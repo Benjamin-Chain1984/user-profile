@@ -8,22 +8,20 @@ import { ProfileForm } from '@/components/ideal/ProfileForm';
 import { ModuleSelector } from '@/components/ideal/ModuleSelector';
 import { ProfileCompletionBanner } from '@/components/ideal/ProfileCompletionBanner';
 import { IndustryResources } from '@/components/ideal/IndustryResources';
-import { Heart } from 'lucide-react';
+import { AppHeader } from '@/components/ideal/AppHeader';
+import { QRCodePanel } from '@/components/ideal/QRCodePanel';
+
 function AppContent() {
   const [activeTab, setActiveTab] = useState('home');
-  return <div className="min-h-screen bg-background pb-24">
-      {/* Header Bar */}
-      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
-        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-primary/10 rounded-lg">
-              <Heart className="w-5 h-5 text-primary" />
-            </div>
-            <span className="font-bold text-lg text-foreground tracking-tight">IDEAL</span>
-          </div>
-          
-        </div>
-      </header>
+  const [showQRCode, setShowQRCode] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-background pb-24">
+      {/* Header with Logo and QR Button */}
+      <AppHeader onQRCodeClick={() => setShowQRCode(true)} />
+      
+      {/* QR Code Panel */}
+      <QRCodePanel open={showQRCode} onOpenChange={setShowQRCode} />
 
       {/* Main Content */}
       <main className="max-w-lg mx-auto px-4 py-6">
@@ -64,11 +62,16 @@ function AppContent() {
 
       {/* Bottom Navigation */}
       <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
-    </div>;
+    </div>
+  );
 }
+
 const Index = () => {
-  return <ProfileProvider>
+  return (
+    <ProfileProvider>
       <AppContent />
-    </ProfileProvider>;
+    </ProfileProvider>
+  );
 };
+
 export default Index;
