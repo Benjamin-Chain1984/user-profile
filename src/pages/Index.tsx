@@ -9,12 +9,9 @@ import { ModuleSelector } from '@/components/ideal/ModuleSelector';
 import { ProfileCompletionBanner } from '@/components/ideal/ProfileCompletionBanner';
 import { IndustryResources } from '@/components/ideal/IndustryResources';
 import { Heart } from 'lucide-react';
-
 function AppContent() {
   const [activeTab, setActiveTab] = useState('home');
-
-  return (
-    <div className="min-h-screen bg-background pb-24">
+  return <div className="min-h-screen bg-background pb-24">
       {/* Header Bar */}
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
@@ -24,16 +21,13 @@ function AppContent() {
             </div>
             <span className="font-bold text-lg text-foreground tracking-tight">IDEAL</span>
           </div>
-          <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
-            Health Monitoring
-          </span>
+          
         </div>
       </header>
 
       {/* Main Content */}
       <main className="max-w-lg mx-auto px-4 py-6">
-        {activeTab === 'home' && (
-          <div className="space-y-6 animate-fade-in">
+        {activeTab === 'home' && <div className="space-y-6 animate-fade-in">
             <ProfileHeader />
             <section>
               <h2 className="text-lg font-semibold text-foreground mb-4">Alerts</h2>
@@ -43,50 +37,38 @@ function AppContent() {
               <h2 className="text-lg font-semibold text-foreground mb-4">Active Modules</h2>
               <ModuleGrid />
             </section>
-          </div>
-        )}
+          </div>}
 
-        {activeTab === 'profile' && (
-          <div className="space-y-6 animate-fade-in">
+        {activeTab === 'profile' && <div className="space-y-6 animate-fade-in">
             <div>
               <h1 className="text-2xl font-bold text-foreground">Individual Profile</h1>
               <p className="text-muted-foreground mt-1">Personal details and contacts</p>
             </div>
             <ProfileCompletionBanner />
             <ProfileForm />
-          </div>
-        )}
+          </div>}
 
-        {activeTab === 'modules' && (
-          <div className="space-y-6 animate-fade-in">
+        {activeTab === 'modules' && <div className="space-y-6 animate-fade-in">
             <div>
               <h1 className="text-2xl font-bold text-foreground">Health Modules</h1>
               <p className="text-muted-foreground mt-1">Configure active monitoring</p>
             </div>
             <ProfileCompletionBanner />
             <ModuleSelector />
-          </div>
-        )}
+          </div>}
 
-        {activeTab === 'resources' && (
-          <div className="space-y-6 animate-fade-in">
+        {activeTab === 'resources' && <div className="space-y-6 animate-fade-in">
             <IndustryResources />
-          </div>
-        )}
+          </div>}
       </main>
 
       {/* Bottom Navigation */}
       <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
-    </div>
-  );
+    </div>;
 }
-
 const Index = () => {
-  return (
-    <ProfileProvider>
+  return <ProfileProvider>
       <AppContent />
-    </ProfileProvider>
-  );
+    </ProfileProvider>;
 };
-
 export default Index;
