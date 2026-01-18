@@ -9,19 +9,14 @@ import { ModuleSelector } from '@/components/ideal/ModuleSelector';
 import { ProfileCompletionBanner } from '@/components/ideal/ProfileCompletionBanner';
 import { IndustryResources } from '@/components/ideal/IndustryResources';
 import { AppHeader } from '@/components/ideal/AppHeader';
-import { QRCodePanel } from '@/components/ideal/QRCodePanel';
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState('home');
-  const [showQRCode, setShowQRCode] = useState(false);
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Header with Logo and QR Button */}
-      <AppHeader onQRCodeClick={() => setShowQRCode(true)} />
-      
-      {/* QR Code Panel */}
-      <QRCodePanel open={showQRCode} onOpenChange={setShowQRCode} />
+      {/* Header with Logo */}
+      <AppHeader />
 
       {/* Main Content */}
       <main className="max-w-lg mx-auto px-4 py-6">
