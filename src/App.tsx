@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
 import ClientScanPage from "./pages/ClientScan";
+import ClientPosterPage from "./pages/ClientPoster";
 import AdminPage from "./pages/Admin";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,13 @@ const App = () => (
             
             {/* QR Scan route - handles auth check internally */}
             <Route path="/c/:token" element={<ClientScanPage />} />
+            
+            {/* Client poster page - printable */}
+            <Route path="/client/:clientId/poster" element={
+              <ProtectedRoute requiredRole="admin">
+                <ClientPosterPage />
+              </ProtectedRoute>
+            } />
             
             {/* Protected routes with sidebar */}
             <Route path="/" element={
