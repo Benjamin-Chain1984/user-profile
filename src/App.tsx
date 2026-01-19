@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { MainLayout } from "@/components/layout/MainLayout";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
@@ -27,17 +28,20 @@ const App = () => (
             {/* QR Scan route - handles auth check internally */}
             <Route path="/c/:token" element={<ClientScanPage />} />
             
-            {/* Protected routes */}
+            {/* Protected routes with sidebar */}
             <Route path="/" element={
               <ProtectedRoute>
-                <Index />
+                <MainLayout>
+                  <Index />
+                </MainLayout>
               </ProtectedRoute>
             } />
             
-            {/* Admin routes - requires admin role */}
             <Route path="/admin" element={
               <ProtectedRoute requiredRole="admin">
-                <AdminPage />
+                <MainLayout>
+                  <AdminPage />
+                </MainLayout>
               </ProtectedRoute>
             } />
             
