@@ -17,9 +17,11 @@ import {
   Edit2,
   Shield,
   ShieldCheck,
-  ShieldAlert
+  ShieldAlert,
+  MessageSquare
 } from 'lucide-react';
 import { TeamMemberDialog } from './TeamMemberDialog';
+import { PhoneVerificationDialog } from './PhoneVerificationDialog';
 import type { AppRole } from '@/services/auth/types';
 
 interface TeamMember {
@@ -51,6 +53,8 @@ export function MyTeam() {
   const [isLoading, setIsLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+  const [verifyingMember, setVerifyingMember] = useState<TeamMember | null>(null);
+  const [verifyDialogOpen, setVerifyDialogOpen] = useState(false);
 
   const isAdmin = hasRole('admin');
 
@@ -107,6 +111,11 @@ export function MyTeam() {
   const handleAddNew = () => {
     setEditingMember(null);
     setDialogOpen(true);
+  };
+
+  const handleVerifyPhone = (member: TeamMember) => {
+    setVerifyingMember(member);
+    setVerifyDialogOpen(true);
   };
 
   if (!isAdmin) {
@@ -194,13 +203,26 @@ export function MyTeam() {
                     </div>
                   </div>
 
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => handleEdit(member)}
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-1">
+                    {!isPhoneVerified && (
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={() => handleVerifyPhone(member)}
+                        title="Verify phone number"
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                      </Button>
+                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => handleEdit(member)}
+                      title="Edit member"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </Card>
             );
@@ -213,6 +235,14 @@ export function MyTeam() {
         onOpenChange={setDialogOpen}
         member={editingMember}
         onSaved={fetchTeamMembers}
+      />
+
+      <PhoneVerificationDialog
+        open={verifyDialogOpen}
+        onOpenChange={setVerifyDialogOpen}
+        userId={verifyingMember?.id || ''}
+        currentPhone={verifyingMember?.verified_phone}
+        onVerified={fetchTeamMembers}
       />
     </div>
   );
