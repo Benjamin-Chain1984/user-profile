@@ -166,12 +166,15 @@ export function ClientManagement() {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm text-muted-foreground">
-                        Created: {new Date(client.poster_qr_token_created_at).toLocaleDateString()}
+                        <div>Created: {new Date(client.poster_qr_token_created_at).toLocaleDateString()}</div>
                         {client.poster_qr_token_rotated_at && (
                           <div className="text-xs">
                             Rotated: {new Date(client.poster_qr_token_rotated_at).toLocaleDateString()}
                           </div>
                         )}
+                        <div className="text-xs text-primary/70 mt-1 font-mono truncate max-w-[150px]" title="Token must be regenerated to view URL">
+                          [Generate poster to view URL]
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell className="text-right">

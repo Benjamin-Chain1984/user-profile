@@ -1,6 +1,7 @@
 /**
  * QR Auth Edge Function
  * Validates a user's phone is verified in the system and sends OTP for QR-based access
+ * Also handles scan attempt logging
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -39,7 +40,27 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { phone, clientToken, action } = await req.json();
+    const body = await req.json();
+    const { phone, clientToken, action } = body;
+
+    // Handle scan attempt logging (anonymous - just logs that a scan occurred)
+    if (action === 'scan_attempt') {
+      console.log('QR scan attempt logged');
+      await supabase.rpc('log_audit_event', {
+        p_actor_user_id: null,
+        p_action: 'QR_SCAN_ATTEMPT',
+        p_metadata_json: { 
+          tokenPrefix: clientToken?.slice(0, 8) + '...',
+          userAgent: req.headers.get('user-agent') || 'unknown',
+          timestamp: new Date().toISOString()
+        }
+      });
+
+      return new Response(
+        JSON.stringify({ success: true, logged: true }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     if (!phone) {
       return new Response(
@@ -50,6 +71,16 @@ Deno.serve(async (req) => {
 
     const formattedPhone = formatPhoneE164(phone);
     console.log(`QR Auth request for phone: ${formattedPhone.slice(0, 6)}****`);
+
+    // Log that login was required from QR
+    await supabase.rpc('log_audit_event', {
+      p_actor_user_id: null,
+      p_action: 'LOGIN_REQUIRED_FROM_QR',
+      p_metadata_json: { 
+        phone: formattedPhone.slice(0, 6) + '****',
+        tokenPrefix: clientToken?.slice(0, 8) + '...'
+      }
+    });
 
     // Step 1: Check if phone is verified in the system
     const { data: profile, error: profileError } = await supabase
@@ -71,11 +102,11 @@ Deno.serve(async (req) => {
       // Log failed access attempt
       await supabase.rpc('log_audit_event', {
         p_actor_user_id: null,
-        p_action: 'ACCESS_DENIED_ROLE',
+        p_action: 'CLIENT_ACCESS_DENIED',
         p_metadata_json: { 
           phone: formattedPhone.slice(0, 6) + '****',
           reason: 'phone_not_registered',
-          clientToken: clientToken?.slice(0, 8) + '...'
+          tokenPrefix: clientToken?.slice(0, 8) + '...'
         }
       });
 
@@ -90,6 +121,15 @@ Deno.serve(async (req) => {
 
     if (!profile.phone_verified_at) {
       console.log('Phone not verified');
+      await supabase.rpc('log_audit_event', {
+        p_actor_user_id: profile.id,
+        p_action: 'CLIENT_ACCESS_DENIED',
+        p_metadata_json: { 
+          phone: formattedPhone.slice(0, 6) + '****',
+          reason: 'phone_not_verified'
+        }
+      });
+
       return new Response(
         JSON.stringify({ 
           error: 'Your phone number has not been verified. Please contact your administrator.',
@@ -103,7 +143,7 @@ Deno.serve(async (req) => {
       console.log('User account inactive');
       await supabase.rpc('log_audit_event', {
         p_actor_user_id: profile.id,
-        p_action: 'ACCESS_DENIED_ROLE',
+        p_action: 'CLIENT_ACCESS_DENIED',
         p_metadata_json: { 
           phone: formattedPhone.slice(0, 6) + '****',
           reason: 'account_inactive'
@@ -129,7 +169,7 @@ Deno.serve(async (req) => {
       console.log('User has no roles');
       await supabase.rpc('log_audit_event', {
         p_actor_user_id: profile.id,
-        p_action: 'ACCESS_DENIED_ROLE',
+        p_action: 'CLIENT_ACCESS_DENIED',
         p_metadata_json: { 
           phone: formattedPhone.slice(0, 6) + '****',
           reason: 'no_role_assigned'
@@ -264,7 +304,7 @@ Deno.serve(async (req) => {
       p_metadata_json: { 
         phone: formattedPhone.slice(0, 6) + '****',
         method: 'qr_auth',
-        clientToken: clientToken?.slice(0, 8) + '...'
+        tokenPrefix: clientToken?.slice(0, 8) + '...'
       }
     });
 

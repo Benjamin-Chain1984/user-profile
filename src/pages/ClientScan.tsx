@@ -3,14 +3,16 @@
  * 
  * Handles QR code scan flow with SMS OTP authentication:
  * 1. User scans QR code on client poster
- * 2. Prompts for verified phone number
- * 3. Sends OTP via SMS
- * 4. Verifies OTP and grants client access
+ * 2. Validates token exists (no client data shown yet)
+ * 3. Shows neutral auth prompt if not authenticated
+ * 4. Stores token in sessionStorage for redirect after login
+ * 5. After auth, resolves client and enforces authorization
  */
 
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,9 +26,13 @@ import {
   ArrowRight, 
   Send,
   CheckCircle,
-  Shield
+  Shield,
+  LogIn
 } from 'lucide-react';
 import idealLogo from '@/assets/ideal-logo.png';
+
+// Session storage key for QR redirect
+const QR_REDIRECT_KEY = 'ideal_qr_redirect';
 
 interface Client {
   id: string;
@@ -42,20 +48,42 @@ interface AuthState {
   roles?: string[];
 }
 
-type Step = 'phone' | 'otp' | 'success' | 'error';
+type Step = 'checking' | 'login_prompt' | 'phone' | 'otp' | 'validating' | 'success' | 'error';
+
+interface ErrorState {
+  title: string;
+  message: string;
+  isTokenInvalid?: boolean;
+}
 
 export default function ClientScanPage() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated, isLoading: authLoading, isStaff } = useAuth();
   
-  const [step, setStep] = useState<Step>('phone');
+  const [step, setStep] = useState<Step>('checking');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorState, setErrorState] = useState<ErrorState | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [authState, setAuthState] = useState<AuthState | null>(null);
   const [countdown, setCountdown] = useState(0);
+
+  // Log QR scan attempt on mount
+  useEffect(() => {
+    if (token) {
+      // Log QR scan attempt (anonymously - just that a scan happened)
+      supabase.functions.invoke('qr-auth', {
+        body: { 
+          action: 'scan_attempt',
+          clientToken: token 
+        }
+      }).catch(console.error);
+    }
+  }, [token]);
 
   // Countdown timer for resend
   useEffect(() => {
@@ -64,6 +92,99 @@ export default function ClientScanPage() {
       return () => clearTimeout(timer);
     }
   }, [countdown]);
+
+  // Main flow: check auth state and proceed accordingly
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (!token) {
+      setErrorState({
+        title: 'Invalid Link',
+        message: 'This QR code link is malformed. Please scan a valid poster QR code.',
+      });
+      setStep('error');
+      return;
+    }
+
+    if (isAuthenticated && isStaff) {
+      // User is already authenticated and has staff role - validate token and grant access
+      validateTokenAndGrantAccess();
+    } else if (isAuthenticated && !isStaff) {
+      // Authenticated but not staff - show error
+      setErrorState({
+        title: 'Access Denied',
+        message: 'You do not have permission to access client records. Please contact your administrator.',
+      });
+      setStep('error');
+    } else {
+      // Not authenticated - show neutral login prompt
+      // Store token for redirect after login
+      sessionStorage.setItem(QR_REDIRECT_KEY, token);
+      setStep('login_prompt');
+    }
+  }, [authLoading, isAuthenticated, isStaff, token]);
+
+  const validateTokenAndGrantAccess = async () => {
+    setStep('validating');
+    
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('verify-qr-auth', {
+        body: { 
+          action: 'validate_token',
+          clientToken: token
+        }
+      });
+
+      if (fnError) throw fnError;
+
+      if (data.invalidToken) {
+        setErrorState({
+          title: 'QR Code Replaced',
+          message: 'This QR code has been replaced or is no longer valid. Please ask an admin to print the latest poster.',
+          isTokenInvalid: true,
+        });
+        setStep('error');
+        return;
+      }
+
+      if (data.success && data.client) {
+        setClient(data.client);
+        setAuthState({
+          userId: data.userId,
+          userName: data.userName,
+          roles: data.roles
+        });
+        setStep('success');
+        // Clear the redirect storage
+        sessionStorage.removeItem(QR_REDIRECT_KEY);
+      } else {
+        setErrorState({
+          title: 'Access Error',
+          message: data.error || 'Unable to access client record.',
+        });
+        setStep('error');
+      }
+    } catch (err: any) {
+      console.error('Token validation error:', err);
+      setErrorState({
+        title: 'Error',
+        message: 'An unexpected error occurred. Please try again.',
+      });
+      setStep('error');
+    }
+  };
+
+  const handleGoToLogin = () => {
+    // Store the full path for redirect after login
+    navigate('/auth', { 
+      state: { from: location },
+      replace: true 
+    });
+  };
+
+  const handleUsePhoneAuth = () => {
+    setStep('phone');
+  };
 
   const formatPhoneDisplay = (phone: string): string => {
     const digits = phone.replace(/\D/g, '');
@@ -105,7 +226,10 @@ export default function ClientScanPage() {
       } else {
         setError(data.error || 'Unable to send verification code');
         if (data.code === 'PHONE_NOT_REGISTERED' || data.code === 'NO_ROLE') {
-          // Show error state
+          setErrorState({
+            title: 'Access Denied',
+            message: data.error || 'You do not have permission to access client records.',
+          });
           setStep('error');
         }
       }
@@ -143,6 +267,16 @@ export default function ClientScanPage() {
         return;
       }
 
+      if (data.invalidToken) {
+        setErrorState({
+          title: 'QR Code Replaced',
+          message: 'This QR code has been replaced or is no longer valid. Please ask an admin to print the latest poster.',
+          isTokenInvalid: true,
+        });
+        setStep('error');
+        return;
+      }
+
       if (data.success) {
         setClient(data.client);
         setAuthState({
@@ -151,6 +285,7 @@ export default function ClientScanPage() {
           roles: data.roles
         });
         setStep('success');
+        sessionStorage.removeItem(QR_REDIRECT_KEY);
       } else {
         setError(data.error || 'Invalid verification code');
         setOtp('');
@@ -170,8 +305,25 @@ export default function ClientScanPage() {
     handleSendOtp();
   };
 
-  // Phone input step
-  if (step === 'phone') {
+  // Checking auth state
+  if (step === 'checking' || authLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+        <div className="w-full max-w-md space-y-6 text-center">
+          <div className="flex justify-center">
+            <img src={idealLogo} alt="IDEAL" className="h-14 w-auto" />
+          </div>
+          <div className="space-y-2">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
+            <p className="text-muted-foreground">Verifying access...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Neutral login prompt - no client data shown
+  if (step === 'login_prompt') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
         <div className="w-full max-w-md space-y-6">
@@ -185,6 +337,68 @@ export default function ClientScanPage() {
                 <QrCode className="w-8 h-8 text-primary" />
               </div>
               <CardTitle>Client Record Access</CardTitle>
+              <CardDescription>
+                You're opening a client record. Please sign in to continue.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button 
+                onClick={handleGoToLogin}
+                className="w-full"
+                size="lg"
+              >
+                <LogIn className="w-4 h-4 mr-2" />
+                Sign In with Email
+              </Button>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">Or</span>
+                </div>
+              </div>
+
+              <Button 
+                onClick={handleUsePhoneAuth}
+                variant="outline"
+                className="w-full"
+                size="lg"
+              >
+                <Phone className="w-4 h-4 mr-2" />
+                Verify with Phone SMS
+              </Button>
+
+              <p className="text-xs text-center text-muted-foreground pt-2">
+                Only authorized staff with a verified phone number can access client records.
+              </p>
+            </CardContent>
+          </Card>
+
+          <p className="text-xs text-center text-muted-foreground">
+            Protected health information. Authorized personnel only.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Phone input step
+  if (step === 'phone') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+        <div className="w-full max-w-md space-y-6">
+          <div className="flex justify-center">
+            <img src={idealLogo} alt="IDEAL" className="h-14 w-auto" />
+          </div>
+
+          <Card className="border-border shadow-lg">
+            <CardHeader className="text-center">
+              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <Phone className="w-8 h-8 text-primary" />
+              </div>
+              <CardTitle>Phone Verification</CardTitle>
               <CardDescription>
                 Enter your registered mobile number to receive a verification code.
               </CardDescription>
@@ -232,6 +446,14 @@ export default function ClientScanPage() {
                     Send Verification Code
                   </>
                 )}
+              </Button>
+
+              <Button 
+                variant="ghost" 
+                onClick={() => setStep('login_prompt')}
+                className="w-full"
+              >
+                Back to sign in options
               </Button>
             </CardContent>
           </Card>
@@ -342,8 +564,25 @@ export default function ClientScanPage() {
     );
   }
 
+  // Validating token after auth
+  if (step === 'validating') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+        <div className="w-full max-w-md space-y-6 text-center">
+          <div className="flex justify-center">
+            <img src={idealLogo} alt="IDEAL" className="h-14 w-auto" />
+          </div>
+          <div className="space-y-2">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
+            <p className="text-muted-foreground">Accessing client record...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Error state
-  if (step === 'error') {
+  if (step === 'error' && errorState) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
         <div className="w-full max-w-md space-y-6">
@@ -356,26 +595,35 @@ export default function ClientScanPage() {
               <div className="mx-auto w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mb-4">
                 <AlertTriangle className="w-8 h-8 text-destructive" />
               </div>
-              <CardTitle className="text-destructive">Access Denied</CardTitle>
+              <CardTitle className="text-destructive">{errorState.title}</CardTitle>
               <CardDescription className="text-base">
-                {error || 'You do not have permission to access client records.'}
+                {errorState.message}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button 
-                onClick={() => {
-                  setStep('phone');
-                  setError(null);
-                  setPhone('');
-                }} 
-                className="w-full" 
-                variant="outline"
-              >
-                Try Different Number
-              </Button>
-              <p className="text-xs text-center text-muted-foreground">
-                If you believe this is an error, please contact your administrator.
-              </p>
+              {errorState.isTokenInvalid ? (
+                <p className="text-xs text-center text-muted-foreground">
+                  The poster QR code in this room may be outdated. Please request a new poster from your administrator.
+                </p>
+              ) : (
+                <>
+                  <Button 
+                    onClick={() => {
+                      setStep('login_prompt');
+                      setErrorState(null);
+                      setError(null);
+                      setPhone('');
+                    }} 
+                    className="w-full" 
+                    variant="outline"
+                  >
+                    Try Again
+                  </Button>
+                  <p className="text-xs text-center text-muted-foreground">
+                    If you believe this is an error, please contact your administrator.
+                  </p>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
