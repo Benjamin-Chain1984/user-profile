@@ -1,6 +1,7 @@
 /**
  * Verify QR Auth OTP Edge Function
  * Validates OTP for QR-based client access
+ * Also handles token-only validation for pre-authenticated users
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -43,8 +44,144 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { phone, otp, clientToken, userId } = await req.json();
+    const body = await req.json();
+    const { phone, otp, clientToken, userId, action } = body;
 
+    // Handle token-only validation for pre-authenticated users
+    if (action === 'validate_token') {
+      console.log('Validating token for pre-authenticated user');
+      
+      // Get user from auth header
+      const authHeader = req.headers.get('Authorization');
+      let currentUserId: string | null = null;
+      let currentUserName: string | null = null;
+      let currentUserRoles: string[] = [];
+
+      if (authHeader?.startsWith('Bearer ')) {
+        const token = authHeader.replace('Bearer ', '');
+        const { data: claims, error: claimsError } = await supabase.auth.getUser(token);
+        
+        if (!claimsError && claims.user) {
+          currentUserId = claims.user.id;
+          
+          // Get user profile
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', currentUserId)
+            .single();
+          
+          currentUserName = profile?.full_name || claims.user.email || null;
+          
+          // Get user roles
+          const { data: roles } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', currentUserId);
+          
+          currentUserRoles = roles?.map(r => r.role) || [];
+        }
+      }
+
+      if (!currentUserId) {
+        return new Response(
+          JSON.stringify({ error: 'Authentication required' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Check if user has staff role
+      if (currentUserRoles.length === 0) {
+        await supabase.rpc('log_audit_event', {
+          p_actor_user_id: currentUserId,
+          p_action: 'CLIENT_ACCESS_DENIED',
+          p_metadata_json: { 
+            reason: 'no_staff_role',
+            tokenPrefix: clientToken?.slice(0, 8) + '...'
+          }
+        });
+
+        return new Response(
+          JSON.stringify({ 
+            error: 'You do not have permission to access client records.',
+            code: 'NO_ROLE'
+          }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Validate the client token
+      if (!clientToken) {
+        return new Response(
+          JSON.stringify({ error: 'Client token is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const tokenHash = await hashToken(clientToken);
+      
+      const { data: clientData, error: clientError } = await supabase
+        .from('clients')
+        .select('id, preferred_name, short_bio, photo_url, status')
+        .eq('poster_qr_token_hash', tokenHash)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (clientError || !clientData) {
+        console.log('Invalid or expired client token');
+        
+        await supabase.rpc('log_audit_event', {
+          p_actor_user_id: currentUserId,
+          p_action: 'QR_TOKEN_INVALID',
+          p_metadata_json: { 
+            tokenPrefix: clientToken?.slice(0, 8) + '...',
+            reason: 'token_not_found_or_rotated'
+          }
+        });
+
+        return new Response(
+          JSON.stringify({ 
+            error: 'This QR code is invalid or has been replaced. Please contact your administrator.',
+            invalidToken: true,
+            code: 'INVALID_CLIENT_TOKEN'
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const client = {
+        id: clientData.id,
+        preferredName: clientData.preferred_name,
+        shortBio: clientData.short_bio,
+        photoUrl: clientData.photo_url,
+        status: clientData.status
+      };
+
+      // Log successful access
+      await supabase.rpc('log_audit_event', {
+        p_actor_user_id: currentUserId,
+        p_action: 'CLIENT_ACCESS_GRANTED',
+        p_client_id: client.id,
+        p_metadata_json: { 
+          method: 'pre_authenticated',
+          clientName: client.preferredName
+        }
+      });
+
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          message: 'Access granted',
+          userId: currentUserId,
+          userName: currentUserName,
+          roles: currentUserRoles,
+          client
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Standard OTP verification flow
     if (!phone || !otp) {
       return new Response(
         JSON.stringify({ error: 'Phone and OTP are required' }),
@@ -185,9 +322,21 @@ Deno.serve(async (req) => {
 
       if (clientError || !clientData) {
         console.log('Invalid or expired client token');
+        
+        await supabase.rpc('log_audit_event', {
+          p_actor_user_id: storedOtp.user_id,
+          p_action: 'QR_TOKEN_INVALID',
+          p_metadata_json: { 
+            tokenPrefix: clientToken?.slice(0, 8) + '...',
+            reason: 'token_not_found_or_rotated',
+            phone: formattedPhone.slice(0, 6) + '****'
+          }
+        });
+
         return new Response(
           JSON.stringify({ 
             error: 'This QR code is invalid or has been replaced. Please contact your administrator.',
+            invalidToken: true,
             code: 'INVALID_CLIENT_TOKEN'
           }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -205,11 +354,11 @@ Deno.serve(async (req) => {
       // Log successful access
       await supabase.rpc('log_audit_event', {
         p_actor_user_id: storedOtp.user_id,
-        p_action: 'CLIENT_ACCESS',
+        p_action: 'CLIENT_ACCESS_GRANTED',
         p_client_id: client.id,
         p_metadata_json: { 
           phone: formattedPhone.slice(0, 6) + '****',
-          method: 'qr_auth',
+          method: 'qr_auth_otp',
           clientName: client.preferredName
         }
       });
