@@ -14,16 +14,187 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      audit_events: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          client_id: string | null
+          id: string
+          metadata_json: Json | null
+          timestamp: string
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          client_id?: string | null
+          id?: string
+          metadata_json?: Json | null
+          timestamp?: string
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          client_id?: string | null
+          id?: string
+          metadata_json?: Json | null
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_events_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clients: {
+        Row: {
+          created_at: string
+          id: string
+          photo_url: string | null
+          poster_qr_token_created_at: string
+          poster_qr_token_hash: string
+          poster_qr_token_rotated_at: string | null
+          preferred_name: string
+          short_bio: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          photo_url?: string | null
+          poster_qr_token_created_at?: string
+          poster_qr_token_hash: string
+          poster_qr_token_rotated_at?: string | null
+          preferred_name: string
+          short_bio?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          photo_url?: string | null
+          poster_qr_token_created_at?: string
+          poster_qr_token_hash?: string
+          poster_qr_token_rotated_at?: string | null
+          preferred_name?: string
+          short_bio?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          is_active: boolean
+          phone_verified_at: string | null
+          updated_at: string
+          verified_phone: string | null
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          is_active?: boolean
+          phone_verified_at?: string | null
+          updated_at?: string
+          verified_phone?: string | null
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          is_active?: boolean
+          phone_verified_at?: string | null
+          updated_at?: string
+          verified_phone?: string | null
+        }
+        Relationships: []
+      }
+      rate_limits: {
+        Row: {
+          action: string
+          attempt_count: number
+          created_at: string
+          first_attempt_at: string
+          id: string
+          identifier: string
+          locked_until: string | null
+        }
+        Insert: {
+          action: string
+          attempt_count?: number
+          created_at?: string
+          first_attempt_at?: string
+          id?: string
+          identifier: string
+          locked_until?: string | null
+        }
+        Update: {
+          action?: string
+          attempt_count?: number
+          created_at?: string
+          first_attempt_at?: string
+          id?: string
+          identifier?: string
+          locked_until?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_staff: { Args: { _user_id: string }; Returns: boolean }
+      log_audit_event: {
+        Args: {
+          p_action: string
+          p_actor_user_id: string
+          p_client_id?: string
+          p_metadata_json?: Json
+        }
+        Returns: string
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "worker" | "team_leader" | "clinician" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +321,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["worker", "team_leader", "clinician", "admin"],
+    },
   },
 } as const
