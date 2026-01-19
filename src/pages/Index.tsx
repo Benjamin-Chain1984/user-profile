@@ -14,45 +14,57 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState('home');
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-20 sm:pb-24 safe-area-inset">
       {/* Header with Logo */}
       <AppHeader />
 
-      {/* Main Content */}
-      <main className="max-w-lg mx-auto px-4 py-6">
-        {activeTab === 'home' && <div className="space-y-6 animate-fade-in">
+      {/* Main Content - Responsive container */}
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+        {activeTab === 'home' && (
+          <div className="space-y-4 sm:space-y-6 animate-fade-in">
             <ProfileHeader />
-            <section>
-              <h2 className="text-lg font-semibold text-foreground mb-4">Alerts</h2>
-              <AlertDashboard />
-            </section>
-            <section>
-              <h2 className="text-lg font-semibold text-foreground mb-4">Active Modules</h2>
-              <ModuleGrid />
-            </section>
-          </div>}
+            
+            {/* Two-column layout on larger screens */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              <section>
+                <h2 className="text-lg font-semibold text-foreground mb-3 sm:mb-4">Alerts</h2>
+                <AlertDashboard />
+              </section>
+              <section>
+                <h2 className="text-lg font-semibold text-foreground mb-3 sm:mb-4">Active Modules</h2>
+                <ModuleGrid />
+              </section>
+            </div>
+          </div>
+        )}
 
-        {activeTab === 'profile' && <div className="space-y-6 animate-fade-in">
+        {activeTab === 'profile' && (
+          <div className="space-y-4 sm:space-y-6 animate-fade-in">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Individual Profile</h1>
-              <p className="text-muted-foreground mt-1">Personal details and contacts</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">Individual Profile</h1>
+              <p className="text-sm sm:text-base text-muted-foreground mt-1">Personal details and contacts</p>
             </div>
             <ProfileCompletionBanner />
             <ProfileForm />
-          </div>}
+          </div>
+        )}
 
-        {activeTab === 'modules' && <div className="space-y-6 animate-fade-in">
+        {activeTab === 'modules' && (
+          <div className="space-y-4 sm:space-y-6 animate-fade-in">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Health Modules</h1>
-              <p className="text-muted-foreground mt-1">Configure active monitoring</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">Health Modules</h1>
+              <p className="text-sm sm:text-base text-muted-foreground mt-1">Configure active monitoring</p>
             </div>
             <ProfileCompletionBanner />
             <ModuleSelector />
-          </div>}
+          </div>
+        )}
 
-        {activeTab === 'resources' && <div className="space-y-6 animate-fade-in">
+        {activeTab === 'resources' && (
+          <div className="space-y-4 sm:space-y-6 animate-fade-in">
             <IndustryResources />
-          </div>}
+          </div>
+        )}
       </main>
 
       {/* Bottom Navigation */}
