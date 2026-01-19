@@ -9,7 +9,8 @@ import { QRCodeSVG } from 'qrcode.react';
 import { supabase } from '@/integrations/supabase/client';
 import { clientTokenService } from '@/services/clientToken';
 import { Button } from '@/components/ui/button';
-import { Printer, Download, ArrowLeft } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Printer, Download, ArrowLeft, User } from 'lucide-react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 
@@ -91,14 +92,55 @@ export default function ClientPosterPage() {
       pdf.text('IDEAL Health Monitoring', margin, margin);
       pdf.text('Staff Use Only', pageWidth - margin, margin, { align: 'right' });
 
+      // Client photo if available
+      let currentY = margin + 20;
+      if (client.photo_url) {
+        try {
+          const photoSize = 40;
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          await new Promise<void>((resolve, reject) => {
+            img.onload = () => {
+              // Create circular crop using canvas
+              const canvas = document.createElement('canvas');
+              canvas.width = 200;
+              canvas.height = 200;
+              const ctx = canvas.getContext('2d');
+              if (ctx) {
+                ctx.beginPath();
+                ctx.arc(100, 100, 100, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.clip();
+                ctx.drawImage(img, 0, 0, 200, 200);
+              }
+              const photoDataUrl = canvas.toDataURL('image/png');
+              pdf.addImage(
+                photoDataUrl,
+                'PNG',
+                (pageWidth - photoSize) / 2,
+                currentY,
+                photoSize,
+                photoSize
+              );
+              resolve();
+            };
+            img.onerror = () => resolve(); // Continue without photo on error
+            img.src = client.photo_url!;
+          });
+          currentY += photoSize + 10;
+        } catch {
+          // Continue without photo on error
+        }
+      }
+
       // Title
       pdf.setFontSize(32);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(0);
-      pdf.text(client.preferred_name, pageWidth / 2, margin + 30, { align: 'center' });
+      pdf.text(client.preferred_name, pageWidth / 2, currentY + 10, { align: 'center' });
+      currentY += 25;
 
       // Bio if present
-      let currentY = margin + 45;
       if (client.short_bio) {
         pdf.setFontSize(14);
         pdf.setFont('helvetica', 'normal');
@@ -271,15 +313,25 @@ export default function ClientPosterPage() {
           </div>
 
           {/* Client Info */}
-          <div className="space-y-3">
-            <h1 className="text-4xl font-bold text-foreground tracking-tight">
-              {client.preferred_name}
-            </h1>
-            {client.short_bio && (
-              <p className="text-muted-foreground text-lg leading-relaxed max-w-xs mx-auto">
-                {client.short_bio}
-              </p>
-            )}
+          <div className="space-y-4">
+            {/* Client Photo */}
+            <Avatar className="h-24 w-24 mx-auto border-4 border-background shadow-lg">
+              <AvatarImage src={client.photo_url || undefined} alt={client.preferred_name} />
+              <AvatarFallback className="bg-primary/10 text-primary text-2xl">
+                {client.preferred_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || <User className="h-10 w-10" />}
+              </AvatarFallback>
+            </Avatar>
+            
+            <div className="space-y-2">
+              <h1 className="text-4xl font-bold text-foreground tracking-tight">
+                {client.preferred_name}
+              </h1>
+              {client.short_bio && (
+                <p className="text-muted-foreground text-lg leading-relaxed max-w-xs mx-auto">
+                  {client.short_bio}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* QR Code */}
