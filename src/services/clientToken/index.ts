@@ -36,7 +36,11 @@ function toClient(row: any): Client {
  * Generate a cryptographically secure random token
  * Uses Web Crypto API for security
  */
-function generateSecureToken(): string {
+/**
+ * Generate a cryptographically secure random token
+ * Uses Web Crypto API for security
+ */
+export function generateSecureToken(): string {
   const bytes = new Uint8Array(32); // 256 bits of entropy
   crypto.getRandomValues(bytes);
   // Convert to base64url encoding (URL-safe)
@@ -50,7 +54,7 @@ function generateSecureToken(): string {
  * Hash a token using SHA-256
  * Only the hash is stored in the database
  */
-async function hashToken(token: string): Promise<string> {
+export async function hashToken(token: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(token);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
@@ -143,8 +147,13 @@ class ClientTokenServiceImpl implements ClientTokenService {
     return `${env.appDomain}/c/${token}`;
   }
 
-  generateSecureToken = generateSecureToken;
-  hashToken = hashToken;
+  generateSecureToken(): string {
+    return generateSecureToken();
+  }
+
+  async hashToken(token: string): Promise<string> {
+    return hashToken(token);
+  }
 }
 
 // Export singleton instance

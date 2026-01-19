@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
 import ClientScanPage from "./pages/ClientScan";
+import AdminPage from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,13 @@ const App = () => (
             <Route path="/" element={
               <ProtectedRoute>
                 <Index />
+              </ProtectedRoute>
+            } />
+            
+            {/* Admin routes - requires admin role */}
+            <Route path="/admin" element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminPage />
               </ProtectedRoute>
             } />
             
