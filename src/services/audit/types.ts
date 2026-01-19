@@ -10,7 +10,16 @@ export type AuditAction =
   | 'OTP_SENT'
   | 'OTP_VERIFY_FAIL'
   | 'LOGOUT'
-  | 'DATA_LOGGED';
+  | 'DATA_LOGGED'
+  | 'ROLE_ASSIGNED'
+  | 'ROLE_REMOVED'
+  | 'TEAM_MEMBER_ADDED'
+  | 'TEAM_MEMBER_EDITED'
+  | 'TEAM_MEMBER_DEACTIVATED'
+  | 'TEAM_MEMBER_REACTIVATED'
+  | 'PHONE_VERIFIED'
+  | 'PHONE_CHANGED'
+  | 'ACCESS_DENIED_ROLE';
 
 export interface AuditEvent {
   id: string;
