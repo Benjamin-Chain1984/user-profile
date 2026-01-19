@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +17,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, RefreshCw, FileText, Edit, Eye } from 'lucide-react';
+import { Plus, RefreshCw, FileText, Edit, Eye, Printer } from 'lucide-react';
 import { ClientFormDialog } from './ClientFormDialog';
 import { PosterPreviewDialog } from './PosterPreviewDialog';
 import { RotateQRDialog } from './RotateQRDialog';
@@ -37,6 +38,7 @@ interface ClientRow {
 }
 
 export function ClientManagement() {
+  const navigate = useNavigate();
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -190,6 +192,14 @@ export function ClientManagement() {
                           title="Rotate QR Code"
                         >
                           <RefreshCw className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/client/${client.id}/poster`)}
+                          title="View Printable Poster"
+                        >
+                          <Printer className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="outline"
