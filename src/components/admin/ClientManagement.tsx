@@ -17,7 +17,14 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, RefreshCw, FileText, Edit, Eye, Printer } from 'lucide-react';
+import { Plus, RefreshCw, FileText, Edit, Eye, Printer, MoreHorizontal } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { ClientFormDialog } from './ClientFormDialog';
 import { PosterPreviewDialog } from './PosterPreviewDialog';
 import { RotateQRDialog } from './RotateQRDialog';
@@ -168,49 +175,38 @@ export function ClientManagement() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setAuditClient(client)}
-                          title="View Audit Log"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setEditingClient(client)}
-                          title="Edit Client"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setRotatingClient(client)}
-                          title="Rotate QR Code"
-                        >
-                          <RefreshCw className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(`/client/${client.id}/poster`)}
-                          title="View Printable Poster"
-                        >
-                          <Printer className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setRotatingClient(client)}
-                          title="Generate Poster"
-                        >
-                          <FileText className="h-4 w-4 mr-1" />
-                          Poster
-                        </Button>
-                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Open menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem onClick={() => setEditingClient(client)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit Client
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setAuditClient(client)}>
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Audit Log
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => navigate(`/client/${client.id}/poster`)}>
+                            <Printer className="h-4 w-4 mr-2" />
+                            View Poster
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setRotatingClient(client)}>
+                            <FileText className="h-4 w-4 mr-2" />
+                            Generate Poster
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setRotatingClient(client)}>
+                            <RefreshCw className="h-4 w-4 mr-2" />
+                            Rotate QR Code
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
