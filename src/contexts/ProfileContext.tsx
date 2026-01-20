@@ -55,23 +55,26 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     createdBy: 'System Admin',
   });
 
+  // Enable ALL modules by default for master project development
   const [enabledModules, setEnabledModules] = useState<HealthModule[]>(
     HEALTH_MODULES.map((m) => ({
       ...m,
-      enabled: ['fluid-balance', 'health-monitoring', 'oral-health', 'weight'].includes(m.id),
+      enabled: true, // All modules ON by default
       status: m.id === 'health-monitoring' ? 'action' : 
               m.id === 'fluid-balance' ? 'monitor' : 'stable',
       lastEntry: m.id === 'weight' ? 'Logged 2 days ago' : 
                  m.id === 'oral-health' ? 'Up to date' :
                  m.id === 'fluid-balance' ? '1,200ml today' :
-                 m.id === 'health-monitoring' ? 'Review required' : undefined,
+                 m.id === 'health-monitoring' ? 'Review required' : 
+                 'Not yet logged',
     }))
   );
 
+  // Enable ALL vitals by default
   const [healthMonitoringConfig, setHealthMonitoringConfig] = useState<HealthMonitoringConfig>({
     bloodPressureEnabled: true,
     heartRateEnabled: true,
-    oxygenLevelsEnabled: false,
+    oxygenLevelsEnabled: true,
     temperatureEnabled: true,
   });
 
