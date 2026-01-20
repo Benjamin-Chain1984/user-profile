@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
@@ -13,53 +14,62 @@ import ClientScanPage from "./pages/ClientScan";
 import ClientPosterPage from "./pages/ClientPoster";
 import AdminPage from "./pages/Admin";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 5 * 60 * 1000,
+    },
+  },
+});
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/auth" element={<AuthPage />} />
-            
-            {/* QR Scan route - handles auth check internally */}
-            <Route path="/c/:token" element={<ClientScanPage />} />
-            
-            {/* Client poster page - printable */}
-            <Route path="/client/:clientId/poster" element={
-              <ProtectedRoute requiredRole="admin">
-                <ClientPosterPage />
-              </ProtectedRoute>
-            } />
-            
-            {/* Protected routes with sidebar */}
-            <Route path="/" element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <Index />
-                </MainLayout>
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/admin" element={
-              <ProtectedRoute requiredRole="admin">
-                <MainLayout>
-                  <AdminPage />
-                </MainLayout>
-              </ProtectedRoute>
-            } />
-            
-            {/* Catch-all */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/auth" element={<AuthPage />} />
+              
+              {/* QR Scan route - handles auth check internally */}
+              <Route path="/c/:token" element={<ClientScanPage />} />
+              
+              {/* Client poster page - printable */}
+              <Route path="/client/:clientId/poster" element={
+                <ProtectedRoute requiredRole="admin">
+                  <ClientPosterPage />
+                </ProtectedRoute>
+              } />
+              
+              {/* Protected routes with sidebar */}
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Index />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin" element={
+                <ProtectedRoute requiredRole="admin">
+                  <MainLayout>
+                    <AdminPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Catch-all */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

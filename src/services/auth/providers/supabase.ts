@@ -57,10 +57,19 @@ export class SupabaseAuthAdapter implements AuthAdapter {
 
   onAuthStateChange(callback: (session: AuthSession | null) => void): () => void {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
+        // CRITICAL: Never use async directly in onAuthStateChange callback
+        // to prevent deadlocks. Defer async operations with setTimeout.
         if (session?.user) {
-          const roles = await this.getUserRoles(session.user.id);
-          callback(toAuthSession(session, roles));
+          // First, immediately provide session without roles to unblock UI
+          callback(toAuthSession(session, []));
+          
+          // Then fetch roles asynchronously and update
+          setTimeout(() => {
+            this.getUserRoles(session.user.id).then((roles) => {
+              callback(toAuthSession(session, roles));
+            });
+          }, 0);
         } else {
           callback(null);
         }
