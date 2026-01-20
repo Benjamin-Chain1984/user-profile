@@ -144,7 +144,8 @@ class ClientTokenServiceImpl implements ClientTokenService {
   }
 
   generatePosterQrUrl(token: string): string {
-    return `${env.appDomain}/c/${token}`;
+    const base = env.appDomain.replace(/\/$/, '');
+    return `${base}/c/${token}`;
   }
 
   generateSecureToken(): string {
