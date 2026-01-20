@@ -33,16 +33,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    let mounted = true;
+    
     // Set up auth state listener first
     const unsubscribe = authService.onAuthStateChange((newSession) => {
-      setSession(newSession);
-      setIsLoading(false);
+      if (mounted) {
+        setSession(newSession);
+        setIsLoading(false);
+      }
     });
 
-    // Then check for existing session
-    refreshSession().finally(() => setIsLoading(false));
+    // Then check for existing session with timeout to prevent hanging
+    const sessionTimeout = setTimeout(() => {
+      if (mounted && isLoading) {
+        console.warn('[AuthContext] Session check timed out, proceeding as unauthenticated');
+        setIsLoading(false);
+      }
+    }, 5000);
 
-    return unsubscribe;
+    refreshSession()
+      .catch((err) => {
+        console.error('[AuthContext] Session refresh failed:', err);
+      })
+      .finally(() => {
+        if (mounted) {
+          clearTimeout(sessionTimeout);
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+      clearTimeout(sessionTimeout);
+      unsubscribe();
+    };
   }, [refreshSession]);
 
   const signOut = useCallback(async () => {
