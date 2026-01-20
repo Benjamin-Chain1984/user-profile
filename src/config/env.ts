@@ -4,23 +4,6 @@
  * This ensures portability and makes it easy to swap providers.
  */
 
-// Production domain for QR codes - never use preview links
-const getProductionDomain = (): string => {
-  // Check for explicitly set domain first
-  if (import.meta.env.VITE_APP_DOMAIN) {
-    return import.meta.env.VITE_APP_DOMAIN;
-  }
-  
-  // In production, use the current origin (published URL)
-  if (import.meta.env.PROD) {
-    return window.location.origin;
-  }
-  
-  // In dev/preview, still use production domain if set, otherwise fallback
-  // This ensures QR codes always point to production
-  return import.meta.env.VITE_PRODUCTION_DOMAIN || window.location.origin;
-};
-
 export const env = {
   // Supabase / Backend
   supabaseUrl: import.meta.env.VITE_SUPABASE_URL || '',
@@ -28,7 +11,7 @@ export const env = {
   
   // App Configuration
   appName: import.meta.env.VITE_APP_NAME || 'IDEAL',
-  appDomain: getProductionDomain(),
+  appDomain: import.meta.env.VITE_APP_DOMAIN || window.location.origin,
   
   // Feature Flags
   enablePasskeys: import.meta.env.VITE_ENABLE_PASSKEYS !== 'false',
