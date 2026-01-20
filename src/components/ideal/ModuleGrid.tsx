@@ -1,6 +1,74 @@
 import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/contexts/ProfileContext';
-import { ModuleTile } from './ModuleTile';
+import { HealthModule } from '@/types/ideal';
+import { StatusBadge } from './StatusBadge';
+import { ChevronRight } from 'lucide-react';
+import { 
+  Droplets, Heart, Apple, Pill, Activity, Scale, 
+  Smile, BedDouble, Eye, CircleDot,
+  HeartPulse, Gauge
+} from 'lucide-react';
+
+const moduleIcons: Record<string, React.ElementType> = {
+  'constipation': CircleDot,
+  'continence': Droplets,
+  'diabetes': Activity,
+  'enteral': Apple,
+  'epilepsy': HeartPulse,
+  'fluid-balance': Droplets,
+  'health-monitoring': Heart,
+  'health-prevention': Gauge,
+  'iddsi': Apple,
+  'oral-health': Smile,
+  'ostomy': CircleDot,
+  'pain-check': Eye,
+  'pressure-area': BedDouble,
+  'sleep': BedDouble,
+  'catheter': Droplets,
+  'weight': Scale,
+};
+
+function ModuleRow({ module, onClick }: { module: HealthModule; onClick: () => void }) {
+  const Icon = moduleIcons[module.id] || Pill;
+  
+  return (
+    <button
+      onClick={onClick}
+      className="w-full text-left flex items-center gap-3 p-3 sm:p-4 bg-card rounded-xl border border-border hover:border-primary/30 hover:shadow-sm transition-all active:scale-[0.99]"
+    >
+      {/* Icon */}
+      <div className={`p-2 rounded-lg shrink-0 ${
+        module.status === 'stable' ? 'bg-success/10' :
+        module.status === 'monitor' ? 'bg-warning/10' :
+        'bg-destructive/10'
+      }`}>
+        <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${
+          module.status === 'stable' ? 'text-success' :
+          module.status === 'monitor' ? 'text-warning' :
+          'text-destructive'
+        }`} />
+      </div>
+      
+      {/* Content - takes remaining space, no truncation */}
+      <div className="flex-1 min-w-0">
+        <h3 className="font-medium text-foreground text-sm sm:text-base leading-snug">
+          {module.name}
+        </h3>
+        {module.lastEntry && (
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-relaxed">
+            {module.lastEntry}
+          </p>
+        )}
+      </div>
+      
+      {/* Status + Arrow */}
+      <div className="flex items-center gap-2 shrink-0">
+        <StatusBadge status={module.status || 'stable'} size="sm" showIcon={false} />
+        <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
+      </div>
+    </button>
+  );
+}
 
 export function ModuleGrid() {
   const { enabledModules, healthMonitoringConfig } = useProfile();
@@ -38,9 +106,9 @@ export function ModuleGrid() {
   }
 
   return (
-    <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-fr">
+    <div className="flex flex-col gap-2 sm:gap-3">
       {activeModules.map((module) => (
-        <ModuleTile 
+        <ModuleRow 
           key={module.id} 
           module={module} 
           onClick={() => handleModuleClick(module.id)}
