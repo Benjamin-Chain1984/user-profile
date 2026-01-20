@@ -19,6 +19,7 @@ const moduleIcons: Record<string, React.ElementType> = {
   'epilepsy': HeartPulse,
   'fluid-balance': Droplets,
   'health-monitoring': Heart,
+  'health-prevention': Gauge,
   'iddsi': Apple,
   'oral-health': Smile,
   'ostomy': CircleDot,

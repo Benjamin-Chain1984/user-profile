@@ -56,6 +56,7 @@ export const HEALTH_MODULES: Omit<HealthModule, 'enabled' | 'status' | 'lastEntr
   { id: 'epilepsy', name: 'Epilepsy & Seizures', description: 'Seizure tracking and patterns' },
   { id: 'fluid-balance', name: 'Fluid Balance', description: 'Daily fluid intake and output' },
   { id: 'health-monitoring', name: 'Health Monitoring', description: 'Vital signs tracking', hasSubModules: true },
+  { id: 'health-prevention', name: 'Health Prevention', description: 'Preventative health assessments and checks' },
   { id: 'iddsi', name: 'IDDSI Levels', description: 'Food and drink texture management' },
   { id: 'oral-health', name: 'Oral Health Care', description: 'Dental and oral hygiene tracking' },
   { id: 'ostomy', name: 'Ostomy (Stoma Care)', description: 'Stoma output and care management' },

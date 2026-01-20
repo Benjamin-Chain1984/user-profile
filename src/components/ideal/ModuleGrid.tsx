@@ -1,8 +1,10 @@
+import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/contexts/ProfileContext';
 import { ModuleTile } from './ModuleTile';
 
 export function ModuleGrid() {
   const { enabledModules, healthMonitoringConfig } = useProfile();
+  const navigate = useNavigate();
 
   // Filter to only enabled modules, with health monitoring validation
   const activeModules = enabledModules.filter((m) => {
@@ -17,6 +19,10 @@ export function ModuleGrid() {
     }
     return true;
   });
+
+  const handleModuleClick = (moduleId: string) => {
+    navigate(`/module/${moduleId}`);
+  };
 
   if (activeModules.length === 0) {
     return (
@@ -37,7 +43,7 @@ export function ModuleGrid() {
         <ModuleTile 
           key={module.id} 
           module={module} 
-          onClick={() => console.log('Open module:', module.id)}
+          onClick={() => handleModuleClick(module.id)}
         />
       ))}
     </div>

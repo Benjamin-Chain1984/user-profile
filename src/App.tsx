@@ -13,6 +13,7 @@ import AuthPage from "./pages/Auth";
 import ClientScanPage from "./pages/ClientScan";
 import ClientPosterPage from "./pages/ClientPoster";
 import AdminPage from "./pages/Admin";
+import ModulePlaceholder from "./pages/ModulePlaceholder";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,6 +51,15 @@ const App = () => (
                 <ProtectedRoute>
                   <MainLayout>
                     <Index />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Module placeholder route */}
+              <Route path="/module/:moduleId" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <ModulePlaceholder />
                   </MainLayout>
                 </ProtectedRoute>
               } />
