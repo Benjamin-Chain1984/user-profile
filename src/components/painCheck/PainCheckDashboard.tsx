@@ -1,13 +1,29 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { usePainAssessments } from '@/hooks/usePainAssessments';
 import { PainAssessmentForm } from './PainAssessmentForm';
 import { PainAssessmentHistory } from './PainAssessmentHistory';
 import { PainTrendChart } from './PainTrendChart';
 import { getSeverityLabel, getSeverityColor, getSeverityBgColor } from '@/types/painAssessment';
-import { Plus, TrendingUp, ClipboardList, AlertCircle } from 'lucide-react';
+import { Plus, TrendingUp, ClipboardList, AlertCircle, AlertTriangle, Info } from 'lucide-react';
 import { format } from 'date-fns';
+
+// Safety warning text
+const SCREENING_WARNING = "The Abbey Pain Scale is a screening tool only. If pain is suspected or scores increase, seek advice from a medical professional immediately.";
+
+// Clinical instruction text
+const CLINICAL_INSTRUCTIONS = `The Abbey Pain Scale is an instrument designed to assist in the assessment of pain in patients who are unable to clearly articulate their needs, for example, patients with dementia, cognition or communication issues.
+
+The scale does not differentiate between distress and pain, so measuring the effectiveness of pain-relieving interventions is essential.
+
+The Australian Pain Society recommends the pain scale should be used as a movement-based assessment. Therefore observe the person while they are being moved, during pressure area care, while showering, etc.
+
+Complete the scale immediately following the procedure and record the results on the Abbey Pain tool chart.`;
+
+// Footer reference citation
+const ABBEY_CITATION = "Abbey Pain Scale – Abbey, J., Piller, N., De Bellis, A., Esterman, A., Parker, D., Giles, L., & Lowcay, B. (2004). The Abbey pain scale: a 1-minute numerical indicator for people with end-stage dementia. International Journal of Palliative Nursing, 10(1), 6–13.";
 
 export function PainCheckDashboard() {
   const [showForm, setShowForm] = useState(false);
@@ -40,9 +56,36 @@ export function PainCheckDashboard() {
             Abbey Pain Scale Assessment
           </p>
         </div>
-        <Button onClick={() => setShowForm(true)} className="gap-2">
-          <Plus className="w-4 h-4" />
-          New Assessment
+      </div>
+
+      {/* Screening Warning Banner */}
+      <Alert className="border-warning/50 bg-warning/10">
+        <AlertTriangle className="h-4 w-4 text-warning" />
+        <AlertDescription className="text-sm font-medium text-foreground">
+          {SCREENING_WARNING}
+        </AlertDescription>
+      </Alert>
+
+      {/* Clinical Instructions */}
+      <Card className="bg-muted/30 border-muted">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+            <div className="space-y-2">
+              <p className="font-medium text-foreground">Assessment Instructions</p>
+              <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
+                {CLINICAL_INSTRUCTIONS}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Begin Assessment Button */}
+      <div className="flex justify-center">
+        <Button onClick={() => setShowForm(true)} className="gap-2" size="lg">
+          <Plus className="w-5 h-5" />
+          Begin Assessment
         </Button>
       </div>
 
@@ -150,20 +193,32 @@ export function PainCheckDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between items-center p-2 bg-success/10 rounded">
-                  <span>No Pain</span>
+                <div className="flex justify-between items-center p-2 bg-success/10 rounded border-l-4 border-l-success">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-success" />
+                    <span>No Pain</span>
+                  </div>
                   <span className="font-medium text-success">0-2</span>
                 </div>
-                <div className="flex justify-between items-center p-2 bg-warning/10 rounded">
-                  <span>Mild</span>
-                  <span className="font-medium text-warning">3-7</span>
+                <div className="flex justify-between items-center p-2 bg-orange-400/10 rounded border-l-4 border-l-orange-400">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-orange-400" />
+                    <span>Mild Pain</span>
+                  </div>
+                  <span className="font-medium text-orange-400">3-7</span>
                 </div>
-                <div className="flex justify-between items-center p-2 bg-orange-500/10 rounded">
-                  <span>Moderate</span>
-                  <span className="font-medium text-orange-500">8-13</span>
+                <div className="flex justify-between items-center p-2 bg-orange-600/10 rounded border-l-4 border-l-orange-600">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-orange-600" />
+                    <span>Moderate Pain</span>
+                  </div>
+                  <span className="font-medium text-orange-600">8-13</span>
                 </div>
-                <div className="flex justify-between items-center p-2 bg-destructive/10 rounded">
-                  <span>Severe</span>
+                <div className="flex justify-between items-center p-2 bg-destructive/10 rounded border-l-4 border-l-destructive">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-destructive" />
+                    <span>Severe Pain</span>
+                  </div>
                   <span className="font-medium text-destructive">14+</span>
                 </div>
               </div>
@@ -175,6 +230,13 @@ export function PainCheckDashboard() {
       {activeTab === 'history' && <PainAssessmentHistory assessments={assessments} loading={loading} />}
 
       {activeTab === 'trends' && <PainTrendChart assessments={assessments} />}
+
+      {/* Footer Citation */}
+      <div className="pt-6 mt-6 border-t border-border">
+        <p className="text-xs text-muted-foreground italic text-center">
+          {ABBEY_CITATION}
+        </p>
+      </div>
     </div>
   );
 }
