@@ -9,6 +9,7 @@ import { PainAssessmentHistory } from './PainAssessmentHistory';
 import { PainTrendChart } from './PainTrendChart';
 import { PainConfigSettings } from './PainConfigSettings';
 import { PainQuickStatus } from './PainQuickStatus';
+import { PainExportReports } from './PainExportReports';
 import { getSeverityLabel, getSeverityColor, getSeverityBgColor } from '@/types/painAssessment';
 import { Plus, TrendingUp, ClipboardList, AlertTriangle, Info, Settings, FileDown } from 'lucide-react';
 import { format } from 'date-fns';
@@ -28,6 +29,7 @@ const ABBEY_CITATION = "Abbey Pain Scale – Abbey, J., Piller, N., De Bellis, A
 export function PainCheckDashboard() {
   const [showForm, setShowForm] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showExport, setShowExport] = useState(false);
   const { assessments, loading, getLatestAssessment, getTrendDirection, refresh } = usePainAssessments();
 
   const latestAssessment = getLatestAssessment();
@@ -55,6 +57,12 @@ export function PainCheckDashboard() {
     );
   }
 
+  if (showExport) {
+    return (
+      <PainExportReports assessments={assessments} onClose={() => setShowExport(false)} />
+    );
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
@@ -65,10 +73,16 @@ export function PainCheckDashboard() {
             Abbey Pain Scale (Non-Verbal Pain Assessment)
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
-          <Settings className="w-4 h-4 mr-2" />
-          Settings
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowExport(true)}>
+            <FileDown className="w-4 h-4 mr-2" />
+            Export
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
+            <Settings className="w-4 h-4 mr-2" />
+            Settings
+          </Button>
+        </div>
       </div>
 
       {/* Screening Warning Banner */}
