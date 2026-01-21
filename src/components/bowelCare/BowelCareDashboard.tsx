@@ -16,7 +16,7 @@ import { useBowelCareStatus } from '@/hooks/useBowelCare';
 import { Plus, AlertTriangle, Settings, BarChart3, Clock, FileText } from 'lucide-react';
 
 interface BowelCareDashboardProps {
-  clientId: string;
+  clientId?: string;
 }
 
 export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {

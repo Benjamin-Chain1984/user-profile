@@ -41,16 +41,17 @@ export function useBowelCareConfig(clientId?: string) {
   const { data: config, isLoading, error } = useQuery({
     queryKey: ['bowelCareConfig', clientId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('bowel_care_config')
-        .select('*')
-        .eq('client_id', clientId || '')
-        .maybeSingle();
+      let query = supabase.from('bowel_care_config').select('*');
+      if (clientId) {
+        query = query.eq('client_id', clientId);
+      } else {
+        query = query.is('client_id', null);
+      }
+      const { data, error } = await query.maybeSingle();
 
       if (error) throw error;
       return data as BowelCareConfig | null;
     },
-    enabled: !!clientId,
   });
 
   const updateConfig = useMutation({
@@ -108,13 +109,19 @@ export function usePrnMedications(clientId?: string) {
   const { data: medications = [], isLoading, error } = useQuery({
     queryKey: ['prnMedications', clientId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('bowel_prn_medications')
         .select('*')
-        .eq('client_id', clientId || '')
         .eq('is_active', true)
         .order('display_order');
+      
+      if (clientId) {
+        query = query.eq('client_id', clientId);
+      } else {
+        query = query.is('client_id', null);
+      }
 
+      const { data, error } = await query;
       if (error) throw error;
       return data as PrnMedication[];
     },
@@ -213,17 +220,22 @@ export function useBowelLogs(clientId?: string, limit = 50) {
   const { data: logs = [], isLoading, error } = useQuery({
     queryKey: ['bowelLogs', clientId, limit],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('bowel_log_entries')
         .select('*')
-        .eq('client_id', clientId || '')
         .order('entry_time', { ascending: false })
         .limit(limit);
+      
+      if (clientId) {
+        query = query.eq('client_id', clientId);
+      } else {
+        query = query.is('client_id', null);
+      }
 
+      const { data, error } = await query;
       if (error) throw error;
       return data as BowelLogEntry[];
     },
-    enabled: !!clientId,
   });
 
   const addLog = useMutation({
@@ -308,17 +320,22 @@ export function usePrnAdministrations(clientId?: string) {
   const { data: administrations = [], isLoading, error } = useQuery({
     queryKey: ['prnAdministrations', clientId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('bowel_prn_administrations')
         .select('*')
-        .eq('client_id', clientId || '')
         .order('administration_time', { ascending: false })
         .limit(50);
+      
+      if (clientId) {
+        query = query.eq('client_id', clientId);
+      } else {
+        query = query.is('client_id', null);
+      }
 
+      const { data, error } = await query;
       if (error) throw error;
       return data as PrnAdministration[];
     },
-    enabled: !!clientId,
   });
 
   const recordAdministration = useMutation({
@@ -400,17 +417,22 @@ export function useBowelCareAlerts(clientId?: string) {
   const { data: alerts = [], isLoading, error } = useQuery({
     queryKey: ['bowelCareAlerts', clientId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('bowel_care_alerts')
         .select('*')
-        .eq('client_id', clientId || '')
         .is('resolved_at', null)
         .order('created_at', { ascending: false });
+      
+      if (clientId) {
+        query = query.eq('client_id', clientId);
+      } else {
+        query = query.is('client_id', null);
+      }
 
+      const { data, error } = await query;
       if (error) throw error;
       return data as BowelCareAlert[];
     },
-    enabled: !!clientId,
   });
 
   const createAlert = useMutation({
