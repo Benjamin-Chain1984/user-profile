@@ -55,6 +55,16 @@ export function usePainAssessments(clientId?: string) {
 
   const createAssessment = async (assessment: NewAssessment): Promise<AbbeyPainAssessment | null> => {
     try {
+      // Validate required fields before submission
+      if (!assessment.pain_type) {
+        toast({
+          title: 'Validation Error',
+          description: 'Pain type is required',
+          variant: 'destructive',
+        });
+        return null;
+      }
+
       const totalScore = 
         assessment.q1_vocalization +
         assessment.q2_facial_expression +
@@ -65,20 +75,46 @@ export function usePainAssessments(clientId?: string) {
 
       const severity = calculateSeverity(totalScore);
 
-      const { data: userData } = await supabase.auth.getUser();
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !userData.user) {
+        console.error('Auth error:', userError);
+        toast({
+          title: 'Authentication Error',
+          description: 'You must be logged in to save assessments',
+          variant: 'destructive',
+        });
+        return null;
+      }
+
+      const insertData = {
+        client_id: assessment.client_id || null,
+        q1_vocalization: assessment.q1_vocalization,
+        q2_facial_expression: assessment.q2_facial_expression,
+        q3_body_language: assessment.q3_body_language,
+        q4_behavioral_change: assessment.q4_behavioral_change,
+        q5_physiological_change: assessment.q5_physiological_change,
+        q6_physical_change: assessment.q6_physical_change,
+        pain_type: assessment.pain_type,
+        trigger_reason: assessment.trigger_reason || null,
+        notes: assessment.notes || null,
+        total_score: totalScore,
+        severity,
+        created_by: userData.user.id,
+      };
+
+      console.log('Inserting assessment:', insertData);
 
       const { data, error: insertError } = await supabase
         .from('abbey_pain_assessments')
-        .insert({
-          ...assessment,
-          total_score: totalScore,
-          severity,
-          created_by: userData.user?.id,
-        })
+        .insert(insertData)
         .select()
         .single();
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('Insert error details:', insertError);
+        throw insertError;
+      }
 
       const newAssessment = data as AbbeyPainAssessment;
       setAssessments(prev => [newAssessment, ...prev]);
@@ -89,11 +125,12 @@ export function usePainAssessments(clientId?: string) {
       });
 
       return newAssessment;
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error creating assessment:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save assessment';
       toast({
         title: 'Error',
-        description: 'Failed to save assessment',
+        description: errorMessage,
         variant: 'destructive',
       });
       return null;
