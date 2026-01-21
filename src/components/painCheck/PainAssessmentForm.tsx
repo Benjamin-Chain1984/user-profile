@@ -3,10 +3,21 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePainAssessments } from '@/hooks/usePainAssessments';
-import { ABBEY_QUESTIONS, calculateSeverity, getSeverityLabel, getSeverityColor, getSeverityBgColor, PainType, getPainTypeLabel } from '@/types/painAssessment';
+import { usePainConfig } from '@/hooks/usePainConfig';
+import { 
+  ABBEY_QUESTIONS, 
+  calculateSeverity, 
+  getSeverityLabel, 
+  getSeverityColor, 
+  getSeverityBgColor, 
+  getSeverityDotColor,
+  PainType, 
+  getPainTypeLabel,
+  ASSESSMENT_TRIGGER_LABELS,
+  AssessmentTrigger
+} from '@/types/painAssessment';
 import { ArrowLeft, ArrowRight, Check, AlertTriangle } from 'lucide-react';
 import { PainActionForm } from './PainActionForm';
 
@@ -14,9 +25,10 @@ interface PainAssessmentFormProps {
   onComplete: () => void;
   onCancel: () => void;
   clientId?: string;
+  preselectedTrigger?: AssessmentTrigger;
 }
 
-export function PainAssessmentForm({ onComplete, onCancel, clientId }: PainAssessmentFormProps) {
+export function PainAssessmentForm({ onComplete, onCancel, clientId, preselectedTrigger }: PainAssessmentFormProps) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({
     q1_vocalization: -1,
@@ -27,11 +39,14 @@ export function PainAssessmentForm({ onComplete, onCancel, clientId }: PainAsses
     q6_physical_change: -1,
   });
   const [painType, setPainType] = useState<PainType | ''>('');
+  const [triggerReason, setTriggerReason] = useState<string>(preselectedTrigger || '');
   const [notes, setNotes] = useState('');
   const [showActionForm, setShowActionForm] = useState(false);
   const [savedAssessmentId, setSavedAssessmentId] = useState<string | null>(null);
 
   const { createAssessment, addActionRecord } = usePainAssessments(clientId);
+  const { getEffectiveConfig } = usePainConfig(clientId);
+  const config = getEffectiveConfig();
 
   const totalSteps = ABBEY_QUESTIONS.length + 1; // Questions + Summary
   const currentQuestion = ABBEY_QUESTIONS[step];
@@ -75,6 +90,7 @@ export function PainAssessmentForm({ onComplete, onCancel, clientId }: PainAsses
       q5_physiological_change: answers.q5_physiological_change,
       q6_physical_change: answers.q6_physical_change,
       pain_type: painType,
+      trigger_reason: triggerReason || undefined,
       notes: notes || undefined,
     });
 
@@ -137,36 +153,35 @@ export function PainAssessmentForm({ onComplete, onCancel, clientId }: PainAsses
               Q{currentQuestion.number}: {currentQuestion.title}
             </CardTitle>
             <p className="text-sm text-muted-foreground">{currentQuestion.description}</p>
+            <p className="text-sm text-primary italic">{currentQuestion.examples}</p>
           </CardHeader>
           <CardContent>
-            <RadioGroup
-              value={answers[currentQuestion.id]?.toString() || ''}
-              onValueChange={(val) => handleAnswerChange(currentQuestion.id, parseInt(val))}
-              className="space-y-3"
-            >
+            {/* Large visual tile buttons for 0-3 scale */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {currentQuestion.options.map((option) => (
-                <div
+                <button
                   key={option.value}
-                  className={`flex items-start space-x-3 p-3 rounded-lg border transition-colors ${
+                  type="button"
+                  onClick={() => handleAnswerChange(currentQuestion.id, option.value)}
+                  className={`p-4 rounded-lg border-2 transition-all text-center ${
                     answers[currentQuestion.id] === option.value
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
+                      ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+                      : 'border-border hover:border-primary/50 bg-card'
                   }`}
                 >
-                  <RadioGroupItem value={option.value.toString()} id={`${currentQuestion.id}-${option.value}`} />
-                  <Label
-                    htmlFor={`${currentQuestion.id}-${option.value}`}
-                    className="flex-1 cursor-pointer"
-                  >
-                    <span className="font-medium">{option.label}</span>
-                    <span className="ml-2 text-xs bg-muted px-1.5 py-0.5 rounded">
-                      Score: {option.value}
-                    </span>
-                    <p className="text-sm text-muted-foreground mt-1">{option.description}</p>
-                  </Label>
-                </div>
+                  <span className={`text-2xl font-bold block ${
+                    answers[currentQuestion.id] === option.value ? 'text-primary' : 'text-muted-foreground'
+                  }`}>
+                    {option.value}
+                  </span>
+                  <span className={`text-sm ${
+                    answers[currentQuestion.id] === option.value ? 'text-primary font-medium' : 'text-muted-foreground'
+                  }`}>
+                    {option.label}
+                  </span>
+                </button>
               ))}
-            </RadioGroup>
+            </div>
           </CardContent>
           <CardFooter className="flex justify-between">
             <Button variant="outline" onClick={handleBack} disabled={step === 0}>
@@ -189,12 +204,7 @@ export function PainAssessmentForm({ onComplete, onCancel, clientId }: PainAsses
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Score Display */}
-            <div className={`p-4 rounded-lg text-center ${
-              currentSeverity === 'no_pain' ? 'bg-success/10' :
-              currentSeverity === 'mild' ? 'bg-warning/10' :
-              currentSeverity === 'moderate' ? 'bg-orange-500/10' :
-              'bg-destructive/10'
-            }`}>
+            <div className={`p-4 rounded-lg text-center ${getSeverityBgColor(currentSeverity)}`}>
               <p className="text-sm text-muted-foreground">Total Score</p>
               <p className={`text-4xl font-bold ${getSeverityColor(currentSeverity)}`}>
                 {currentScore}
@@ -202,6 +212,7 @@ export function PainAssessmentForm({ onComplete, onCancel, clientId }: PainAsses
               <p className={`text-lg font-medium ${getSeverityColor(currentSeverity)}`}>
                 {getSeverityLabel(currentSeverity)}
               </p>
+              <p className="text-xs text-muted-foreground mt-1">out of 18</p>
             </div>
 
             {requiresAction && (
@@ -222,9 +233,26 @@ export function PainAssessmentForm({ onComplete, onCancel, clientId }: PainAsses
               {ABBEY_QUESTIONS.map((q) => (
                 <div key={q.id} className="flex justify-between text-sm p-2 bg-muted/50 rounded">
                   <span>{q.title}</span>
-                  <span className="font-medium">{answers[q.id]}</span>
+                  <span className="font-medium">{answers[q.id]}/3</span>
                 </div>
               ))}
+            </div>
+
+            {/* Trigger Reason */}
+            <div className="space-y-2">
+              <Label>Reason for Assessment</Label>
+              <Select value={triggerReason} onValueChange={setTriggerReason}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select reason (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {config.assessment_triggers.map((trigger) => (
+                    <SelectItem key={trigger} value={trigger}>
+                      {ASSESSMENT_TRIGGER_LABELS[trigger]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Pain Type */}
@@ -244,11 +272,11 @@ export function PainAssessmentForm({ onComplete, onCancel, clientId }: PainAsses
 
             {/* Notes */}
             <div className="space-y-2">
-              <Label>Additional Notes (optional)</Label>
+              <Label>Additional Observations (optional)</Label>
               <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Any additional observations..."
+                placeholder="Any additional observations or context..."
                 rows={3}
               />
             </div>
@@ -275,16 +303,11 @@ export function PainAssessmentForm({ onComplete, onCancel, clientId }: PainAsses
       }`}>
         <CardContent className="p-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className={`w-3 h-3 rounded-full ${
-              currentSeverity === 'no_pain' ? 'bg-success' :
-              currentSeverity === 'mild' ? 'bg-orange-400' :
-              currentSeverity === 'moderate' ? 'bg-orange-600' :
-              'bg-destructive'
-            }`} />
+            <div className={`w-3 h-3 rounded-full ${getSeverityDotColor(currentSeverity)}`} />
             <span className="text-sm text-muted-foreground">Running Score:</span>
           </div>
           <span className={`font-bold text-lg ${getSeverityColor(currentSeverity)}`}>
-            {currentScore}/12 • {getSeverityLabel(currentSeverity)}
+            {currentScore}/18 • {getSeverityLabel(currentSeverity)}
           </span>
         </CardContent>
       </Card>
