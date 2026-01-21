@@ -1,0 +1,631 @@
+/**
+ * Bowel Care Module Hooks
+ */
+
+import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import type {
+  BowelCareConfig,
+  PrnMedication,
+  BowelLogEntry,
+  PrnAdministration,
+  BowelCareAlert,
+  EscalationRecord,
+  BowelCareStatus,
+  BowelCareStatusInfo,
+  BowelIndicators,
+} from '@/types/bowelCare';
+
+// Default config values
+const DEFAULT_CONFIG: Partial<BowelCareConfig> = {
+  no_bm_days_threshold: 3,
+  type1_consecutive_days_threshold: 2,
+  monitor_hours_after_prn: 6,
+  no_bm_after_prn_hours_escalation: 12,
+  prn_dose_lookback_window_hours: 48,
+  max_prn_doses_in_window: 3,
+  max_prn_doses_per_24h: 2,
+  diarrhoea_type67_count_threshold: 3,
+  diarrhoea_hours_window: 48,
+  escalation_recipients: ['supervisor', 'nurse'],
+};
+
+export function useBowelCareConfig(clientId?: string) {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const { data: config, isLoading, error } = useQuery({
+    queryKey: ['bowelCareConfig', clientId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('bowel_care_config')
+        .select('*')
+        .eq('client_id', clientId || '')
+        .maybeSingle();
+
+      if (error) throw error;
+      return data as BowelCareConfig | null;
+    },
+    enabled: !!clientId,
+  });
+
+  const updateConfig = useMutation({
+    mutationFn: async (updates: Partial<BowelCareConfig>) => {
+      if (!user?.id) throw new Error('Not authenticated');
+
+      if (config?.id) {
+        const { data, error } = await supabase
+          .from('bowel_care_config')
+          .update({ ...updates, updated_by: user.id })
+          .eq('id', config.id)
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      } else {
+        const { data, error } = await supabase
+          .from('bowel_care_config')
+          .insert({
+            ...DEFAULT_CONFIG,
+            ...updates,
+            client_id: clientId,
+            created_by: user.id,
+            updated_by: user.id,
+          })
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bowelCareConfig', clientId] });
+      toast({ title: 'Settings saved', description: 'Bowel care configuration updated.' });
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  return {
+    config: config || (DEFAULT_CONFIG as BowelCareConfig),
+    isLoading,
+    error,
+    updateConfig: updateConfig.mutate,
+    isUpdating: updateConfig.isPending,
+  };
+}
+
+export function usePrnMedications(clientId?: string) {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const { data: medications = [], isLoading, error } = useQuery({
+    queryKey: ['prnMedications', clientId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('bowel_prn_medications')
+        .select('*')
+        .eq('client_id', clientId || '')
+        .eq('is_active', true)
+        .order('display_order');
+
+      if (error) throw error;
+      return data as PrnMedication[];
+    },
+    enabled: !!clientId,
+  });
+
+  const addMedication = useMutation({
+    mutationFn: async (med: Partial<PrnMedication>) => {
+      if (!user?.id) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('bowel_prn_medications')
+        .insert([{
+          medication_name: med.medication_name || '',
+          dose_instructions: med.dose_instructions || '',
+          route: med.route,
+          notes: med.notes,
+          client_id: clientId,
+          created_by: user.id,
+          updated_by: user.id,
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prnMedications', clientId] });
+      toast({ title: 'Medication added', description: 'PRN medication has been configured.' });
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const updateMedication = useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<PrnMedication> & { id: string }) => {
+      if (!user?.id) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('bowel_prn_medications')
+        .update({ ...updates, updated_by: user.id })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prnMedications', clientId] });
+      toast({ title: 'Medication updated', description: 'PRN medication has been updated.' });
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const removeMedication = useMutation({
+    mutationFn: async (id: string) => {
+      if (!user?.id) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('bowel_prn_medications')
+        .update({ is_active: false, updated_by: user.id })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prnMedications', clientId] });
+      toast({ title: 'Medication removed', description: 'PRN medication has been deactivated.' });
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  return {
+    medications,
+    isLoading,
+    error,
+    addMedication: addMedication.mutate,
+    updateMedication: updateMedication.mutate,
+    removeMedication: removeMedication.mutate,
+    isAdding: addMedication.isPending,
+  };
+}
+
+export function useBowelLogs(clientId?: string, limit = 50) {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const { data: logs = [], isLoading, error } = useQuery({
+    queryKey: ['bowelLogs', clientId, limit],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('bowel_log_entries')
+        .select('*')
+        .eq('client_id', clientId || '')
+        .order('entry_time', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+      return data as BowelLogEntry[];
+    },
+    enabled: !!clientId,
+  });
+
+  const addLog = useMutation({
+    mutationFn: async (entry: Partial<BowelLogEntry>) => {
+      if (!user?.id) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('bowel_log_entries')
+        .insert([{
+          bristol_type: entry.bristol_type ?? 0,
+          stool_size: entry.stool_size,
+          observed_status: entry.observed_status || 'observed',
+          indicators: (entry.indicators || {}) as Record<string, unknown>,
+          notes: entry.notes,
+          client_id: clientId,
+          created_by: user.id,
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bowelLogs', clientId] });
+      queryClient.invalidateQueries({ queryKey: ['bowelCareStatus', clientId] });
+      toast({ title: 'Entry logged', description: 'Bowel movement has been recorded.' });
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const updateLog = useMutation({
+    mutationFn: async ({ id, editReason, ...updates }: Partial<BowelLogEntry> & { id: string; editReason: string }) => {
+      if (!user?.id) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('bowel_log_entries')
+        .update({
+          bristol_type: updates.bristol_type,
+          stool_size: updates.stool_size,
+          observed_status: updates.observed_status,
+          indicators: updates.indicators as Record<string, unknown>,
+          notes: updates.notes,
+          edited_by: user.id,
+          edited_at: new Date().toISOString(),
+          edit_reason: editReason,
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bowelLogs', clientId] });
+      queryClient.invalidateQueries({ queryKey: ['bowelCareStatus', clientId] });
+      toast({ title: 'Entry updated', description: 'Bowel log has been updated.' });
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  return {
+    logs,
+    isLoading,
+    error,
+    addLog: addLog.mutate,
+    updateLog: updateLog.mutate,
+    isAdding: addLog.isPending,
+  };
+}
+
+export function usePrnAdministrations(clientId?: string) {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const { data: administrations = [], isLoading, error } = useQuery({
+    queryKey: ['prnAdministrations', clientId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('bowel_prn_administrations')
+        .select('*')
+        .eq('client_id', clientId || '')
+        .order('administration_time', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      return data as PrnAdministration[];
+    },
+    enabled: !!clientId,
+  });
+
+  const recordAdministration = useMutation({
+    mutationFn: async (admin: Partial<PrnAdministration>) => {
+      if (!user?.id) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('bowel_prn_administrations')
+        .insert([{
+          medication_id: admin.medication_id,
+          medication_name: admin.medication_name || '',
+          dose_given: admin.dose_given || '',
+          prior_bristol_type: admin.prior_bristol_type,
+          monitoring_end_time: admin.monitoring_end_time,
+          notes: admin.notes,
+          client_id: clientId,
+          created_by: user.id,
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prnAdministrations', clientId] });
+      queryClient.invalidateQueries({ queryKey: ['bowelCareStatus', clientId] });
+      toast({ title: 'PRN recorded', description: 'Laxative administration has been logged.' });
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const recordOutcome = useMutation({
+    mutationFn: async ({ id, ...outcome }: { id: string; bowel_motion_occurred: boolean; outcome_bristol_type?: number }) => {
+      if (!user?.id) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('bowel_prn_administrations')
+        .update({
+          ...outcome,
+          outcome_recorded_at: new Date().toISOString(),
+          edited_by: user.id,
+          edited_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prnAdministrations', clientId] });
+      queryClient.invalidateQueries({ queryKey: ['bowelCareStatus', clientId] });
+      toast({ title: 'Outcome recorded', description: 'PRN monitoring outcome has been saved.' });
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  return {
+    administrations,
+    isLoading,
+    error,
+    recordAdministration: recordAdministration.mutate,
+    recordOutcome: recordOutcome.mutate,
+    isRecording: recordAdministration.isPending,
+  };
+}
+
+export function useBowelCareAlerts(clientId?: string) {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const { data: alerts = [], isLoading, error } = useQuery({
+    queryKey: ['bowelCareAlerts', clientId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('bowel_care_alerts')
+        .select('*')
+        .eq('client_id', clientId || '')
+        .is('resolved_at', null)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as BowelCareAlert[];
+    },
+    enabled: !!clientId,
+  });
+
+  const createAlert = useMutation({
+    mutationFn: async (alert: Partial<BowelCareAlert>) => {
+      if (!user?.id) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('bowel_care_alerts')
+        .insert([{
+          alert_type: alert.alert_type || 'constipation_threshold',
+          severity: alert.severity || 'amber',
+          message: alert.message || '',
+          metadata: alert.metadata as Record<string, unknown>,
+          client_id: clientId,
+          created_by: user.id,
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bowelCareAlerts', clientId] });
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const resolveAlert = useMutation({
+    mutationFn: async ({ id, notes }: { id: string; notes?: string }) => {
+      if (!user?.id) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('bowel_care_alerts')
+        .update({
+          resolved_at: new Date().toISOString(),
+          resolved_by: user.id,
+          resolution_notes: notes,
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bowelCareAlerts', clientId] });
+      toast({ title: 'Alert resolved', description: 'The alert has been marked as resolved.' });
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  return {
+    alerts,
+    isLoading,
+    error,
+    createAlert: createAlert.mutate,
+    resolveAlert: resolveAlert.mutate,
+  };
+}
+
+export function useBowelCareStatus(clientId?: string) {
+  const { config } = useBowelCareConfig(clientId);
+  const { logs } = useBowelLogs(clientId, 14);
+  const { alerts } = useBowelCareAlerts(clientId);
+  const { administrations } = usePrnAdministrations(clientId);
+
+  const [statusInfo, setStatusInfo] = useState<BowelCareStatusInfo>({
+    status: 'ideal',
+    message: 'Regular bowel pattern',
+    daysSinceLastBm: null,
+    lastBristolType: null,
+    activeAlerts: [],
+  });
+
+  useEffect(() => {
+    if (!logs.length) {
+      setStatusInfo({
+        status: 'monitor',
+        message: 'No bowel entries recorded yet',
+        daysSinceLastBm: null,
+        lastBristolType: null,
+        activeAlerts: alerts,
+      });
+      return;
+    }
+
+    // Find last actual bowel movement (not type 0)
+    const lastBm = logs.find(l => l.bristol_type > 0);
+    const daysSinceLastBm = lastBm
+      ? Math.floor((Date.now() - new Date(lastBm.entry_time).getTime()) / (1000 * 60 * 60 * 24))
+      : null;
+
+    // Check for constipation threshold
+    const noActivityThresholdMet = daysSinceLastBm !== null && daysSinceLastBm >= config.no_bm_days_threshold;
+
+    // Check for consecutive Type 1
+    const recentType1 = logs.filter(l => l.bristol_type === 1).slice(0, config.type1_consecutive_days_threshold);
+    const type1ThresholdMet = recentType1.length >= config.type1_consecutive_days_threshold;
+
+    // Check for diarrhoea (Type 6-7)
+    const recentDiarrhoea = logs.filter(l => {
+      const hoursDiff = (Date.now() - new Date(l.entry_time).getTime()) / (1000 * 60 * 60);
+      return (l.bristol_type === 6 || l.bristol_type === 7) && hoursDiff <= config.diarrhoea_hours_window;
+    });
+    const diarrhoeaThresholdMet = recentDiarrhoea.length >= config.diarrhoea_type67_count_threshold;
+
+    // Check for red flag indicators in recent logs
+    const hasRedFlags = logs.slice(0, 3).some(l => {
+      const ind = l.indicators as BowelIndicators;
+      return (
+        ind.blood === 'bright_red' ||
+        ind.blood === 'dark_tarry' ||
+        ind.pain === 'severe' ||
+        ind.abdominal_pain === 'severe' ||
+        ind.vomiting
+      );
+    });
+
+    // Determine status
+    let status: BowelCareStatus = 'ideal';
+    let message = 'Regular bowel pattern';
+
+    if (hasRedFlags) {
+      status = 'action';
+      message = 'Concerning symptoms detected – escalation may be required';
+    } else if (noActivityThresholdMet || type1ThresholdMet) {
+      status = 'action';
+      message = noActivityThresholdMet
+        ? `No bowel movement for ${daysSinceLastBm} days – PRN may be needed`
+        : `Consecutive hard stools – constipation risk`;
+    } else if (diarrhoeaThresholdMet) {
+      status = 'action';
+      message = 'Persistent loose stools – consider medical review';
+    } else if (daysSinceLastBm && daysSinceLastBm >= 2) {
+      status = 'monitor';
+      message = `${daysSinceLastBm} days since last bowel movement`;
+    } else if (alerts.length > 0) {
+      status = 'monitor';
+      message = 'Active alerts require attention';
+    }
+
+    setStatusInfo({
+      status,
+      message,
+      daysSinceLastBm,
+      lastBristolType: lastBm?.bristol_type ?? null,
+      activeAlerts: alerts,
+    });
+  }, [logs, alerts, config, administrations]);
+
+  return statusInfo;
+}
+
+export function useEscalationRecords(clientId?: string) {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const { data: records = [], isLoading, error } = useQuery({
+    queryKey: ['escalationRecords', clientId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('bowel_escalation_records')
+        .select('*')
+        .eq('client_id', clientId || '')
+        .order('contact_time', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      return data as EscalationRecord[];
+    },
+    enabled: !!clientId,
+  });
+
+  const recordEscalation = useMutation({
+    mutationFn: async (record: Partial<EscalationRecord>) => {
+      if (!user?.id) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('bowel_escalation_records')
+        .insert([{
+          escalation_reason: record.escalation_reason || '',
+          contacted_person: record.contacted_person || '',
+          contact_role: record.contact_role,
+          advice_received: record.advice_received,
+          alert_id: record.alert_id,
+          client_id: clientId,
+          created_by: user.id,
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['escalationRecords', clientId] });
+      toast({ title: 'Escalation recorded', description: 'Contact details have been logged.' });
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  return {
+    records,
+    isLoading,
+    error,
+    recordEscalation: recordEscalation.mutate,
+    isRecording: recordEscalation.isPending,
+  };
+}

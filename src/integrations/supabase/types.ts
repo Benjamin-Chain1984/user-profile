@@ -179,6 +179,374 @@ export type Database = {
           },
         ]
       }
+      bowel_care_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bowel_care_alerts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bowel_care_config: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          diarrhoea_hours_window: number
+          diarrhoea_type67_count_threshold: number
+          escalation_recipients: string[]
+          id: string
+          max_prn_doses_in_window: number
+          max_prn_doses_per_24h: number
+          monitor_hours_after_prn: number
+          no_bm_after_prn_hours_escalation: number
+          no_bm_days_threshold: number
+          prn_dose_lookback_window_hours: number
+          type1_consecutive_days_threshold: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          diarrhoea_hours_window?: number
+          diarrhoea_type67_count_threshold?: number
+          escalation_recipients?: string[]
+          id?: string
+          max_prn_doses_in_window?: number
+          max_prn_doses_per_24h?: number
+          monitor_hours_after_prn?: number
+          no_bm_after_prn_hours_escalation?: number
+          no_bm_days_threshold?: number
+          prn_dose_lookback_window_hours?: number
+          type1_consecutive_days_threshold?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          diarrhoea_hours_window?: number
+          diarrhoea_type67_count_threshold?: number
+          escalation_recipients?: string[]
+          id?: string
+          max_prn_doses_in_window?: number
+          max_prn_doses_per_24h?: number
+          monitor_hours_after_prn?: number
+          no_bm_after_prn_hours_escalation?: number
+          no_bm_days_threshold?: number
+          prn_dose_lookback_window_hours?: number
+          type1_consecutive_days_threshold?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bowel_care_config_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bowel_escalation_records: {
+        Row: {
+          advice_received: string | null
+          alert_id: string | null
+          client_id: string | null
+          contact_role: string | null
+          contact_time: string
+          contacted_person: string
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          escalation_reason: string
+          id: string
+        }
+        Insert: {
+          advice_received?: string | null
+          alert_id?: string | null
+          client_id?: string | null
+          contact_role?: string | null
+          contact_time?: string
+          contacted_person: string
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          escalation_reason: string
+          id?: string
+        }
+        Update: {
+          advice_received?: string | null
+          alert_id?: string | null
+          client_id?: string | null
+          contact_role?: string | null
+          contact_time?: string
+          contacted_person?: string
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          escalation_reason?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bowel_escalation_records_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "bowel_care_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bowel_escalation_records_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bowel_log_entries: {
+        Row: {
+          bristol_type: number
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          entry_time: string
+          id: string
+          indicators: Json | null
+          notes: string | null
+          observed_status: string
+          stool_size: string | null
+        }
+        Insert: {
+          bristol_type: number
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          entry_time?: string
+          id?: string
+          indicators?: Json | null
+          notes?: string | null
+          observed_status?: string
+          stool_size?: string | null
+        }
+        Update: {
+          bristol_type?: number
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          entry_time?: string
+          id?: string
+          indicators?: Json | null
+          notes?: string | null
+          observed_status?: string
+          stool_size?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bowel_log_entries_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bowel_prn_administrations: {
+        Row: {
+          administration_time: string
+          bowel_motion_occurred: boolean | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          dose_given: string
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          id: string
+          medication_id: string | null
+          medication_name: string
+          monitoring_end_time: string | null
+          notes: string | null
+          outcome_bristol_type: number | null
+          outcome_recorded_at: string | null
+          prior_bristol_type: number | null
+        }
+        Insert: {
+          administration_time?: string
+          bowel_motion_occurred?: boolean | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          dose_given: string
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          id?: string
+          medication_id?: string | null
+          medication_name: string
+          monitoring_end_time?: string | null
+          notes?: string | null
+          outcome_bristol_type?: number | null
+          outcome_recorded_at?: string | null
+          prior_bristol_type?: number | null
+        }
+        Update: {
+          administration_time?: string
+          bowel_motion_occurred?: boolean | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          dose_given?: string
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          id?: string
+          medication_id?: string | null
+          medication_name?: string
+          monitoring_end_time?: string | null
+          notes?: string | null
+          outcome_bristol_type?: number | null
+          outcome_recorded_at?: string | null
+          prior_bristol_type?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bowel_prn_administrations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bowel_prn_administrations_medication_id_fkey"
+            columns: ["medication_id"]
+            isOneToOne: false
+            referencedRelation: "bowel_prn_medications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bowel_prn_medications: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          display_order: number
+          dose_instructions: string
+          id: string
+          is_active: boolean
+          medication_name: string
+          notes: string | null
+          route: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          dose_instructions: string
+          id?: string
+          is_active?: boolean
+          medication_name: string
+          notes?: string | null
+          route?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          dose_instructions?: string
+          id?: string
+          is_active?: boolean
+          medication_name?: string
+          notes?: string | null
+          route?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bowel_prn_medications_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           created_at: string
