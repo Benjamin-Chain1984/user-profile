@@ -15,6 +15,7 @@ import ClientPosterPage from "./pages/ClientPoster";
 import AdminPage from "./pages/Admin";
 import ModulePlaceholder from "./pages/ModulePlaceholder";
 import PainCheckPage from "./pages/PainCheck";
+import BowelCarePage from "./pages/BowelCare";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -61,6 +62,15 @@ const App = () => (
                 <ProtectedRoute>
                   <MainLayout>
                     <PainCheckPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Bowel Care / Constipation module */}
+              <Route path="/module/constipation" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <BowelCarePage />
                   </MainLayout>
                 </ProtectedRoute>
               } />
