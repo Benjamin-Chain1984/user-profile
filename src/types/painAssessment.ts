@@ -125,27 +125,36 @@ export function calculateSeverity(totalScore: number): PainSeverity {
 export function getSeverityLabel(severity: PainSeverity): string {
   switch (severity) {
     case 'no_pain': return 'No Pain';
-    case 'mild': return 'Mild';
-    case 'moderate': return 'Moderate';
-    case 'severe': return 'Severe';
+    case 'mild': return 'Mild Pain';
+    case 'moderate': return 'Moderate Pain';
+    case 'severe': return 'Severe Pain';
   }
 }
 
 export function getSeverityColor(severity: PainSeverity): string {
   switch (severity) {
-    case 'no_pain': return 'text-success';
-    case 'mild': return 'text-warning';
-    case 'moderate': return 'text-orange-500';
-    case 'severe': return 'text-destructive';
+    case 'no_pain': return 'text-success'; // Green
+    case 'mild': return 'text-orange-400'; // Light Orange
+    case 'moderate': return 'text-orange-600'; // Dark Orange
+    case 'severe': return 'text-destructive'; // Red
   }
 }
 
 export function getSeverityBgColor(severity: PainSeverity): string {
   switch (severity) {
     case 'no_pain': return 'bg-success/10';
-    case 'mild': return 'bg-warning/10';
-    case 'moderate': return 'bg-orange-500/10';
+    case 'mild': return 'bg-orange-400/10';
+    case 'moderate': return 'bg-orange-600/10';
     case 'severe': return 'bg-destructive/10';
+  }
+}
+
+export function getSeverityBorderColor(severity: PainSeverity): string {
+  switch (severity) {
+    case 'no_pain': return 'border-l-success';
+    case 'mild': return 'border-l-orange-400';
+    case 'moderate': return 'border-l-orange-600';
+    case 'severe': return 'border-l-destructive';
   }
 }
 

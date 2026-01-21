@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePainAssessments } from '@/hooks/usePainAssessments';
-import { ABBEY_QUESTIONS, calculateSeverity, getSeverityLabel, getSeverityColor, PainType, getPainTypeLabel } from '@/types/painAssessment';
+import { ABBEY_QUESTIONS, calculateSeverity, getSeverityLabel, getSeverityColor, getSeverityBgColor, PainType, getPainTypeLabel } from '@/types/painAssessment';
 import { ArrowLeft, ArrowRight, Check, AlertTriangle } from 'lucide-react';
 import { PainActionForm } from './PainActionForm';
 
@@ -267,11 +267,24 @@ export function PainAssessmentForm({ onComplete, onCancel, clientId }: PainAsses
       )}
 
       {/* Running Score Display */}
-      <Card className="bg-muted/50">
+      <Card className={`${getSeverityBgColor(currentSeverity)} border-l-4 ${
+        currentSeverity === 'no_pain' ? 'border-l-success' :
+        currentSeverity === 'mild' ? 'border-l-orange-400' :
+        currentSeverity === 'moderate' ? 'border-l-orange-600' :
+        'border-l-destructive'
+      }`}>
         <CardContent className="p-3 flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">Running Score:</span>
+          <div className="flex items-center gap-2">
+            <div className={`w-3 h-3 rounded-full ${
+              currentSeverity === 'no_pain' ? 'bg-success' :
+              currentSeverity === 'mild' ? 'bg-orange-400' :
+              currentSeverity === 'moderate' ? 'bg-orange-600' :
+              'bg-destructive'
+            }`} />
+            <span className="text-sm text-muted-foreground">Running Score:</span>
+          </div>
           <span className={`font-bold text-lg ${getSeverityColor(currentSeverity)}`}>
-            {currentScore}/12
+            {currentScore}/12 • {getSeverityLabel(currentSeverity)}
           </span>
         </CardContent>
       </Card>
