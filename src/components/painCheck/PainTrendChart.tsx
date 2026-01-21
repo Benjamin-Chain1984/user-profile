@@ -115,7 +115,7 @@ export function PainTrendChart({ assessments }: PainTrendChartProps) {
                 className="text-muted-foreground"
               />
               <YAxis 
-                domain={[0, 12]} 
+                domain={[0, 18]} 
                 tick={{ fontSize: 12 }}
                 className="text-muted-foreground"
               />
