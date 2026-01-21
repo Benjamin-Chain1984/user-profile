@@ -10,15 +10,15 @@ interface StatusBadgeProps {
 
 const statusConfig = {
   stable: {
-    label: 'Stable',
+    label: 'IDEAL',
     variant: 'stable' as const,
   },
   monitor: {
-    label: 'Monitor',
+    label: 'AMBER',
     variant: 'monitor' as const,
   },
   action: {
-    label: 'Action Needed',
+    label: 'RED',
     variant: 'action' as const,
   },
 };
