@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { AbbeyPainAssessment, PainActionRecord, PainSeverity, PainType, calculateSeverity } from '@/types/painAssessment';
+import { AbbeyPainAssessment, PainActionRecord, PainType, calculateSeverity } from '@/types/painAssessment';
 import { useToast } from '@/hooks/use-toast';
 
 interface NewAssessment {
@@ -12,6 +12,7 @@ interface NewAssessment {
   q5_physiological_change: number;
   q6_physical_change: number;
   pain_type: PainType;
+  trigger_reason?: string;
   notes?: string;
 }
 
@@ -131,6 +132,39 @@ export function usePainAssessments(clientId?: string) {
     }
   };
 
+  const updateActionOutcome = async (actionId: string, outcome: string): Promise<boolean> => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+
+      const { error: updateError } = await supabase
+        .from('pain_action_records')
+        .update({
+          outcome,
+          outcome_recorded_at: new Date().toISOString(),
+          edited_by: userData.user?.id,
+          edited_at: new Date().toISOString(),
+        })
+        .eq('id', actionId);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: 'Outcome Recorded',
+        description: 'The outcome has been saved successfully',
+      });
+
+      return true;
+    } catch (err) {
+      console.error('Error updating action outcome:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to save outcome',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
   const getActionsForAssessment = async (assessmentId: string): Promise<PainActionRecord[]> => {
     try {
       const { data, error } = await supabase
@@ -163,6 +197,23 @@ export function usePainAssessments(clientId?: string) {
     }
   };
 
+  const getTrendDirection = (): 'improving' | 'worsening' | 'stable' => {
+    if (assessments.length < 2) return 'stable';
+    
+    const recent = assessments.slice(0, 3);
+    const avgRecent = recent.reduce((sum, a) => sum + a.total_score, 0) / recent.length;
+    
+    const older = assessments.slice(3, 6);
+    if (older.length === 0) return 'stable';
+    
+    const avgOlder = older.reduce((sum, a) => sum + a.total_score, 0) / older.length;
+    
+    const diff = avgRecent - avgOlder;
+    if (diff < -1) return 'improving';
+    if (diff > 1) return 'worsening';
+    return 'stable';
+  };
+
   useEffect(() => {
     fetchAssessments();
   }, [clientId]);
@@ -173,9 +224,11 @@ export function usePainAssessments(clientId?: string) {
     error,
     createAssessment,
     addActionRecord,
+    updateActionOutcome,
     getActionsForAssessment,
     getLatestAssessment,
     getAlertStatus,
+    getTrendDirection,
     refresh: fetchAssessments,
   };
 }

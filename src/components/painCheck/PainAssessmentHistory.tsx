@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AbbeyPainAssessment, getSeverityLabel, getSeverityColor, getSeverityBgColor, getSeverityBorderColor, getPainTypeLabel, ABBEY_QUESTIONS, PainActionRecord } from '@/types/painAssessment';
+import { AbbeyPainAssessment, getSeverityLabel, getSeverityColor, getSeverityBgColor, getSeverityBorderColor, getSeverityDotColor, getPainTypeLabel, ABBEY_QUESTIONS, PainActionRecord, ASSESSMENT_TRIGGER_LABELS, AssessmentTrigger } from '@/types/painAssessment';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { ChevronDown, ChevronUp, FileText, User, Clock, Activity, ArrowUpDown } from 'lucide-react';
@@ -41,16 +41,11 @@ function AssessmentCard({ assessment, actions, createdByName }: {
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-3">
-              {/* Severity color indicator */}
-              <div className={`w-3 h-3 rounded-full ${
-                assessment.severity === 'no_pain' ? 'bg-success' :
-                assessment.severity === 'mild' ? 'bg-orange-400' :
-                assessment.severity === 'moderate' ? 'bg-orange-600' :
-                'bg-destructive'
-              }`} />
-              <span className={`text-2xl font-bold ${getSeverityColor(assessment.severity)}`}>
-                {assessment.total_score}
-              </span>
+            {/* Severity color indicator */}
+            <div className={`w-3 h-3 rounded-full ${getSeverityDotColor(assessment.severity)}`} />
+            <span className={`text-2xl font-bold ${getSeverityColor(assessment.severity)}`}>
+              {assessment.total_score}/18
+            </span>
               <div>
                 <p className={`font-medium ${getSeverityColor(assessment.severity)}`}>
                   {getSeverityLabel(assessment.severity)}
@@ -70,6 +65,12 @@ function AssessmentCard({ assessment, actions, createdByName }: {
               </span>
               <span>•</span>
               <span>Type: {getPainTypeLabel(assessment.pain_type)}</span>
+              {assessment.trigger_reason && (
+                <>
+                  <span>•</span>
+                  <span>Trigger: {ASSESSMENT_TRIGGER_LABELS[assessment.trigger_reason as AssessmentTrigger] || assessment.trigger_reason}</span>
+                </>
+              )}
             </div>
 
             {/* Actions summary for pain scores */}

@@ -33,6 +33,7 @@ export type Database = {
           q6_physical_change: number
           severity: string
           total_score: number
+          trigger_reason: string | null
         }
         Insert: {
           client_id?: string | null
@@ -52,6 +53,7 @@ export type Database = {
           q6_physical_change: number
           severity: string
           total_score: number
+          trigger_reason?: string | null
         }
         Update: {
           client_id?: string | null
@@ -71,12 +73,72 @@ export type Database = {
           q6_physical_change?: number
           severity?: string
           total_score?: number
+          trigger_reason?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "abbey_pain_assessments_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      abbey_pain_config: {
+        Row: {
+          assessment_triggers: string[]
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          custom_trigger_text: string | null
+          id: string
+          mild_alert_recipients: string[]
+          mild_reassess_hours: number
+          moderate_alert_recipients: string[]
+          moderate_reassess_hours: number
+          severe_alert_recipients: string[]
+          severe_reassess_hours: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          assessment_triggers?: string[]
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          custom_trigger_text?: string | null
+          id?: string
+          mild_alert_recipients?: string[]
+          mild_reassess_hours?: number
+          moderate_alert_recipients?: string[]
+          moderate_reassess_hours?: number
+          severe_alert_recipients?: string[]
+          severe_reassess_hours?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          assessment_triggers?: string[]
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          custom_trigger_text?: string | null
+          id?: string
+          mild_alert_recipients?: string[]
+          mild_reassess_hours?: number
+          moderate_alert_recipients?: string[]
+          moderate_reassess_hours?: number
+          severe_alert_recipients?: string[]
+          severe_reassess_hours?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "abbey_pain_config_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
