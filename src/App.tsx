@@ -14,6 +14,7 @@ import ClientScanPage from "./pages/ClientScan";
 import ClientPosterPage from "./pages/ClientPoster";
 import AdminPage from "./pages/Admin";
 import ModulePlaceholder from "./pages/ModulePlaceholder";
+import PainCheckPage from "./pages/PainCheck";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -55,7 +56,16 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
-              {/* Module placeholder route */}
+              {/* Pain Check module */}
+              <Route path="/module/pain-check" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <PainCheckPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Module placeholder route for other modules */}
               <Route path="/module/:moduleId" element={
                 <ProtectedRoute>
                   <MainLayout>

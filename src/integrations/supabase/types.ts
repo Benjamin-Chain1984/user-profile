@@ -14,6 +14,74 @@ export type Database = {
   }
   public: {
     Tables: {
+      abbey_pain_assessments: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          id: string
+          notes: string | null
+          pain_type: string
+          q1_vocalization: number
+          q2_facial_expression: number
+          q3_body_language: number
+          q4_behavioral_change: number
+          q5_physiological_change: number
+          q6_physical_change: number
+          severity: string
+          total_score: number
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          id?: string
+          notes?: string | null
+          pain_type: string
+          q1_vocalization: number
+          q2_facial_expression: number
+          q3_body_language: number
+          q4_behavioral_change: number
+          q5_physiological_change: number
+          q6_physical_change: number
+          severity: string
+          total_score: number
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          id?: string
+          notes?: string | null
+          pain_type?: string
+          q1_vocalization?: number
+          q2_facial_expression?: number
+          q3_body_language?: number
+          q4_behavioral_change?: number
+          q5_physiological_change?: number
+          q6_physical_change?: number
+          severity?: string
+          total_score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "abbey_pain_assessments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_events: {
         Row: {
           action: string
@@ -87,6 +155,53 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      pain_action_records: {
+        Row: {
+          action_taken: string
+          action_time: string
+          assessment_id: string
+          created_at: string
+          created_by: string | null
+          edited_at: string | null
+          edited_by: string | null
+          id: string
+          outcome: string | null
+          outcome_recorded_at: string | null
+        }
+        Insert: {
+          action_taken: string
+          action_time?: string
+          assessment_id: string
+          created_at?: string
+          created_by?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          id?: string
+          outcome?: string | null
+          outcome_recorded_at?: string | null
+        }
+        Update: {
+          action_taken?: string
+          action_time?: string
+          assessment_id?: string
+          created_at?: string
+          created_by?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          id?: string
+          outcome?: string | null
+          outcome_recorded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pain_action_records_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "abbey_pain_assessments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       phone_otps: {
         Row: {
