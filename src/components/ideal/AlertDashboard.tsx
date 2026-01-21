@@ -1,6 +1,7 @@
 import { useProfile } from '@/contexts/ProfileContext';
 import { AlertTriangle, CheckCircle, AlertCircle, ChevronRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 export function AlertDashboard() {
   const { globalAlertState } = useProfile();
@@ -73,12 +74,19 @@ export function AlertDashboard() {
   );
 }
 
-function AlertCard({ alert }: { alert: { id: string; moduleName: string; message: string; status: 'red' | 'amber'; timestamp: string } }) {
+function AlertCard({ alert }: { alert: { id: string; moduleId: string; moduleName: string; message: string; status: 'red' | 'amber'; timestamp: string } }) {
+  const navigate = useNavigate();
   const isRed = alert.status === 'red';
+  
+  const handleClick = () => {
+    // Navigate to the module page
+    navigate(`/module/${alert.moduleId}`);
+  };
   
   return (
     <button 
-      className={`w-full text-left p-4 rounded-xl border transition-all hover:shadow-md ${
+      onClick={handleClick}
+      className={`w-full text-left p-4 rounded-xl border transition-all hover:shadow-md cursor-pointer ${
         isRed 
           ? 'bg-destructive/5 border-destructive/20 hover:border-destructive/40' 
           : 'bg-warning/5 border-warning/20 hover:border-warning/40'
