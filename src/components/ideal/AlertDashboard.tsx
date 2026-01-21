@@ -9,7 +9,8 @@ export function AlertDashboard() {
   const redAlerts = alerts.filter((a) => a.status === 'red');
   const amberAlerts = alerts.filter((a) => a.status === 'amber');
 
-  if (currentStatus === 'stable') {
+  // Only show Amber and Red alerts - IDEAL status means no alerts to display
+  if (currentStatus === 'stable' || (redAlerts.length === 0 && amberAlerts.length === 0)) {
     return (
       <div className="bg-success/10 border border-success/20 rounded-2xl p-5">
         <div className="flex items-center gap-3">
@@ -17,7 +18,7 @@ export function AlertDashboard() {
             <CheckCircle className="w-6 h-6 text-success" />
           </div>
           <div>
-            <h3 className="font-semibold text-foreground">All Systems Stable</h3>
+            <h3 className="font-semibold text-foreground">All Systems IDEAL</h3>
             <p className="text-sm text-muted-foreground">No alerts requiring attention</p>
           </div>
         </div>

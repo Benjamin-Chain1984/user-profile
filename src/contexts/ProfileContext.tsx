@@ -22,25 +22,22 @@ interface ProfileContextType {
 
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
 
-// Mock alerts for demo
-const mockAlerts: Alert[] = [
-  {
-    id: '1',
-    moduleId: 'fluid-balance',
-    moduleName: 'Fluid Balance',
-    message: 'Below target intake for 2 days',
-    status: 'amber',
-    timestamp: new Date(Date.now() - 3600000).toISOString(),
-  },
-  {
-    id: '2',
-    moduleId: 'health-monitoring',
-    moduleName: 'Vital Monitoring',
-    message: 'Heart rate elevated - requires review',
-    status: 'red',
-    timestamp: new Date(Date.now() - 1800000).toISOString(),
-  },
-];
+// Generate alerts dynamically from module statuses
+// Only Amber (monitor) and Red (action) alerts are included - never IDEAL (stable)
+function generateAlertsFromModules(modules: HealthModule[]): Alert[] {
+  return modules
+    .filter((m) => m.enabled && (m.status === 'monitor' || m.status === 'action'))
+    .map((m) => ({
+      id: m.id,
+      moduleId: m.id,
+      moduleName: m.name,
+      message: m.status === 'action' 
+        ? 'Immediate action required' 
+        : 'Requires follow-up',
+      status: m.status === 'action' ? 'red' as const : 'amber' as const,
+      timestamp: new Date().toISOString(),
+    }));
+}
 
 export function ProfileProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<IndividualProfile | null>({
@@ -106,14 +103,16 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     return m.enabled;
   });
 
-  // Calculate global alert state
+  // Calculate global alert state dynamically from module statuses
+  // Only Amber and Red alerts propagate to dashboard - IDEAL (stable) does not
+  const activeAlerts = generateAlertsFromModules(activeEnabledModules);
   const hasRedAlert = activeEnabledModules.some((m) => m.status === 'action');
   const hasAmberAlert = activeEnabledModules.some((m) => m.status === 'monitor');
   
   const globalAlertState: GlobalAlertState = {
     currentStatus: hasRedAlert ? 'action' : hasAmberAlert ? 'monitor' : 'stable',
-    activeAlertsCount: mockAlerts.length,
-    alerts: mockAlerts,
+    activeAlertsCount: activeAlerts.length,
+    alerts: activeAlerts,
   };
 
   const isProfileComplete = Boolean(
