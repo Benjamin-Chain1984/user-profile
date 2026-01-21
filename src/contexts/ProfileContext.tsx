@@ -9,7 +9,8 @@ import {
 } from '@/types/ideal';
 import { supabase } from '@/integrations/supabase/client';
 import { calculateSeverity, getSeverityLabel, PainSeverity } from '@/types/painAssessment';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, differenceInDays, differenceInHours } from 'date-fns';
+import { BRISTOL_TYPES } from '@/types/bowelCare';
 
 interface ProfileContextType {
   profile: IndividualProfile | null;
@@ -22,6 +23,7 @@ interface ProfileContextType {
   isProfileComplete: boolean;
   getModuleStatus: (moduleId: string) => HealthModule | undefined;
   refreshPainStatus: () => void;
+  refreshBowelStatus: () => void;
 }
 
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
@@ -46,9 +48,37 @@ function getPainAlertMessage(severity: PainSeverity, score: number): string {
   }
 }
 
+// Bowel care status types
+type BowelAlertData = {
+  status: 'stable' | 'monitor' | 'action';
+  message: string;
+  timestamp: string;
+  daysSinceLastBm: number | null;
+};
+
+// Generate bowel care alert message
+function getBowelAlertMessage(data: BowelAlertData): string {
+  if (data.status === 'action') {
+    if (data.daysSinceLastBm !== null && data.daysSinceLastBm >= 3) {
+      return `No bowel movement for ${data.daysSinceLastBm} days – constipation risk, action required`;
+    }
+    return 'Bowel care concern – immediate attention required';
+  }
+  if (data.status === 'monitor') {
+    if (data.daysSinceLastBm !== null && data.daysSinceLastBm >= 2) {
+      return `No bowel movement for ${data.daysSinceLastBm} days – monitor closely`;
+    }
+    return 'Bowel pattern irregular – monitoring advised';
+  }
+  return 'Regular bowel pattern';
+}
+
 // Generate alerts dynamically from module statuses
-// Only Amber (monitor) and Red (action) alerts are included - never IDEAL (stable)
-function generateAlertsFromModules(modules: HealthModule[], painData?: { severity: PainSeverity; score: number; timestamp: string }): Alert[] {
+function generateAlertsFromModules(
+  modules: HealthModule[], 
+  painData?: { severity: PainSeverity; score: number; timestamp: string },
+  bowelData?: BowelAlertData
+): Alert[] {
   return modules
     .filter((m) => m.enabled && (m.status === 'monitor' || m.status === 'action'))
     .map((m) => {
@@ -61,6 +91,18 @@ function generateAlertsFromModules(modules: HealthModule[], painData?: { severit
           message: getPainAlertMessage(painData.severity, painData.score),
           status: m.status === 'action' ? 'red' as const : 'amber' as const,
           timestamp: painData.timestamp,
+        };
+      }
+      
+      // Special handling for constipation/bowel care module with real data
+      if (m.id === 'constipation' && bowelData) {
+        return {
+          id: m.id,
+          moduleId: m.id,
+          moduleName: 'Bowel Care',
+          message: getBowelAlertMessage(bowelData),
+          status: m.status === 'action' ? 'red' as const : 'amber' as const,
+          timestamp: bowelData.timestamp,
         };
       }
       
@@ -92,6 +134,9 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   // Pain assessment state
   const [latestPainData, setLatestPainData] = useState<{ severity: PainSeverity; score: number; timestamp: string } | null>(null);
+  
+  // Bowel care state
+  const [latestBowelData, setLatestBowelData] = useState<BowelAlertData | null>(null);
 
   // Enable ALL modules by default for master project development
   const [enabledModules, setEnabledModules] = useState<HealthModule[]>(
@@ -150,12 +195,158 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Fetch pain data on mount and set up realtime subscription
+  // Fetch bowel care data and compute status
+  const fetchBowelCareStatus = async () => {
+    try {
+      // Fetch config
+      const { data: configData } = await supabase
+        .from('bowel_care_config')
+        .select('*')
+        .limit(1)
+        .maybeSingle();
+
+      const noBmDaysThreshold = configData?.no_bm_days_threshold ?? 3;
+      const type1ConsecutiveThreshold = configData?.type1_consecutive_days_threshold ?? 2;
+      const diarrhoeaThreshold = configData?.diarrhoea_type67_count_threshold ?? 3;
+      const diarrhoeaHoursWindow = configData?.diarrhoea_hours_window ?? 48;
+
+      // Fetch recent bowel logs (last 14 days)
+      const { data: logs, error } = await supabase
+        .from('bowel_log_entries')
+        .select('*')
+        .order('entry_time', { ascending: false })
+        .limit(50);
+
+      if (error) {
+        console.error('Error fetching bowel logs:', error);
+        return;
+      }
+
+      // Calculate status based on logs
+      let status: 'stable' | 'monitor' | 'action' = 'stable';
+      let daysSinceLastBm: number | null = null;
+      let message = 'Regular bowel pattern';
+      let timestamp = new Date().toISOString();
+
+      if (!logs || logs.length === 0) {
+        status = 'monitor';
+        message = 'No bowel entries recorded';
+      } else {
+        // Find last actual bowel movement (type > 0)
+        const lastActualBm = logs.find(l => l.bristol_type > 0);
+        
+        if (lastActualBm) {
+          daysSinceLastBm = differenceInDays(new Date(), new Date(lastActualBm.entry_time));
+          timestamp = lastActualBm.entry_time;
+
+          // Check for no BM threshold
+          if (daysSinceLastBm >= noBmDaysThreshold) {
+            status = 'action';
+            message = `No bowel movement for ${daysSinceLastBm} days`;
+          } else if (daysSinceLastBm >= noBmDaysThreshold - 1) {
+            status = 'monitor';
+            message = `${daysSinceLastBm} days since last bowel movement`;
+          }
+        } else {
+          // Only type 0 entries (no BM)
+          const oldestLog = logs[logs.length - 1];
+          daysSinceLastBm = differenceInDays(new Date(), new Date(oldestLog.entry_time));
+          if (daysSinceLastBm >= noBmDaysThreshold) {
+            status = 'action';
+            message = `No bowel movement recorded in ${daysSinceLastBm}+ days`;
+          } else {
+            status = 'monitor';
+            message = 'Bowel not opened – monitoring';
+          }
+        }
+
+        // Check for consecutive Type 1 (hard stools)
+        if (status !== 'action') {
+          const recentLogs = logs.slice(0, 7);
+          let consecutiveType1 = 0;
+          for (const log of recentLogs) {
+            if (log.bristol_type === 1) {
+              consecutiveType1++;
+            } else if (log.bristol_type > 1) {
+              break;
+            }
+          }
+          if (consecutiveType1 >= type1ConsecutiveThreshold) {
+            status = 'action';
+            message = `${consecutiveType1} consecutive hard stools (Type 1)`;
+          }
+        }
+
+        // Check for diarrhoea (Type 6-7)
+        const recentHours = logs.filter(l => {
+          const hours = differenceInHours(new Date(), new Date(l.entry_time));
+          return hours <= diarrhoeaHoursWindow;
+        });
+        const type67Count = recentHours.filter(l => l.bristol_type >= 6).length;
+        if (type67Count >= diarrhoeaThreshold) {
+          status = 'action';
+          message = `${type67Count} loose/watery stools in ${diarrhoeaHoursWindow}h – diarrhoea risk`;
+        }
+
+        // Check for red flag indicators in recent logs
+        const latestLog = logs[0];
+        if (latestLog?.indicators) {
+          const indicators = latestLog.indicators as Record<string, unknown>;
+          if (
+            indicators.blood === 'bright_red' || 
+            indicators.blood === 'dark_tarry' ||
+            indicators.pain === 'severe' ||
+            indicators.vomiting === true
+          ) {
+            status = 'action';
+            message = 'Red flag indicator detected – immediate review';
+            timestamp = latestLog.entry_time;
+          }
+        }
+      }
+
+      const bowelData: BowelAlertData = {
+        status,
+        message,
+        timestamp,
+        daysSinceLastBm,
+      };
+
+      setLatestBowelData(bowelData);
+
+      // Update constipation module with real status
+      const timeAgo = logs?.[0] 
+        ? formatDistanceToNow(new Date(logs[0].entry_time), { addSuffix: true })
+        : 'Never';
+      const lastBristol = logs?.[0]?.bristol_type;
+      const bristolInfo = lastBristol !== undefined && lastBristol !== null
+        ? BRISTOL_TYPES.find(b => b.type === lastBristol)
+        : null;
+      const bristolLabel = bristolInfo?.name || '';
+
+      setEnabledModules(prev => prev.map(m => 
+        m.id === 'constipation' 
+          ? { 
+              ...m, 
+              status, 
+              lastEntry: bristolLabel 
+                ? `${bristolLabel} • ${timeAgo}` 
+                : `Last logged ${timeAgo}`
+            }
+          : m
+      ));
+    } catch (err) {
+      console.error('Error in fetchBowelCareStatus:', err);
+    }
+  };
+
+  // Fetch data on mount and set up realtime subscriptions
   useEffect(() => {
     fetchLatestPainAssessment();
+    fetchBowelCareStatus();
 
     // Subscribe to realtime updates for pain assessments
-    const channel = supabase
+    const painChannel = supabase
       .channel('pain-alerts')
       .on(
         'postgres_changes',
@@ -170,8 +361,25 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       )
       .subscribe();
 
+    // Subscribe to realtime updates for bowel logs
+    const bowelChannel = supabase
+      .channel('bowel-alerts')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bowel_log_entries',
+        },
+        () => {
+          fetchBowelCareStatus();
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(painChannel);
+      supabase.removeChannel(bowelChannel);
     };
   }, []);
 
@@ -212,8 +420,11 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   });
 
   // Calculate global alert state dynamically from module statuses
-  // Only Amber and Red alerts propagate to dashboard - IDEAL (stable) does not
-  const activeAlerts = generateAlertsFromModules(activeEnabledModules, latestPainData || undefined);
+  const activeAlerts = generateAlertsFromModules(
+    activeEnabledModules, 
+    latestPainData || undefined,
+    latestBowelData || undefined
+  );
   const hasRedAlert = activeEnabledModules.some((m) => m.status === 'action');
   const hasAmberAlert = activeEnabledModules.some((m) => m.status === 'monitor');
   
@@ -247,6 +458,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         isProfileComplete,
         getModuleStatus,
         refreshPainStatus: fetchLatestPainAssessment,
+        refreshBowelStatus: fetchBowelCareStatus,
       }}
     >
       {children}
