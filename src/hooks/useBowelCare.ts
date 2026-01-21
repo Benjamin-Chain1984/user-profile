@@ -534,9 +534,11 @@ export function useBowelCareStatus(clientId?: string) {
     // Check for constipation threshold
     const noActivityThresholdMet = daysSinceLastBm !== null && daysSinceLastBm >= config.no_bm_days_threshold;
 
-    // Check for consecutive Type 1
-    const recentType1 = logs.filter(l => l.bristol_type === 1).slice(0, config.type1_consecutive_days_threshold);
-    const type1ThresholdMet = recentType1.length >= config.type1_consecutive_days_threshold;
+    // Check for consecutive Type 1 in the most recent actual BMs
+    const recentActualBMs = logs.filter(l => l.bristol_type > 0).slice(0, config.type1_consecutive_days_threshold);
+    const type1ThresholdMet = 
+      recentActualBMs.length >= config.type1_consecutive_days_threshold &&
+      recentActualBMs.every(l => l.bristol_type === 1);
 
     // Check for diarrhoea (Type 6-7)
     const recentDiarrhoea = logs.filter(l => {
