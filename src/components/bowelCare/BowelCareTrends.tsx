@@ -216,18 +216,19 @@ export function BowelCareTrends({ clientId }: BowelCareTrendsProps) {
                 No data yet
               </p>
             ) : (
-              <div className="h-[180px]">
+              <div className="h-[220px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
+                  <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                     <Pie
                       data={bristolDistribution}
                       cx="50%"
                       cy="50%"
-                      innerRadius={40}
-                      outerRadius={70}
+                      innerRadius={35}
+                      outerRadius={55}
                       paddingAngle={2}
                       dataKey="count"
                       label={({ type }) => type}
+                      labelLine={true}
                     >
                       {bristolDistribution.map((entry) => (
                         <Cell key={entry.type} fill={BRISTOL_COLORS[entry.typeNum]} />
@@ -254,18 +255,19 @@ export function BowelCareTrends({ clientId }: BowelCareTrendsProps) {
                 No data yet
               </p>
             ) : (
-              <div className="h-[180px]">
+              <div className="h-[220px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
+                  <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                     <Pie
                       data={sizeDistribution}
                       cx="50%"
                       cy="50%"
-                      innerRadius={40}
-                      outerRadius={70}
+                      innerRadius={35}
+                      outerRadius={55}
                       paddingAngle={2}
                       dataKey="value"
                       label={({ name }) => name}
+                      labelLine={true}
                     >
                       {sizeDistribution.map((entry, index) => (
                         <Cell key={entry.name} fill={entry.color} />
