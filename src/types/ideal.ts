@@ -60,7 +60,7 @@ export const HEALTH_MODULES: Omit<HealthModule, 'enabled' | 'status' | 'lastEntr
   { id: 'iddsi', name: 'IDDSI Levels', description: 'Food and drink texture management' },
   { id: 'oral-health', name: 'Oral Health Care', description: 'Dental and oral hygiene tracking' },
   { id: 'ostomy', name: 'Ostomy (Stoma Care)', description: 'Stoma output and care management' },
-  { id: 'pain-check', name: 'Pain Check', description: 'Pain assessment and monitoring' },
+  { id: 'pain-check', name: 'Pain Assessment', description: 'Pain assessment and monitoring' },
   { id: 'pressure-area', name: 'Pressure Area Prevention', description: 'Skin integrity and repositioning' },
   { id: 'sleep', name: 'Sleep Chart', description: 'Sleep patterns and quality tracking' },
   { id: 'catheter', name: 'Urinary Catheter Management', description: 'Catheter care and monitoring' },

@@ -57,7 +57,7 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
-              {/* Pain Check module */}
+              {/* Pain Assessment module */}
               <Route path="/module/pain-check" element={
                 <ProtectedRoute>
                   <MainLayout>
