@@ -4,9 +4,9 @@
 
 import { cn } from '@/lib/utils';
 import { useBowelCareStatus } from '@/hooks/useBowelCare';
-import { CheckCircle, AlertTriangle, AlertCircle, TrendingUp } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { CheckCircle, AlertTriangle, AlertCircle } from 'lucide-react';
 import type { BowelCareStatus } from '@/types/bowelCare';
+import { StoolIllustration } from './StoolIllustration';
 
 interface BowelCareStatusCardProps {
   clientId: string;
@@ -67,18 +67,23 @@ export function BowelCareStatusCard({ clientId }: BowelCareStatusCardProps) {
           </div>
         </div>
 
-        <div className="text-right">
-          {statusInfo.daysSinceLastBm !== null && (
-            <div className="text-sm">
-              <span className="font-semibold">{statusInfo.daysSinceLastBm}</span>
-              <span className="opacity-70"> {statusInfo.daysSinceLastBm === 1 ? 'day' : 'days'} since last BM</span>
-            </div>
-          )}
+        <div className="flex items-center gap-3">
           {statusInfo.lastBristolType !== null && (
-            <div className="text-xs opacity-70 mt-1">
-              Last type: Bristol {statusInfo.lastBristolType}
+            <div className="flex flex-col items-center gap-1">
+              <div className="w-16 h-10 rounded-lg bg-white/50 p-1 flex items-center justify-center">
+                <StoolIllustration type={statusInfo.lastBristolType} />
+              </div>
+              <span className="text-xs opacity-70">Last: Type {statusInfo.lastBristolType}</span>
             </div>
           )}
+          <div className="text-right">
+            {statusInfo.daysSinceLastBm !== null && (
+              <div className="text-sm">
+                <span className="font-semibold">{statusInfo.daysSinceLastBm}</span>
+                <span className="opacity-70"> {statusInfo.daysSinceLastBm === 1 ? 'day' : 'days'} since last BM</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
