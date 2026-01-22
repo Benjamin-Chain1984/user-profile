@@ -57,8 +57,8 @@ const RELATED_MODULES = [
     path: '/module/health-prevention'
   },
   {
-    id: 'pain-check',
-    name: 'Pain Check',
+    id: 'pain-assessment',
+    name: 'Pain Assessment',
     description: 'Identify discomfort that may be related to bowel health',
     icon: Thermometer,
     path: '/module/pain-check'

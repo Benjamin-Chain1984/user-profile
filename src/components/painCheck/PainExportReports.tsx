@@ -16,7 +16,7 @@ import {
   AssessmentTrigger,
   ABBEY_QUESTIONS
 } from '@/types/painAssessment';
-import { format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
+import { format, isWithinInterval, startOfDay, endOfDay, subDays, subMonths, subYears } from 'date-fns';
 import { CalendarIcon, FileDown, FileText, Table, ArrowLeft, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import jsPDF from 'jspdf';
@@ -32,9 +32,12 @@ interface ExportData {
   profiles: Record<string, string>;
 }
 
+type DateRangePreset = 'last7' | 'last30' | 'lastMonth' | 'lastYear' | 'custom';
+
 export function PainExportReports({ assessments, onClose }: PainExportReportsProps) {
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [datePreset, setDatePreset] = useState<DateRangePreset>('last7');
+  const [startDate, setStartDate] = useState<Date | undefined>(subDays(new Date(), 7));
+  const [endDate, setEndDate] = useState<Date | undefined>(new Date());
   const [includeConfig, setIncludeConfig] = useState(true);
   const [includeActions, setIncludeActions] = useState(true);
   const [includeTrends, setIncludeTrends] = useState(true);
@@ -43,6 +46,34 @@ export function PainExportReports({ assessments, onClose }: PainExportReportsPro
   
   const { getEffectiveConfig } = usePainConfig();
   const config = getEffectiveConfig();
+
+  // Handle date preset changes
+  const handlePresetChange = (preset: DateRangePreset) => {
+    setDatePreset(preset);
+    const now = new Date();
+    
+    switch (preset) {
+      case 'last7':
+        setStartDate(subDays(now, 7));
+        setEndDate(now);
+        break;
+      case 'last30':
+        setStartDate(subDays(now, 30));
+        setEndDate(now);
+        break;
+      case 'lastMonth':
+        setStartDate(subMonths(now, 1));
+        setEndDate(now);
+        break;
+      case 'lastYear':
+        setStartDate(subYears(now, 1));
+        setEndDate(now);
+        break;
+      case 'custom':
+        // Keep current dates for custom
+        break;
+    }
+  };
 
   // Filter assessments by date range
   const filteredAssessments = assessments.filter(assessment => {
@@ -385,7 +416,9 @@ export function PainExportReports({ assessments, onClose }: PainExportReportsPro
         </Button>
         <div>
           <h2 className="text-lg font-semibold">Export Reports</h2>
-          <p className="text-sm text-muted-foreground">Generate PDF or CSV reports of pain assessments</p>
+          <p className="text-sm text-muted-foreground">
+            Generate PDF or CSV reports for medical professionals, clinicians, and NDIS funding
+          </p>
         </div>
       </div>
 
@@ -395,72 +428,106 @@ export function PainExportReports({ assessments, onClose }: PainExportReportsPro
           <CardTitle className="text-base">Date Range</CardTitle>
           <CardDescription>Select the period for your report</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="space-y-2">
-              <Label>Start Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full sm:w-[200px] justify-start text-left font-normal",
-                      !startDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={startDate}
-                    onSelect={setStartDate}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div className="space-y-2">
-              <Label>End Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full sm:w-[200px] justify-start text-left font-normal",
-                      !endDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {endDate ? format(endDate, "PPP") : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={endDate}
-                    onSelect={setEndDate}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            {(startDate || endDate) && (
-              <div className="flex items-end">
-                <Button variant="ghost" size="sm" onClick={() => { setStartDate(undefined); setEndDate(undefined); }}>
-                  Clear
-                </Button>
-              </div>
-            )}
+        <CardContent className="space-y-4">
+          {/* Preset Buttons */}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={datePreset === 'last7' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handlePresetChange('last7')}
+            >
+              Last 7 Days
+            </Button>
+            <Button
+              variant={datePreset === 'last30' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handlePresetChange('last30')}
+            >
+              Last 30 Days
+            </Button>
+            <Button
+              variant={datePreset === 'lastMonth' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handlePresetChange('lastMonth')}
+            >
+              Last Month
+            </Button>
+            <Button
+              variant={datePreset === 'lastYear' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handlePresetChange('lastYear')}
+            >
+              Last Year
+            </Button>
+            <Button
+              variant={datePreset === 'custom' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handlePresetChange('custom')}
+            >
+              Custom
+            </Button>
           </div>
 
-          <p className="text-sm text-muted-foreground mt-3">
+          {/* Custom Date Pickers */}
+          {datePreset === 'custom' && (
+            <div className="flex flex-col sm:flex-row gap-4 pt-2">
+              <div className="space-y-2">
+                <Label>Start Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full sm:w-[200px] justify-start text-left font-normal",
+                        !startDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label>End Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full sm:w-[200px] justify-start text-left font-normal",
+                        !endDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {endDate ? format(endDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+          )}
+
+          <p className="text-sm text-muted-foreground">
             {filteredAssessments.length} assessment{filteredAssessments.length !== 1 ? 's' : ''} in selected range
           </p>
         </CardContent>

@@ -10,8 +10,8 @@ import { PainTrendChart } from './PainTrendChart';
 import { PainConfigSettings } from './PainConfigSettings';
 import { PainQuickStatus } from './PainQuickStatus';
 import { PainExportReports } from './PainExportReports';
-import { getSeverityLabel, getSeverityColor, getSeverityBgColor } from '@/types/painAssessment';
-import { Plus, TrendingUp, ClipboardList, AlertTriangle, Info, Settings, FileDown } from 'lucide-react';
+import { getSeverityLabel, getSeverityColor } from '@/types/painAssessment';
+import { Plus, TrendingUp, ClipboardList, AlertTriangle, Info, Settings, FileDown, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 
 const SCREENING_WARNING = "The Abbey Pain Scale is a screening tool only. If pain is suspected or scores increase, seek advice from a medical professional immediately.";
@@ -28,7 +28,6 @@ const ABBEY_CITATION = "Abbey Pain Scale – Abbey, J., Piller, N., De Bellis, A
 
 export function PainCheckDashboard() {
   const [showForm, setShowForm] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const { assessments, loading, getLatestAssessment, getTrendDirection, refresh } = usePainAssessments();
 
@@ -49,14 +48,6 @@ export function PainCheckDashboard() {
     );
   }
 
-  if (showSettings) {
-    return (
-      <div className="space-y-4">
-        <PainConfigSettings onClose={() => setShowSettings(false)} />
-      </div>
-    );
-  }
-
   if (showExport) {
     return (
       <PainExportReports assessments={assessments} onClose={() => setShowExport(false)} />
@@ -64,57 +55,38 @@ export function PainCheckDashboard() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-6">
+      {/* Header Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Pain Check</h1>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1">
+          <h2 className="text-2xl font-bold">Pain Assessment</h2>
+          <p className="text-muted-foreground">
             Abbey Pain Scale (Non-Verbal Pain Assessment)
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowExport(true)}>
-            <FileDown className="w-4 h-4 mr-2" />
+          <Button variant="outline" onClick={() => setShowExport(true)}>
+            <FileDown className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
-            <Settings className="w-4 h-4 mr-2" />
-            Settings
+          <Button onClick={() => setShowForm(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Begin Assessment
           </Button>
         </div>
       </div>
 
-      {/* Screening Warning Banner */}
-      <Alert className="border-warning/50 bg-warning/10">
-        <AlertTriangle className="h-4 w-4 text-warning" />
-        <AlertDescription className="text-sm font-medium text-foreground">
-          {SCREENING_WARNING}
-        </AlertDescription>
-      </Alert>
-
-      {/* Clinical Instructions */}
-      <Card className="bg-muted/30 border-muted">
-        <CardContent className="p-4">
-          <div className="flex items-start gap-3">
-            <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-            <div className="space-y-2">
-              <p className="font-medium text-foreground">Assessment Instructions</p>
-              <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
-                {CLINICAL_INSTRUCTIONS}
-              </p>
-            </div>
+      {/* Mandatory Disclaimer */}
+      <Card className="border-amber-200 bg-amber-50/50">
+        <CardContent className="py-4">
+          <div className="flex gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-amber-800">
+              <strong>Important:</strong> {SCREENING_WARNING}
+            </p>
           </div>
         </CardContent>
       </Card>
-
-      {/* Begin Assessment Button */}
-      <div className="flex justify-center">
-        <Button onClick={() => setShowForm(true)} className="gap-2" size="lg">
-          <Plus className="w-5 h-5" />
-          Begin Assessment
-        </Button>
-      </div>
 
       {/* Quick Status Card */}
       <PainQuickStatus 
@@ -124,25 +96,32 @@ export function PainCheckDashboard() {
         onStartAssessment={() => setShowForm(true)}
       />
 
-      {/* Tabbed Content */}
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="history" className="gap-1">
-            <ClipboardList className="w-4 h-4" />
-            History
+      {/* Tabs - Consistent with Bowel Care */}
+      <Tabs defaultValue="tracking" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
+          <TabsTrigger value="tracking" className="gap-2">
+            <Clock className="h-4 w-4" />
+            <span className="hidden sm:inline">Tracking</span>
           </TabsTrigger>
-          <TabsTrigger value="trends" className="gap-1">
-            <TrendingUp className="w-4 h-4" />
-            Trends
+          <TabsTrigger value="trends" className="gap-2">
+            <TrendingUp className="h-4 w-4" />
+            <span className="hidden sm:inline">Trends</span>
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="gap-2">
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">Settings</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="mt-4">
-          <div className="grid gap-4 md:grid-cols-2">
+        <TabsContent value="tracking" className="space-y-4">
+          <div className="grid lg:grid-cols-2 gap-4">
+            {/* Recent Assessments */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Recent Assessments</CardTitle>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <ClipboardList className="h-4 w-4" />
+                  Recent Assessments
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -172,6 +151,7 @@ export function PainCheckDashboard() {
               </CardContent>
             </Card>
 
+            {/* Score Breakdown */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Score Breakdown</CardTitle>
@@ -210,20 +190,39 @@ export function PainCheckDashboard() {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
 
-        <TabsContent value="history" className="mt-4">
+          {/* Assessment History */}
           <PainAssessmentHistory assessments={assessments} loading={loading} />
         </TabsContent>
 
-        <TabsContent value="trends" className="mt-4">
+        <TabsContent value="trends">
           <PainTrendChart assessments={assessments} />
+        </TabsContent>
+
+        <TabsContent value="settings">
+          <PainConfigSettings />
         </TabsContent>
       </Tabs>
 
+      {/* Clinical Instructions */}
+      <Card className="bg-muted/30 border-muted">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Info className="h-4 w-4 text-primary" />
+            Assessment Instructions
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
+            {CLINICAL_INSTRUCTIONS}
+          </p>
+        </CardContent>
+      </Card>
+
       {/* Footer Citation */}
-      <div className="pt-6 mt-6 border-t border-border">
-        <p className="text-xs text-muted-foreground italic text-center">
+      <div className="text-xs text-muted-foreground border-t pt-4 space-y-1">
+        <p className="font-medium">Abbey Pain Scale</p>
+        <p className="italic">
           {ABBEY_CITATION}
         </p>
       </div>
