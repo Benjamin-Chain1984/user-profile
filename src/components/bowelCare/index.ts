@@ -13,3 +13,4 @@ export { StoolSizeSelector } from './StoolSizeSelector';
 export { IndicatorsForm } from './IndicatorsForm';
 export { PrnWorkflowCard } from './PrnWorkflowCard';
 export { EscalationDialog } from './EscalationDialog';
+export { StoolIllustration } from './StoolIllustration';

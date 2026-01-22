@@ -3,25 +3,93 @@
  */
 
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BowelCareStatusCard } from './BowelCareStatusCard';
 import { BowelLogForm } from './BowelLogForm';
 import { BowelCareHistory } from './BowelCareHistory';
 import { BowelCareTrends } from './BowelCareTrends';
 import { PrnWorkflowCard } from './PrnWorkflowCard';
 import { BowelCareConfigSettings } from './BowelCareConfigSettings';
-import { EscalationDialog } from './EscalationDialog';
 import { useBowelCareStatus } from '@/hooks/useBowelCare';
-import { Plus, AlertTriangle, Settings, BarChart3, Clock, FileText } from 'lucide-react';
+import { 
+  Plus, 
+  Settings, 
+  BarChart3, 
+  Clock, 
+  AlertCircle,
+  Droplets,
+  Scale,
+  Activity,
+  Moon,
+  Thermometer,
+  Heart
+} from 'lucide-react';
 
 interface BowelCareDashboardProps {
   clientId?: string;
 }
 
+const RELATED_MODULES = [
+  {
+    id: 'weight',
+    name: 'Weight Chart',
+    description: 'Track weight changes that may indicate fluid or digestive issues',
+    icon: Scale,
+    path: '/module/weight'
+  },
+  {
+    id: 'hydration',
+    name: 'Hydration / Fluid Balance',
+    description: 'Monitor fluid intake to support healthy bowel function',
+    icon: Droplets,
+    path: '/module/hydration'
+  },
+  {
+    id: 'health-prevention',
+    name: 'Health Prevention',
+    description: 'Proactive health monitoring to catch early warning signs',
+    icon: Heart,
+    path: '/module/health-prevention'
+  },
+  {
+    id: 'pain-check',
+    name: 'Pain Check',
+    description: 'Identify discomfort that may be related to bowel health',
+    icon: Thermometer,
+    path: '/module/pain-check'
+  },
+  {
+    id: 'sleep',
+    name: 'Sleep Chart',
+    description: 'Quality sleep supports overall digestive health',
+    icon: Moon,
+    path: '/module/sleep'
+  }
+];
+
+const SYMPTOMS_LIST = [
+  'Bloated or enlarged stomach',
+  'Signs of pain',
+  'Abdominal pain or discomfort',
+  'Vomiting',
+  'Changes in usual bowel pattern',
+  'Signs of distress during toileting',
+  'You have concerns'
+];
+
+const BOWEL_CARE_TIPS = [
+  'Encourage regular fluid intake and hydration',
+  'Include high-fibre foods where appropriate',
+  'Support regular movement and activity',
+  'Maintain consistent toileting routines',
+  'Consult a dietitian or health professional if concerns persist'
+];
+
 export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
   const [showLogForm, setShowLogForm] = useState(false);
-  const [showEscalation, setShowEscalation] = useState(false);
   const statusInfo = useBowelCareStatus(clientId);
 
   return (
@@ -34,31 +102,34 @@ export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
             Track bowel movements and manage PRN laxatives
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setShowEscalation(true)}>
-            <AlertTriangle className="h-4 w-4 mr-2" />
-            I'm Concerned
-          </Button>
-          <Button onClick={() => setShowLogForm(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Log Bowel Entry
-          </Button>
-        </div>
+        <Button onClick={() => setShowLogForm(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Log Bowel Entry
+        </Button>
       </div>
+
+      {/* Mandatory Disclaimer */}
+      <Card className="border-amber-200 bg-amber-50/50">
+        <CardContent className="py-4">
+          <div className="flex gap-3">
+            <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-amber-800">
+              <strong>Important:</strong> The Bristol Stool Chart is a screening and monitoring tool only. 
+              Stool type thresholds, interventions, and escalation pathways should be determined by a GP or qualified health professional.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Status Card */}
       <BowelCareStatusCard clientId={clientId} />
 
-      {/* Tabs */}
+      {/* Tabs - PRN tab removed, accessed via settings only */}
       <Tabs defaultValue="tracking" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
+        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
           <TabsTrigger value="tracking" className="gap-2">
             <Clock className="h-4 w-4" />
             <span className="hidden sm:inline">Tracking</span>
-          </TabsTrigger>
-          <TabsTrigger value="prn" className="gap-2">
-            <FileText className="h-4 w-4" />
-            <span className="hidden sm:inline">PRN</span>
           </TabsTrigger>
           <TabsTrigger value="trends" className="gap-2">
             <BarChart3 className="h-4 w-4" />
@@ -77,10 +148,6 @@ export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
           </div>
         </TabsContent>
 
-        <TabsContent value="prn">
-          <PrnWorkflowCard clientId={clientId} />
-        </TabsContent>
-
         <TabsContent value="trends">
           <BowelCareTrends clientId={clientId} />
         </TabsContent>
@@ -90,18 +157,92 @@ export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
         </TabsContent>
       </Tabs>
 
+      {/* Symptoms to Be Aware Of */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-red-500" />
+            Symptoms to Be Aware Of and Seek Advice
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="grid sm:grid-cols-2 gap-2">
+            {SYMPTOMS_LIST.map((symptom, index) => (
+              <li key={index} className="flex items-start gap-2">
+                <span className="text-red-500 mt-1">•</span>
+                <span className="text-sm text-muted-foreground">{symptom}</span>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+
+      {/* Good Bowel Care Tips */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Activity className="h-5 w-5 text-green-500" />
+            Good Bowel Care Tips
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="space-y-2">
+            {BOWEL_CARE_TIPS.map((tip, index) => (
+              <li key={index} className="flex items-start gap-2">
+                <span className="text-green-500 mt-1">✓</span>
+                <span className="text-sm text-muted-foreground">{tip}</span>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+
+      {/* Works Well With These Modules */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Works Well With These Modules</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Comprehensive care involves monitoring multiple aspects of health
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {RELATED_MODULES.map((module) => (
+              <Link 
+                key={module.id} 
+                to={module.path}
+                className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+              >
+                <div className="p-2 rounded-md bg-primary/10">
+                  <module.icon className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm">{module.name}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2">
+                    {module.description}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Bristol Stool Chart Citation */}
+      <div className="text-xs text-muted-foreground border-t pt-4 space-y-1">
+        <p className="font-medium">Bristol Stool Chart</p>
+        <p>Developed by Heaton KW & Lewis SJ, University of Bristol.</p>
+        <p className="italic">
+          Lewis SJ, Heaton KW. Stool Form Scale as a Useful Guide to Intestinal Transit Time. 
+          Scandinavian Journal of Gastroenterology, 1997;32(9):920–924.
+        </p>
+      </div>
+
       {/* Dialogs */}
       <BowelLogForm
         clientId={clientId}
         open={showLogForm}
         onOpenChange={setShowLogForm}
-      />
-
-      <EscalationDialog
-        clientId={clientId}
-        reason="Staff member concerned about bowel health"
-        open={showEscalation}
-        onOpenChange={setShowEscalation}
       />
     </div>
   );
