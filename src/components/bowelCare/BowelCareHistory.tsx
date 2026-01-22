@@ -8,8 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format, formatDistanceToNow } from 'date-fns';
 import { BRISTOL_TYPES, STOOL_SIZES } from '@/types/bowelCare';
-import { Clock, User, Edit } from 'lucide-react';
+import { Clock, Edit } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { StoolIllustration } from './StoolIllustration';
 
 interface BowelCareHistoryProps {
   clientId: string;
@@ -74,13 +75,13 @@ export function BowelCareHistory({ clientId }: BowelCareHistoryProps) {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3">
                         <div className={cn(
-                          'w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg',
-                          isNoMovement && 'bg-muted text-muted-foreground',
-                          isConstipation && 'bg-amber-100 text-amber-700',
-                          isNormal && 'bg-green-100 text-green-700',
-                          isDiarrhoea && 'bg-orange-100 text-orange-700',
+                          'w-14 h-10 rounded-lg flex items-center justify-center p-1',
+                          isNoMovement && 'bg-slate-100',
+                          isConstipation && 'bg-amber-50',
+                          isNormal && 'bg-green-50',
+                          isDiarrhoea && 'bg-orange-50',
                         )}>
-                          {log.bristol_type === 0 ? '∅' : log.bristol_type}
+                          <StoolIllustration type={log.bristol_type} />
                         </div>
                         <div>
                           <div className="font-medium">
