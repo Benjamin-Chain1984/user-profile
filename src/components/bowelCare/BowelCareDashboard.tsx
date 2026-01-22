@@ -13,6 +13,7 @@ import { BowelCareHistory } from './BowelCareHistory';
 import { BowelCareTrends } from './BowelCareTrends';
 import { PrnWorkflowCard } from './PrnWorkflowCard';
 import { BowelCareConfigSettings } from './BowelCareConfigSettings';
+import { BowelCareExportReports } from './BowelCareExportReports';
 import { useBowelCareStatus } from '@/hooks/useBowelCare';
 import { 
   Plus, 
@@ -25,7 +26,8 @@ import {
   Activity,
   Moon,
   Thermometer,
-  Heart
+  Heart,
+  FileDown
 } from 'lucide-react';
 
 interface BowelCareDashboardProps {
@@ -90,7 +92,13 @@ const BOWEL_CARE_TIPS = [
 
 export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
   const [showLogForm, setShowLogForm] = useState(false);
+  const [showExport, setShowExport] = useState(false);
   const statusInfo = useBowelCareStatus(clientId);
+
+  // Show export view
+  if (showExport) {
+    return <BowelCareExportReports clientId={clientId} onClose={() => setShowExport(false)} />;
+  }
 
   return (
     <div className="space-y-6">
@@ -102,10 +110,16 @@ export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
             Track bowel movements and manage PRN laxatives
           </p>
         </div>
-        <Button onClick={() => setShowLogForm(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Log Bowel Entry
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowExport(true)}>
+            <FileDown className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+          <Button onClick={() => setShowLogForm(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Log Bowel Entry
+          </Button>
+        </div>
       </div>
 
       {/* Mandatory Disclaimer */}
