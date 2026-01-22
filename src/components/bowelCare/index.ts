@@ -3,6 +3,7 @@
  */
 
 export { BowelCareDashboard } from './BowelCareDashboard';
+export { BowelCareExportReports } from './BowelCareExportReports';
 export { BowelCareStatusCard } from './BowelCareStatusCard';
 export { BowelLogForm } from './BowelLogForm';
 export { BowelCareHistory } from './BowelCareHistory';
