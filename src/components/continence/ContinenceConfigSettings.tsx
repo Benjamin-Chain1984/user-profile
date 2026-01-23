@@ -33,8 +33,8 @@ interface ContinenceConfigSettingsProps {
 
 export function ContinenceConfigSettings({ clientId }: ContinenceConfigSettingsProps) {
   const { config, loading, updateConfig } = useContinenceConfig(clientId);
-  const { userRoles } = useAuth();
-  const isAdmin = userRoles.includes('admin');
+  const { hasRole } = useAuth();
+  const isAdmin = hasRole('admin');
 
   const [scheduleType, setScheduleType] = useState<ScheduleType>('as_required');
   const [fixedTimes, setFixedTimes] = useState<string[]>([]);
