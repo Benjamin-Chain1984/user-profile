@@ -50,8 +50,8 @@ export interface GlobalAlertState {
 
 export const HEALTH_MODULES: Omit<HealthModule, 'enabled' | 'status' | 'lastEntry'>[] = [
   { id: 'constipation', name: 'Bowel Care', description: 'Track bowel movements and patterns' },
+  { id: 'catheter', name: 'Urinary Catheter Management', description: 'Catheter care and monitoring' },
   { id: 'continence', name: 'Continence Management', description: 'Monitor pad changes and skin integrity' },
-  { id: 'continence', name: 'Continence Management', description: 'Monitor bladder and bowel control' },
   { id: 'diabetes', name: 'Diabetes', description: 'Blood glucose monitoring and management' },
   { id: 'enteral', name: 'Enteral Nutrition', description: 'Tube feeding management and tracking' },
   { id: 'epilepsy', name: 'Epilepsy & Seizures', description: 'Seizure tracking and patterns' },
@@ -64,7 +64,6 @@ export const HEALTH_MODULES: Omit<HealthModule, 'enabled' | 'status' | 'lastEntr
   { id: 'pain-check', name: 'Pain Assessment', description: 'Pain assessment and monitoring' },
   { id: 'pressure-area', name: 'Pressure Area Prevention', description: 'Skin integrity and repositioning' },
   { id: 'sleep', name: 'Sleep Chart', description: 'Sleep patterns and quality tracking' },
-  { id: 'catheter', name: 'Urinary Catheter Management', description: 'Catheter care and monitoring' },
   { id: 'weight', name: 'Weight', description: 'Weight tracking and trends' },
 ];
 
