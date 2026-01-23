@@ -604,6 +604,385 @@ export type Database = {
         }
         Relationships: []
       }
+      continence_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          resolved_at: string | null
+          resolved_by: string | null
+          resolved_reason: string | null
+          severity: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_reason?: string | null
+          severity?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_reason?: string | null
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "continence_alerts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      continence_config: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          enable_consumables_monitoring: boolean
+          enable_hydration_link: boolean
+          enable_uti_testing: boolean
+          escalation_recipients: string[]
+          fixed_times: string[] | null
+          id: string
+          interval_hours: number | null
+          schedule_type: string
+          updated_at: string
+          updated_by: string | null
+          uti_testing_frequency: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          enable_consumables_monitoring?: boolean
+          enable_hydration_link?: boolean
+          enable_uti_testing?: boolean
+          escalation_recipients?: string[]
+          fixed_times?: string[] | null
+          id?: string
+          interval_hours?: number | null
+          schedule_type?: string
+          updated_at?: string
+          updated_by?: string | null
+          uti_testing_frequency?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          enable_consumables_monitoring?: boolean
+          enable_hydration_link?: boolean
+          enable_uti_testing?: boolean
+          escalation_recipients?: string[]
+          fixed_times?: string[] | null
+          id?: string
+          interval_hours?: number | null
+          schedule_type?: string
+          updated_at?: string
+          updated_by?: string | null
+          uti_testing_frequency?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "continence_config_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      continence_consumables_checks: {
+        Row: {
+          barrier_creams_level: string
+          check_date: string
+          cleansing_products_level: string
+          client_id: string | null
+          continence_pads_level: string
+          created_at: string
+          created_by: string | null
+          disposable_sheets_level: string
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          gloves_wipes_level: string
+          id: string
+          notes: string | null
+        }
+        Insert: {
+          barrier_creams_level: string
+          check_date?: string
+          cleansing_products_level: string
+          client_id?: string | null
+          continence_pads_level: string
+          created_at?: string
+          created_by?: string | null
+          disposable_sheets_level: string
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          gloves_wipes_level: string
+          id?: string
+          notes?: string | null
+        }
+        Update: {
+          barrier_creams_level?: string
+          check_date?: string
+          cleansing_products_level?: string
+          client_id?: string | null
+          continence_pads_level?: string
+          created_at?: string
+          created_by?: string | null
+          disposable_sheets_level?: string
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          gloves_wipes_level?: string
+          id?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "continence_consumables_checks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      continence_pad_changes: {
+        Row: {
+          change_reason: string
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          event_occurred_at: string
+          id: string
+          notes: string | null
+          pad_condition: string
+          pad_type: string
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
+        }
+        Insert: {
+          change_reason: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          id?: string
+          notes?: string | null
+          pad_condition: string
+          pad_type: string
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
+        }
+        Update: {
+          change_reason?: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          id?: string
+          notes?: string | null
+          pad_condition?: string
+          pad_type?: string
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "continence_pad_changes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      continence_skin_checks: {
+        Row: {
+          areas_checked: string[]
+          barrier_cream_applied: string
+          body_map_markers: Json | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          discomfort_level: string
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          escalated_to_clinician: boolean
+          escalation_notes: string | null
+          event_occurred_at: string
+          id: string
+          moisture_status: string
+          notes: string | null
+          pad_change_id: string | null
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
+          skin_condition: string
+        }
+        Insert: {
+          areas_checked?: string[]
+          barrier_cream_applied?: string
+          body_map_markers?: Json | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          discomfort_level?: string
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          escalated_to_clinician?: boolean
+          escalation_notes?: string | null
+          event_occurred_at?: string
+          id?: string
+          moisture_status: string
+          notes?: string | null
+          pad_change_id?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
+          skin_condition: string
+        }
+        Update: {
+          areas_checked?: string[]
+          barrier_cream_applied?: string
+          body_map_markers?: Json | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          discomfort_level?: string
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          escalated_to_clinician?: boolean
+          escalation_notes?: string | null
+          event_occurred_at?: string
+          id?: string
+          moisture_status?: string
+          notes?: string | null
+          pad_change_id?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
+          skin_condition?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "continence_skin_checks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "continence_skin_checks_pad_change_id_fkey"
+            columns: ["pad_change_id"]
+            isOneToOne: false
+            referencedRelation: "continence_pad_changes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      continence_uti_tests: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          escalated_to: string | null
+          id: string
+          notes: string | null
+          symptoms: string[]
+          test_date: string
+          test_result: string
+          test_time: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          escalated_to?: string | null
+          id?: string
+          notes?: string | null
+          symptoms?: string[]
+          test_date?: string
+          test_result: string
+          test_time?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          escalated_to?: string | null
+          id?: string
+          notes?: string | null
+          symptoms?: string[]
+          test_date?: string
+          test_result?: string
+          test_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "continence_uti_tests_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pain_action_records: {
         Row: {
           action_taken: string
