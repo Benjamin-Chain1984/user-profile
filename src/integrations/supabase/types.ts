@@ -193,6 +193,7 @@ export type Database = {
           resolution_notes: string | null
           resolved_at: string | null
           resolved_by: string | null
+          resolved_reason: string | null
           severity: string
         }
         Insert: {
@@ -208,6 +209,7 @@ export type Database = {
           resolution_notes?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
+          resolved_reason?: string | null
           severity?: string
         }
         Update: {
@@ -223,6 +225,7 @@ export type Database = {
           resolution_notes?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
+          resolved_reason?: string | null
           severity?: string
         }
         Relationships: [
@@ -242,6 +245,7 @@ export type Database = {
           created_by: string | null
           diarrhoea_hours_window: number
           diarrhoea_type67_count_threshold: number
+          enable_log_on_behalf: boolean
           escalation_recipients: string[]
           id: string
           max_prn_doses_in_window: number
@@ -260,6 +264,7 @@ export type Database = {
           created_by?: string | null
           diarrhoea_hours_window?: number
           diarrhoea_type67_count_threshold?: number
+          enable_log_on_behalf?: boolean
           escalation_recipients?: string[]
           id?: string
           max_prn_doses_in_window?: number
@@ -278,6 +283,7 @@ export type Database = {
           created_by?: string | null
           diarrhoea_hours_window?: number
           diarrhoea_type67_count_threshold?: number
+          enable_log_on_behalf?: boolean
           escalation_recipients?: string[]
           id?: string
           max_prn_doses_in_window?: number
@@ -373,10 +379,14 @@ export type Database = {
           edited_at: string | null
           edited_by: string | null
           entry_time: string
+          event_occurred_at: string | null
           id: string
           indicators: Json | null
           notes: string | null
           observed_status: string
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
           stool_size: string | null
         }
         Insert: {
@@ -388,10 +398,14 @@ export type Database = {
           edited_at?: string | null
           edited_by?: string | null
           entry_time?: string
+          event_occurred_at?: string | null
           id?: string
           indicators?: Json | null
           notes?: string | null
           observed_status?: string
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           stool_size?: string | null
         }
         Update: {
@@ -403,10 +417,14 @@ export type Database = {
           edited_at?: string | null
           edited_by?: string | null
           entry_time?: string
+          event_occurred_at?: string | null
           id?: string
           indicators?: Json | null
           notes?: string | null
           observed_status?: string
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           stool_size?: string | null
         }
         Relationships: [

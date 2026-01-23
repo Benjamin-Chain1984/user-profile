@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useBowelLogs, usePrnAdministrations, useBowelCareConfig } from '@/hooks/useBowelCare';
-import { BowelLogEntry, PrnAdministration, BRISTOL_TYPES, STOOL_SIZES } from '@/types/bowelCare';
+import { BowelLogEntry, PrnAdministration, BRISTOL_TYPES, STOOL_SIZES, STAFF_ROLES, ON_BEHALF_REASONS } from '@/types/bowelCare';
 import { format, isWithinInterval, startOfDay, endOfDay, subDays, subMonths, subYears } from 'date-fns';
 import { CalendarIcon, FileDown, FileText, Table, ArrowLeft, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -154,6 +154,16 @@ export function BowelCareExportReports({ clientId, onClose }: BowelCareExportRep
     return STOOL_SIZES.find(s => s.value === size)?.label || size;
   };
 
+  const getRoleLabel = (role: string | null) => {
+    if (!role) return '';
+    return STAFF_ROLES.find(r => r.value === role)?.label || role;
+  };
+
+  const getReasonLabel = (reason: string | null) => {
+    if (!reason) return '';
+    return ON_BEHALF_REASONS.find(r => r.value === reason)?.label || reason;
+  };
+
   const generateCSV = () => {
     if (!exportData) return;
     setExporting(true);
@@ -164,8 +174,12 @@ export function BowelCareExportReports({ clientId, onClose }: BowelCareExportRep
       // Header for Bowel Logs
       rows.push(['--- BOWEL LOG ENTRIES ---']);
       rows.push([
-        'Date/Time',
-        'Staff Member',
+        'Event Date/Time',
+        'Recorded At',
+        'Recorded By',
+        'Recorded On Behalf Of',
+        'On Behalf Role',
+        'On Behalf Reason',
         'Bristol Type',
         'Bristol Name',
         'Stool Size',
@@ -184,10 +198,15 @@ export function BowelCareExportReports({ clientId, onClose }: BowelCareExportRep
       exportData.logs.forEach(log => {
         const staffName = log.created_by ? exportData.profiles[log.created_by] || 'Unknown' : 'Unknown';
         const indicators = log.indicators || {};
+        const eventTime = log.event_occurred_at || log.entry_time;
 
         rows.push([
-          format(new Date(log.entry_time), 'yyyy-MM-dd HH:mm'),
+          format(new Date(eventTime), 'yyyy-MM-dd HH:mm'),
+          format(new Date(log.created_at), 'yyyy-MM-dd HH:mm'),
           staffName,
+          log.recorded_on_behalf_of_name || '',
+          getRoleLabel(log.recorded_on_behalf_of_role),
+          getReasonLabel(log.recorded_on_behalf_of_reason),
           log.bristol_type.toString(),
           getBristolLabel(log.bristol_type),
           getSizeLabel(log.stool_size),
@@ -400,20 +419,42 @@ export function BowelCareExportReports({ clientId, onClose }: BowelCareExportRep
       yPos += 10;
 
       exportData.logs.forEach((log, index) => {
-        checkPageBreak(35);
+        checkPageBreak(45);
 
         const staffName = log.created_by ? exportData.profiles[log.created_by] || 'Unknown' : 'Unknown';
         const indicators = log.indicators || {};
+        const eventTime = log.event_occurred_at || log.entry_time;
+        const isOnBehalfOf = !!log.recorded_on_behalf_of_name;
 
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
-        doc.text(`Entry ${index + 1} - ${format(new Date(log.entry_time), 'PPp')}`, margin, yPos);
+        doc.text(`Entry ${index + 1} - ${format(new Date(eventTime), 'PPp')}`, margin, yPos);
         yPos += 5;
 
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Staff: ${staffName}`, margin, yPos);
-        yPos += 4;
+        
+        // On Behalf Of attribution
+        if (isOnBehalfOf) {
+          doc.setFont('helvetica', 'italic');
+          doc.text(`Recorded on behalf of: ${log.recorded_on_behalf_of_name}`, margin, yPos);
+          yPos += 4;
+          if (log.recorded_on_behalf_of_role) {
+            doc.text(`  Role: ${getRoleLabel(log.recorded_on_behalf_of_role)}`, margin, yPos);
+            yPos += 4;
+          }
+          if (log.recorded_on_behalf_of_reason) {
+            doc.text(`  Reason: ${getReasonLabel(log.recorded_on_behalf_of_reason)}`, margin, yPos);
+            yPos += 4;
+          }
+          doc.setFont('helvetica', 'normal');
+          doc.text(`Recorded by: ${staffName}`, margin, yPos);
+          yPos += 4;
+        } else {
+          doc.text(`Staff: ${staffName}`, margin, yPos);
+          yPos += 4;
+        }
+        
         doc.text(`Bristol Type ${log.bristol_type}: ${getBristolLabel(log.bristol_type)}`, margin, yPos);
         yPos += 4;
         if (log.stool_size) {
