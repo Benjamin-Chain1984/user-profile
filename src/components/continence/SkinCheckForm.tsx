@@ -14,7 +14,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import {
   Select,
@@ -24,9 +23,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSkinChecks } from '@/hooks/useContinence';
+import { BodyMapMarker } from './BodyMapMarker';
 import {
-  SKIN_AREAS,
   SKIN_CONDITIONS,
   MOISTURE_STATUSES,
   DISCOMFORT_LEVELS,
@@ -36,8 +36,9 @@ import {
   MoistureStatus,
   DiscomfortLevel,
   BarrierCreamStatus,
+  BodyMapMarker as BodyMapMarkerType,
 } from '@/types/continence';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, List, MapPin } from 'lucide-react';
 
 interface SkinCheckFormProps {
   clientId?: string;
@@ -57,6 +58,7 @@ export function SkinCheckForm({
   const { addCheck } = useSkinChecks(clientId);
 
   const [areasChecked, setAreasChecked] = useState<SkinArea[]>([]);
+  const [bodyMapMarkers, setBodyMapMarkers] = useState<BodyMapMarkerType[]>([]);
   const [skinCondition, setSkinCondition] = useState<SkinCondition>('clear');
   const [moistureStatus, setMoistureStatus] = useState<MoistureStatus>('dry');
   const [discomfortLevel, setDiscomfortLevel] = useState<DiscomfortLevel>('unknown');
@@ -65,14 +67,9 @@ export function SkinCheckForm({
   const [escalationNotes, setEscalationNotes] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState<'bodymap' | 'details'>('bodymap');
 
   const requiresEscalation = ['broken_skin', 'fungal_signs'].includes(skinCondition);
-
-  const toggleArea = (area: SkinArea) => {
-    setAreasChecked((prev) =>
-      prev.includes(area) ? prev.filter((a) => a !== area) : [...prev, area]
-    );
-  };
 
   const handleSubmit = async () => {
     if (areasChecked.length === 0) return;
@@ -88,6 +85,7 @@ export function SkinCheckForm({
         barrier_cream_applied: barrierCream,
         escalated_to_clinician: escalated,
         escalation_notes: escalated ? escalationNotes : undefined,
+        body_map_markers: bodyMapMarkers,
         notes: notes || undefined,
       });
 
@@ -101,6 +99,7 @@ export function SkinCheckForm({
 
   const resetForm = () => {
     setAreasChecked([]);
+    setBodyMapMarkers([]);
     setSkinCondition('clear');
     setMoistureStatus('dry');
     setDiscomfortLevel('unknown');
@@ -108,11 +107,12 @@ export function SkinCheckForm({
     setEscalated(false);
     setEscalationNotes('');
     setNotes('');
+    setActiveTab('bodymap');
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Skin Integrity Check</DialogTitle>
           <DialogDescription>
@@ -120,31 +120,28 @@ export function SkinCheckForm({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          {/* Areas Checked */}
-          <div className="space-y-2">
-            <Label>Areas Checked <span className="text-destructive">*</span></Label>
-            <div className="grid grid-cols-2 gap-2">
-              {SKIN_AREAS.map((area) => (
-                <div
-                  key={area.value}
-                  className={`flex items-center space-x-2 p-3 rounded-lg border cursor-pointer transition-colors ${
-                    areasChecked.includes(area.value)
-                      ? 'bg-primary/10 border-primary'
-                      : 'hover:bg-muted'
-                  }`}
-                  onClick={() => toggleArea(area.value)}
-                >
-                  <Checkbox
-                    checked={areasChecked.includes(area.value)}
-                    onCheckedChange={() => toggleArea(area.value)}
-                  />
-                  <span className="text-sm">{area.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'bodymap' | 'details')}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="bodymap" className="gap-2">
+              <MapPin className="h-4 w-4" />
+              Body Map
+            </TabsTrigger>
+            <TabsTrigger value="details" className="gap-2">
+              <List className="h-4 w-4" />
+              Details
+            </TabsTrigger>
+          </TabsList>
 
+          <TabsContent value="bodymap" className="mt-4">
+            <BodyMapMarker
+              markers={bodyMapMarkers}
+              onMarkersChange={setBodyMapMarkers}
+              selectedAreas={areasChecked}
+              onAreasChange={setAreasChecked}
+            />
+          </TabsContent>
+
+          <TabsContent value="details" className="mt-4 space-y-6">
           {/* Skin Condition */}
           <div className="space-y-2">
             <Label>Skin Condition</Label>
@@ -273,7 +270,8 @@ export function SkinCheckForm({
               rows={3}
             />
           </div>
-        </div>
+          </TabsContent>
+        </Tabs>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
