@@ -1,5 +1,6 @@
 /**
  * Bowel Care History - Log entries timeline
+ * Shows "Recorded on Behalf Of" attribution when applicable
  */
 
 import { useBowelLogs } from '@/hooks/useBowelCare';
@@ -7,8 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format, formatDistanceToNow } from 'date-fns';
-import { BRISTOL_TYPES, STOOL_SIZES } from '@/types/bowelCare';
-import { Clock, Edit } from 'lucide-react';
+import { BRISTOL_TYPES, STOOL_SIZES, STAFF_ROLES, ON_BEHALF_REASONS } from '@/types/bowelCare';
+import { Clock, Edit, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { StoolIllustration } from './StoolIllustration';
 
@@ -18,6 +19,16 @@ interface BowelCareHistoryProps {
 
 export function BowelCareHistory({ clientId }: BowelCareHistoryProps) {
   const { logs, isLoading } = useBowelLogs(clientId, 30);
+
+  const getRoleLabel = (role: string | null) => {
+    if (!role) return null;
+    return STAFF_ROLES.find(r => r.value === role)?.label || role;
+  };
+
+  const getReasonLabel = (reason: string | null) => {
+    if (!reason) return null;
+    return ON_BEHALF_REASONS.find(r => r.value === reason)?.label || reason;
+  };
 
   if (isLoading) {
     return (
@@ -60,6 +71,8 @@ export function BowelCareHistory({ clientId }: BowelCareHistoryProps) {
                 const isConstipation = log.bristol_type >= 1 && log.bristol_type <= 2;
                 const isNormal = log.bristol_type >= 3 && log.bristol_type <= 5;
                 const isDiarrhoea = log.bristol_type >= 6 && log.bristol_type <= 7;
+                const isOnBehalfOf = !!log.recorded_on_behalf_of_name;
+                const eventTime = log.event_occurred_at || log.entry_time;
 
                 return (
                   <div
@@ -72,6 +85,25 @@ export function BowelCareHistory({ clientId }: BowelCareHistoryProps) {
                       isDiarrhoea && 'bg-orange-50 border-orange-200',
                     )}
                   >
+                    {/* On Behalf Of indicator */}
+                    {isOnBehalfOf && (
+                      <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-md flex items-start gap-2">
+                        <Users className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
+                        <div className="text-xs text-blue-800">
+                          <span className="font-medium">On behalf of:</span>{' '}
+                          {log.recorded_on_behalf_of_name}
+                          {log.recorded_on_behalf_of_role && (
+                            <span className="text-blue-600"> ({getRoleLabel(log.recorded_on_behalf_of_role)})</span>
+                          )}
+                          {log.recorded_on_behalf_of_reason && (
+                            <span className="block text-blue-600 mt-0.5">
+                              Reason: {getReasonLabel(log.recorded_on_behalf_of_reason)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3">
                         <div className={cn(
@@ -88,7 +120,7 @@ export function BowelCareHistory({ clientId }: BowelCareHistoryProps) {
                             {bristolInfo?.name || `Type ${log.bristol_type}`}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            {format(new Date(log.entry_time), 'EEE, d MMM yyyy • HH:mm')}
+                            {format(new Date(eventTime), 'EEE, d MMM yyyy • HH:mm')}
                           </div>
                           {!isNoMovement && sizeInfo && (
                             <div className="text-sm text-muted-foreground mt-1">
@@ -99,13 +131,21 @@ export function BowelCareHistory({ clientId }: BowelCareHistoryProps) {
                       </div>
 
                       <div className="text-right">
-                        <Badge variant="outline" className="text-xs">
-                          {log.observed_status === 'observed' && 'Observed'}
-                          {log.observed_status === 'self_reported' && 'Self-reported'}
-                          {log.observed_status === 'not_observed' && 'Not observed'}
-                        </Badge>
+                        <div className="flex flex-wrap gap-1 justify-end">
+                          <Badge variant="outline" className="text-xs">
+                            {log.observed_status === 'observed' && 'Observed'}
+                            {log.observed_status === 'self_reported' && 'Self-reported'}
+                            {log.observed_status === 'not_observed' && 'Not observed'}
+                          </Badge>
+                          {isOnBehalfOf && (
+                            <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
+                              <Users className="h-3 w-3 mr-1" />
+                              On behalf
+                            </Badge>
+                          )}
+                        </div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          {formatDistanceToNow(new Date(log.entry_time), { addSuffix: true })}
+                          {formatDistanceToNow(new Date(eventTime), { addSuffix: true })}
                         </div>
                       </div>
                     </div>

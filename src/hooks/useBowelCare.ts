@@ -31,6 +31,7 @@ const DEFAULT_CONFIG: Partial<BowelCareConfig> = {
   diarrhoea_type67_count_threshold: 3,
   diarrhoea_hours_window: 48,
   escalation_recipients: ['supervisor', 'nurse'],
+  enable_log_on_behalf: false,
 };
 
 export function useBowelCareConfig(clientId?: string) {
@@ -223,7 +224,7 @@ export function useBowelLogs(clientId?: string, limit = 50) {
       let query = supabase
         .from('bowel_log_entries')
         .select('*')
-        .order('entry_time', { ascending: false })
+        .order('event_occurred_at', { ascending: false })
         .limit(limit);
       
       if (clientId) {
@@ -250,6 +251,10 @@ export function useBowelLogs(clientId?: string, limit = 50) {
           observed_status: entry.observed_status || 'observed',
           indicators: JSON.parse(JSON.stringify(entry.indicators || {})),
           notes: entry.notes,
+          event_occurred_at: entry.event_occurred_at || new Date().toISOString(),
+          recorded_on_behalf_of_name: entry.recorded_on_behalf_of_name || null,
+          recorded_on_behalf_of_role: entry.recorded_on_behalf_of_role || null,
+          recorded_on_behalf_of_reason: entry.recorded_on_behalf_of_reason || null,
           client_id: clientId,
           created_by: user.id,
         }])
@@ -262,6 +267,7 @@ export function useBowelLogs(clientId?: string, limit = 50) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bowelLogs', clientId] });
       queryClient.invalidateQueries({ queryKey: ['bowelCareStatus', clientId] });
+      queryClient.invalidateQueries({ queryKey: ['bowelCareAlerts', clientId] });
       toast({ title: 'Entry logged', description: 'Bowel movement has been recorded.' });
     },
     onError: (error) => {
@@ -525,10 +531,10 @@ export function useBowelCareStatus(clientId?: string) {
       return;
     }
 
-    // Find last actual bowel movement (not type 0)
+    // Find last actual bowel movement (not type 0) - use event_occurred_at for algorithm
     const lastBm = logs.find(l => l.bristol_type > 0);
     const daysSinceLastBm = lastBm
-      ? Math.floor((Date.now() - new Date(lastBm.entry_time).getTime()) / (1000 * 60 * 60 * 24))
+      ? Math.floor((Date.now() - new Date(lastBm.event_occurred_at || lastBm.entry_time).getTime()) / (1000 * 60 * 60 * 24))
       : null;
 
     // Check for constipation threshold
@@ -540,9 +546,10 @@ export function useBowelCareStatus(clientId?: string) {
       recentActualBMs.length >= config.type1_consecutive_days_threshold &&
       recentActualBMs.every(l => l.bristol_type === 1);
 
-    // Check for diarrhoea (Type 6-7)
+    // Check for diarrhoea (Type 6-7) - use event_occurred_at for timing
     const recentDiarrhoea = logs.filter(l => {
-      const hoursDiff = (Date.now() - new Date(l.entry_time).getTime()) / (1000 * 60 * 60);
+      const eventTime = new Date(l.event_occurred_at || l.entry_time).getTime();
+      const hoursDiff = (Date.now() - eventTime) / (1000 * 60 * 60);
       return (l.bristol_type === 6 || l.bristol_type === 7) && hoursDiff <= config.diarrhoea_hours_window;
     });
     const diarrhoeaThresholdMet = recentDiarrhoea.length >= config.diarrhoea_type67_count_threshold;

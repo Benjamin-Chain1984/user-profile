@@ -15,6 +15,7 @@ export interface BowelCareConfig {
   diarrhoea_type67_count_threshold: number;
   diarrhoea_hours_window: number;
   escalation_recipients: string[];
+  enable_log_on_behalf: boolean;
   created_at: string;
   created_by: string | null;
   updated_at: string;
@@ -45,12 +46,31 @@ export interface BowelLogEntry {
   indicators: BowelIndicators;
   notes: string | null;
   entry_time: string;
+  event_occurred_at: string;
+  recorded_on_behalf_of_name: string | null;
+  recorded_on_behalf_of_role: string | null;
+  recorded_on_behalf_of_reason: string | null;
   created_at: string;
   created_by: string | null;
   edited_at: string | null;
   edited_by: string | null;
   edit_reason: string | null;
 }
+
+export const ON_BEHALF_REASONS = [
+  { value: 'forgot_login', label: 'Forgot to log in' },
+  { value: 'not_registered', label: 'Not a registered user' },
+  { value: 'retrospective', label: 'Retrospective entry' },
+  { value: 'other', label: 'Other' },
+] as const;
+
+export const STAFF_ROLES = [
+  { value: 'support_worker', label: 'Support Worker' },
+  { value: 'agency_staff', label: 'Agency Staff' },
+  { value: 'family', label: 'Family Member' },
+  { value: 'nurse', label: 'Nurse' },
+  { value: 'other', label: 'Other' },
+] as const;
 
 export interface BowelIndicators {
   pain?: 'none' | 'mild' | 'moderate' | 'severe';
@@ -95,6 +115,7 @@ export interface BowelCareAlert {
   resolved_at: string | null;
   resolved_by: string | null;
   resolution_notes: string | null;
+  resolved_reason: string | null;
   created_at: string;
   created_by: string | null;
 }

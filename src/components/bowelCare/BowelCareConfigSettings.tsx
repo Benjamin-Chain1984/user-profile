@@ -25,9 +25,10 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { RestrictedSection } from '@/components/ui/restricted-section';
+import { Switch } from '@/components/ui/switch';
 import { useBowelCareConfig, usePrnMedications } from '@/hooks/useBowelCare';
 import { useAuth } from '@/contexts/AuthContext';
-import { Settings, Pill, AlertTriangle, Plus, Trash2, Loader2 } from 'lucide-react';
+import { Settings, Pill, AlertTriangle, Plus, Trash2, Loader2, Users } from 'lucide-react';
 import type { BowelCareConfig, PrnMedication } from '@/types/bowelCare';
 
 interface BowelCareConfigSettingsProps {
@@ -87,6 +88,48 @@ export function BowelCareConfigSettings({ clientId }: BowelCareConfigSettingsPro
           </p>
         </div>
       </div>
+
+      {/* Documentation Controls */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Documentation Controls
+          </CardTitle>
+          <CardDescription>
+            Configure logging options for staff documentation
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <RestrictedSection requiredRole="admin">
+            <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+              <div className="space-y-1">
+                <Label htmlFor="enable_log_on_behalf" className="font-medium">
+                  Enable "Log on Behalf of Another Staff Member"
+                </Label>
+                <p className="text-xs text-muted-foreground max-w-md">
+                  Use this option only when a staff member cannot log in themselves. 
+                  All entries will be clearly marked as recorded on behalf of another person.
+                </p>
+              </div>
+              <Switch
+                id="enable_log_on_behalf"
+                checked={localConfig.enable_log_on_behalf ?? false}
+                onCheckedChange={(checked) =>
+                  setLocalConfig({ ...localConfig, enable_log_on_behalf: checked })
+                }
+                disabled={!isAdmin}
+              />
+            </div>
+            {isAdmin && (
+              <Button onClick={handleSaveConfig} disabled={isUpdating} className="mt-4">
+                {isUpdating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Save Documentation Settings
+              </Button>
+            )}
+          </RestrictedSection>
+        </CardContent>
+      </Card>
 
       {/* Constipation Thresholds */}
       <Card>
