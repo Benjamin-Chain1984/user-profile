@@ -23,22 +23,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSkinChecks } from '@/hooks/useContinence';
-import { BodyMapMarker } from './BodyMapMarker';
 import {
   SKIN_CONDITIONS,
   MOISTURE_STATUSES,
   DISCOMFORT_LEVELS,
   BARRIER_CREAM_OPTIONS,
-  SkinArea,
   SkinCondition,
   MoistureStatus,
   DiscomfortLevel,
   BarrierCreamStatus,
-  BodyMapMarker as BodyMapMarkerType,
 } from '@/types/continence';
-import { AlertTriangle, List, MapPin } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 
 interface SkinCheckFormProps {
   clientId?: string;
@@ -57,8 +53,6 @@ export function SkinCheckForm({
 }: SkinCheckFormProps) {
   const { addCheck } = useSkinChecks(clientId);
 
-  const [areasChecked, setAreasChecked] = useState<SkinArea[]>([]);
-  const [bodyMapMarkers, setBodyMapMarkers] = useState<BodyMapMarkerType[]>([]);
   const [skinCondition, setSkinCondition] = useState<SkinCondition>('clear');
   const [moistureStatus, setMoistureStatus] = useState<MoistureStatus>('dry');
   const [discomfortLevel, setDiscomfortLevel] = useState<DiscomfortLevel>('unknown');
@@ -67,25 +61,21 @@ export function SkinCheckForm({
   const [escalationNotes, setEscalationNotes] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState<'bodymap' | 'details'>('bodymap');
 
   const requiresEscalation = ['broken_skin', 'fungal_signs'].includes(skinCondition);
 
   const handleSubmit = async () => {
-    if (areasChecked.length === 0) return;
-
     setIsSubmitting(true);
     try {
       await addCheck.mutateAsync({
         pad_change_id: padChangeId,
-        areas_checked: areasChecked,
+        areas_checked: ['perineum'],
         skin_condition: skinCondition,
         moisture_status: moistureStatus,
         discomfort_level: discomfortLevel,
         barrier_cream_applied: barrierCream,
         escalated_to_clinician: escalated,
         escalation_notes: escalated ? escalationNotes : undefined,
-        body_map_markers: bodyMapMarkers,
         notes: notes || undefined,
       });
 
@@ -98,8 +88,6 @@ export function SkinCheckForm({
   };
 
   const resetForm = () => {
-    setAreasChecked([]);
-    setBodyMapMarkers([]);
     setSkinCondition('clear');
     setMoistureStatus('dry');
     setDiscomfortLevel('unknown');
@@ -107,12 +95,11 @@ export function SkinCheckForm({
     setEscalated(false);
     setEscalationNotes('');
     setNotes('');
-    setActiveTab('bodymap');
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Skin Integrity Check</DialogTitle>
           <DialogDescription>
@@ -120,28 +107,7 @@ export function SkinCheckForm({
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'bodymap' | 'details')}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="bodymap" className="gap-2">
-              <MapPin className="h-4 w-4" />
-              Body Map
-            </TabsTrigger>
-            <TabsTrigger value="details" className="gap-2">
-              <List className="h-4 w-4" />
-              Details
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="bodymap" className="mt-4">
-            <BodyMapMarker
-              markers={bodyMapMarkers}
-              onMarkersChange={setBodyMapMarkers}
-              selectedAreas={areasChecked}
-              onAreasChange={setAreasChecked}
-            />
-          </TabsContent>
-
-          <TabsContent value="details" className="mt-4 space-y-6">
+        <div className="space-y-6 py-4">
           {/* Skin Condition */}
           <div className="space-y-2">
             <Label>Skin Condition</Label>
@@ -270,17 +236,13 @@ export function SkinCheckForm({
               rows={3}
             />
           </div>
-          </TabsContent>
-        </Tabs>
+        </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting || areasChecked.length === 0}
-          >
+          <Button onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting ? 'Saving...' : 'Save Skin Check'}
           </Button>
         </DialogFooter>
