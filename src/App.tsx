@@ -16,6 +16,7 @@ import AdminPage from "./pages/Admin";
 import ModulePlaceholder from "./pages/ModulePlaceholder";
 import PainCheckPage from "./pages/PainCheck";
 import BowelCarePage from "./pages/BowelCare";
+import ContinencePage from "./pages/Continence";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -71,6 +72,15 @@ const App = () => (
                 <ProtectedRoute>
                   <MainLayout>
                     <BowelCarePage />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Continence Management module */}
+              <Route path="/module/continence" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <ContinencePage />
                   </MainLayout>
                 </ProtectedRoute>
               } />

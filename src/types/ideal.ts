@@ -49,7 +49,8 @@ export interface GlobalAlertState {
 }
 
 export const HEALTH_MODULES: Omit<HealthModule, 'enabled' | 'status' | 'lastEntry'>[] = [
-  { id: 'constipation', name: 'Constipation', description: 'Track bowel movements and patterns' },
+  { id: 'constipation', name: 'Bowel Care', description: 'Track bowel movements and patterns' },
+  { id: 'continence', name: 'Continence Management', description: 'Monitor pad changes and skin integrity' },
   { id: 'continence', name: 'Continence Management', description: 'Monitor bladder and bowel control' },
   { id: 'diabetes', name: 'Diabetes', description: 'Blood glucose monitoring and management' },
   { id: 'enteral', name: 'Enteral Nutrition', description: 'Tube feeding management and tracking' },
