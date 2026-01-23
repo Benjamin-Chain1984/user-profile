@@ -565,6 +565,472 @@ export type Database = {
           },
         ]
       }
+      catheter_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          resolved_at: string | null
+          resolved_by: string | null
+          resolved_reason: string | null
+          severity: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_reason?: string | null
+          severity?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_reason?: string | null
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catheter_alerts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catheter_autonomic_risk_logs: {
+        Row: {
+          actions_taken: string[]
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          escalated: boolean
+          escalated_to: string | null
+          event_occurred_at: string
+          id: string
+          notes: string | null
+          outcome: string | null
+          symptoms: string[]
+        }
+        Insert: {
+          actions_taken?: string[]
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          escalated?: boolean
+          escalated_to?: string | null
+          event_occurred_at?: string
+          id?: string
+          notes?: string | null
+          outcome?: string | null
+          symptoms?: string[]
+        }
+        Update: {
+          actions_taken?: string[]
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          escalated?: boolean
+          escalated_to?: string | null
+          event_occurred_at?: string
+          id?: string
+          notes?: string | null
+          outcome?: string | null
+          symptoms?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catheter_autonomic_risk_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catheter_bag_change_logs: {
+        Row: {
+          bag_type: string
+          change_reason: string
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          event_occurred_at: string
+          id: string
+          notes: string | null
+        }
+        Insert: {
+          bag_type: string
+          change_reason: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          id?: string
+          notes?: string | null
+        }
+        Update: {
+          bag_type?: string
+          change_reason?: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          id?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catheter_bag_change_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catheter_change_logs: {
+        Row: {
+          catheter_size: string | null
+          catheter_type: Database["public"]["Enums"]["catheter_type"]
+          change_reason: string
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          event_occurred_at: string
+          id: string
+          notes: string | null
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
+        }
+        Insert: {
+          catheter_size?: string | null
+          catheter_type: Database["public"]["Enums"]["catheter_type"]
+          change_reason: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          id?: string
+          notes?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
+        }
+        Update: {
+          catheter_size?: string | null
+          catheter_type?: Database["public"]["Enums"]["catheter_type"]
+          change_reason?: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          id?: string
+          notes?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catheter_change_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catheter_config: {
+        Row: {
+          bag_types: string[]
+          catheter_size: string | null
+          catheter_type: Database["public"]["Enums"]["catheter_type"]
+          change_frequency_days: number | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          enable_autonomic_dysreflexia_risk: boolean
+          enable_flush_tracking: boolean
+          enable_stoma_checks: boolean
+          escalation_recipients: string[]
+          flush_frequency_hours: number | null
+          id: string
+          last_catheter_change: string | null
+          next_catheter_change_due: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          bag_types?: string[]
+          catheter_size?: string | null
+          catheter_type?: Database["public"]["Enums"]["catheter_type"]
+          change_frequency_days?: number | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          enable_autonomic_dysreflexia_risk?: boolean
+          enable_flush_tracking?: boolean
+          enable_stoma_checks?: boolean
+          escalation_recipients?: string[]
+          flush_frequency_hours?: number | null
+          id?: string
+          last_catheter_change?: string | null
+          next_catheter_change_due?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          bag_types?: string[]
+          catheter_size?: string | null
+          catheter_type?: Database["public"]["Enums"]["catheter_type"]
+          change_frequency_days?: number | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          enable_autonomic_dysreflexia_risk?: boolean
+          enable_flush_tracking?: boolean
+          enable_stoma_checks?: boolean
+          escalation_recipients?: string[]
+          flush_frequency_hours?: number | null
+          id?: string
+          last_catheter_change?: string | null
+          next_catheter_change_due?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catheter_config_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catheter_consumables_usage: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          item_type: string
+          month_year: string
+          notes: string | null
+          quantity_used: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_type: string
+          month_year: string
+          notes?: string | null
+          quantity_used?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_type?: string
+          month_year?: string
+          notes?: string | null
+          quantity_used?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catheter_consumables_usage_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catheter_flush_logs: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          event_occurred_at: string
+          flush_solution: string | null
+          flush_volume_ml: number | null
+          id: string
+          notes: string | null
+          output_description: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          flush_solution?: string | null
+          flush_volume_ml?: number | null
+          id?: string
+          notes?: string | null
+          output_description?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          flush_solution?: string | null
+          flush_volume_ml?: number | null
+          id?: string
+          notes?: string | null
+          output_description?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catheter_flush_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catheter_stoma_checks: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          escalated_to_clinician: boolean
+          escalation_notes: string | null
+          event_occurred_at: string
+          granulation: boolean
+          id: string
+          leaking: boolean
+          maceration: boolean
+          notes: string | null
+          pain: boolean
+          redness: boolean
+          stoma_condition: string
+          swelling: boolean
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          escalated_to_clinician?: boolean
+          escalation_notes?: string | null
+          event_occurred_at?: string
+          granulation?: boolean
+          id?: string
+          leaking?: boolean
+          maceration?: boolean
+          notes?: string | null
+          pain?: boolean
+          redness?: boolean
+          stoma_condition: string
+          swelling?: boolean
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          escalated_to_clinician?: boolean
+          escalation_notes?: string | null
+          event_occurred_at?: string
+          granulation?: boolean
+          id?: string
+          leaking?: boolean
+          maceration?: boolean
+          notes?: string | null
+          pain?: boolean
+          redness?: boolean
+          stoma_condition?: string
+          swelling?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catheter_stoma_checks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           created_at: string
@@ -1167,6 +1633,13 @@ export type Database = {
     }
     Enums: {
       app_role: "worker" | "team_leader" | "clinician" | "admin"
+      catheter_type:
+        | "spc"
+        | "idc"
+        | "balloon"
+        | "intermittent"
+        | "urostomy"
+        | "condom"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1295,6 +1768,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["worker", "team_leader", "clinician", "admin"],
+      catheter_type: [
+        "spc",
+        "idc",
+        "balloon",
+        "intermittent",
+        "urostomy",
+        "condom",
+      ],
     },
   },
 } as const
