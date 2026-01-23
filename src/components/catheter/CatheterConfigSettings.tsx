@@ -86,7 +86,7 @@ export function CatheterConfigSettings({ clientId }: CatheterConfigSettingsProps
 
   return (
     <div className="space-y-6">
-      <RestrictedSection requiredRole="admin" showWhenRestricted>
+      <RestrictedSection requiredRole="admin" message="Admin access required to configure catheter settings">
         <Card>
           <CardHeader>
             <CardTitle>Catheter Configuration</CardTitle>
