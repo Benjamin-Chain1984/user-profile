@@ -86,6 +86,15 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
+              {/* Urinary Catheter Management module */}
+              <Route path="/module/catheter" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <CatheterPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              
               {/* Module placeholder route for other modules */}
               <Route path="/module/:moduleId" element={
                 <ProtectedRoute>
