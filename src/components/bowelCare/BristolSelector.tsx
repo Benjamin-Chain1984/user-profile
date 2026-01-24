@@ -61,7 +61,7 @@ const BRISTOL_VISUALS: Record<number, {
     bgColorSelected: 'bg-green-200',
     borderColor: 'border-green-500',
     textColor: 'text-green-800', 
-    status: 'Ideal',
+    status: 'Normal',
     shortDesc: 'Smooth sausage'
   },
   5: { 
