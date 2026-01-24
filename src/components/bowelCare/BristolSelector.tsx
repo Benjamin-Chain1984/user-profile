@@ -1,11 +1,12 @@
 /**
- * Bristol Stool Chart Selector - Visual picker for stool types
+ * Bristol Stool Chart Selector - Interactive button-based picker for stool types
  * Based on the Bristol Stool Form Scale with clinical illustrations
+ * UI-only update: No changes to clinical logic, alerts, or data models
  */
 
 import { cn } from '@/lib/utils';
 import { BRISTOL_TYPES } from '@/types/bowelCare';
-import { Check } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { StoolIllustration } from './StoolIllustration';
 
 interface BristolSelectorProps {
@@ -14,65 +15,134 @@ interface BristolSelectorProps {
   disabled?: boolean;
 }
 
-// Visual representations for each Bristol type
-const BRISTOL_VISUALS: Record<number, { bgColor: string; textColor: string; status: string }> = {
-  0: { bgColor: 'bg-slate-100', textColor: 'text-slate-600', status: 'No movement' },
-  1: { bgColor: 'bg-red-100', textColor: 'text-red-700', status: 'Very constipated' },
-  2: { bgColor: 'bg-orange-100', textColor: 'text-orange-700', status: 'Slightly constipated' },
-  3: { bgColor: 'bg-green-100', textColor: 'text-green-700', status: 'Normal' },
-  4: { bgColor: 'bg-green-100', textColor: 'text-green-700', status: 'Normal / Ideal' },
-  5: { bgColor: 'bg-yellow-100', textColor: 'text-yellow-700', status: 'Lack of fiber' },
-  6: { bgColor: 'bg-orange-100', textColor: 'text-orange-700', status: 'Inflammation' },
-  7: { bgColor: 'bg-red-100', textColor: 'text-red-700', status: 'Diarrhoea' },
+// Visual representations for each Bristol type with clinical color coding
+const BRISTOL_VISUALS: Record<number, { 
+  bgColor: string; 
+  bgColorSelected: string;
+  borderColor: string;
+  textColor: string; 
+  status: string;
+  shortDesc: string;
+}> = {
+  0: { 
+    bgColor: 'bg-slate-50 hover:bg-slate-100', 
+    bgColorSelected: 'bg-slate-200',
+    borderColor: 'border-slate-300',
+    textColor: 'text-slate-700', 
+    status: 'No movement',
+    shortDesc: 'No bowel movement'
+  },
+  1: { 
+    bgColor: 'bg-red-50 hover:bg-red-100', 
+    bgColorSelected: 'bg-red-200',
+    borderColor: 'border-red-400',
+    textColor: 'text-red-800', 
+    status: 'Very constipated',
+    shortDesc: 'Hard pellets'
+  },
+  2: { 
+    bgColor: 'bg-orange-50 hover:bg-orange-100', 
+    bgColorSelected: 'bg-orange-200',
+    borderColor: 'border-orange-400',
+    textColor: 'text-orange-800', 
+    status: 'Slightly constipated',
+    shortDesc: 'Lumpy sausage'
+  },
+  3: { 
+    bgColor: 'bg-green-50 hover:bg-green-100', 
+    bgColorSelected: 'bg-green-200',
+    borderColor: 'border-green-500',
+    textColor: 'text-green-800', 
+    status: 'Normal',
+    shortDesc: 'Cracked sausage'
+  },
+  4: { 
+    bgColor: 'bg-green-50 hover:bg-green-100', 
+    bgColorSelected: 'bg-green-200',
+    borderColor: 'border-green-500',
+    textColor: 'text-green-800', 
+    status: 'Ideal',
+    shortDesc: 'Smooth sausage'
+  },
+  5: { 
+    bgColor: 'bg-yellow-50 hover:bg-yellow-100', 
+    bgColorSelected: 'bg-yellow-200',
+    borderColor: 'border-yellow-500',
+    textColor: 'text-yellow-800', 
+    status: 'Lack of fiber',
+    shortDesc: 'Soft blobs'
+  },
+  6: { 
+    bgColor: 'bg-orange-50 hover:bg-orange-100', 
+    bgColorSelected: 'bg-orange-200',
+    borderColor: 'border-orange-400',
+    textColor: 'text-orange-800', 
+    status: 'Inflammation',
+    shortDesc: 'Fluffy pieces'
+  },
+  7: { 
+    bgColor: 'bg-red-50 hover:bg-red-100', 
+    bgColorSelected: 'bg-red-200',
+    borderColor: 'border-red-400',
+    textColor: 'text-red-800', 
+    status: 'Diarrhoea',
+    shortDesc: 'Watery'
+  },
 };
 
 export function BristolSelector({ value, onChange, disabled }: BristolSelectorProps) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Select the stool type that best describes the bowel movement
+        Tap to select the stool type that best describes the bowel movement
       </p>
       
-      {/* Visual Bristol Chart Table */}
-      <div className="border rounded-xl overflow-hidden">
-        {/* Header */}
-        <div className="grid grid-cols-[70px_60px_1fr_100px] sm:grid-cols-[80px_80px_1fr_120px] bg-muted/50 border-b">
-          <div className="p-2 text-xs font-semibold text-center border-r">Type</div>
-          <div className="p-2 text-xs font-semibold text-center border-r">Image</div>
-          <div className="p-2 text-xs font-semibold border-r">Description</div>
-          <div className="p-2 text-xs font-semibold text-center">Status</div>
+      {/* Type 0 - No bowel movement (separate prominent button) */}
+      <button
+        type="button"
+        onClick={() => onChange(0)}
+        disabled={disabled}
+        aria-label="Type 0: No bowel movement"
+        aria-pressed={value === 0}
+        className={cn(
+          'w-full p-4 rounded-xl border-2 transition-all duration-200',
+          'flex items-center justify-between gap-4',
+          'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+          'disabled:opacity-50 disabled:cursor-not-allowed',
+          'touch-manipulation select-none',
+          value === 0 
+            ? cn(BRISTOL_VISUALS[0].bgColorSelected, BRISTOL_VISUALS[0].borderColor, 'ring-2 ring-primary')
+            : cn(BRISTOL_VISUALS[0].bgColor, 'border-slate-200')
+        )}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
+            <X className="w-6 h-6 text-slate-500" />
+          </div>
+          <div className="text-left">
+            <div className="font-semibold text-base">Type 0</div>
+            <div className="text-sm text-muted-foreground">Bowel not opened</div>
+          </div>
         </div>
-        
-        {/* Type 0 - Bowel not opened */}
-        <button
-          type="button"
-          onClick={() => onChange(0)}
-          disabled={disabled}
-          className={cn(
-            'w-full grid grid-cols-[70px_60px_1fr_100px] sm:grid-cols-[80px_80px_1fr_120px] border-b transition-all',
-            'hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed',
-            value === 0 && 'ring-2 ring-inset ring-primary bg-primary/5'
-          )}
-        >
-          <div className="p-2 flex items-center justify-center border-r bg-slate-100">
-            <div className="flex items-center gap-1">
-              <span className="text-xs font-bold">Type 0</span>
-              {value === 0 && <Check className="h-3 w-3 text-primary" />}
-            </div>
+        {value === 0 && (
+          <div className="flex-shrink-0">
+            <Check className="w-6 h-6 text-primary" />
           </div>
-          <div className="p-2 flex items-center justify-center border-r bg-slate-50">
-            <StoolIllustration type={0} />
-          </div>
-          <div className="p-2 text-left border-r">
-            <div className="font-medium text-sm">Bowel not opened</div>
-            <div className="text-xs text-muted-foreground">No bowel movement recorded</div>
-          </div>
-          <div className={cn('p-2 flex items-center justify-center text-xs font-medium', BRISTOL_VISUALS[0].bgColor, BRISTOL_VISUALS[0].textColor)}>
-            No movement
-          </div>
-        </button>
-        
-        {/* Types 1-7 */}
+        )}
+      </button>
+
+      {/* Divider */}
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-muted" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">Bristol Stool Types</span>
+        </div>
+      </div>
+
+      {/* Types 1-7 Button Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {BRISTOL_TYPES.filter(b => b.type > 0).map((bristol) => {
           const visual = BRISTOL_VISUALS[bristol.type];
           const isSelected = value === bristol.type;
@@ -83,41 +153,44 @@ export function BristolSelector({ value, onChange, disabled }: BristolSelectorPr
               type="button"
               onClick={() => onChange(bristol.type)}
               disabled={disabled}
+              aria-label={`Type ${bristol.type}: ${bristol.name}. ${bristol.description}`}
+              aria-pressed={isSelected}
               className={cn(
-                'w-full grid grid-cols-[70px_60px_1fr_100px] sm:grid-cols-[80px_80px_1fr_120px] border-b last:border-b-0 transition-all',
-                'hover:bg-muted/30 disabled:opacity-50 disabled:cursor-not-allowed',
-                isSelected && 'ring-2 ring-inset ring-primary bg-primary/5'
+                'relative p-3 rounded-xl border-2 transition-all duration-200',
+                'flex items-center gap-3',
+                'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+                'disabled:opacity-50 disabled:cursor-not-allowed',
+                'touch-manipulation select-none',
+                'min-h-[80px]',
+                isSelected 
+                  ? cn(visual.bgColorSelected, visual.borderColor, 'ring-2 ring-primary shadow-md')
+                  : cn(visual.bgColor, 'border-muted')
               )}
             >
-              {/* Type number */}
-              <div className={cn('p-2 flex flex-col items-center justify-center border-r', visual.bgColor)}>
-                <span className="text-xs font-bold">Type {bristol.type}</span>
-                {isSelected && <Check className="h-3 w-3 text-primary mt-0.5" />}
+              {/* Stool Illustration */}
+              <div className="w-14 h-10 flex-shrink-0 bg-amber-50/80 rounded-lg p-1 flex items-center justify-center">
+                <StoolIllustration type={bristol.type} />
               </div>
               
-              {/* Stool illustration */}
-              <div className="p-2 flex items-center justify-center border-r bg-amber-50/50">
-                <div className="w-14 h-8">
-                  <StoolIllustration type={bristol.type} />
+              {/* Type Info */}
+              <div className="flex-1 text-left min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className={cn('text-xs font-bold px-1.5 py-0.5 rounded', visual.bgColorSelected, visual.textColor)}>
+                    Type {bristol.type}
+                  </span>
+                  {isSelected && <Check className="w-4 h-4 text-primary flex-shrink-0" />}
                 </div>
-              </div>
-              
-              {/* Description */}
-              <div className="p-2 text-left border-r flex flex-col justify-center">
-                <div className="font-medium text-sm">{bristol.name}</div>
-                <div className="text-xs text-muted-foreground">{bristol.description}</div>
-              </div>
-              
-              {/* Status indicator */}
-              <div className={cn('p-2 flex items-center justify-center text-xs font-medium text-center', visual.bgColor, visual.textColor)}>
-                {visual.status}
+                <div className="font-medium text-sm mt-1 truncate">{bristol.name}</div>
+                <div className={cn('text-xs font-medium mt-0.5', visual.textColor)}>
+                  {visual.status}
+                </div>
               </div>
             </button>
           );
         })}
       </div>
       
-      {/* Legend */}
+      {/* Color Legend */}
       <div className="flex flex-wrap gap-3 text-xs text-muted-foreground p-3 bg-muted/30 rounded-lg">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded bg-red-400" />
