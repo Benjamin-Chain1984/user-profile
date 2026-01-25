@@ -9,8 +9,9 @@ import {
 } from '@/types/ideal';
 import { supabase } from '@/integrations/supabase/client';
 import { calculateSeverity, getSeverityLabel, PainSeverity } from '@/types/painAssessment';
-import { formatDistanceToNow, differenceInDays, differenceInHours } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { BRISTOL_TYPES } from '@/types/bowelCare';
+import { calculateBowelCareStatus, type CalculatedBowelStatus } from '@/utils/bowelCareStatusCalculator';
 
 interface ProfileContextType {
   profile: IndividualProfile | null;
@@ -195,7 +196,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Fetch bowel care data and compute status
+  // Fetch bowel care data and compute status using centralized calculator
   const fetchBowelCareStatus = async () => {
     try {
       // Fetch config
@@ -205,12 +206,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         .limit(1)
         .maybeSingle();
 
-      const noBmDaysThreshold = configData?.no_bm_days_threshold ?? 3;
-      const type1ConsecutiveThreshold = configData?.type1_consecutive_days_threshold ?? 2;
-      const diarrhoeaThreshold = configData?.diarrhoea_type67_count_threshold ?? 3;
-      const diarrhoeaHoursWindow = configData?.diarrhoea_hours_window ?? 48;
-
-      // Fetch recent bowel logs (last 14 days)
+      // Fetch recent bowel logs
       const { data: logs, error } = await supabase
         .from('bowel_log_entries')
         .select('*')
@@ -222,113 +218,51 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Calculate status based on logs
-      let status: 'stable' | 'monitor' | 'action' = 'stable';
-      let daysSinceLastBm: number | null = null;
-      let message = 'Regular bowel pattern';
-      let timestamp = new Date().toISOString();
-
-      if (!logs || logs.length === 0) {
-        status = 'monitor';
-        message = 'No bowel entries recorded';
-      } else {
-        // Find last actual bowel movement (type > 0)
-        const lastActualBm = logs.find(l => l.bristol_type > 0);
-        
-        if (lastActualBm) {
-          daysSinceLastBm = differenceInDays(new Date(), new Date(lastActualBm.entry_time));
-          timestamp = lastActualBm.entry_time;
-
-          // Check for no BM threshold
-          if (daysSinceLastBm >= noBmDaysThreshold) {
-            status = 'action';
-            message = `No bowel movement for ${daysSinceLastBm} days`;
-          } else if (daysSinceLastBm >= noBmDaysThreshold - 1) {
-            status = 'monitor';
-            message = `${daysSinceLastBm} days since last bowel movement`;
-          }
-        } else {
-          // Only type 0 entries (no BM)
-          const oldestLog = logs[logs.length - 1];
-          daysSinceLastBm = differenceInDays(new Date(), new Date(oldestLog.entry_time));
-          if (daysSinceLastBm >= noBmDaysThreshold) {
-            status = 'action';
-            message = `No bowel movement recorded in ${daysSinceLastBm}+ days`;
-          } else {
-            status = 'monitor';
-            message = 'Bowel not opened – monitoring';
-          }
-        }
-
-        // Check for consecutive Type 1 (hard stools)
-        if (status !== 'action') {
-          const recentLogs = logs.slice(0, 7);
-          let consecutiveType1 = 0;
-          for (const log of recentLogs) {
-            if (log.bristol_type === 1) {
-              consecutiveType1++;
-            } else if (log.bristol_type > 1) {
-              break;
-            }
-          }
-          if (consecutiveType1 >= type1ConsecutiveThreshold) {
-            status = 'action';
-            message = `${consecutiveType1} consecutive hard stools (Type 1)`;
-          }
-        }
-
-        // Check for diarrhoea (Type 6-7)
-        const recentHours = logs.filter(l => {
-          const hours = differenceInHours(new Date(), new Date(l.entry_time));
-          return hours <= diarrhoeaHoursWindow;
-        });
-        const type67Count = recentHours.filter(l => l.bristol_type >= 6).length;
-        if (type67Count >= diarrhoeaThreshold) {
-          status = 'action';
-          message = `${type67Count} loose/watery stools in ${diarrhoeaHoursWindow}h – diarrhoea risk`;
-        }
-
-        // Check for red flag indicators in recent logs
-        const latestLog = logs[0];
-        if (latestLog?.indicators) {
-          const indicators = latestLog.indicators as Record<string, unknown>;
-          if (
-            indicators.blood === 'bright_red' || 
-            indicators.blood === 'dark_tarry' ||
-            indicators.pain === 'severe' ||
-            indicators.vomiting === true
-          ) {
-            status = 'action';
-            message = 'Red flag indicator detected – immediate review';
-            timestamp = latestLog.entry_time;
-          }
-        }
-      }
+      // Use the centralized status calculator - single source of truth
+      const calculated = calculateBowelCareStatus(
+        (logs || []).map(l => ({
+          id: l.id,
+          bristol_type: l.bristol_type,
+          entry_time: l.entry_time,
+          event_occurred_at: l.event_occurred_at,
+          indicators: l.indicators as Record<string, unknown> | undefined,
+        })),
+        configData ? {
+          no_bm_days_threshold: configData.no_bm_days_threshold,
+          type1_consecutive_days_threshold: configData.type1_consecutive_days_threshold,
+          diarrhoea_type67_count_threshold: configData.diarrhoea_type67_count_threshold,
+          diarrhoea_hours_window: configData.diarrhoea_hours_window,
+        } : undefined,
+        []
+      );
 
       const bowelData: BowelAlertData = {
-        status,
-        message,
-        timestamp,
-        daysSinceLastBm,
+        status: calculated.status === 'ideal' ? 'stable' : calculated.status,
+        message: calculated.message,
+        timestamp: calculated.lastEventTimestamp || new Date().toISOString(),
+        daysSinceLastBm: calculated.daysSinceLastBm,
       };
 
       setLatestBowelData(bowelData);
 
       // Update constipation module with real status
-      const timeAgo = logs?.[0] 
-        ? formatDistanceToNow(new Date(logs[0].entry_time), { addSuffix: true })
+      const lastLog = logs?.[0];
+      const timeAgo = lastLog 
+        ? formatDistanceToNow(new Date(lastLog.event_occurred_at || lastLog.entry_time), { addSuffix: true })
         : 'Never';
-      const lastBristol = logs?.[0]?.bristol_type;
-      const bristolInfo = lastBristol !== undefined && lastBristol !== null
-        ? BRISTOL_TYPES.find(b => b.type === lastBristol)
+      const bristolInfo = calculated.lastBristolType !== null
+        ? BRISTOL_TYPES.find(b => b.type === calculated.lastBristolType)
         : null;
       const bristolLabel = bristolInfo?.name || '';
+
+      // Map status for module (ideal -> stable for HealthModule type)
+      const moduleStatus = calculated.status === 'ideal' ? 'stable' : calculated.status;
 
       setEnabledModules(prev => prev.map(m => 
         m.id === 'constipation' 
           ? { 
               ...m, 
-              status, 
+              status: moduleStatus, 
               lastEntry: bristolLabel 
                 ? `${bristolLabel} • ${timeAgo}` 
                 : `Last logged ${timeAgo}`

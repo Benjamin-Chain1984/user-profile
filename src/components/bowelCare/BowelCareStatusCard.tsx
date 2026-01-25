@@ -16,17 +16,17 @@ const statusConfig: Record<BowelCareStatus, { label: string; icon: React.Element
   ideal: {
     label: 'IDEAL',
     icon: CheckCircle,
-    className: 'bg-green-100 text-green-700 border-green-300',
+    className: 'bg-success/10 text-success border-success/30',
   },
   monitor: {
-    label: 'Monitor',
+    label: 'Amber – Attention Required',
     icon: AlertTriangle,
-    className: 'bg-amber-100 text-amber-700 border-amber-300',
+    className: 'bg-warning/10 text-warning border-warning/30',
   },
   action: {
-    label: 'Action Needed',
+    label: 'Red – Action Needed',
     icon: AlertCircle,
-    className: 'bg-red-100 text-red-700 border-red-300',
+    className: 'bg-destructive/10 text-destructive border-destructive/30',
   },
 };
 
@@ -44,9 +44,9 @@ export function BowelCareStatusCard({ clientId }: BowelCareStatusCardProps) {
         <div className="flex items-center gap-3">
           <div className={cn(
             'p-3 rounded-full',
-            statusInfo.status === 'ideal' && 'bg-green-200',
-            statusInfo.status === 'monitor' && 'bg-amber-200',
-            statusInfo.status === 'action' && 'bg-red-200',
+            statusInfo.status === 'ideal' && 'bg-success/20',
+            statusInfo.status === 'monitor' && 'bg-warning/20',
+            statusInfo.status === 'action' && 'bg-destructive/20',
           )}>
             <Icon className="h-6 w-6" />
           </div>
