@@ -507,9 +507,8 @@ export function useBowelCareAlerts(clientId?: string) {
 
 export function useBowelCareStatus(clientId?: string) {
   const { config } = useBowelCareConfig(clientId);
-  const { logs } = useBowelLogs(clientId, 14);
+  const { logs } = useBowelLogs(clientId, 50);
   const { alerts } = useBowelCareAlerts(clientId);
-  const { administrations } = usePrnAdministrations(clientId);
 
   const [statusInfo, setStatusInfo] = useState<BowelCareStatusInfo>({
     status: 'ideal',
@@ -520,83 +519,17 @@ export function useBowelCareStatus(clientId?: string) {
   });
 
   useEffect(() => {
-    if (!logs.length) {
-      setStatusInfo({
-        status: 'monitor',
-        message: 'No bowel entries recorded yet',
-        daysSinceLastBm: null,
-        lastBristolType: null,
-        activeAlerts: alerts,
-      });
-      return;
-    }
-
-    // Find last actual bowel movement (not type 0) - use event_occurred_at for algorithm
-    const lastBm = logs.find(l => l.bristol_type > 0);
-    const daysSinceLastBm = lastBm
-      ? Math.floor((Date.now() - new Date(lastBm.event_occurred_at || lastBm.entry_time).getTime()) / (1000 * 60 * 60 * 24))
-      : null;
-
-    // Check for constipation threshold
-    const noActivityThresholdMet = daysSinceLastBm !== null && daysSinceLastBm >= config.no_bm_days_threshold;
-
-    // Check for consecutive Type 1 in the most recent actual BMs
-    const recentActualBMs = logs.filter(l => l.bristol_type > 0).slice(0, config.type1_consecutive_days_threshold);
-    const type1ThresholdMet = 
-      recentActualBMs.length >= config.type1_consecutive_days_threshold &&
-      recentActualBMs.every(l => l.bristol_type === 1);
-
-    // Check for diarrhoea (Type 6-7) - use event_occurred_at for timing
-    const recentDiarrhoea = logs.filter(l => {
-      const eventTime = new Date(l.event_occurred_at || l.entry_time).getTime();
-      const hoursDiff = (Date.now() - eventTime) / (1000 * 60 * 60);
-      return (l.bristol_type === 6 || l.bristol_type === 7) && hoursDiff <= config.diarrhoea_hours_window;
-    });
-    const diarrhoeaThresholdMet = recentDiarrhoea.length >= config.diarrhoea_type67_count_threshold;
-
-    // Check for red flag indicators in recent logs
-    const hasRedFlags = logs.slice(0, 3).some(l => {
-      const ind = l.indicators as BowelIndicators;
-      return (
-        ind.blood === 'bright_red' ||
-        ind.blood === 'dark_tarry' ||
-        ind.pain === 'severe' ||
-        ind.abdominal_pain === 'severe' ||
-        ind.vomiting
-      );
-    });
-
-    // Determine status
-    let status: BowelCareStatus = 'ideal';
-    let message = 'Regular bowel pattern';
-
-    if (hasRedFlags) {
-      status = 'action';
-      message = 'Concerning symptoms detected – escalation may be required';
-    } else if (noActivityThresholdMet || type1ThresholdMet) {
-      status = 'action';
-      message = noActivityThresholdMet
-        ? `No bowel movement for ${daysSinceLastBm} days – PRN may be needed`
-        : `Consecutive hard stools – constipation risk`;
-    } else if (diarrhoeaThresholdMet) {
-      status = 'action';
-      message = 'Persistent loose stools – consider medical review';
-    } else if (daysSinceLastBm && daysSinceLastBm >= 2) {
-      status = 'monitor';
-      message = `${daysSinceLastBm} days since last bowel movement`;
-    } else if (alerts.length > 0) {
-      status = 'monitor';
-      message = 'Active alerts require attention';
-    }
-
-    setStatusInfo({
-      status,
-      message,
-      daysSinceLastBm,
-      lastBristolType: lastBm?.bristol_type ?? null,
-      activeAlerts: alerts,
-    });
-  }, [logs, alerts, config, administrations]);
+    // Use the centralized status calculator for single source of truth
+    const { calculateBowelCareStatus, toBowelCareStatusInfo } = require('@/utils/bowelCareStatusCalculator');
+    
+    const calculated = calculateBowelCareStatus(
+      logs as { id: string; bristol_type: number; entry_time: string; event_occurred_at: string | null; indicators?: BowelIndicators }[],
+      config,
+      alerts
+    );
+    
+    setStatusInfo(toBowelCareStatusInfo(calculated, alerts));
+  }, [logs, alerts, config]);
 
   return statusInfo;
 }
