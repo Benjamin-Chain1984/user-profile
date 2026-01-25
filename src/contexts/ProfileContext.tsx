@@ -57,21 +57,10 @@ type BowelAlertData = {
   daysSinceLastBm: number | null;
 };
 
-// Generate bowel care alert message
+// Bowel care alert message MUST come from the centralized bowel status calculator.
+// Do not re-derive messaging here (avoids drift between dashboard and module).
 function getBowelAlertMessage(data: BowelAlertData): string {
-  if (data.status === 'action') {
-    if (data.daysSinceLastBm !== null && data.daysSinceLastBm >= 3) {
-      return `No bowel movement for ${data.daysSinceLastBm} days – constipation risk, action required`;
-    }
-    return 'Bowel care concern – immediate attention required';
-  }
-  if (data.status === 'monitor') {
-    if (data.daysSinceLastBm !== null && data.daysSinceLastBm >= 2) {
-      return `No bowel movement for ${data.daysSinceLastBm} days – monitor closely`;
-    }
-    return 'Bowel pattern irregular – monitoring advised';
-  }
-  return 'Regular bowel pattern';
+  return data.message;
 }
 
 // Generate alerts dynamically from module statuses
