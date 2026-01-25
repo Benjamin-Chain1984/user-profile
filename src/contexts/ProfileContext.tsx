@@ -206,11 +206,11 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         .limit(1)
         .maybeSingle();
 
-      // Fetch recent bowel logs
+      // Fetch recent bowel logs - order by event_occurred_at for clinical accuracy
       const { data: logs, error } = await supabase
         .from('bowel_log_entries')
         .select('*')
-        .order('entry_time', { ascending: false })
+        .order('event_occurred_at', { ascending: false })
         .limit(50);
 
       if (error) {
