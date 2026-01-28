@@ -12,6 +12,8 @@ import { calculateSeverity, getSeverityLabel, PainSeverity } from '@/types/painA
 import { formatDistanceToNow } from 'date-fns';
 import { BRISTOL_TYPES } from '@/types/bowelCare';
 import { calculateBowelCareStatus, type CalculatedBowelStatus } from '@/utils/bowelCareStatusCalculator';
+import { calculateWeightBmiStatus } from '@/utils/weightBmiCalculator';
+import type { WeightEntry, WeightBmiConfig, WeightBmiAlert, WeightStatusInfo } from '@/types/weightBmi';
 
 interface ProfileContextType {
   profile: IndividualProfile | null;
@@ -25,6 +27,7 @@ interface ProfileContextType {
   getModuleStatus: (moduleId: string) => HealthModule | undefined;
   refreshPainStatus: () => void;
   refreshBowelStatus: () => void;
+  refreshWeightStatus: () => void;
 }
 
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
@@ -63,11 +66,18 @@ function getBowelAlertMessage(data: BowelAlertData): string {
   return data.message;
 }
 
+// Weight alert data type
+type WeightAlertData = {
+  status: 'stable' | 'monitor' | 'action';
+  message: string;
+  timestamp: string;
+};
 // Generate alerts dynamically from module statuses
 function generateAlertsFromModules(
   modules: HealthModule[], 
   painData?: { severity: PainSeverity; score: number; timestamp: string },
-  bowelData?: BowelAlertData
+  bowelData?: BowelAlertData,
+  weightData?: WeightAlertData
 ): Alert[] {
   return modules
     .filter((m) => m.enabled && (m.status === 'monitor' || m.status === 'action'))
@@ -93,6 +103,18 @@ function generateAlertsFromModules(
           message: getBowelAlertMessage(bowelData),
           status: m.status === 'action' ? 'red' as const : 'amber' as const,
           timestamp: bowelData.timestamp,
+        };
+      }
+      
+      // Special handling for weight module with real data
+      if (m.id === 'weight' && weightData) {
+        return {
+          id: m.id,
+          moduleId: m.id,
+          moduleName: 'Weight & BMI',
+          message: weightData.message,
+          status: m.status === 'action' ? 'red' as const : 'amber' as const,
+          timestamp: weightData.timestamp,
         };
       }
       
@@ -127,6 +149,9 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   
   // Bowel care state
   const [latestBowelData, setLatestBowelData] = useState<BowelAlertData | null>(null);
+  
+  // Weight state
+  const [latestWeightData, setLatestWeightData] = useState<WeightAlertData | null>(null);
 
   // Enable ALL modules by default for master project development
   const [enabledModules, setEnabledModules] = useState<HealthModule[]>(
@@ -263,10 +288,78 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Fetch weight status and update module
+  const fetchWeightStatus = async () => {
+    try {
+      // Fetch config
+      const { data: configData } = await supabase
+        .from('weight_bmi_config')
+        .select('*')
+        .maybeSingle();
+
+      // Fetch recent weight entries
+      const { data: entries, error } = await supabase
+        .from('weight_entries')
+        .select('*')
+        .order('event_occurred_at', { ascending: false })
+        .limit(50);
+
+      if (error) {
+        console.error('Error fetching weight entries:', error);
+        return;
+      }
+
+      // Fetch alerts
+      const { data: alertsData } = await supabase
+        .from('weight_bmi_alerts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      // Calculate status using centralized calculator
+      const typedEntries = (entries || []) as unknown as WeightEntry[];
+      const typedConfig = configData as unknown as WeightBmiConfig | null;
+      const typedAlerts = (alertsData || []) as unknown as WeightBmiAlert[];
+
+      const statusInfo = calculateWeightBmiStatus(typedEntries, typedConfig, typedAlerts);
+
+      const weightData: WeightAlertData = {
+        status: statusInfo.status,
+        message: statusInfo.message,
+        timestamp: statusInfo.lastRecordedDate || new Date().toISOString(),
+      };
+
+      setLatestWeightData(weightData);
+
+      // Update weight module with real status
+      const latestEntry = typedEntries[0];
+      const timeAgo = latestEntry 
+        ? formatDistanceToNow(new Date(latestEntry.event_occurred_at), { addSuffix: true })
+        : 'Never';
+      const bmiInfo = latestEntry?.bmi_value 
+        ? `BMI ${latestEntry.bmi_value.toFixed(1)}`
+        : '';
+
+      setEnabledModules(prev => prev.map(m => 
+        m.id === 'weight' 
+          ? { 
+              ...m, 
+              status: statusInfo.status, 
+              lastEntry: latestEntry 
+                ? `${latestEntry.weight_kg}kg ${bmiInfo ? `• ${bmiInfo}` : ''} • ${timeAgo}` 
+                : 'Not yet logged'
+            }
+          : m
+      ));
+    } catch (err) {
+      console.error('Error in fetchWeightStatus:', err);
+    }
+  };
+
   // Fetch data on mount and set up realtime subscriptions
   useEffect(() => {
     fetchLatestPainAssessment();
     fetchBowelCareStatus();
+    fetchWeightStatus();
 
     // Subscribe to realtime updates for pain assessments
     const painChannel = supabase
@@ -300,9 +393,26 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       )
       .subscribe();
 
+    // Subscribe to realtime updates for weight entries
+    const weightChannel = supabase
+      .channel('weight-alerts')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'weight_entries',
+        },
+        () => {
+          fetchWeightStatus();
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(painChannel);
       supabase.removeChannel(bowelChannel);
+      supabase.removeChannel(weightChannel);
     };
   }, []);
 
@@ -346,7 +456,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const activeAlerts = generateAlertsFromModules(
     activeEnabledModules, 
     latestPainData || undefined,
-    latestBowelData || undefined
+    latestBowelData || undefined,
+    latestWeightData || undefined
   );
   const hasRedAlert = activeEnabledModules.some((m) => m.status === 'action');
   const hasAmberAlert = activeEnabledModules.some((m) => m.status === 'monitor');
@@ -382,6 +493,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         getModuleStatus,
         refreshPainStatus: fetchLatestPainAssessment,
         refreshBowelStatus: fetchBowelCareStatus,
+        refreshWeightStatus: fetchWeightStatus,
       }}
     >
       {children}
