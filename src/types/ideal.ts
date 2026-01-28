@@ -64,7 +64,7 @@ export const HEALTH_MODULES: Omit<HealthModule, 'enabled' | 'status' | 'lastEntr
   { id: 'pain-check', name: 'Pain Assessment', description: 'Pain assessment and monitoring' },
   { id: 'pressure-area', name: 'Pressure Area Prevention', description: 'Skin integrity and repositioning' },
   { id: 'sleep', name: 'Sleep Chart', description: 'Sleep patterns and quality tracking' },
-  { id: 'weight', name: 'Weight', description: 'Weight tracking and trends' },
+  { id: 'weight', name: 'Weight & BMI Monitoring', description: 'Weight tracking, BMI calculation, and trends' },
 ];
 
 export const HEALTH_MONITORING_VITALS = [

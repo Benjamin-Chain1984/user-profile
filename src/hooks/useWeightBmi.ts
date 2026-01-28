@@ -1,0 +1,241 @@
+/**
+ * Weight & BMI Hook - Data fetching and state management
+ */
+
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import type { 
+  WeightBmiConfig, 
+  WeightEntry, 
+  WeightBmiAlert,
+  WeightStatusInfo,
+  BmiCategory
+} from '@/types/weightBmi';
+import { calculateWeightBmiStatus, calculateBmi, getBmiCategory } from '@/utils/weightBmiCalculator';
+
+const DEFAULT_CONFIG: Partial<WeightBmiConfig> = {
+  monitoring_frequency: 'weekly',
+  enable_rapid_change_alert: true,
+  rapid_change_threshold_kg: 2.0,
+  rapid_change_window_days: 7,
+  height_method: 'standing',
+  height_is_estimate: false,
+  enable_trend_graph: true,
+  escalation_recipients: [],
+  overdue_escalation_cycles: 2,
+  target_range_alert_severity: 'amber'
+};
+
+export function useWeightBmi(clientId?: string) {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [entries, setEntries] = useState<WeightEntry[]>([]);
+  const [config, setConfig] = useState<WeightBmiConfig | null>(null);
+  const [alerts, setAlerts] = useState<WeightBmiAlert[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [statusInfo, setStatusInfo] = useState<WeightStatusInfo | null>(null);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      // Fetch entries
+      const { data: entriesData, error: entriesError } = await supabase
+        .from('weight_entries')
+        .select('*')
+        .order('event_occurred_at', { ascending: false })
+        .limit(100);
+
+      if (entriesError) throw entriesError;
+
+      // Fetch config
+      const { data: configData, error: configError } = await supabase
+        .from('weight_bmi_config')
+        .select('*')
+        .maybeSingle();
+
+      if (configError) throw configError;
+
+      // Fetch alerts
+      const { data: alertsData, error: alertsError } = await supabase
+        .from('weight_bmi_alerts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (alertsError) throw alertsError;
+
+      // Type cast the data
+      const typedEntries = (entriesData || []) as unknown as WeightEntry[];
+      const typedConfig = configData as unknown as WeightBmiConfig | null;
+      const typedAlerts = (alertsData || []) as unknown as WeightBmiAlert[];
+
+      setEntries(typedEntries);
+      setConfig(typedConfig);
+      setAlerts(typedAlerts);
+
+      // Calculate status
+      const status = calculateWeightBmiStatus(typedEntries, typedConfig, typedAlerts);
+      setStatusInfo(status);
+    } catch (error) {
+      console.error('Error fetching weight data:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load weight data',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [clientId, toast]);
+
+  // Log new weight entry
+  const logWeight = useCallback(async (data: {
+    weight_kg: number;
+    event_occurred_at?: string;
+    time_of_day?: string;
+    meal_timing?: string;
+    wheelchair_context?: string;
+    notes?: string;
+    recorded_on_behalf_of_name?: string;
+    recorded_on_behalf_of_role?: string;
+    recorded_on_behalf_of_reason?: string;
+  }) => {
+    if (!user?.id) return false;
+
+    try {
+      // Calculate BMI if height is configured
+      let bmiValue: number | null = null;
+      let bmiCategory: BmiCategory | null = null;
+      let heightUsed: number | null = null;
+
+      if (config?.height_cm) {
+        heightUsed = config.height_cm;
+        bmiValue = Math.round(calculateBmi(data.weight_kg, config.height_cm) * 10) / 10;
+        bmiCategory = getBmiCategory(bmiValue);
+      }
+
+      const { error } = await supabase
+        .from('weight_entries')
+        .insert({
+          weight_kg: data.weight_kg,
+          event_occurred_at: data.event_occurred_at || new Date().toISOString(),
+          time_of_day: data.time_of_day || null,
+          meal_timing: data.meal_timing || null,
+          wheelchair_context: data.wheelchair_context || null,
+          notes: data.notes || null,
+          bmi_value: bmiValue,
+          bmi_category: bmiCategory,
+          height_used_cm: heightUsed,
+          recorded_on_behalf_of_name: data.recorded_on_behalf_of_name || null,
+          recorded_on_behalf_of_role: data.recorded_on_behalf_of_role || null,
+          recorded_on_behalf_of_reason: data.recorded_on_behalf_of_reason || null,
+          created_by: user.id
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Weight Logged',
+        description: bmiValue 
+          ? `Weight ${data.weight_kg}kg recorded. BMI: ${bmiValue}`
+          : `Weight ${data.weight_kg}kg recorded successfully`
+      });
+
+      await fetchData();
+      return true;
+    } catch (error) {
+      console.error('Error logging weight:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to log weight entry',
+        variant: 'destructive'
+      });
+      return false;
+    }
+  }, [user?.id, config, toast, fetchData]);
+
+  // Save config
+  const saveConfig = useCallback(async (data: Partial<WeightBmiConfig>) => {
+    if (!user?.id) return false;
+
+    try {
+      if (config?.id) {
+        // Update existing
+        const { error } = await supabase
+          .from('weight_bmi_config')
+          .update({
+            ...data,
+            updated_by: user.id,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', config.id);
+
+        if (error) throw error;
+      } else {
+        // Create new
+        const { error } = await supabase
+          .from('weight_bmi_config')
+          .insert({
+            ...DEFAULT_CONFIG,
+            ...data,
+            created_by: user.id
+          });
+
+        if (error) throw error;
+      }
+
+      toast({
+        title: 'Settings Saved',
+        description: 'Weight monitoring settings have been updated'
+      });
+
+      await fetchData();
+      return true;
+    } catch (error) {
+      console.error('Error saving config:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save settings',
+        variant: 'destructive'
+      });
+      return false;
+    }
+  }, [user?.id, config, toast, fetchData]);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Realtime subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('weight-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'weight_entries' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'weight_bmi_alerts' }, fetchData)
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchData]);
+
+  return {
+    entries,
+    config,
+    alerts,
+    loading,
+    statusInfo,
+    logWeight,
+    saveConfig,
+    refetch: fetchData
+  };
+}
+
+// Simplified hook for status only (used by dashboard tiles)
+export function useWeightBmiStatus(clientId?: string): WeightStatusInfo | null {
+  const { statusInfo } = useWeightBmi(clientId);
+  return statusInfo;
+}

@@ -18,6 +18,7 @@ import PainCheckPage from "./pages/PainCheck";
 import BowelCarePage from "./pages/BowelCare";
 import ContinencePage from "./pages/Continence";
 import CatheterPage from "./pages/Catheter";
+import WeightBmiPage from "./pages/WeightBmi";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -91,6 +92,15 @@ const App = () => (
                 <ProtectedRoute>
                   <MainLayout>
                     <CatheterPage />
+                  </MainLayout>
+              </ProtectedRoute>
+              } />
+              
+              {/* Weight & BMI Monitoring module */}
+              <Route path="/module/weight" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <WeightBmiPage />
                   </MainLayout>
                 </ProtectedRoute>
               } />

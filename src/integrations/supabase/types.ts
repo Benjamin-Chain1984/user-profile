@@ -1607,6 +1607,222 @@ export type Database = {
         }
         Relationships: []
       }
+      weight_bmi_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          resolved_at: string | null
+          resolved_by: string | null
+          resolved_reason: string | null
+          severity: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_reason?: string | null
+          severity?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_reason?: string | null
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weight_bmi_alerts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weight_bmi_config: {
+        Row: {
+          baseline_weight_kg: number | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          enable_rapid_change_alert: boolean
+          enable_trend_graph: boolean
+          escalation_recipients: string[] | null
+          height_cm: number | null
+          height_is_estimate: boolean | null
+          height_method: string | null
+          height_method_notes: string | null
+          id: string
+          knee_height_cm: number | null
+          knee_height_sex: string | null
+          max_target_weight_kg: number | null
+          min_target_weight_kg: number | null
+          monitoring_frequency: string
+          overdue_escalation_cycles: number | null
+          rapid_change_threshold_kg: number | null
+          rapid_change_window_days: number | null
+          target_range_alert_severity: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          baseline_weight_kg?: number | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          enable_rapid_change_alert?: boolean
+          enable_trend_graph?: boolean
+          escalation_recipients?: string[] | null
+          height_cm?: number | null
+          height_is_estimate?: boolean | null
+          height_method?: string | null
+          height_method_notes?: string | null
+          id?: string
+          knee_height_cm?: number | null
+          knee_height_sex?: string | null
+          max_target_weight_kg?: number | null
+          min_target_weight_kg?: number | null
+          monitoring_frequency?: string
+          overdue_escalation_cycles?: number | null
+          rapid_change_threshold_kg?: number | null
+          rapid_change_window_days?: number | null
+          target_range_alert_severity?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          baseline_weight_kg?: number | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          enable_rapid_change_alert?: boolean
+          enable_trend_graph?: boolean
+          escalation_recipients?: string[] | null
+          height_cm?: number | null
+          height_is_estimate?: boolean | null
+          height_method?: string | null
+          height_method_notes?: string | null
+          id?: string
+          knee_height_cm?: number | null
+          knee_height_sex?: string | null
+          max_target_weight_kg?: number | null
+          min_target_weight_kg?: number | null
+          monitoring_frequency?: string
+          overdue_escalation_cycles?: number | null
+          rapid_change_threshold_kg?: number | null
+          rapid_change_window_days?: number | null
+          target_range_alert_severity?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weight_bmi_config_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weight_entries: {
+        Row: {
+          bmi_category: string | null
+          bmi_value: number | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          event_occurred_at: string
+          height_used_cm: number | null
+          id: string
+          meal_timing: string | null
+          notes: string | null
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
+          time_of_day: string | null
+          weight_kg: number
+          wheelchair_context: string | null
+        }
+        Insert: {
+          bmi_category?: string | null
+          bmi_value?: number | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          height_used_cm?: number | null
+          id?: string
+          meal_timing?: string | null
+          notes?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
+          time_of_day?: string | null
+          weight_kg: number
+          wheelchair_context?: string | null
+        }
+        Update: {
+          bmi_category?: string | null
+          bmi_value?: number | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          height_used_cm?: number | null
+          id?: string
+          meal_timing?: string | null
+          notes?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
+          time_of_day?: string | null
+          weight_kg?: number
+          wheelchair_context?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weight_entries_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
