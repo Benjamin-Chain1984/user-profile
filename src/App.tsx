@@ -19,6 +19,7 @@ import BowelCarePage from "./pages/BowelCare";
 import ContinencePage from "./pages/Continence";
 import CatheterPage from "./pages/Catheter";
 import WeightBmiPage from "./pages/WeightBmi";
+import FluidBalancePage from "./pages/FluidBalance";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -101,6 +102,15 @@ const App = () => (
                 <ProtectedRoute>
                   <MainLayout>
                     <WeightBmiPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Fluid Balance & Hydration module */}
+              <Route path="/module/fluid-balance" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <FluidBalancePage />
                   </MainLayout>
                 </ProtectedRoute>
               } />

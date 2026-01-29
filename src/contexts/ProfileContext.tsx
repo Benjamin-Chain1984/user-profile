@@ -13,7 +13,9 @@ import { formatDistanceToNow } from 'date-fns';
 import { BRISTOL_TYPES } from '@/types/bowelCare';
 import { calculateBowelCareStatus, type CalculatedBowelStatus } from '@/utils/bowelCareStatusCalculator';
 import { calculateWeightBmiStatus } from '@/utils/weightBmiCalculator';
+import { calculateFluidStatus } from '@/utils/fluidBalanceCalculator';
 import type { WeightEntry, WeightBmiConfig, WeightBmiAlert, WeightStatusInfo } from '@/types/weightBmi';
+import type { FluidConfig, FluidIntakeEntry, FluidOutputEntry, FluidStatus } from '@/types/fluidBalance';
 
 interface ProfileContextType {
   profile: IndividualProfile | null;
@@ -28,6 +30,7 @@ interface ProfileContextType {
   refreshPainStatus: () => void;
   refreshBowelStatus: () => void;
   refreshWeightStatus: () => void;
+  refreshFluidStatus: () => void;
 }
 
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
@@ -72,12 +75,20 @@ type WeightAlertData = {
   message: string;
   timestamp: string;
 };
+
+// Fluid alert data type
+type FluidAlertData = {
+  status: 'stable' | 'monitor' | 'action';
+  message: string;
+  timestamp: string;
+};
 // Generate alerts dynamically from module statuses
 function generateAlertsFromModules(
   modules: HealthModule[], 
   painData?: { severity: PainSeverity; score: number; timestamp: string },
   bowelData?: BowelAlertData,
-  weightData?: WeightAlertData
+  weightData?: WeightAlertData,
+  fluidData?: FluidAlertData
 ): Alert[] {
   return modules
     .filter((m) => m.enabled && (m.status === 'monitor' || m.status === 'action'))
@@ -118,6 +129,18 @@ function generateAlertsFromModules(
         };
       }
       
+      // Special handling for fluid balance module with real data
+      if (m.id === 'fluid-balance' && fluidData) {
+        return {
+          id: m.id,
+          moduleId: m.id,
+          moduleName: 'Fluid Balance',
+          message: fluidData.message,
+          status: m.status === 'action' ? 'red' as const : 'amber' as const,
+          timestamp: fluidData.timestamp,
+        };
+      }
+      
       return {
         id: m.id,
         moduleId: m.id,
@@ -152,6 +175,9 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   
   // Weight state
   const [latestWeightData, setLatestWeightData] = useState<WeightAlertData | null>(null);
+  
+  // Fluid state
+  const [latestFluidData, setLatestFluidData] = useState<FluidAlertData | null>(null);
 
   // Enable ALL modules by default for master project development
   const [enabledModules, setEnabledModules] = useState<HealthModule[]>(
@@ -355,11 +381,81 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Fetch fluid balance status
+  const fetchFluidStatus = async () => {
+    try {
+      // Fetch config
+      const { data: configData } = await supabase
+        .from('fluid_config')
+        .select('*')
+        .maybeSingle();
+
+      // Fetch today's intake entries
+      const today = new Date().toISOString().split('T')[0];
+      const { data: intakeData, error } = await supabase
+        .from('fluid_intake_entries')
+        .select('*')
+        .gte('event_occurred_at', today)
+        .order('event_occurred_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching fluid intake:', error);
+        return;
+      }
+
+      // Fetch output if enabled
+      let outputData: FluidOutputEntry[] = [];
+      if (configData?.enable_output_logging) {
+        const { data: outputs } = await supabase
+          .from('fluid_output_entries')
+          .select('*')
+          .gte('event_occurred_at', today);
+        outputData = (outputs || []) as unknown as FluidOutputEntry[];
+      }
+
+      const typedConfig = configData as unknown as FluidConfig | null;
+      const typedIntake = (intakeData || []) as unknown as FluidIntakeEntry[];
+
+      const { status, message, percentOfTarget } = calculateFluidStatus(
+        typedIntake,
+        outputData,
+        typedConfig
+      );
+
+      // Map fluid status to module status
+      const moduleStatus = status === 'ideal' ? 'stable' : status === 'amber' ? 'monitor' : 'action';
+
+      const fluidData: FluidAlertData = {
+        status: moduleStatus,
+        message,
+        timestamp: new Date().toISOString(),
+      };
+
+      setLatestFluidData(fluidData);
+
+      // Calculate today's total
+      const todayTotal = typedIntake.reduce((sum, e) => sum + e.amount_ml, 0);
+
+      setEnabledModules(prev => prev.map(m => 
+        m.id === 'fluid-balance' 
+          ? { 
+              ...m, 
+              status: moduleStatus, 
+              lastEntry: `${todayTotal}ml today (${percentOfTarget}%)`
+            }
+          : m
+      ));
+    } catch (err) {
+      console.error('Error in fetchFluidStatus:', err);
+    }
+  };
+
   // Fetch data on mount and set up realtime subscriptions
   useEffect(() => {
     fetchLatestPainAssessment();
     fetchBowelCareStatus();
     fetchWeightStatus();
+    fetchFluidStatus();
 
     // Subscribe to realtime updates for pain assessments
     const painChannel = supabase
@@ -409,10 +505,27 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       )
       .subscribe();
 
+    // Subscribe to realtime updates for fluid intake
+    const fluidChannel = supabase
+      .channel('fluid-alerts')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'fluid_intake_entries',
+        },
+        () => {
+          fetchFluidStatus();
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(painChannel);
       supabase.removeChannel(bowelChannel);
       supabase.removeChannel(weightChannel);
+      supabase.removeChannel(fluidChannel);
     };
   }, []);
 
@@ -457,7 +570,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     activeEnabledModules, 
     latestPainData || undefined,
     latestBowelData || undefined,
-    latestWeightData || undefined
+    latestWeightData || undefined,
+    latestFluidData || undefined
   );
   const hasRedAlert = activeEnabledModules.some((m) => m.status === 'action');
   const hasAmberAlert = activeEnabledModules.some((m) => m.status === 'monitor');
@@ -494,6 +608,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         refreshPainStatus: fetchLatestPainAssessment,
         refreshBowelStatus: fetchBowelCareStatus,
         refreshWeightStatus: fetchWeightStatus,
+        refreshFluidStatus: fetchFluidStatus,
       }}
     >
       {children}
