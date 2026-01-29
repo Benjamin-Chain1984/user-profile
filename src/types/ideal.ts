@@ -55,7 +55,7 @@ export const HEALTH_MODULES: Omit<HealthModule, 'enabled' | 'status' | 'lastEntr
   { id: 'diabetes', name: 'Diabetes', description: 'Blood glucose monitoring and management' },
   { id: 'enteral', name: 'Enteral Nutrition', description: 'Tube feeding management and tracking' },
   { id: 'epilepsy', name: 'Epilepsy & Seizures', description: 'Seizure tracking and patterns' },
-  { id: 'fluid-balance', name: 'Fluid Balance', description: 'Daily fluid intake and output' },
+  { id: 'fluid-balance', name: 'Fluid Balance & Hydration', description: 'Daily fluid intake, output, and hydration monitoring' },
   { id: 'health-monitoring', name: 'Health Monitoring', description: 'Vital signs tracking', hasSubModules: true },
   { id: 'health-prevention', name: 'Health Prevention', description: 'Preventative health assessments and checks' },
   { id: 'iddsi', name: 'IDDSI Levels', description: 'Food and drink texture management' },

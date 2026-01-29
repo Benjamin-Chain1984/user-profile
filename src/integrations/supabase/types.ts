@@ -1449,6 +1449,313 @@ export type Database = {
           },
         ]
       }
+      fluid_balance_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          resolved_at: string | null
+          resolved_by: string | null
+          resolved_reason: string | null
+          severity: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_reason?: string | null
+          severity?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_reason?: string | null
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fluid_balance_alerts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fluid_config: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          day_boundary_time: string
+          dehydration_threshold_ml: number
+          enable_output_logging: boolean
+          escalation_recipients: string[] | null
+          fluid_restriction_enabled: boolean
+          hard_stop_on_limit_exceeded: boolean
+          id: string
+          max_fluid_allowance_ml: number | null
+          overhydration_threshold_ml: number
+          target_daily_intake_ml: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          day_boundary_time?: string
+          dehydration_threshold_ml?: number
+          enable_output_logging?: boolean
+          escalation_recipients?: string[] | null
+          fluid_restriction_enabled?: boolean
+          hard_stop_on_limit_exceeded?: boolean
+          id?: string
+          max_fluid_allowance_ml?: number | null
+          overhydration_threshold_ml?: number
+          target_daily_intake_ml?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          day_boundary_time?: string
+          dehydration_threshold_ml?: number
+          enable_output_logging?: boolean
+          escalation_recipients?: string[] | null
+          fluid_restriction_enabled?: boolean
+          hard_stop_on_limit_exceeded?: boolean
+          id?: string
+          max_fluid_allowance_ml?: number | null
+          overhydration_threshold_ml?: number
+          target_daily_intake_ml?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fluid_config_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fluid_intake_entries: {
+        Row: {
+          amount_ml: number
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          event_occurred_at: string
+          fluid_type: string
+          id: string
+          is_self_reported: boolean
+          notes: string | null
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
+        }
+        Insert: {
+          amount_ml: number
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          fluid_type: string
+          id?: string
+          is_self_reported?: boolean
+          notes?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
+        }
+        Update: {
+          amount_ml?: number
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          fluid_type?: string
+          id?: string
+          is_self_reported?: boolean
+          notes?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fluid_intake_entries_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fluid_output_entries: {
+        Row: {
+          amount_ml: number | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          event_occurred_at: string
+          id: string
+          is_unmeasured: boolean
+          notes: string | null
+          output_type: string
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
+          urine_colour: number | null
+        }
+        Insert: {
+          amount_ml?: number | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          id?: string
+          is_unmeasured?: boolean
+          notes?: string | null
+          output_type: string
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
+          urine_colour?: number | null
+        }
+        Update: {
+          amount_ml?: number | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          id?: string
+          is_unmeasured?: boolean
+          notes?: string | null
+          output_type?: string
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
+          urine_colour?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fluid_output_entries_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hydration_symptom_checks: {
+        Row: {
+          check_date: string
+          client_id: string | null
+          confusion: boolean
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          fatigue_dizziness: boolean
+          id: string
+          nausea_vomiting: boolean
+          notes: string | null
+          swelling: boolean
+          thirst_dry_mouth: boolean
+          urine_colour: number | null
+        }
+        Insert: {
+          check_date?: string
+          client_id?: string | null
+          confusion?: boolean
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          fatigue_dizziness?: boolean
+          id?: string
+          nausea_vomiting?: boolean
+          notes?: string | null
+          swelling?: boolean
+          thirst_dry_mouth?: boolean
+          urine_colour?: number | null
+        }
+        Update: {
+          check_date?: string
+          client_id?: string | null
+          confusion?: boolean
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          fatigue_dizziness?: boolean
+          id?: string
+          nausea_vomiting?: boolean
+          notes?: string | null
+          swelling?: boolean
+          thirst_dry_mouth?: boolean
+          urine_colour?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hydration_symptom_checks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pain_action_records: {
         Row: {
           action_taken: string
