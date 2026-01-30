@@ -13,25 +13,61 @@ interface FluidHistoryProps {
   enableOutputLogging: boolean;
 }
 
-export const FluidHistory: React.FC<FluidHistoryProps> = ({
-  intakeEntries,
-  outputEntries,
-  enableOutputLogging
-}) => {
-  const formatTime = (dateStr: string) => {
-    return format(parseISO(dateStr), 'dd MMM yyyy, HH:mm');
-  };
+const formatTime = (dateStr: string) => {
+  return format(parseISO(dateStr), 'dd MMM yyyy, HH:mm');
+};
+
+const IntakeItem: React.FC<{ entry: FluidIntakeEntry }> = ({ entry }) => (
+  <div className="p-3 border rounded-lg space-y-2">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <TrendingUp className="h-4 w-4 text-blue-500" />
+        <span className="font-medium">{entry.fluid_type}</span>
+        <Badge variant="secondary">{entry.amount_ml}ml</Badge>
+      </div>
+      {entry.is_self_reported && (
+        <Badge variant="outline" className="text-xs">Self-reported</Badge>
+      )}
+    </div>
+    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <Clock className="h-3 w-3" />
+      {formatTime(entry.event_occurred_at)}
+    </div>
+    {entry.recorded_on_behalf_of_name && (
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <User className="h-3 w-3" />
+        Logged by {entry.recorded_on_behalf_of_name} ({entry.recorded_on_behalf_of_role})
+      </div>
+    )}
+    {entry.notes && (
+      <p className="text-sm text-muted-foreground bg-muted p-2 rounded">
+        {entry.notes}
+      </p>
+    )}
+  </div>
+);
+
+const OutputItem: React.FC<{ entry: FluidOutputEntry }> = ({ entry }) => {
+  const urineColour = entry.urine_colour 
+    ? URINE_COLOUR_SCALE.find(c => c.value === entry.urine_colour) 
+    : null;
   
-  const IntakeItem: React.FC<{ entry: FluidIntakeEntry }> = ({ entry }) => (
+  return (
     <div className="p-3 border rounded-lg space-y-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <TrendingUp className="h-4 w-4 text-blue-500" />
-          <span className="font-medium">{entry.fluid_type}</span>
-          <Badge variant="secondary">{entry.amount_ml}ml</Badge>
+          <TrendingDown className="h-4 w-4 text-orange-500" />
+          <span className="font-medium">{entry.output_type}</span>
+          <Badge variant="secondary">
+            {entry.is_unmeasured ? 'Unmeasured' : `${entry.amount_ml}ml`}
+          </Badge>
         </div>
-        {entry.is_self_reported && (
-          <Badge variant="outline" className="text-xs">Self-reported</Badge>
+        {urineColour && (
+          <div 
+            className="w-6 h-6 rounded-full border"
+            style={{ backgroundColor: urineColour.color }}
+            title={`Urine colour: ${urineColour.label}`}
+          />
         )}
       </div>
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -44,6 +80,11 @@ export const FluidHistory: React.FC<FluidHistoryProps> = ({
           Logged by {entry.recorded_on_behalf_of_name} ({entry.recorded_on_behalf_of_role})
         </div>
       )}
+      {urineColour && entry.urine_colour && entry.urine_colour >= 5 && (
+        <div className="text-xs text-amber-600 font-medium">
+          ⚠️ {urineColour.description}
+        </div>
+      )}
       {entry.notes && (
         <p className="text-sm text-muted-foreground bg-muted p-2 rounded">
           {entry.notes}
@@ -51,54 +92,13 @@ export const FluidHistory: React.FC<FluidHistoryProps> = ({
       )}
     </div>
   );
-  
-  const OutputItem: React.FC<{ entry: FluidOutputEntry }> = ({ entry }) => {
-    const urineColour = entry.urine_colour 
-      ? URINE_COLOUR_SCALE.find(c => c.value === entry.urine_colour) 
-      : null;
-    
-    return (
-      <div className="p-3 border rounded-lg space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <TrendingDown className="h-4 w-4 text-orange-500" />
-            <span className="font-medium">{entry.output_type}</span>
-            <Badge variant="secondary">
-              {entry.is_unmeasured ? 'Unmeasured' : `${entry.amount_ml}ml`}
-            </Badge>
-          </div>
-          {urineColour && (
-            <div 
-              className="w-6 h-6 rounded-full border"
-              style={{ backgroundColor: urineColour.color }}
-              title={`Urine colour: ${urineColour.label}`}
-            />
-          )}
-        </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Clock className="h-3 w-3" />
-          {formatTime(entry.event_occurred_at)}
-        </div>
-        {entry.recorded_on_behalf_of_name && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <User className="h-3 w-3" />
-            Logged by {entry.recorded_on_behalf_of_name} ({entry.recorded_on_behalf_of_role})
-          </div>
-        )}
-        {urineColour && entry.urine_colour && entry.urine_colour >= 5 && (
-          <div className="text-xs text-amber-600 font-medium">
-            ⚠️ {urineColour.description}
-          </div>
-        )}
-        {entry.notes && (
-          <p className="text-sm text-muted-foreground bg-muted p-2 rounded">
-            {entry.notes}
-          </p>
-        )}
-      </div>
-    );
-  };
-  
+};
+
+export const FluidHistory: React.FC<FluidHistoryProps> = ({
+  intakeEntries,
+  outputEntries,
+  enableOutputLogging
+}) => {
   return (
     <Card>
       <CardHeader>
