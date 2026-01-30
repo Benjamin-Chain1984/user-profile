@@ -1,5 +1,6 @@
 export { FluidDashboard } from './FluidDashboard';
 export { FluidStatusCard } from './FluidStatusCard';
+export { SignsAndSymptomsPanel } from './SignsAndSymptomsPanel';
 export { HydrationInfographic } from './HydrationInfographic';
 export { IntakeLogForm } from './IntakeLogForm';
 export { OutputLogForm } from './OutputLogForm';
