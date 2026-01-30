@@ -11,7 +11,7 @@ import { IntakeLogForm } from './IntakeLogForm';
 import { OutputLogForm } from './OutputLogForm';
 import { FluidHistory } from './FluidHistory';
 import { FluidTrends } from './FluidTrends';
-import { SymptomCheckForm } from './SymptomCheckForm';
+import { SignsAndSymptomsPanel } from './SignsAndSymptomsPanel';
 import { FluidConfigSettings } from './FluidConfigSettings';
 import { FluidExportReports } from './FluidExportReports';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -150,11 +150,11 @@ export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
             )}
           </div>
           
-          {/* Symptom check */}
-          <SymptomCheckForm onSubmit={logSymptomCheck} />
-          
-          {/* History */}
-          <FluidHistory
+            {/* Signs and Symptoms - informational only */}
+            <SignsAndSymptomsPanel />
+            
+            {/* History */}
+            <FluidHistory
             intakeEntries={intakeEntries}
             outputEntries={outputEntries}
             enableOutputLogging={config?.enable_output_logging ?? true}
