@@ -1512,6 +1512,7 @@ export type Database = {
           created_by: string | null
           day_boundary_time: string
           dehydration_threshold_ml: number
+          dehydration_warning_percent: number
           enable_output_logging: boolean
           escalation_recipients: string[] | null
           fluid_restriction_enabled: boolean
@@ -1519,7 +1520,9 @@ export type Database = {
           id: string
           max_fluid_allowance_ml: number | null
           overhydration_threshold_ml: number
+          overhydration_warning_percent: number
           target_daily_intake_ml: number
+          time_checkpoint_for_warning: string
           updated_at: string
           updated_by: string | null
         }
@@ -1529,6 +1532,7 @@ export type Database = {
           created_by?: string | null
           day_boundary_time?: string
           dehydration_threshold_ml?: number
+          dehydration_warning_percent?: number
           enable_output_logging?: boolean
           escalation_recipients?: string[] | null
           fluid_restriction_enabled?: boolean
@@ -1536,7 +1540,9 @@ export type Database = {
           id?: string
           max_fluid_allowance_ml?: number | null
           overhydration_threshold_ml?: number
+          overhydration_warning_percent?: number
           target_daily_intake_ml?: number
+          time_checkpoint_for_warning?: string
           updated_at?: string
           updated_by?: string | null
         }
@@ -1546,6 +1552,7 @@ export type Database = {
           created_by?: string | null
           day_boundary_time?: string
           dehydration_threshold_ml?: number
+          dehydration_warning_percent?: number
           enable_output_logging?: boolean
           escalation_recipients?: string[] | null
           fluid_restriction_enabled?: boolean
@@ -1553,7 +1560,9 @@ export type Database = {
           id?: string
           max_fluid_allowance_ml?: number | null
           overhydration_threshold_ml?: number
+          overhydration_warning_percent?: number
           target_daily_intake_ml?: number
+          time_checkpoint_for_warning?: string
           updated_at?: string
           updated_by?: string | null
         }
