@@ -9,28 +9,38 @@ interface HydrationInfographicProps {
   todayIntake: number;
 }
 
-// Generate bubble positions based on fill level
-function generateBubbles(fillPercent: number): Array<{ cx: number; cy: number; r: number; delay: number }> {
+// Generate rising bubble positions based on fill level
+function generateBubbles(fillPercent: number): Array<{ cx: number; cy: number; r: number; delay: number; duration: number }> {
   if (fillPercent < 5) return [];
   
-  const bubbleCount = Math.min(Math.floor(fillPercent / 10), 8);
-  const bubbles: Array<{ cx: number; cy: number; r: number; delay: number }> = [];
+  const bubbleCount = Math.min(Math.floor(fillPercent / 8), 10);
+  const bubbles: Array<{ cx: number; cy: number; r: number; delay: number; duration: number }> = [];
   
   for (let i = 0; i < bubbleCount; i++) {
-    // Distribute bubbles within the filled area of the body
-    const fillHeight = (fillPercent / 100) * 140;
-    const minY = 180 - fillHeight + 10;
-    const maxY = 175;
-    
     bubbles.push({
-      cx: 35 + Math.random() * 30, // Random x within body width
-      cy: minY + Math.random() * (maxY - minY),
-      r: 2 + Math.random() * 3,
-      delay: i * 0.2
+      cx: 35 + Math.random() * 30,
+      cy: 0, // Will animate from bottom
+      r: 1.5 + Math.random() * 2.5,
+      delay: i * 0.3 + Math.random() * 0.5,
+      duration: 2 + Math.random() * 1.5
     });
   }
   
   return bubbles;
+}
+
+// Generate light reflection spots
+function generateReflections(fillPercent: number): Array<{ cx: number; cy: number; rx: number; ry: number }> {
+  if (fillPercent < 15) return [];
+  
+  const fillHeight = (fillPercent / 100) * 140;
+  const baseY = 180 - fillHeight;
+  
+  return [
+    { cx: 42, cy: baseY + fillHeight * 0.3, rx: 3, ry: 6 },
+    { cx: 58, cy: baseY + fillHeight * 0.5, rx: 2, ry: 4 },
+    { cx: 48, cy: baseY + fillHeight * 0.7, rx: 1.5, ry: 3 },
+  ];
 }
 
 export const HydrationInfographic: React.FC<HydrationInfographicProps> = ({
@@ -42,12 +52,13 @@ export const HydrationInfographic: React.FC<HydrationInfographicProps> = ({
   // Clamp fill percentage
   const fillPercent = Math.min(Math.max(percentOfTarget, 0), 100);
   
-  // Memoize bubbles so they don't regenerate on every render
+  // Memoize bubbles and reflections
   const bubbles = useMemo(() => generateBubbles(fillPercent), [fillPercent]);
+  const reflections = useMemo(() => generateReflections(fillPercent), [fillPercent]);
   
   // Calculate fill height - body fills from bottom up
-  const fillHeight = (fillPercent / 100) * 140; // Max fill height of body area
-  const fillY = 180 - fillHeight; // Start position from bottom
+  const fillHeight = (fillPercent / 100) * 140;
+  const fillY = 180 - fillHeight;
   
   return (
     <Card>
@@ -78,19 +89,73 @@ export const HydrationInfographic: React.FC<HydrationInfographicProps> = ({
                 <path d="M70 48 Q80 55 85 80 Q87 90 82 92 Q77 90 72 75 L70 60" />
               </clipPath>
               
-              {/* Water gradient */}
+              {/* Enhanced water gradient with depth */}
               <linearGradient id="bodyWaterGradient" x1="0%" y1="100%" x2="0%" y2="0%">
-                <stop offset="0%" stopColor="hsl(200, 80%, 50%)" stopOpacity="0.85" />
-                <stop offset="40%" stopColor="hsl(200, 75%, 55%)" stopOpacity="0.75" />
-                <stop offset="100%" stopColor="hsl(200, 70%, 65%)" stopOpacity="0.6" />
+                <stop offset="0%" stopColor="hsl(200, 85%, 45%)" stopOpacity="0.9" />
+                <stop offset="30%" stopColor="hsl(200, 80%, 50%)" stopOpacity="0.85" />
+                <stop offset="70%" stopColor="hsl(195, 75%, 55%)" stopOpacity="0.75" />
+                <stop offset="100%" stopColor="hsl(190, 70%, 65%)" stopOpacity="0.6" />
               </linearGradient>
+              
+              {/* Surface highlight gradient */}
+              <linearGradient id="surfaceHighlight" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="white" stopOpacity="0.6" />
+                <stop offset="50%" stopColor="white" stopOpacity="0.2" />
+                <stop offset="100%" stopColor="white" stopOpacity="0" />
+              </linearGradient>
+              
+              {/* Light reflection gradient */}
+              <radialGradient id="reflectionGradient" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="white" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="white" stopOpacity="0" />
+              </radialGradient>
               
               {/* Body outline gradient */}
               <linearGradient id="bodyOutlineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="hsl(210, 20%, 70%)" />
                 <stop offset="100%" stopColor="hsl(210, 15%, 60%)" />
               </linearGradient>
+              
+              {/* Wave pattern for animated surface */}
+              <pattern id="wavePattern" x="0" y="0" width="20" height="6" patternUnits="userSpaceOnUse">
+                <path 
+                  d="M0 3 Q5 0 10 3 T20 3" 
+                  fill="none" 
+                  stroke="hsl(190, 80%, 70%)" 
+                  strokeWidth="1.5"
+                  opacity="0.6"
+                />
+              </pattern>
             </defs>
+            
+            {/* Inline styles for animations */}
+            <style>{`
+              @keyframes waveMove {
+                0% { transform: translateX(0); }
+                100% { transform: translateX(-20px); }
+              }
+              @keyframes bubbleRise {
+                0% { 
+                  transform: translateY(0);
+                  opacity: 0.7;
+                }
+                50% {
+                  opacity: 0.9;
+                }
+                100% { 
+                  transform: translateY(-${fillHeight}px);
+                  opacity: 0;
+                }
+              }
+              @keyframes shimmer {
+                0%, 100% { opacity: 0.3; }
+                50% { opacity: 0.6; }
+              }
+              @keyframes surfaceBob {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-1.5px); }
+              }
+            `}</style>
             
             {/* Body silhouette background */}
             <g opacity="0.3">
@@ -123,7 +188,7 @@ export const HydrationInfographic: React.FC<HydrationInfographicProps> = ({
             
             {/* Water fill clipped to body shape */}
             <g clipPath="url(#bodyClip)">
-              {/* Water fill rectangle */}
+              {/* Main water fill */}
               <rect 
                 x="0" 
                 y={fillY}
@@ -133,32 +198,92 @@ export const HydrationInfographic: React.FC<HydrationInfographicProps> = ({
                 className="transition-all duration-700 ease-out"
               />
               
-              {/* Wave effect at water surface */}
+              {/* Animated wave surface */}
               {fillPercent > 5 && (
-                <ellipse 
-                  cx="50" 
-                  cy={fillY}
-                  rx="40"
-                  ry="4"
-                  fill="hsl(200, 70%, 70%)"
-                  opacity="0.5"
-                  className="transition-all duration-700 ease-out"
-                />
+                <g style={{ animation: 'surfaceBob 2s ease-in-out infinite' }}>
+                  {/* Primary wave */}
+                  <ellipse 
+                    cx="50" 
+                    cy={fillY}
+                    rx="45"
+                    ry="4"
+                    fill="hsl(195, 80%, 70%)"
+                    opacity="0.5"
+                    className="transition-all duration-700 ease-out"
+                  />
+                  {/* Secondary wave highlight */}
+                  <ellipse 
+                    cx="50" 
+                    cy={fillY - 1}
+                    rx="40"
+                    ry="2"
+                    fill="url(#surfaceHighlight)"
+                    className="transition-all duration-700 ease-out"
+                  />
+                  {/* Animated wave pattern */}
+                  <rect
+                    x="0"
+                    y={fillY - 3}
+                    width="100"
+                    height="6"
+                    fill="url(#wavePattern)"
+                    style={{ animation: 'waveMove 1.5s linear infinite' }}
+                  />
+                </g>
               )}
               
-              {/* Animated bubbles */}
+              {/* Rising bubbles */}
               {bubbles.map((bubble, index) => (
                 <circle 
                   key={index}
                   cx={bubble.cx} 
-                  cy={bubble.cy} 
+                  cy={180}
                   r={bubble.r} 
                   fill="white" 
-                  opacity="0.5"
-                  className="animate-pulse"
-                  style={{ animationDelay: `${bubble.delay}s` }}
+                  opacity="0"
+                  style={{ 
+                    animation: `bubbleRise ${bubble.duration}s ease-out infinite`,
+                    animationDelay: `${bubble.delay}s`
+                  }}
                 />
               ))}
+              
+              {/* Light reflections */}
+              {reflections.map((reflection, index) => (
+                <ellipse
+                  key={index}
+                  cx={reflection.cx}
+                  cy={reflection.cy}
+                  rx={reflection.rx}
+                  ry={reflection.ry}
+                  fill="url(#reflectionGradient)"
+                  style={{ animation: 'shimmer 3s ease-in-out infinite', animationDelay: `${index * 0.5}s` }}
+                />
+              ))}
+              
+              {/* Inner glow/caustics effect */}
+              {fillPercent > 20 && (
+                <>
+                  <ellipse
+                    cx="45"
+                    cy={fillY + fillHeight * 0.4}
+                    rx="8"
+                    ry="15"
+                    fill="white"
+                    opacity="0.1"
+                    style={{ animation: 'shimmer 4s ease-in-out infinite' }}
+                  />
+                  <ellipse
+                    cx="55"
+                    cy={fillY + fillHeight * 0.6}
+                    rx="6"
+                    ry="12"
+                    fill="white"
+                    opacity="0.08"
+                    style={{ animation: 'shimmer 4s ease-in-out infinite', animationDelay: '1s' }}
+                  />
+                </>
+              )}
             </g>
             
             {/* Body outline overlay for definition */}
