@@ -34,6 +34,16 @@ interface IntakeLogFormProps {
 
 const QUICK_AMOUNTS = [100, 200, 250, 500];
 
+function toDateTimeLocalValue(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const yyyy = date.getFullYear();
+  const mm = pad(date.getMonth() + 1);
+  const dd = pad(date.getDate());
+  const hh = pad(date.getHours());
+  const min = pad(date.getMinutes());
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+}
+
 export const IntakeLogForm: React.FC<IntakeLogFormProps> = ({
   onSubmit,
   isRestricted,
@@ -45,7 +55,9 @@ export const IntakeLogForm: React.FC<IntakeLogFormProps> = ({
     defaultValues: {
       fluid_type: '',
       amount_ml: 0,
-      event_occurred_at: new Date().toISOString().slice(0, 16),
+      // IMPORTANT: datetime-local expects *local* time, not UTC.
+      // Using toISOString() here causes entries to be logged into the wrong day for many timezones.
+      event_occurred_at: toDateTimeLocalValue(new Date()),
       is_self_reported: false,
       notes: ''
     }
@@ -66,7 +78,7 @@ export const IntakeLogForm: React.FC<IntakeLogFormProps> = ({
     form.reset({
       fluid_type: '',
       amount_ml: 0,
-      event_occurred_at: new Date().toISOString().slice(0, 16),
+      event_occurred_at: toDateTimeLocalValue(new Date()),
       is_self_reported: false,
       notes: ''
     });

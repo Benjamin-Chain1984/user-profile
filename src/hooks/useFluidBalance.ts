@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { FluidConfig, FluidIntakeEntry, FluidOutputEntry, HydrationSymptomCheck, FluidBalanceAlert, FluidStatus } from '@/types/fluidBalance';
-import { calculateFluidStatus } from '@/utils/fluidBalanceCalculator';
+import { calculateDailyTotals, calculateFluidStatus } from '@/utils/fluidBalanceCalculator';
 import { useToast } from '@/hooks/use-toast';
 
 interface UseFluidBalanceReturn {
@@ -316,20 +316,19 @@ export function useFluidBalance(clientId?: string): UseFluidBalanceReturn {
     }
   };
   
-  // Calculate today's totals first (needed for status calculation)
-  const today = new Date().toDateString();
-  const todayIntakeEntries = intakeEntries.filter(e => new Date(e.event_occurred_at).toDateString() === today);
-  const todayOutputEntries = outputEntries.filter(e => new Date(e.event_occurred_at).toDateString() === today);
-  
-  const todayIntake = todayIntakeEntries.reduce((sum, e) => sum + e.amount_ml, 0);
-  const todayOutput = todayOutputEntries.reduce((sum, e) => sum + (e.amount_ml || 0), 0);
-  const todayBalance = todayIntake - todayOutput;
+  // Calculate today's totals using the same day-boundary logic as the status calculator
+  // (prevents timezone / boundary mismatches between cards, % calc and the graphic)
+  const now = new Date();
+  const { intake: todayIntake, output: todayOutput, balance: todayBalance } = config
+    ? calculateDailyTotals(intakeEntries, outputEntries, now, config)
+    : { intake: 0, output: 0, balance: 0 };
   
   // Calculate current status (single source of truth for all UI elements)
   const { status: currentStatus, message: statusMessage, percentOfTarget, statusLabel } = calculateFluidStatus(
     intakeEntries,
     outputEntries,
-    config
+    config,
+    now
   );
   
   return {
