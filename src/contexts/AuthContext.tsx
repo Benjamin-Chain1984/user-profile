@@ -36,10 +36,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let mounted = true;
     
     // Set up auth state listener first
-    const unsubscribe = authService.onAuthStateChange((newSession) => {
+    const unsubscribe = authService.onAuthStateChange((newSession, rolesLoaded) => {
       if (mounted) {
         setSession(newSession);
-        setIsLoading(false);
+        // Only stop loading once roles are fully loaded
+        if (rolesLoaded) {
+          setIsLoading(false);
+        }
       }
     });
 
