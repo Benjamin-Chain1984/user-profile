@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Droplets } from 'lucide-react';
 
@@ -9,6 +9,30 @@ interface HydrationInfographicProps {
   todayIntake: number;
 }
 
+// Generate bubble positions based on fill level
+function generateBubbles(fillPercent: number): Array<{ cx: number; cy: number; r: number; delay: number }> {
+  if (fillPercent < 5) return [];
+  
+  const bubbleCount = Math.min(Math.floor(fillPercent / 10), 8);
+  const bubbles: Array<{ cx: number; cy: number; r: number; delay: number }> = [];
+  
+  for (let i = 0; i < bubbleCount; i++) {
+    // Distribute bubbles within the filled area of the body
+    const fillHeight = (fillPercent / 100) * 140;
+    const minY = 180 - fillHeight + 10;
+    const maxY = 175;
+    
+    bubbles.push({
+      cx: 35 + Math.random() * 30, // Random x within body width
+      cy: minY + Math.random() * (maxY - minY),
+      r: 2 + Math.random() * 3,
+      delay: i * 0.2
+    });
+  }
+  
+  return bubbles;
+}
+
 export const HydrationInfographic: React.FC<HydrationInfographicProps> = ({
   percentOfTarget,
   isRestricted,
@@ -17,6 +41,13 @@ export const HydrationInfographic: React.FC<HydrationInfographicProps> = ({
 }) => {
   // Clamp fill percentage
   const fillPercent = Math.min(Math.max(percentOfTarget, 0), 100);
+  
+  // Memoize bubbles so they don't regenerate on every render
+  const bubbles = useMemo(() => generateBubbles(fillPercent), [fillPercent]);
+  
+  // Calculate fill height - body fills from bottom up
+  const fillHeight = (fillPercent / 100) * 140; // Max fill height of body area
+  const fillY = 180 - fillHeight; // Start position from bottom
   
   return (
     <Card>
@@ -29,83 +60,114 @@ export const HydrationInfographic: React.FC<HydrationInfographicProps> = ({
       <CardContent>
         <div className="flex justify-center">
           <svg 
-            viewBox="0 0 120 160" 
-            className="w-40 h-52"
+            viewBox="0 0 100 200" 
+            className="w-32 h-48"
             aria-label={`Hydration level: ${fillPercent}%`}
           >
-            {/* Glass container */}
             <defs>
-              <clipPath id="glassClip">
-                <path d="M20 20 L25 140 Q27 150 60 150 Q93 150 95 140 L100 20 Z" />
+              {/* Clip path for human body silhouette */}
+              <clipPath id="bodyClip">
+                {/* Head */}
+                <circle cx="50" cy="22" r="16" />
+                {/* Neck */}
+                <rect x="44" y="36" width="12" height="8" />
+                {/* Torso */}
+                <path d="M30 44 Q28 70 30 100 L30 130 Q30 140 35 145 L35 180 L42 180 L42 145 L50 145 L58 145 L58 180 L65 180 L65 145 Q70 140 70 130 L70 100 Q72 70 70 44 Z" />
+                {/* Arms */}
+                <path d="M30 48 Q20 55 15 80 Q13 90 18 92 Q23 90 28 75 L30 60" />
+                <path d="M70 48 Q80 55 85 80 Q87 90 82 92 Q77 90 72 75 L70 60" />
               </clipPath>
-              <linearGradient id="waterGradient" x1="0%" y1="100%" x2="0%" y2="0%">
-                <stop offset="0%" stopColor="hsl(200, 80%, 50%)" stopOpacity="0.9" />
-                <stop offset="50%" stopColor="hsl(200, 75%, 55%)" stopOpacity="0.8" />
-                <stop offset="100%" stopColor="hsl(200, 70%, 65%)" stopOpacity="0.7" />
+              
+              {/* Water gradient */}
+              <linearGradient id="bodyWaterGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" stopColor="hsl(200, 80%, 50%)" stopOpacity="0.85" />
+                <stop offset="40%" stopColor="hsl(200, 75%, 55%)" stopOpacity="0.75" />
+                <stop offset="100%" stopColor="hsl(200, 70%, 65%)" stopOpacity="0.6" />
               </linearGradient>
-              <linearGradient id="glassShine" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="white" stopOpacity="0.3" />
-                <stop offset="20%" stopColor="white" stopOpacity="0" />
-                <stop offset="80%" stopColor="white" stopOpacity="0" />
-                <stop offset="100%" stopColor="white" stopOpacity="0.2" />
+              
+              {/* Body outline gradient */}
+              <linearGradient id="bodyOutlineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="hsl(210, 20%, 70%)" />
+                <stop offset="100%" stopColor="hsl(210, 15%, 60%)" />
               </linearGradient>
             </defs>
             
-            {/* Glass background */}
-            <path 
-              d="M20 20 L25 140 Q27 150 60 150 Q93 150 95 140 L100 20 Z" 
-              fill="hsl(210, 20%, 95%)"
-              stroke="hsl(210, 15%, 80%)"
-              strokeWidth="2"
-            />
+            {/* Body silhouette background */}
+            <g opacity="0.3">
+              {/* Head */}
+              <circle cx="50" cy="22" r="16" fill="hsl(210, 15%, 85%)" stroke="url(#bodyOutlineGradient)" strokeWidth="1.5" />
+              {/* Neck */}
+              <rect x="44" y="36" width="12" height="8" fill="hsl(210, 15%, 85%)" />
+              {/* Torso and legs */}
+              <path 
+                d="M30 44 Q28 70 30 100 L30 130 Q30 140 35 145 L35 180 L42 180 L42 145 L50 145 L58 145 L58 180 L65 180 L65 145 Q70 140 70 130 L70 100 Q72 70 70 44 Z" 
+                fill="hsl(210, 15%, 85%)" 
+                stroke="url(#bodyOutlineGradient)" 
+                strokeWidth="1.5"
+              />
+              {/* Left arm */}
+              <path 
+                d="M30 48 Q20 55 15 80 Q13 90 18 92 Q23 90 28 75 L30 60" 
+                fill="hsl(210, 15%, 85%)" 
+                stroke="url(#bodyOutlineGradient)" 
+                strokeWidth="1.5"
+              />
+              {/* Right arm */}
+              <path 
+                d="M70 48 Q80 55 85 80 Q87 90 82 92 Q77 90 72 75 L70 60" 
+                fill="hsl(210, 15%, 85%)" 
+                stroke="url(#bodyOutlineGradient)" 
+                strokeWidth="1.5"
+              />
+            </g>
             
-            {/* Water fill */}
-            <g clipPath="url(#glassClip)">
+            {/* Water fill clipped to body shape */}
+            <g clipPath="url(#bodyClip)">
+              {/* Water fill rectangle */}
               <rect 
-                x="15" 
-                y={150 - (fillPercent / 100) * 130}
-                width="90" 
-                height={(fillPercent / 100) * 130}
-                fill="url(#waterGradient)"
+                x="0" 
+                y={fillY}
+                width="100" 
+                height={fillHeight + 10}
+                fill="url(#bodyWaterGradient)"
                 className="transition-all duration-700 ease-out"
               />
               
-              {/* Water surface wave effect */}
+              {/* Wave effect at water surface */}
               {fillPercent > 5 && (
                 <ellipse 
-                  cx="60" 
-                  cy={150 - (fillPercent / 100) * 130}
-                  rx="38"
+                  cx="50" 
+                  cy={fillY}
+                  rx="40"
                   ry="4"
                   fill="hsl(200, 70%, 70%)"
-                  opacity="0.6"
+                  opacity="0.5"
+                  className="transition-all duration-700 ease-out"
                 />
               )}
               
-              {/* Bubbles */}
-              {fillPercent > 10 && (
-                <>
-                  <circle cx="40" cy={155 - (fillPercent / 100) * 100} r="3" fill="white" opacity="0.4" className="animate-pulse" />
-                  <circle cx="75" cy={165 - (fillPercent / 100) * 110} r="2" fill="white" opacity="0.3" className="animate-pulse" style={{ animationDelay: '0.3s' }} />
-                  <circle cx="55" cy={145 - (fillPercent / 100) * 90} r="2.5" fill="white" opacity="0.35" className="animate-pulse" style={{ animationDelay: '0.6s' }} />
-                </>
-              )}
+              {/* Animated bubbles */}
+              {bubbles.map((bubble, index) => (
+                <circle 
+                  key={index}
+                  cx={bubble.cx} 
+                  cy={bubble.cy} 
+                  r={bubble.r} 
+                  fill="white" 
+                  opacity="0.5"
+                  className="animate-pulse"
+                  style={{ animationDelay: `${bubble.delay}s` }}
+                />
+              ))}
             </g>
             
-            {/* Glass shine overlay */}
-            <path 
-              d="M20 20 L25 140 Q27 150 60 150 Q93 150 95 140 L100 20 Z" 
-              fill="url(#glassShine)"
-            />
-            
-            {/* Glass rim */}
-            <ellipse cx="60" cy="20" rx="42" ry="8" fill="none" stroke="hsl(210, 15%, 75%)" strokeWidth="3" />
-            <ellipse cx="60" cy="20" rx="40" ry="6" fill="hsl(210, 20%, 98%)" stroke="hsl(210, 15%, 85%)" strokeWidth="1" />
-            
-            {/* Measurement lines */}
-            <line x1="98" y1="45" x2="105" y2="45" stroke="hsl(210, 15%, 70%)" strokeWidth="1" />
-            <line x1="97" y1="80" x2="105" y2="80" stroke="hsl(210, 15%, 70%)" strokeWidth="1" />
-            <line x1="96" y1="115" x2="105" y2="115" stroke="hsl(210, 15%, 70%)" strokeWidth="1" />
+            {/* Body outline overlay for definition */}
+            <g fill="none" stroke="hsl(210, 20%, 65%)" strokeWidth="1" opacity="0.6">
+              <circle cx="50" cy="22" r="16" />
+              <path d="M30 44 Q28 70 30 100 L30 130 Q30 140 35 145 L35 180 L42 180 L42 145 L50 145 L58 145 L58 180 L65 180 L65 145 Q70 140 70 130 L70 100 Q72 70 70 44 Z" />
+              <path d="M30 48 Q20 55 15 80 Q13 90 18 92 Q23 90 28 75 L30 60" />
+              <path d="M70 48 Q80 55 85 80 Q87 90 82 92 Q77 90 72 75 L70 60" />
+            </g>
           </svg>
         </div>
         
