@@ -4,12 +4,13 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Droplets, TrendingUp, TrendingDown, AlertTriangle, CheckCircle } from 'lucide-react';
 import { FluidStatus } from '@/types/fluidBalance';
-import { getStatusLabel, getHydrationLevel } from '@/utils/fluidBalanceCalculator';
+import { getHydrationLevel } from '@/utils/fluidBalanceCalculator';
 import { cn } from '@/lib/utils';
 
 interface FluidStatusCardProps {
   status: FluidStatus;
   statusMessage: string;
+  statusLabel: string;
   todayIntake: number;
   todayOutput: number;
   todayBalance: number;
@@ -22,6 +23,7 @@ interface FluidStatusCardProps {
 export const FluidStatusCard: React.FC<FluidStatusCardProps> = ({
   status,
   statusMessage,
+  statusLabel,
   todayIntake,
   todayOutput,
   todayBalance,
@@ -64,7 +66,7 @@ export const FluidStatusCard: React.FC<FluidStatusCardProps> = ({
           </CardTitle>
           <Badge className={badgeColors[status]}>
             <StatusIcon className="h-3 w-3 mr-1" />
-            {getStatusLabel(status)}
+            {statusLabel}
           </Badge>
         </div>
       </CardHeader>
