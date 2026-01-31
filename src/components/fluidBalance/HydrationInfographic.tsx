@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+import { Droplets } from 'lucide-react';
 
 interface HydrationInfographicProps {
   percentOfTarget: number;
@@ -16,126 +16,107 @@ export const HydrationInfographic: React.FC<HydrationInfographicProps> = ({
   todayIntake
 }) => {
   // Clamp fill percentage
-  const fillPercent = Math.min(Math.max(percentOfTarget, 0), 120);
-  
-  // Determine fill color based on percentage
-  const getFillColor = () => {
-    if (isRestricted && fillPercent > 100) return '#ef4444'; // Red for exceeded restriction
-    if (fillPercent >= 75) return '#22c55e'; // Green
-    if (fillPercent >= 50) return '#eab308'; // Yellow
-    return '#ef4444'; // Red for low
-  };
-  
-  const fillColor = getFillColor();
-  const bubbleCount = Math.floor(fillPercent / 10);
+  const fillPercent = Math.min(Math.max(percentOfTarget, 0), 100);
   
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg flex items-center justify-between">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Droplets className="h-5 w-5 text-primary" />
           <span>Hydration Level</span>
-          {isRestricted && (
-            <span className="text-xs font-normal bg-amber-100 text-amber-800 px-2 py-1 rounded">
-              Restricted
-            </span>
-          )}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex justify-center">
           <svg 
-            viewBox="0 0 100 160" 
-            className="w-32 h-48"
-            aria-label={`Hydration level: ${Math.min(percentOfTarget, 100)}%`}
+            viewBox="0 0 120 160" 
+            className="w-40 h-52"
+            aria-label={`Hydration level: ${fillPercent}%`}
           >
-            {/* Body silhouette */}
+            {/* Glass container */}
             <defs>
-              <clipPath id="bodyClip">
-                {/* Head */}
-                <circle cx="50" cy="20" r="15" />
-                {/* Neck */}
-                <rect x="45" y="35" width="10" height="8" />
-                {/* Torso */}
-                <ellipse cx="50" cy="70" rx="25" ry="30" />
-                {/* Arms */}
-                <ellipse cx="20" cy="65" rx="8" ry="25" />
-                <ellipse cx="80" cy="65" rx="8" ry="25" />
-                {/* Legs */}
-                <ellipse cx="38" cy="125" rx="10" ry="30" />
-                <ellipse cx="62" cy="125" rx="10" ry="30" />
+              <clipPath id="glassClip">
+                <path d="M20 20 L25 140 Q27 150 60 150 Q93 150 95 140 L100 20 Z" />
               </clipPath>
-              
-              {/* Water gradient */}
               <linearGradient id="waterGradient" x1="0%" y1="100%" x2="0%" y2="0%">
-                <stop offset="0%" stopColor={fillColor} stopOpacity="0.9" />
-                <stop offset="100%" stopColor={fillColor} stopOpacity="0.6" />
+                <stop offset="0%" stopColor="hsl(200, 80%, 50%)" stopOpacity="0.9" />
+                <stop offset="50%" stopColor="hsl(200, 75%, 55%)" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="hsl(200, 70%, 65%)" stopOpacity="0.7" />
+              </linearGradient>
+              <linearGradient id="glassShine" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="white" stopOpacity="0.3" />
+                <stop offset="20%" stopColor="white" stopOpacity="0" />
+                <stop offset="80%" stopColor="white" stopOpacity="0" />
+                <stop offset="100%" stopColor="white" stopOpacity="0.2" />
               </linearGradient>
             </defs>
             
-            {/* Background body */}
-            <g clipPath="url(#bodyClip)">
-              <rect x="0" y="0" width="100" height="160" fill="#e5e7eb" />
-              
-              {/* Water fill */}
+            {/* Glass background */}
+            <path 
+              d="M20 20 L25 140 Q27 150 60 150 Q93 150 95 140 L100 20 Z" 
+              fill="hsl(210, 20%, 95%)"
+              stroke="hsl(210, 15%, 80%)"
+              strokeWidth="2"
+            />
+            
+            {/* Water fill */}
+            <g clipPath="url(#glassClip)">
               <rect 
-                x="0" 
-                y={160 - (Math.min(fillPercent, 100) / 100) * 160}
-                width="100" 
-                height={(Math.min(fillPercent, 100) / 100) * 160}
+                x="15" 
+                y={150 - (fillPercent / 100) * 130}
+                width="90" 
+                height={(fillPercent / 100) * 130}
                 fill="url(#waterGradient)"
-                className="transition-all duration-500"
+                className="transition-all duration-700 ease-out"
               />
               
-              {/* Bubbles */}
-              {Array.from({ length: bubbleCount }).map((_, i) => (
-                <circle
-                  key={i}
-                  cx={25 + Math.random() * 50}
-                  cy={160 - (Math.min(fillPercent, 100) / 100) * 160 + 10 + Math.random() * ((Math.min(fillPercent, 100) / 100) * 150)}
-                  r={2 + Math.random() * 3}
-                  fill="white"
-                  opacity={0.4 + Math.random() * 0.3}
-                  className="animate-pulse"
-                  style={{ animationDelay: `${i * 0.2}s` }}
+              {/* Water surface wave effect */}
+              {fillPercent > 5 && (
+                <ellipse 
+                  cx="60" 
+                  cy={150 - (fillPercent / 100) * 130}
+                  rx="38"
+                  ry="4"
+                  fill="hsl(200, 70%, 70%)"
+                  opacity="0.6"
                 />
-              ))}
+              )}
+              
+              {/* Bubbles */}
+              {fillPercent > 10 && (
+                <>
+                  <circle cx="40" cy={155 - (fillPercent / 100) * 100} r="3" fill="white" opacity="0.4" className="animate-pulse" />
+                  <circle cx="75" cy={165 - (fillPercent / 100) * 110} r="2" fill="white" opacity="0.3" className="animate-pulse" style={{ animationDelay: '0.3s' }} />
+                  <circle cx="55" cy={145 - (fillPercent / 100) * 90} r="2.5" fill="white" opacity="0.35" className="animate-pulse" style={{ animationDelay: '0.6s' }} />
+                </>
+              )}
             </g>
             
-            {/* Body outline */}
-            <circle cx="50" cy="20" r="15" fill="none" stroke="#9ca3af" strokeWidth="1.5" />
-            <rect x="45" y="35" width="10" height="8" fill="none" stroke="#9ca3af" strokeWidth="1.5" />
-            <ellipse cx="50" cy="70" rx="25" ry="30" fill="none" stroke="#9ca3af" strokeWidth="1.5" />
-            <ellipse cx="20" cy="65" rx="8" ry="25" fill="none" stroke="#9ca3af" strokeWidth="1.5" />
-            <ellipse cx="80" cy="65" rx="8" ry="25" fill="none" stroke="#9ca3af" strokeWidth="1.5" />
-            <ellipse cx="38" cy="125" rx="10" ry="30" fill="none" stroke="#9ca3af" strokeWidth="1.5" />
-            <ellipse cx="62" cy="125" rx="10" ry="30" fill="none" stroke="#9ca3af" strokeWidth="1.5" />
+            {/* Glass shine overlay */}
+            <path 
+              d="M20 20 L25 140 Q27 150 60 150 Q93 150 95 140 L100 20 Z" 
+              fill="url(#glassShine)"
+            />
+            
+            {/* Glass rim */}
+            <ellipse cx="60" cy="20" rx="42" ry="8" fill="none" stroke="hsl(210, 15%, 75%)" strokeWidth="3" />
+            <ellipse cx="60" cy="20" rx="40" ry="6" fill="hsl(210, 20%, 98%)" stroke="hsl(210, 15%, 85%)" strokeWidth="1" />
+            
+            {/* Measurement lines */}
+            <line x1="98" y1="45" x2="105" y2="45" stroke="hsl(210, 15%, 70%)" strokeWidth="1" />
+            <line x1="97" y1="80" x2="105" y2="80" stroke="hsl(210, 15%, 70%)" strokeWidth="1" />
+            <line x1="96" y1="115" x2="105" y2="115" stroke="hsl(210, 15%, 70%)" strokeWidth="1" />
           </svg>
         </div>
         
         {/* Stats below graphic */}
         <div className="text-center mt-4 space-y-1">
-          <p className="text-3xl font-bold" style={{ color: fillColor }}>
-            {Math.min(percentOfTarget, 100)}%
+          <p className="text-3xl font-bold text-primary">
+            {fillPercent}%
           </p>
           <p className="text-sm text-muted-foreground">
             {todayIntake}ml of {targetOrCap}ml {isRestricted ? 'limit' : 'target'}
           </p>
-        </div>
-        
-        {/* Legend */}
-        <div className="flex justify-center gap-4 mt-4 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded-full bg-emerald-500" />
-            <span>≥75%</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded-full bg-yellow-500" />
-            <span>50-74%</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded-full bg-red-500" />
-            <span>&lt;50%</span>
-          </div>
         </div>
       </CardContent>
     </Card>
