@@ -50,7 +50,7 @@ export interface AuthAdapter {
   getSession(): Promise<AuthSession | null>;
   getCurrentUser(): Promise<AuthUser | null>;
   signOut(): Promise<void>;
-  onAuthStateChange(callback: (session: AuthSession | null) => void): () => void;
+  onAuthStateChange(callback: (session: AuthSession | null, rolesLoaded: boolean) => void): () => void;
   
   // Email/Password Auth
   signInWithEmail(email: string, password: string): Promise<SignInResult>;
