@@ -27,6 +27,9 @@ export const FluidConfigSettings: React.FC<FluidConfigSettingsProps> = ({
       day_boundary_time: config?.day_boundary_time || '00:00',
       dehydration_threshold_ml: config?.dehydration_threshold_ml || -500,
       overhydration_threshold_ml: config?.overhydration_threshold_ml || 1000,
+      dehydration_warning_percent: config?.dehydration_warning_percent || 30,
+      overhydration_warning_percent: config?.overhydration_warning_percent || 120,
+      time_checkpoint_for_warning: config?.time_checkpoint_for_warning || '12:00',
       fluid_restriction_enabled: config?.fluid_restriction_enabled || false,
       max_fluid_allowance_ml: config?.max_fluid_allowance_ml || null,
       hard_stop_on_limit_exceeded: config?.hard_stop_on_limit_exceeded || false,
@@ -93,6 +96,75 @@ export const FluidConfigSettings: React.FC<FluidConfigSettingsProps> = ({
                       </FormControl>
                       <FormDescription>
                         When the "day" starts for calculations. Default is midnight (00:00).
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-amber-500" />
+                  Status Thresholds (Percentage-Based)
+                </CardTitle>
+                <CardDescription>
+                  Configure when status indicators change to Amber or Red based on hydration percentage
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="dehydration_warning_percent"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Dehydration Warning (%) – Amber</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          {...field} 
+                          onChange={e => field.onChange(parseInt(e.target.value) || 30)}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Trigger Amber status when intake falls below this % of target. Default: 30%
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="overhydration_warning_percent"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Overhydration Warning (%) – Red</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          {...field} 
+                          onChange={e => field.onChange(parseInt(e.target.value) || 120)}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Trigger Red status when intake exceeds this % of target. Default: 120%
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="time_checkpoint_for_warning"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Dehydration Warning Time Checkpoint</FormLabel>
+                      <FormControl>
+                        <Input type="time" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Low hydration warnings (Amber) only trigger after this time. Default: 12:00 (midday)
                       </FormDescription>
                     </FormItem>
                   )}

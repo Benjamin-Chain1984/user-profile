@@ -8,6 +8,10 @@ export interface FluidConfig {
   day_boundary_time: string;
   dehydration_threshold_ml: number;
   overhydration_threshold_ml: number;
+  // Percentage-based thresholds for status indicators
+  dehydration_warning_percent: number; // Default 30% - triggers Amber when below this
+  overhydration_warning_percent: number; // Default 120% - triggers Red when above this
+  time_checkpoint_for_warning: string; // Default "12:00" - time after which low hydration triggers Amber
   fluid_restriction_enabled: boolean;
   max_fluid_allowance_ml: number | null;
   hard_stop_on_limit_exceeded: boolean;

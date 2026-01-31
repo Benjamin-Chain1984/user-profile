@@ -13,6 +13,7 @@ interface UseFluidBalanceReturn {
   alerts: FluidBalanceAlert[];
   currentStatus: FluidStatus;
   statusMessage: string;
+  statusLabel: string;
   percentOfTarget: number;
   todayIntake: number;
   todayOutput: number;
@@ -315,14 +316,7 @@ export function useFluidBalance(clientId?: string): UseFluidBalanceReturn {
     }
   };
   
-  // Calculate current status
-  const { status: currentStatus, message: statusMessage, percentOfTarget } = calculateFluidStatus(
-    intakeEntries,
-    outputEntries,
-    config
-  );
-  
-  // Calculate today's totals
+  // Calculate today's totals first (needed for status calculation)
   const today = new Date().toDateString();
   const todayIntakeEntries = intakeEntries.filter(e => new Date(e.event_occurred_at).toDateString() === today);
   const todayOutputEntries = outputEntries.filter(e => new Date(e.event_occurred_at).toDateString() === today);
@@ -330,6 +324,13 @@ export function useFluidBalance(clientId?: string): UseFluidBalanceReturn {
   const todayIntake = todayIntakeEntries.reduce((sum, e) => sum + e.amount_ml, 0);
   const todayOutput = todayOutputEntries.reduce((sum, e) => sum + (e.amount_ml || 0), 0);
   const todayBalance = todayIntake - todayOutput;
+  
+  // Calculate current status (single source of truth for all UI elements)
+  const { status: currentStatus, message: statusMessage, percentOfTarget, statusLabel } = calculateFluidStatus(
+    intakeEntries,
+    outputEntries,
+    config
+  );
   
   return {
     config,
@@ -339,6 +340,7 @@ export function useFluidBalance(clientId?: string): UseFluidBalanceReturn {
     alerts,
     currentStatus,
     statusMessage,
+    statusLabel,
     percentOfTarget,
     todayIntake,
     todayOutput,

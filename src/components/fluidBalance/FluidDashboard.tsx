@@ -29,6 +29,7 @@ export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
     alerts,
     currentStatus,
     statusMessage,
+    statusLabel,
     percentOfTarget,
     todayIntake,
     todayOutput,
@@ -121,6 +122,7 @@ export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
             <FluidStatusCard
               status={currentStatus}
               statusMessage={statusMessage}
+              statusLabel={statusLabel}
               todayIntake={todayIntake}
               todayOutput={todayOutput}
               todayBalance={todayBalance}
