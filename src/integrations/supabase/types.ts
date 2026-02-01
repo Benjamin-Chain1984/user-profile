@@ -1765,6 +1765,179 @@ export type Database = {
           },
         ]
       }
+      module_alert_recipients: {
+        Row: {
+          alert_severity: string
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          module_name: string
+          notification_contact_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          alert_severity: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          module_name: string
+          notification_contact_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          alert_severity?: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          module_name?: string
+          notification_contact_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_alert_recipients_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "module_alert_recipients_notification_contact_id_fkey"
+            columns: ["notification_contact_id"]
+            isOneToOne: false
+            referencedRelation: "notification_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_contacts: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          notes: string | null
+          preferred_contact_hours: string | null
+          relationship: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          email: string
+          full_name: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          preferred_contact_hours?: string | null
+          relationship: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          preferred_contact_hours?: string | null
+          relationship?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_contacts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_events: {
+        Row: {
+          alert_id: string | null
+          alert_severity: string | null
+          alert_type: string | null
+          client_id: string | null
+          contact_email: string
+          contact_name: string
+          delivery_method: string
+          delivery_status: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          module_name: string
+          notification_contact_id: string | null
+          sent_at: string
+        }
+        Insert: {
+          alert_id?: string | null
+          alert_severity?: string | null
+          alert_type?: string | null
+          client_id?: string | null
+          contact_email: string
+          contact_name: string
+          delivery_method?: string
+          delivery_status?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          module_name: string
+          notification_contact_id?: string | null
+          sent_at?: string
+        }
+        Update: {
+          alert_id?: string | null
+          alert_severity?: string | null
+          alert_type?: string | null
+          client_id?: string | null
+          contact_email?: string
+          contact_name?: string
+          delivery_method?: string
+          delivery_status?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          module_name?: string
+          notification_contact_id?: string | null
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_events_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_events_notification_contact_id_fkey"
+            columns: ["notification_contact_id"]
+            isOneToOne: false
+            referencedRelation: "notification_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pain_action_records: {
         Row: {
           action_taken: string
