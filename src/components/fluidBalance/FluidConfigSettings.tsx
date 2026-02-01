@@ -1,25 +1,54 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from '@/components/ui/form';
-import { Settings, AlertTriangle, Info, Heart, Scale } from 'lucide-react';
+import { Settings, AlertTriangle, Info, Heart, Scale, Bell } from 'lucide-react';
 import { FluidConfig } from '@/types/fluidBalance';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { RestrictedSection } from '@/components/ui/restricted-section';
 import { Separator } from '@/components/ui/separator';
+import { AlertRecipientSelector } from '@/components/profile';
+import { useModuleAlertRecipients, useSetModuleAlertRecipients } from '@/hooks/useNotificationContacts';
+import type { AlertSeverity } from '@/types/notificationContacts';
 
 interface FluidConfigSettingsProps {
   config: FluidConfig | null;
   onSave: (config: Partial<FluidConfig>) => Promise<void>;
+  clientId?: string;
 }
+
+const MODULE_NAME = 'fluid-balance';
 
 export const FluidConfigSettings: React.FC<FluidConfigSettingsProps> = ({
   config,
-  onSave
+  onSave,
+  clientId
 }) => {
+  // Module alert recipients state
+  const { data: recipients } = useModuleAlertRecipients(MODULE_NAME, clientId);
+  const setRecipients = useSetModuleAlertRecipients();
+
+  const [amberRecipients, setAmberRecipients] = useState<string[]>([]);
+  const [redRecipients, setRedRecipients] = useState<string[]>([]);
+
+  // Initialize recipients from database
+  useEffect(() => {
+    if (recipients) {
+      setAmberRecipients(
+        recipients
+          .filter((r) => r.alert_severity === 'amber')
+          .map((r) => r.notification_contact_id)
+      );
+      setRedRecipients(
+        recipients
+          .filter((r) => r.alert_severity === 'red')
+          .map((r) => r.notification_contact_id)
+      );
+    }
+  }, [recipients]);
   const form = useForm({
     defaultValues: {
       target_daily_intake_ml: config?.target_daily_intake_ml || 2000,
@@ -42,6 +71,18 @@ export const FluidConfigSettings: React.FC<FluidConfigSettingsProps> = ({
   
   const handleSubmit = async (data: any) => {
     await onSave(data);
+  };
+
+  const handleSaveRecipients = () => {
+    const allRecipients: { contactId: string; severity: AlertSeverity }[] = [
+      ...amberRecipients.map((id) => ({ contactId: id, severity: 'amber' as AlertSeverity })),
+      ...redRecipients.map((id) => ({ contactId: id, severity: 'red' as AlertSeverity })),
+    ];
+    setRecipients.mutate({
+      moduleName: MODULE_NAME,
+      clientId: clientId || null,
+      recipients: allRecipients,
+    });
   };
   
   return (
@@ -341,6 +382,47 @@ export const FluidConfigSettings: React.FC<FluidConfigSettingsProps> = ({
             </Button>
           </form>
         </Form>
+        
+        <Separator />
+
+        {/* Alert Recipients */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Bell className="h-5 w-5" />
+              Alert Notification Recipients
+            </CardTitle>
+            <CardDescription>
+              Select who should receive email notifications when alerts occur for this module.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <AlertRecipientSelector
+              moduleName={MODULE_NAME}
+              severity="amber"
+              selectedContactIds={amberRecipients}
+              onSelectionChange={setAmberRecipients}
+              clientId={clientId}
+            />
+
+            <AlertRecipientSelector
+              moduleName={MODULE_NAME}
+              severity="red"
+              selectedContactIds={redRecipients}
+              onSelectionChange={setRedRecipients}
+              clientId={clientId}
+            />
+
+            <Button
+              onClick={handleSaveRecipients}
+              disabled={setRecipients.isPending}
+              variant="outline"
+              className="w-full"
+            >
+              {setRecipients.isPending ? 'Saving...' : 'Save Alert Recipients'}
+            </Button>
+          </CardContent>
+        </Card>
         
         <Separator />
         

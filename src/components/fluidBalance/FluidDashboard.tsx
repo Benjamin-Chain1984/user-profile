@@ -181,7 +181,7 @@ export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
         </TabsContent>
         
         <TabsContent value="settings">
-          <FluidConfigSettings config={config} onSave={saveConfig} />
+          <FluidConfigSettings config={config} onSave={saveConfig} clientId={clientId} />
         </TabsContent>
       </Tabs>
       
