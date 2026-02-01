@@ -29,6 +29,9 @@ import { RestrictedSection } from '@/components/ui/restricted-section';
 import { Switch } from '@/components/ui/switch';
 import { useBowelCareConfig, usePrnMedications } from '@/hooks/useBowelCare';
 import { useAuth } from '@/contexts/AuthContext';
+import { AlertRecipientSelector } from '@/components/profile';
+import { useModuleAlertRecipients, useSetModuleAlertRecipients } from '@/hooks/useNotificationContacts';
+import type { AlertSeverity } from '@/types/notificationContacts';
 import { 
   Settings, 
   Pill, 
@@ -41,7 +44,8 @@ import {
   Droplets,
   Heart,
   Thermometer,
-  Moon
+  Moon,
+  Bell
 } from 'lucide-react';
 import type { BowelCareConfig, PrnMedication } from '@/types/bowelCare';
 
@@ -87,11 +91,36 @@ interface BowelCareConfigSettingsProps {
   clientId: string;
 }
 
+const MODULE_NAME = 'bowel-care';
+
 export function BowelCareConfigSettings({ clientId }: BowelCareConfigSettingsProps) {
   const { hasRole } = useAuth();
   const isAdmin = hasRole('admin');
   const { config, updateConfig, isUpdating } = useBowelCareConfig(clientId);
   const { medications, addMedication, updateMedication, removeMedication, isAdding } = usePrnMedications(clientId);
+
+  // Module alert recipients
+  const { data: recipients } = useModuleAlertRecipients(MODULE_NAME, clientId);
+  const setRecipients = useSetModuleAlertRecipients();
+
+  const [amberRecipients, setAmberRecipients] = useState<string[]>([]);
+  const [redRecipients, setRedRecipients] = useState<string[]>([]);
+
+  // Initialize recipients from database
+  useEffect(() => {
+    if (recipients) {
+      setAmberRecipients(
+        recipients
+          .filter((r) => r.alert_severity === 'amber')
+          .map((r) => r.notification_contact_id)
+      );
+      setRedRecipients(
+        recipients
+          .filter((r) => r.alert_severity === 'red')
+          .map((r) => r.notification_contact_id)
+      );
+    }
+  }, [recipients]);
 
   // Local state for form
   const [localConfig, setLocalConfig] = useState<Partial<BowelCareConfig>>({});
@@ -125,6 +154,18 @@ export function BowelCareConfigSettings({ clientId }: BowelCareConfigSettingsPro
           notes: '',
         });
       },
+    });
+  };
+
+  const handleSaveRecipients = () => {
+    const allRecipients: { contactId: string; severity: AlertSeverity }[] = [
+      ...amberRecipients.map((id) => ({ contactId: id, severity: 'amber' as AlertSeverity })),
+      ...redRecipients.map((id) => ({ contactId: id, severity: 'red' as AlertSeverity })),
+    ];
+    setRecipients.mutate({
+      moduleName: MODULE_NAME,
+      clientId: clientId || null,
+      recipients: allRecipients,
     });
   };
 
@@ -539,7 +580,50 @@ export function BowelCareConfigSettings({ clientId }: BowelCareConfigSettingsPro
         </DialogContent>
       </Dialog>
 
-      {/* Other Recommended Related Modules */}
+      {/* Alert Notification Recipients */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Bell className="h-5 w-5" />
+            Alert Notification Recipients
+          </CardTitle>
+          <CardDescription>
+            Select who should receive email notifications when alerts occur for this module.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <RestrictedSection requiredRole="admin">
+            <AlertRecipientSelector
+              moduleName={MODULE_NAME}
+              severity="amber"
+              selectedContactIds={amberRecipients}
+              onSelectionChange={setAmberRecipients}
+              clientId={clientId}
+            />
+
+            <AlertRecipientSelector
+              moduleName={MODULE_NAME}
+              severity="red"
+              selectedContactIds={redRecipients}
+              onSelectionChange={setRedRecipients}
+              clientId={clientId}
+              className="mt-6"
+            />
+
+            {isAdmin && (
+              <Button
+                onClick={handleSaveRecipients}
+                disabled={setRecipients.isPending}
+                variant="outline"
+                className="w-full mt-4"
+              >
+                {setRecipients.isPending ? 'Saving...' : 'Save Alert Recipients'}
+              </Button>
+            )}
+          </RestrictedSection>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Other Recommended Related Modules</CardTitle>

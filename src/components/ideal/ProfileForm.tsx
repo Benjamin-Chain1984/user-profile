@@ -8,6 +8,7 @@ import { RestrictedSection } from '@/components/ui/restricted-section';
 import { MyTeam } from '@/components/team/MyTeam';
 import { QRPosterSection } from './QRPosterSection';
 import { SubscriptionBillingSection } from './SubscriptionBillingSection';
+import { NotificationContactsSection } from '@/components/profile';
 import { differenceInYears } from 'date-fns';
 import { Camera, User, Phone, Users, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -203,6 +204,10 @@ export function ProfileForm() {
           Save Changes
         </Button>
       )}
+
+      {/* Notification Contacts Section - Admin Only */}
+      <Separator className="my-8" />
+      <NotificationContactsSection />
 
       {/* QR & Poster Section */}
       <Separator className="my-8" />
