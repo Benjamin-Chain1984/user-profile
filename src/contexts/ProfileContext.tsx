@@ -535,6 +535,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     heartRateEnabled: true,
     oxygenLevelsEnabled: true,
     temperatureEnabled: true,
+    respiratoryRateEnabled: true,
   });
 
   const toggleModule = (moduleId: string) => {
@@ -556,7 +557,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     healthMonitoringConfig.bloodPressureEnabled ||
     healthMonitoringConfig.heartRateEnabled ||
     healthMonitoringConfig.oxygenLevelsEnabled ||
-    healthMonitoringConfig.temperatureEnabled;
+    healthMonitoringConfig.temperatureEnabled ||
+    healthMonitoringConfig.respiratoryRateEnabled;
 
   const activeEnabledModules = enabledModules.filter((m) => {
     if (m.id === 'health-monitoring') {

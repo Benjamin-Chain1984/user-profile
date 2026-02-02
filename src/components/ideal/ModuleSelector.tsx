@@ -10,6 +10,7 @@ const vitalIcons: Record<string, React.ElementType> = {
   'heart-rate': Activity,
   'oxygen-levels': Wind,
   'temperature': Thermometer,
+  'respiratory-rate': Wind,
 };
 
 export function ModuleSelector() {
@@ -29,13 +30,15 @@ export function ModuleSelector() {
     healthMonitoringConfig.bloodPressureEnabled ||
     healthMonitoringConfig.heartRateEnabled ||
     healthMonitoringConfig.oxygenLevelsEnabled ||
-    healthMonitoringConfig.temperatureEnabled;
+    healthMonitoringConfig.temperatureEnabled ||
+    healthMonitoringConfig.respiratoryRateEnabled;
 
   const vitalConfigKeys: Record<string, keyof typeof healthMonitoringConfig> = {
     'blood-pressure': 'bloodPressureEnabled',
     'heart-rate': 'heartRateEnabled',
     'oxygen-levels': 'oxygenLevelsEnabled',
     'temperature': 'temperatureEnabled',
+    'respiratory-rate': 'respiratoryRateEnabled',
   };
 
   return (

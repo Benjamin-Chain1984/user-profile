@@ -31,6 +31,7 @@ export interface HealthMonitoringConfig {
   heartRateEnabled: boolean;
   oxygenLevelsEnabled: boolean;
   temperatureEnabled: boolean;
+  respiratoryRateEnabled: boolean;
 }
 
 export interface Alert {
@@ -72,4 +73,16 @@ export const HEALTH_MONITORING_VITALS = [
   { id: 'heart-rate', name: 'Heart Rate', icon: 'Activity' },
   { id: 'oxygen-levels', name: 'Oxygen Levels (SpO₂)', icon: 'Wind' },
   { id: 'temperature', name: 'Temperature', icon: 'Thermometer' },
+  { id: 'respiratory-rate', name: 'Respiratory Rate', icon: 'Wind' },
 ];
+
+// Frequency options for vital sign monitoring
+export const MONITORING_FREQUENCIES = [
+  { value: 'daily', label: 'Daily', hours: 24 },
+  { value: 'twice_daily', label: 'Twice Daily', hours: 12 },
+  { value: 'weekly', label: 'Weekly', hours: 168 },
+  { value: 'monthly', label: 'Monthly', hours: 720 },
+  { value: 'as_needed', label: 'As Needed', hours: null },
+] as const;
+
+export type MonitoringFrequency = typeof MONITORING_FREQUENCIES[number]['value'];
