@@ -17,7 +17,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { 
   AlertTriangle, 
   ShieldAlert, 
@@ -28,8 +27,7 @@ import {
   Heart,
   Activity,
   Wind,
-  Droplets,
-  Info
+  Droplets
 } from 'lucide-react';
 import { useAlteredCriteria } from '@/hooks/useHealthMonitoring';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
@@ -111,7 +109,6 @@ interface VitalCriteriaFormProps {
 function VitalCriteriaForm({ vitalType, existingCriteria, onSave, isUpdating }: VitalCriteriaFormProps) {
   const config = vitalTypeConfig[vitalType];
   const standardThresholds = VITAL_THRESHOLDS[vitalType];
-  const [showForm, setShowForm] = useState(!!existingCriteria);
 
   const form = useForm<CriteriaFormData>({
     resolver: zodResolver(criteriaSchema),
@@ -137,61 +134,21 @@ function VitalCriteriaForm({ vitalType, existingCriteria, onSave, isUpdating }: 
     });
   };
 
-  if (!showForm) {
-    return (
-      <div className="flex items-center justify-between p-4 border rounded-lg">
-        <div className="flex items-center gap-3">
-          {config.icon}
-          <div>
-            <p className="font-medium">{config.label}</p>
-            <p className="text-sm text-muted-foreground">
-              Using standard thresholds: {standardThresholds.green.min}–{standardThresholds.green.max} {config.unit}
-            </p>
-          </div>
-        </div>
-        <Button variant="outline" size="sm" onClick={() => setShowForm(true)}>
-          Customize
-        </Button>
-      </div>
-    );
-  }
-
   return (
-    <Card className="border-amber-200">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {config.icon}
-            <CardTitle className="text-base">{config.label}</CardTitle>
-          </div>
-          {existingCriteria?.approved_at && (
-            <Badge variant="outline" className="border-green-500 text-green-600">
-              <CheckCircle2 className="h-3 w-3 mr-1" />
-              Approved
-            </Badge>
-          )}
-          {existingCriteria && !existingCriteria.approved_at && (
-            <Badge variant="outline" className="border-amber-500 text-amber-600">
-              <Clock className="h-3 w-3 mr-1" />
-              Pending Approval
-            </Badge>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Alert variant="destructive" className="mb-4 border-amber-500 bg-amber-50 text-amber-800">
-          <ShieldAlert className="h-4 w-4" />
-          <AlertTitle className="text-amber-800">Safety Warning</AlertTitle>
-          <AlertDescription className="text-amber-700">
-            You are changing standard clinical safety thresholds. This should only be done 
-            with documented approval from a qualified medical professional.
-          </AlertDescription>
-        </Alert>
+    <div className="space-y-4 pt-4 border-t">
+      <Alert variant="destructive" className="border-amber-500 bg-amber-50 text-amber-800">
+        <ShieldAlert className="h-4 w-4" />
+        <AlertTitle className="text-amber-800">Safety Warning</AlertTitle>
+        <AlertDescription className="text-amber-700">
+          You are changing standard clinical safety thresholds. This should only be done 
+          with documented approval from a qualified medical professional.
+        </AlertDescription>
+      </Alert>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Threshold Ranges */}
-            <div className="grid gap-4">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* Threshold Ranges */}
+          <div className="grid gap-4">
               {/* Green (IDEAL) Range */}
               <div className="p-4 rounded-lg bg-green-50 border border-green-200">
                 <div className="flex items-center gap-2 mb-3">
@@ -473,18 +430,14 @@ function VitalCriteriaForm({ vitalType, existingCriteria, onSave, isUpdating }: 
               <Button 
                 type="button" 
                 variant="outline" 
-                onClick={() => {
-                  form.reset();
-                  if (!existingCriteria) setShowForm(false);
-                }}
+                onClick={() => form.reset()}
               >
-                {existingCriteria ? 'Reset' : 'Cancel'}
+                Reset to Defaults
               </Button>
             </div>
           </form>
         </Form>
-      </CardContent>
-    </Card>
+      </div>
   );
 }
 
@@ -495,24 +448,26 @@ interface AlteredCriteriaSettingsProps {
 export function AlteredCriteriaSettings({ clientId }: AlteredCriteriaSettingsProps) {
   const { isAdmin } = useRoleAccess();
   const { criteria, criteriaMap, upsertCriteria, approveCriteria, isUpdating } = useAlteredCriteria(clientId);
+  const [enabledVitals, setEnabledVitals] = useState<Record<VitalType, boolean>>({
+    temperature: !!criteriaMap['temperature'],
+    bp_systolic: !!criteriaMap['bp_systolic'],
+    bp_diastolic: !!criteriaMap['bp_diastolic'],
+    oxygen: !!criteriaMap['oxygen'],
+    heart_rate: !!criteriaMap['heart_rate'],
+    respiratory: !!criteriaMap['respiratory'],
+  });
 
   const vitalTypes: VitalType[] = ['temperature', 'bp_systolic', 'bp_diastolic', 'oxygen', 'heart_rate', 'respiratory'];
 
   const pendingApproval = criteria.filter(c => !c.approved_at);
   const activeCriteria = criteria.filter(c => c.approved_at);
 
-  if (!clientId) {
-    return (
-      <Card>
-        <CardContent className="py-6">
-          <div className="flex items-center gap-3 text-muted-foreground">
-            <Info className="h-5 w-5" />
-            <p>Altered Criteria can only be configured for individual clients.</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  const toggleAlteredCriteria = (vitalType: VitalType) => {
+    setEnabledVitals(prev => ({
+      ...prev,
+      [vitalType]: !prev[vitalType]
+    }));
+  };
 
   return (
     <div className="space-y-6">
@@ -601,37 +556,71 @@ export function AlteredCriteriaSettings({ clientId }: AlteredCriteriaSettingsPro
         </Card>
       )}
 
-      {/* Vital Type Forms */}
-      <Accordion type="single" collapsible className="space-y-2">
-        {vitalTypes.map((vitalType) => (
-          <AccordionItem key={vitalType} value={vitalType} className="border rounded-lg">
-            <AccordionTrigger className="px-4 hover:no-underline">
-              <div className="flex items-center gap-3">
-                {vitalTypeConfig[vitalType].icon}
-                <span>{vitalTypeConfig[vitalType].label}</span>
-                {criteriaMap[vitalType]?.approved_at && (
-                  <Badge variant="outline" className="border-green-500 text-green-600 text-xs">
-                    Custom
-                  </Badge>
-                )}
-                {criteriaMap[vitalType] && !criteriaMap[vitalType]?.approved_at && (
-                  <Badge variant="outline" className="border-amber-500 text-amber-600 text-xs">
-                    Pending
-                  </Badge>
-                )}
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              <VitalCriteriaForm
-                vitalType={vitalType}
-                existingCriteria={criteriaMap[vitalType]}
-                onSave={upsertCriteria}
-                isUpdating={isUpdating}
-              />
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
+      {/* Vital Type Configuration */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium">Configure Altered Criteria by Vital Type</h3>
+        <p className="text-sm text-muted-foreground">
+          Enable altered criteria for specific vital signs to set custom Green (IDEAL), Amber (Monitor), and Red (Call Triple 0) ranges.
+        </p>
+        
+        {vitalTypes.map((vitalType) => {
+          const config = vitalTypeConfig[vitalType];
+          const standardThresholds = VITAL_THRESHOLDS[vitalType];
+          const isEnabled = enabledVitals[vitalType] || !!criteriaMap[vitalType];
+          const hasCriteria = !!criteriaMap[vitalType];
+          
+          return (
+            <Card key={vitalType} className={isEnabled ? 'border-primary/50' : ''}>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {config.icon}
+                    <div>
+                      <CardTitle className="text-base">{config.label}</CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        Standard: {standardThresholds.green.min}–{standardThresholds.green.max} {config.unit}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {criteriaMap[vitalType]?.approved_at && (
+                      <Badge variant="outline" className="border-green-500 text-green-600">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        Active
+                      </Badge>
+                    )}
+                    {hasCriteria && !criteriaMap[vitalType]?.approved_at && (
+                      <Badge variant="outline" className="border-amber-500 text-amber-600">
+                        <Clock className="h-3 w-3 mr-1" />
+                        Pending
+                      </Badge>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">Enable Altered Criteria</span>
+                      <Switch
+                        checked={isEnabled}
+                        onCheckedChange={() => toggleAlteredCriteria(vitalType)}
+                        variant="success"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              
+              {isEnabled && (
+                <CardContent className="pt-0">
+                  <VitalCriteriaForm
+                    vitalType={vitalType}
+                    existingCriteria={criteriaMap[vitalType]}
+                    onSave={upsertCriteria}
+                    isUpdating={isUpdating}
+                  />
+                </CardContent>
+              )}
+            </Card>
+          );
+        })}
+      </div>
 
       {/* Safety Notice */}
       <Alert className="border-amber-200 bg-amber-50/50">
