@@ -13,6 +13,16 @@ interface ThresholdRange {
   amberHigh?: { min: number; max: number };
 }
 
+// Simplified threshold overrides for UI components
+export interface PartialThresholdOverride {
+  green_min?: number | null;
+  green_max?: number | null;
+  amber_low_min?: number | null;
+  amber_low_max?: number | null;
+  amber_high_min?: number | null;
+  amber_high_max?: number | null;
+}
+
 /**
  * Get effective thresholds for a vital type, considering altered criteria
  */
@@ -48,17 +58,41 @@ export function getEffectiveThresholds(
 
 /**
  * Calculate status for a single vital value
+ * Accepts either full AlteredCriteria or simplified PartialThresholdOverride
  */
 export function calculateVitalStatus(
   value: number | null,
   vitalType: VitalType,
-  alteredCriteria?: AlteredCriteria | null
+  alteredCriteria?: AlteredCriteria | PartialThresholdOverride | null
 ): VitalStatus | null {
   if (value === null || value === undefined) {
     return null;
   }
 
-  const thresholds = getEffectiveThresholds(vitalType, alteredCriteria);
+  // Convert partial override to threshold range if needed
+  let thresholds: ThresholdRange;
+  
+  if (alteredCriteria && 'is_active' in alteredCriteria) {
+    // Full AlteredCriteria type
+    thresholds = getEffectiveThresholds(vitalType, alteredCriteria);
+  } else if (alteredCriteria) {
+    // PartialThresholdOverride type
+    const standard = VITAL_THRESHOLDS[vitalType];
+    thresholds = {
+      green: {
+        min: alteredCriteria.green_min ?? standard.green.min,
+        max: alteredCriteria.green_max ?? standard.green.max,
+      },
+      amberLow: alteredCriteria.amber_low_min !== undefined && alteredCriteria.amber_low_max !== undefined
+        ? { min: alteredCriteria.amber_low_min ?? standard.amberLow?.min ?? 0, max: alteredCriteria.amber_low_max ?? standard.amberLow?.max ?? 0 }
+        : standard.amberLow,
+      amberHigh: alteredCriteria.amber_high_min !== undefined && alteredCriteria.amber_high_max !== undefined
+        ? { min: alteredCriteria.amber_high_min ?? standard.amberHigh?.min ?? 0, max: alteredCriteria.amber_high_max ?? standard.amberHigh?.max ?? 0 }
+        : standard.amberHigh,
+    };
+  } else {
+    thresholds = getEffectiveThresholds(vitalType, null);
+  }
 
   // Check green (IDEAL) range first
   if (value >= thresholds.green.min && value <= thresholds.green.max) {
@@ -79,12 +113,13 @@ export function calculateVitalStatus(
 
 /**
  * Calculate BP status using "worst wins" logic
+ * Accepts either full AlteredCriteria or simplified PartialThresholdOverride
  */
 export function calculateBpStatus(
   systolic: number | null,
   diastolic: number | null,
-  systolicCriteria?: AlteredCriteria | null,
-  diastolicCriteria?: AlteredCriteria | null
+  systolicCriteria?: AlteredCriteria | PartialThresholdOverride | null,
+  diastolicCriteria?: AlteredCriteria | PartialThresholdOverride | null
 ): VitalStatus | null {
   const systolicStatus = calculateVitalStatus(systolic, 'bp_systolic', systolicCriteria);
   const diastolicStatus = calculateVitalStatus(diastolic, 'bp_diastolic', diastolicCriteria);
