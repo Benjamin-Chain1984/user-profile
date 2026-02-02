@@ -336,26 +336,28 @@ export function useAlteredCriteria(clientId?: string) {
   const { data: criteria = [], isLoading, error } = useQuery({
     queryKey: ['alteredCriteria', clientId],
     queryFn: async () => {
-      if (!clientId) return [];
-
-      const { data, error } = await supabase
+      let query = supabase
         .from('vital_sign_altered_criteria')
         .select('*')
-        .eq('client_id', clientId)
         .eq('is_active', true);
 
+      if (clientId) {
+        query = query.eq('client_id', clientId);
+      } else {
+        query = query.is('client_id', null);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as AlteredCriteria[];
     },
-    enabled: !!clientId,
   });
 
   const upsertCriteria = useMutation({
     mutationFn: async (criteriaData: Partial<AlteredCriteria> & { vital_type: VitalType }) => {
       if (!user?.id) throw new Error('Not authenticated');
-      if (!clientId) throw new Error('Client ID required');
 
-      // Check if criteria already exists
+      // Check if criteria already exists for this vital type
       const existing = criteria.find(c => c.vital_type === criteriaData.vital_type);
 
       if (existing) {
@@ -375,7 +377,7 @@ export function useAlteredCriteria(clientId?: string) {
           .from('vital_sign_altered_criteria')
           .insert([{
             ...criteriaData,
-            client_id: clientId,
+            client_id: clientId || null,
             created_by: user.id,
             updated_by: user.id,
           }])
