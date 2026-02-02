@@ -11,6 +11,8 @@ import { PainConfigSettings } from './PainConfigSettings';
 import { PainQuickStatus } from './PainQuickStatus';
 import { PainExportReports } from './PainExportReports';
 import { getSeverityLabel, getSeverityColor } from '@/types/painAssessment';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
+import { RoleTabsTrigger } from '@/components/ui/role-tabs-trigger';
 import { Plus, TrendingUp, ClipboardList, AlertTriangle, Info, Settings, FileDown, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -30,6 +32,7 @@ export function PainCheckDashboard() {
   const [showForm, setShowForm] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const { assessments, loading, getLatestAssessment, getTrendDirection, refresh } = usePainAssessments();
+  const { isAdmin } = useRoleAccess();
 
   const latestAssessment = getLatestAssessment();
   const trendDirection = getTrendDirection();
@@ -107,10 +110,12 @@ export function PainCheckDashboard() {
             <TrendingUp className="h-4 w-4" />
             <span className="hidden sm:inline">Trends</span>
           </TabsTrigger>
-          <TabsTrigger value="settings" className="gap-2">
-            <Settings className="h-4 w-4" />
-            <span className="hidden sm:inline">Settings</span>
-          </TabsTrigger>
+          <RoleTabsTrigger 
+            value="settings" 
+            requiresAdmin 
+            icon={<Settings className="h-4 w-4" />}
+            label="Settings"
+          />
         </TabsList>
 
         <TabsContent value="tracking" className="space-y-4">
@@ -199,9 +204,11 @@ export function PainCheckDashboard() {
           <PainTrendChart assessments={assessments} />
         </TabsContent>
 
-        <TabsContent value="settings">
-          <PainConfigSettings />
-        </TabsContent>
+        {isAdmin && (
+          <TabsContent value="settings">
+            <PainConfigSettings />
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Clinical Instructions */}

@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertTriangle, FileDown, Plus, Droplets, Activity, Package } from 'lucide-react';
+import { AlertTriangle, FileDown, Plus, Droplets, Activity, Package, Clock, TrendingUp, Settings } from 'lucide-react';
 import { CatheterStatusCard } from './CatheterStatusCard';
 import { CatheterHistory } from './CatheterHistory';
 import { CatheterTrends } from './CatheterTrends';
@@ -18,6 +18,8 @@ import { StomaCheckForm } from './StomaCheckForm';
 import { BagChangeForm } from './BagChangeForm';
 import { AutonomicDysreflexiaPanel } from './AutonomicDysreflexiaPanel';
 import { useCatheterConfig } from '@/hooks/useCatheter';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
+import { RoleTabsTrigger } from '@/components/ui/role-tabs-trigger';
 import { CATHETER_TYPE_CONFIG } from '@/types/catheter';
 
 interface CatheterDashboardProps {
@@ -26,6 +28,7 @@ interface CatheterDashboardProps {
 
 export function CatheterDashboard({ clientId }: CatheterDashboardProps) {
   const { config } = useCatheterConfig(clientId);
+  const { isAdmin } = useRoleAccess();
 
   const [showChangeForm, setShowChangeForm] = useState(false);
   const [showFlushForm, setShowFlushForm] = useState(false);
@@ -100,10 +103,21 @@ export function CatheterDashboard({ clientId }: CatheterDashboardProps) {
 
       {/* Main Tabs */}
       <Tabs defaultValue="tracking" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="tracking">Tracking</TabsTrigger>
-          <TabsTrigger value="trends">Trends</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
+          <TabsTrigger value="tracking" className="gap-2">
+            <Clock className="h-4 w-4" />
+            <span className="hidden sm:inline">Tracking</span>
+          </TabsTrigger>
+          <TabsTrigger value="trends" className="gap-2">
+            <TrendingUp className="h-4 w-4" />
+            <span className="hidden sm:inline">Trends</span>
+          </TabsTrigger>
+          <RoleTabsTrigger 
+            value="settings" 
+            requiresAdmin 
+            icon={<Settings className="h-4 w-4" />}
+            label="Settings"
+          />
         </TabsList>
 
         <TabsContent value="tracking">
@@ -114,9 +128,11 @@ export function CatheterDashboard({ clientId }: CatheterDashboardProps) {
           <CatheterTrends clientId={clientId} />
         </TabsContent>
 
-        <TabsContent value="settings">
-          <CatheterConfigSettings clientId={clientId} />
-        </TabsContent>
+        {isAdmin && (
+          <TabsContent value="settings">
+            <CatheterConfigSettings clientId={clientId} />
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Forms */}

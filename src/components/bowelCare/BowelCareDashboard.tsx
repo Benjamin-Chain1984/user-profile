@@ -14,6 +14,8 @@ import { PrnWorkflowCard } from './PrnWorkflowCard';
 import { BowelCareConfigSettings } from './BowelCareConfigSettings';
 import { BowelCareExportReports } from './BowelCareExportReports';
 import { useBowelCareStatus } from '@/hooks/useBowelCare';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
+import { RoleTabsTrigger } from '@/components/ui/role-tabs-trigger';
 import { 
   Plus, 
   Settings, 
@@ -50,6 +52,7 @@ export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
   const [showLogForm, setShowLogForm] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const statusInfo = useBowelCareStatus(clientId);
+  const { isAdmin } = useRoleAccess();
 
   // Show export view
   if (showExport) {
@@ -105,10 +108,12 @@ export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">Trends</span>
           </TabsTrigger>
-          <TabsTrigger value="settings" className="gap-2">
-            <Settings className="h-4 w-4" />
-            <span className="hidden sm:inline">Settings</span>
-          </TabsTrigger>
+          <RoleTabsTrigger 
+            value="settings" 
+            requiresAdmin 
+            icon={<Settings className="h-4 w-4" />}
+            label="Settings"
+          />
         </TabsList>
 
         <TabsContent value="tracking" className="space-y-4">
@@ -122,9 +127,11 @@ export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
           <BowelCareTrends clientId={clientId} />
         </TabsContent>
 
-        <TabsContent value="settings">
-          <BowelCareConfigSettings clientId={clientId} />
-        </TabsContent>
+        {isAdmin && (
+          <TabsContent value="settings">
+            <BowelCareConfigSettings clientId={clientId} />
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Symptoms to Be Aware Of */}

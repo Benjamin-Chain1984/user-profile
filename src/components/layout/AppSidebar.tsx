@@ -1,11 +1,14 @@
 /**
  * App Sidebar - Main navigation for the application
+ * Uses role-based access control with preview support
  */
 
-import { Home, Users, Shield, QrCode, LogOut } from 'lucide-react';
+import { Home, Users, LogOut, Lock } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
+import { toast } from '@/hooks/use-toast';
 import {
   Sidebar,
   SidebarContent,
@@ -17,22 +20,36 @@ import {
   SidebarMenuItem,
   SidebarFooter,
 } from '@/components/ui/sidebar';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 
 const mainItems = [
-  { title: 'Dashboard', url: '/', icon: Home },
+  { title: 'Dashboard', url: '/', icon: Home, requiresAdmin: false },
 ];
 
 const adminItems = [
-  { title: 'Clients', url: '/admin', icon: Users },
+  { title: 'Clients', url: '/admin', icon: Users, requiresAdmin: true },
 ];
 
 export function AppSidebar() {
   const location = useLocation();
-  const { user, hasRole, signOut } = useAuth();
-  const isAdmin = hasRole('admin');
+  const { user, signOut } = useAuth();
+  const { isAdmin, canAccessAdmin } = useRoleAccess();
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleRestrictedClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    toast({
+      title: "Access Restricted",
+      description: "You don't have access to this section.",
+      variant: "destructive",
+    });
+  };
 
   return (
     <Sidebar className="border-r border-border">
@@ -55,25 +72,46 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {isAdmin && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Admin</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {adminItems.map((item) => (
+        {/* Admin section - always visible but disabled for non-admins */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Admin</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {adminItems.map((item) => {
+                if (canAccessAdmin) {
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild isActive={isActive(item.url)}>
+                        <NavLink to={item.url} className="flex items-center gap-3">
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                }
+                return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                      <NavLink to={item.url} className="flex items-center gap-3">
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <SidebarMenuButton
+                          onClick={handleRestrictedClick}
+                          className="flex items-center gap-3 opacity-50 cursor-not-allowed"
+                        >
+                          <Lock className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </SidebarMenuButton>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Admin access required</p>
+                      </TooltipContent>
+                    </Tooltip>
                   </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="p-4 border-t border-border">

@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertTriangle, FileDown, Plus, Package, TestTube, Shield } from 'lucide-react';
+import { AlertTriangle, FileDown, Plus, Package, TestTube, Shield, Settings, Clock, TrendingUp } from 'lucide-react';
 import { ContinenceStatusCard } from './ContinenceStatusCard';
 import { ContinenceHistory } from './ContinenceHistory';
 import { ContinenceTrends } from './ContinenceTrends';
@@ -17,6 +17,8 @@ import { SkinCheckForm } from './SkinCheckForm';
 import { ConsumablesCheckForm } from './ConsumablesCheckForm';
 import { UTITestForm } from './UTITestForm';
 import { useContinenceConfig } from '@/hooks/useContinence';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
+import { RoleTabsTrigger } from '@/components/ui/role-tabs-trigger';
 
 interface ContinenceDashboardProps {
   clientId?: string;
@@ -24,6 +26,7 @@ interface ContinenceDashboardProps {
 
 export function ContinenceDashboard({ clientId }: ContinenceDashboardProps) {
   const { config } = useContinenceConfig(clientId);
+  const { isAdmin } = useRoleAccess();
   
   const [showPadChangeForm, setShowPadChangeForm] = useState(false);
   const [showSkinCheckForm, setShowSkinCheckForm] = useState(false);
@@ -94,10 +97,21 @@ export function ContinenceDashboard({ clientId }: ContinenceDashboardProps) {
 
       {/* Main Tabs */}
       <Tabs defaultValue="tracking" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="tracking">Tracking</TabsTrigger>
-          <TabsTrigger value="trends">Trends</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
+          <TabsTrigger value="tracking" className="gap-2">
+            <Clock className="h-4 w-4" />
+            <span className="hidden sm:inline">Tracking</span>
+          </TabsTrigger>
+          <TabsTrigger value="trends" className="gap-2">
+            <TrendingUp className="h-4 w-4" />
+            <span className="hidden sm:inline">Trends</span>
+          </TabsTrigger>
+          <RoleTabsTrigger 
+            value="settings" 
+            requiresAdmin 
+            icon={<Settings className="h-4 w-4" />}
+            label="Settings"
+          />
         </TabsList>
 
         <TabsContent value="tracking">
@@ -108,9 +122,11 @@ export function ContinenceDashboard({ clientId }: ContinenceDashboardProps) {
           <ContinenceTrends clientId={clientId} />
         </TabsContent>
 
-        <TabsContent value="settings">
-          <ContinenceConfigSettings clientId={clientId} />
-        </TabsContent>
+        {isAdmin && (
+          <TabsContent value="settings">
+            <ContinenceConfigSettings clientId={clientId} />
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Forms */}
