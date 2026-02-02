@@ -1,10 +1,13 @@
 /**
  * Protected Route Component
  * Wraps routes that require authentication
+ * Respects role preview for testing
  */
 
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
+import { AccessDeniedPage } from './AccessDeniedPage';
 import type { AppRole } from '@/services/auth';
 
 interface ProtectedRouteProps {
@@ -18,7 +21,8 @@ export function ProtectedRoute({
   requiredRole, 
   requireStaff = true 
 }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, isStaff, hasRole } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+  const { isStaff, hasRole, isPreviewMode, effectiveRoles } = useRoleAccess();
   const location = useLocation();
 
   if (isLoading) {
@@ -36,27 +40,15 @@ export function ProtectedRoute({
 
   if (requireStaff && !isStaff) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center p-6">
-          <h1 className="text-xl font-bold text-destructive mb-2">Access Denied</h1>
-          <p className="text-muted-foreground">
-            You don't have permission to access this area.
-          </p>
-        </div>
-      </div>
+      <AccessDeniedPage message="You don't have permission to access this area." />
     );
   }
 
   if (requiredRole && !hasRole(requiredRole)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center p-6">
-          <h1 className="text-xl font-bold text-destructive mb-2">Unauthorized</h1>
-          <p className="text-muted-foreground">
-            You need {requiredRole} permissions to access this page.
-          </p>
-        </div>
-      </div>
+      <AccessDeniedPage 
+        message={`You need ${requiredRole} permissions to access this page.`} 
+      />
     );
   }
 

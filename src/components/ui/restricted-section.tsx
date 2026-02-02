@@ -1,10 +1,11 @@
 /**
  * Restricted Section Component
  * Wraps content that should be disabled for non-admin users
+ * Uses role preview for testing
  */
 
 import { ReactNode } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
 import {
   Tooltip,
   TooltipContent,
@@ -23,7 +24,7 @@ export function RestrictedSection({
   requiredRole = 'admin',
   message = 'Admin access required'
 }: RestrictedSectionProps) {
-  const { hasRole } = useAuth();
+  const { hasRole } = useRoleAccess();
   const hasAccess = hasRole(requiredRole);
 
   if (hasAccess) {

@@ -12,6 +12,8 @@ import { WeightHistory } from './WeightHistory';
 import { WeightBmiTrends } from './WeightBmiTrends';
 import { WeightBmiConfigSettings } from './WeightBmiConfigSettings';
 import { WeightBmiExportReports } from './WeightBmiExportReports';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
+import { RoleTabsTrigger } from '@/components/ui/role-tabs-trigger';
 import { 
   Plus, 
   Settings, 
@@ -48,6 +50,7 @@ const HEALTHY_WEIGHT_TIPS = [
 export function WeightBmiDashboard({ clientId }: WeightBmiDashboardProps) {
   const [showLogForm, setShowLogForm] = useState(false);
   const [showExport, setShowExport] = useState(false);
+  const { isAdmin } = useRoleAccess();
 
   // Show export view
   if (showExport) {
@@ -106,10 +109,12 @@ export function WeightBmiDashboard({ clientId }: WeightBmiDashboardProps) {
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">Trends</span>
           </TabsTrigger>
-          <TabsTrigger value="settings" className="gap-2">
-            <Settings className="h-4 w-4" />
-            <span className="hidden sm:inline">Settings</span>
-          </TabsTrigger>
+          <RoleTabsTrigger 
+            value="settings" 
+            requiresAdmin 
+            icon={<Settings className="h-4 w-4" />}
+            label="Settings"
+          />
         </TabsList>
 
         <TabsContent value="tracking">
@@ -120,9 +125,11 @@ export function WeightBmiDashboard({ clientId }: WeightBmiDashboardProps) {
           <WeightBmiTrends clientId={clientId} />
         </TabsContent>
 
-        <TabsContent value="settings">
-          <WeightBmiConfigSettings clientId={clientId} />
-        </TabsContent>
+        {isAdmin && (
+          <TabsContent value="settings">
+            <WeightBmiConfigSettings clientId={clientId} />
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Symptoms to Be Aware Of */}

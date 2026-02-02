@@ -3,8 +3,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Droplets, FileText, Settings, TrendingUp } from 'lucide-react';
+import { AlertTriangle, Droplets, FileText, Settings, TrendingUp, Clock } from 'lucide-react';
 import { useFluidBalance } from '@/hooks/useFluidBalance';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
+import { RoleTabsTrigger } from '@/components/ui/role-tabs-trigger';
 import { FluidStatusCard } from './FluidStatusCard';
 import { HydrationInfographic } from './HydrationInfographic';
 import { IntakeLogForm } from './IntakeLogForm';
@@ -41,6 +43,8 @@ export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
     logOutput,
     logSymptomCheck
   } = useFluidBalance(clientId);
+  
+  const { isAdmin } = useRoleAccess();
   
   if (isLoading) {
     return (
@@ -99,7 +103,7 @@ export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
       <Tabs defaultValue="tracking" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="tracking" className="flex items-center gap-2">
-            <Droplets className="h-4 w-4" />
+            <Clock className="h-4 w-4" />
             <span className="hidden sm:inline">Tracking</span>
           </TabsTrigger>
           <TabsTrigger value="trends" className="flex items-center gap-2">
@@ -110,10 +114,12 @@ export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
             <FileText className="h-4 w-4" />
             <span className="hidden sm:inline">Export</span>
           </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            <span className="hidden sm:inline">Settings</span>
-          </TabsTrigger>
+          <RoleTabsTrigger 
+            value="settings" 
+            requiresAdmin 
+            icon={<Settings className="h-4 w-4" />}
+            label="Settings"
+          />
         </TabsList>
         
         <TabsContent value="tracking" className="space-y-6">
@@ -180,9 +186,11 @@ export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
           />
         </TabsContent>
         
-        <TabsContent value="settings">
-          <FluidConfigSettings config={config} onSave={saveConfig} clientId={clientId} />
-        </TabsContent>
+        {isAdmin && (
+          <TabsContent value="settings">
+            <FluidConfigSettings config={config} onSave={saveConfig} clientId={clientId} />
+          </TabsContent>
+        )}
       </Tabs>
       
       {/* Clinical Citations */}
