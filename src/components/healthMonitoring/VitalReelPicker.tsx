@@ -3,10 +3,10 @@
  * Features: drag/scroll interaction, dynamic color zones, zone labels
  */
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { VITAL_THRESHOLDS, type VitalType, type VitalStatus } from '@/types/healthMonitoring';
-import { calculateVitalStatus, type PartialThresholdOverride } from '@/utils/vitalSignStatusCalculator';
+import { VITAL_THRESHOLDS, type VitalType, type VitalStatus, type AlteredCriteria } from '@/types/healthMonitoring';
+import { calculateVitalStatus, getEffectiveThresholds, type PartialThresholdOverride } from '@/utils/vitalSignStatusCalculator';
 import { AlertTriangle, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface VitalReelPickerProps {
@@ -14,7 +14,7 @@ interface VitalReelPickerProps {
   value: number | null;
   onChange: (value: number) => void;
   disabled?: boolean;
-  alteredCriteria?: PartialThresholdOverride | null;
+  alteredCriteria?: AlteredCriteria | PartialThresholdOverride | null;
   showAlteredBanner?: boolean;
 }
 
@@ -35,35 +35,57 @@ export function VitalReelPicker({
   const [startY, setStartY] = useState(0);
   const [scrollOffset, setScrollOffset] = useState(0);
   
-  // Generate values for the reel
-  const generateValues = useCallback(() => {
-    const greenMin = alteredCriteria?.green_min ?? threshold.green.min;
-    const greenMax = alteredCriteria?.green_max ?? threshold.green.max;
+  // Determine if altered criteria is active and should be used
+  const isAlteredActive = useMemo(() => {
+    if (!alteredCriteria) return false;
+    // Check if it's a full AlteredCriteria object with is_active flag
+    if ('is_active' in alteredCriteria) {
+      return alteredCriteria.is_active && alteredCriteria.confirmed_by_medical_professional;
+    }
+    // For PartialThresholdOverride, check if any custom values are set
+    return alteredCriteria.green_min !== undefined || alteredCriteria.green_max !== undefined;
+  }, [alteredCriteria]);
+
+  // Get effective thresholds (either altered or standard)
+  const effectiveThresholds = useMemo(() => {
+    if (isAlteredActive && alteredCriteria && 'is_active' in alteredCriteria) {
+      return getEffectiveThresholds(vitalType, alteredCriteria);
+    }
+    // Use standard thresholds
+    return {
+      green: threshold.green,
+      amberLow: threshold.amberLow,
+      amberHigh: threshold.amberHigh,
+    };
+  }, [vitalType, threshold, alteredCriteria, isAlteredActive]);
+
+  // Generate values for the reel based on effective thresholds
+  const values = useMemo(() => {
+    const greenMin = effectiveThresholds.green.min;
+    const greenMax = effectiveThresholds.green.max;
     
     // Extend range for red zones
     let min = greenMin;
     let max = greenMax;
     
-    if (threshold.amberLow) {
-      min = Math.min(min, threshold.amberLow.min - 10 * threshold.step);
+    if (effectiveThresholds.amberLow) {
+      min = Math.min(min, effectiveThresholds.amberLow.min - 10 * threshold.step);
     } else {
       min = greenMin - 20 * threshold.step;
     }
     
-    if (threshold.amberHigh) {
-      max = Math.max(max, threshold.amberHigh.max + 10 * threshold.step);
+    if (effectiveThresholds.amberHigh) {
+      max = Math.max(max, effectiveThresholds.amberHigh.max + 10 * threshold.step);
     } else {
       max = greenMax + 20 * threshold.step;
     }
     
-    const values: number[] = [];
+    const result: number[] = [];
     for (let v = min; v <= max; v += threshold.step) {
-      values.push(Math.round(v * 10) / 10);
+      result.push(Math.round(v * 10) / 10);
     }
-    return values;
-  }, [vitalType, threshold, alteredCriteria]);
-
-  const values = generateValues();
+    return result;
+  }, [threshold, effectiveThresholds]);
   
   // Initialize scroll position to value or default
   const currentValue = value ?? threshold.defaultValue;
@@ -271,7 +293,8 @@ export function VitalReelPicker({
       {/* Range hint */}
       <div className="flex justify-between text-xs text-muted-foreground">
         <span className="text-green-600">
-          IDEAL: {alteredCriteria?.green_min ?? threshold.green.min}–{alteredCriteria?.green_max ?? threshold.green.max} {threshold.unit}
+          IDEAL: {effectiveThresholds.green.min}–{effectiveThresholds.green.max} {threshold.unit}
+          {isAlteredActive && ' (altered)'}
         </span>
       </div>
     </div>

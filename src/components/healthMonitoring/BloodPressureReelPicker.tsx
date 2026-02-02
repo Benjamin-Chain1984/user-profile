@@ -3,10 +3,10 @@
  * Uses "worst value wins" logic for overall status
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { VITAL_THRESHOLDS, type VitalStatus } from '@/types/healthMonitoring';
-import { calculateBpStatus, calculateVitalStatus, type PartialThresholdOverride } from '@/utils/vitalSignStatusCalculator';
+import { VITAL_THRESHOLDS, type VitalStatus, type AlteredCriteria } from '@/types/healthMonitoring';
+import { calculateBpStatus, calculateVitalStatus, getEffectiveThresholds, type PartialThresholdOverride } from '@/utils/vitalSignStatusCalculator';
 import { AlertTriangle, CheckCircle, AlertCircle, Heart } from 'lucide-react';
 import {
   AlertDialog,
@@ -26,8 +26,8 @@ interface BloodPressureReelPickerProps {
   onDiastolicChange: (value: number) => void;
   disabled?: boolean;
   alteredCriteria?: {
-    systolic?: PartialThresholdOverride;
-    diastolic?: PartialThresholdOverride;
+    systolic?: AlteredCriteria | PartialThresholdOverride;
+    diastolic?: AlteredCriteria | PartialThresholdOverride;
   } | null;
   showAlteredBanner?: boolean;
 }
@@ -200,6 +200,18 @@ export function BloodPressureReelPicker({
   const systolicThreshold = VITAL_THRESHOLDS.bp_systolic;
   const diastolicThreshold = VITAL_THRESHOLDS.bp_diastolic;
 
+  // Check if altered criteria is active
+  const isAlteredActive = useMemo(() => {
+    const checkActive = (criteria?: AlteredCriteria | PartialThresholdOverride) => {
+      if (!criteria) return false;
+      if ('is_active' in criteria) {
+        return criteria.is_active && criteria.confirmed_by_medical_professional;
+      }
+      return criteria.green_min !== undefined || criteria.green_max !== undefined;
+    };
+    return checkActive(alteredCriteria?.systolic) || checkActive(alteredCriteria?.diastolic);
+  }, [alteredCriteria]);
+
   // Generate values
   const systolicValues: number[] = [];
   for (let v = 70; v <= 220; v++) systolicValues.push(v);
@@ -331,6 +343,7 @@ export function BloodPressureReelPicker({
 
       <p className="text-xs text-muted-foreground text-center">
         Overall status uses the worst reading between systolic and diastolic
+        {isAlteredActive && ' (using altered criteria)'}
       </p>
 
       {/* Red Zone Confirmation Dialog */}
