@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -28,26 +28,31 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
   const { data: recipients } = useModuleAlertRecipients(MODULE_NAME, clientId);
   const setRecipients = useSetModuleAlertRecipients();
   
-  const [notificationSettings, setNotificationSettings] = useState<ModuleNotificationSettings>({
-    enableNotifications: false,
-    amberRecipientIds: [],
-    redRecipientIds: [],
-  });
-
-  // Initialize recipients from database
-  useEffect(() => {
-    if (recipients) {
-      setNotificationSettings({
-        enableNotifications: recipients.length > 0,
-        amberRecipientIds: recipients
-          .filter((r) => r.alert_severity === 'amber')
-          .map((r) => r.notification_contact_id),
-        redRecipientIds: recipients
-          .filter((r) => r.alert_severity === 'red')
-          .map((r) => r.notification_contact_id),
-      });
+  // Compute notification settings from recipients data (no useState to avoid infinite loops)
+  const notificationSettings: ModuleNotificationSettings = useMemo(() => {
+    if (!recipients) {
+      return {
+        enableNotifications: false,
+        amberRecipientIds: [],
+        redRecipientIds: [],
+      };
     }
+    return {
+      enableNotifications: recipients.length > 0,
+      amberRecipientIds: recipients
+        .filter((r) => r.alert_severity === 'amber')
+        .map((r) => r.notification_contact_id),
+      redRecipientIds: recipients
+        .filter((r) => r.alert_severity === 'red')
+        .map((r) => r.notification_contact_id),
+    };
   }, [recipients]);
+
+  // Local state for user modifications (only updates on user interaction)
+  const [localNotificationSettings, setLocalNotificationSettings] = useState<ModuleNotificationSettings | null>(null);
+
+  // Use local settings if user has made changes, otherwise use computed from DB
+  const activeNotificationSettings = localNotificationSettings ?? notificationSettings;
 
   const [triggers, setTriggers] = useState<AssessmentTrigger[]>(effectiveConfig.assessment_triggers);
   const [customTrigger, setCustomTrigger] = useState(effectiveConfig.custom_trigger_text || '');
@@ -75,13 +80,14 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
   };
 
   const handleNotificationSettingsChange = (settings: ModuleNotificationSettings) => {
-    setNotificationSettings(settings);
+    setLocalNotificationSettings(settings);
   };
 
   const handleSaveNotifications = () => {
+    const settingsToSave = activeNotificationSettings;
     const allRecipients: { contactId: string; severity: AlertSeverity }[] = [
-      ...notificationSettings.amberRecipientIds.map((id) => ({ contactId: id, severity: 'amber' as AlertSeverity })),
-      ...notificationSettings.redRecipientIds.map((id) => ({ contactId: id, severity: 'red' as AlertSeverity })),
+      ...settingsToSave.amberRecipientIds.map((id) => ({ contactId: id, severity: 'amber' as AlertSeverity })),
+      ...settingsToSave.redRecipientIds.map((id) => ({ contactId: id, severity: 'red' as AlertSeverity })),
     ];
     setRecipients.mutate({
       moduleName: MODULE_NAME,
@@ -246,7 +252,7 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
       <ModuleNotificationsCard
         moduleName={MODULE_NAME}
         moduleDisplayName="Pain Assessment"
-        settings={notificationSettings}
+        settings={activeNotificationSettings}
         onSettingsChange={handleNotificationSettingsChange}
         clientId={clientId}
       />

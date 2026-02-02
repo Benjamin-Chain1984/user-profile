@@ -2,7 +2,7 @@
  * Bowel Care Configuration Settings - Admin-only settings panel
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -103,24 +103,31 @@ export function BowelCareConfigSettings({ clientId }: BowelCareConfigSettingsPro
   const { data: recipients } = useModuleAlertRecipients(MODULE_NAME, clientId);
   const setRecipients = useSetModuleAlertRecipients();
 
-  const [amberRecipients, setAmberRecipients] = useState<string[]>([]);
-  const [redRecipients, setRedRecipients] = useState<string[]>([]);
-
-  // Initialize recipients from database
-  useEffect(() => {
-    if (recipients) {
-      setAmberRecipients(
-        recipients
-          .filter((r) => r.alert_severity === 'amber')
-          .map((r) => r.notification_contact_id)
-      );
-      setRedRecipients(
-        recipients
-          .filter((r) => r.alert_severity === 'red')
-          .map((r) => r.notification_contact_id)
-      );
-    }
+  // Compute recipients from database (no useState/useEffect to avoid infinite loops)
+  const computedAmberRecipients = useMemo(() => {
+    if (!recipients) return [];
+    return recipients
+      .filter((r) => r.alert_severity === 'amber')
+      .map((r) => r.notification_contact_id);
   }, [recipients]);
+
+  const computedRedRecipients = useMemo(() => {
+    if (!recipients) return [];
+    return recipients
+      .filter((r) => r.alert_severity === 'red')
+      .map((r) => r.notification_contact_id);
+  }, [recipients]);
+
+  // Local state for user modifications (only updates on user interaction)
+  const [localAmberRecipients, setLocalAmberRecipients] = useState<string[] | null>(null);
+  const [localRedRecipients, setLocalRedRecipients] = useState<string[] | null>(null);
+
+  // Use local settings if user has made changes, otherwise use computed from DB
+  const amberRecipients = localAmberRecipients ?? computedAmberRecipients;
+  const redRecipients = localRedRecipients ?? computedRedRecipients;
+
+  const setAmberRecipients = (ids: string[]) => setLocalAmberRecipients(ids);
+  const setRedRecipients = (ids: string[]) => setLocalRedRecipients(ids);
 
   // Local state for form
   const [localConfig, setLocalConfig] = useState<Partial<BowelCareConfig>>({});

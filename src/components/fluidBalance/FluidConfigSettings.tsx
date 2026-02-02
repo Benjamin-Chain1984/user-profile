@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,24 +31,31 @@ export const FluidConfigSettings: React.FC<FluidConfigSettingsProps> = ({
   const { data: recipients } = useModuleAlertRecipients(MODULE_NAME, clientId);
   const setRecipients = useSetModuleAlertRecipients();
 
-  const [amberRecipients, setAmberRecipients] = useState<string[]>([]);
-  const [redRecipients, setRedRecipients] = useState<string[]>([]);
-
-  // Initialize recipients from database
-  useEffect(() => {
-    if (recipients) {
-      setAmberRecipients(
-        recipients
-          .filter((r) => r.alert_severity === 'amber')
-          .map((r) => r.notification_contact_id)
-      );
-      setRedRecipients(
-        recipients
-          .filter((r) => r.alert_severity === 'red')
-          .map((r) => r.notification_contact_id)
-      );
-    }
+  // Compute recipients from database (no useState/useEffect to avoid infinite loops)
+  const computedAmberRecipients = useMemo(() => {
+    if (!recipients) return [];
+    return recipients
+      .filter((r) => r.alert_severity === 'amber')
+      .map((r) => r.notification_contact_id);
   }, [recipients]);
+
+  const computedRedRecipients = useMemo(() => {
+    if (!recipients) return [];
+    return recipients
+      .filter((r) => r.alert_severity === 'red')
+      .map((r) => r.notification_contact_id);
+  }, [recipients]);
+
+  // Local state for user modifications (only updates on user interaction)
+  const [localAmberRecipients, setLocalAmberRecipients] = useState<string[] | null>(null);
+  const [localRedRecipients, setLocalRedRecipients] = useState<string[] | null>(null);
+
+  // Use local settings if user has made changes, otherwise use computed from DB
+  const amberRecipients = localAmberRecipients ?? computedAmberRecipients;
+  const redRecipients = localRedRecipients ?? computedRedRecipients;
+
+  const setAmberRecipients = (ids: string[]) => setLocalAmberRecipients(ids);
+  const setRedRecipients = (ids: string[]) => setLocalRedRecipients(ids);
   const form = useForm({
     defaultValues: {
       target_daily_intake_ml: config?.target_daily_intake_ml || 2000,

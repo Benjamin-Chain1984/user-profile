@@ -2,7 +2,7 @@
  * Weight & BMI Config Settings - Admin configuration panel
  */
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -93,26 +93,31 @@ export function WeightBmiConfigSettings({ clientId }: WeightBmiConfigSettingsPro
   const { data: recipients } = useModuleAlertRecipients(MODULE_NAME, clientId);
   const setRecipients = useSetModuleAlertRecipients();
 
-  const [notificationSettings, setNotificationSettings] = useState<ModuleNotificationSettings>({
-    enableNotifications: false,
-    amberRecipientIds: [],
-    redRecipientIds: [],
-  });
-
-  // Initialize recipients from database
-  useEffect(() => {
-    if (recipients) {
-      setNotificationSettings({
-        enableNotifications: recipients.length > 0,
-        amberRecipientIds: recipients
-          .filter((r) => r.alert_severity === 'amber')
-          .map((r) => r.notification_contact_id),
-        redRecipientIds: recipients
-          .filter((r) => r.alert_severity === 'red')
-          .map((r) => r.notification_contact_id),
-      });
+  // Compute notification settings from recipients data (no useState to avoid infinite loops)
+  const notificationSettings: ModuleNotificationSettings = React.useMemo(() => {
+    if (!recipients) {
+      return {
+        enableNotifications: false,
+        amberRecipientIds: [],
+        redRecipientIds: [],
+      };
     }
+    return {
+      enableNotifications: recipients.length > 0,
+      amberRecipientIds: recipients
+        .filter((r) => r.alert_severity === 'amber')
+        .map((r) => r.notification_contact_id),
+      redRecipientIds: recipients
+        .filter((r) => r.alert_severity === 'red')
+        .map((r) => r.notification_contact_id),
+    };
   }, [recipients]);
+
+  // Local state for user modifications (only updates on user interaction)
+  const [localNotificationSettings, setLocalNotificationSettings] = useState<ModuleNotificationSettings | null>(null);
+
+  // Use local settings if user has made changes, otherwise use computed from DB
+  const activeNotificationSettings = localNotificationSettings ?? notificationSettings;
 
   const form = useForm<ConfigFormData>({
     resolver: zodResolver(configSchema),
@@ -181,13 +186,14 @@ export function WeightBmiConfigSettings({ clientId }: WeightBmiConfigSettingsPro
   }, [heightMethod, form]);
 
   const handleNotificationSettingsChange = (settings: ModuleNotificationSettings) => {
-    setNotificationSettings(settings);
+    setLocalNotificationSettings(settings);
   };
 
   const handleSaveNotifications = () => {
+    const settingsToSave = activeNotificationSettings;
     const allRecipients: { contactId: string; severity: AlertSeverity }[] = [
-      ...notificationSettings.amberRecipientIds.map((id) => ({ contactId: id, severity: 'amber' as AlertSeverity })),
-      ...notificationSettings.redRecipientIds.map((id) => ({ contactId: id, severity: 'red' as AlertSeverity })),
+      ...settingsToSave.amberRecipientIds.map((id) => ({ contactId: id, severity: 'amber' as AlertSeverity })),
+      ...settingsToSave.redRecipientIds.map((id) => ({ contactId: id, severity: 'red' as AlertSeverity })),
     ];
     setRecipients.mutate({
       moduleName: MODULE_NAME,
@@ -654,7 +660,7 @@ export function WeightBmiConfigSettings({ clientId }: WeightBmiConfigSettingsPro
           <ModuleNotificationsCard
             moduleName={MODULE_NAME}
             moduleDisplayName="Weight & BMI"
-            settings={notificationSettings}
+            settings={activeNotificationSettings}
             onSettingsChange={handleNotificationSettingsChange}
             clientId={clientId}
           />
