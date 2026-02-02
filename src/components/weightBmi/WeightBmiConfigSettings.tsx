@@ -37,6 +37,9 @@ import {
 import { RestrictedSection } from '@/components/ui/restricted-section';
 import { useWeightBmi } from '@/hooks/useWeightBmi';
 import { calculateHeightFromKneeHeight } from '@/utils/weightBmiCalculator';
+import { ModuleNotificationsCard, type ModuleNotificationSettings } from '@/components/module';
+import { useModuleAlertRecipients, useSetModuleAlertRecipients } from '@/hooks/useNotificationContacts';
+import type { AlertSeverity } from '@/types/notificationContacts';
 import { 
   HEIGHT_METHOD_LABELS, 
   FREQUENCY_LABELS,
@@ -45,6 +48,8 @@ import {
 } from '@/types/weightBmi';
 import { Settings, HelpCircle, Scale, Ruler, AlertTriangle, TrendingUp, Activity } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+
+const MODULE_NAME = 'weight-bmi';
 
 const configSchema = z.object({
   baseline_weight_kg: z.number().optional().nullable(),
@@ -83,6 +88,31 @@ export function WeightBmiConfigSettings({ clientId }: WeightBmiConfigSettingsPro
   const { config, saveConfig, loading } = useWeightBmi(clientId);
   const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
+
+  // Module alert recipients
+  const { data: recipients } = useModuleAlertRecipients(MODULE_NAME, clientId);
+  const setRecipients = useSetModuleAlertRecipients();
+
+  const [notificationSettings, setNotificationSettings] = useState<ModuleNotificationSettings>({
+    enableNotifications: false,
+    amberRecipientIds: [],
+    redRecipientIds: [],
+  });
+
+  // Initialize recipients from database
+  useEffect(() => {
+    if (recipients) {
+      setNotificationSettings({
+        enableNotifications: recipients.length > 0,
+        amberRecipientIds: recipients
+          .filter((r) => r.alert_severity === 'amber')
+          .map((r) => r.notification_contact_id),
+        redRecipientIds: recipients
+          .filter((r) => r.alert_severity === 'red')
+          .map((r) => r.notification_contact_id),
+      });
+    }
+  }, [recipients]);
 
   const form = useForm<ConfigFormData>({
     resolver: zodResolver(configSchema),
@@ -150,10 +180,28 @@ export function WeightBmiConfigSettings({ clientId }: WeightBmiConfigSettingsPro
     }
   }, [heightMethod, form]);
 
+  const handleNotificationSettingsChange = (settings: ModuleNotificationSettings) => {
+    setNotificationSettings(settings);
+  };
+
+  const handleSaveNotifications = () => {
+    const allRecipients: { contactId: string; severity: AlertSeverity }[] = [
+      ...notificationSettings.amberRecipientIds.map((id) => ({ contactId: id, severity: 'amber' as AlertSeverity })),
+      ...notificationSettings.redRecipientIds.map((id) => ({ contactId: id, severity: 'red' as AlertSeverity })),
+    ];
+    setRecipients.mutate({
+      moduleName: MODULE_NAME,
+      clientId: clientId || null,
+      recipients: allRecipients,
+    });
+  };
+
   async function onSubmit(data: ConfigFormData) {
     setIsSaving(true);
     try {
       await saveConfig(data);
+      // Also save notification recipients
+      handleSaveNotifications();
     } finally {
       setIsSaving(false);
     }
@@ -601,6 +649,15 @@ export function WeightBmiConfigSettings({ clientId }: WeightBmiConfigSettingsPro
               />
             </CardContent>
           </Card>
+
+          {/* Notification Recipients - Centralized */}
+          <ModuleNotificationsCard
+            moduleName={MODULE_NAME}
+            moduleDisplayName="Weight & BMI"
+            settings={notificationSettings}
+            onSettingsChange={handleNotificationSettingsChange}
+            clientId={clientId}
+          />
 
           {/* Save Button */}
           <div className="flex justify-end">

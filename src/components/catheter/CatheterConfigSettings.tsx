@@ -12,7 +12,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RestrictedSection } from '@/components/ui/restricted-section';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCatheterConfig } from '@/hooks/useCatheter';
+import { ModuleNotificationsCard, type ModuleNotificationSettings } from '@/components/module';
+import { useModuleAlertRecipients, useSetModuleAlertRecipients } from '@/hooks/useNotificationContacts';
+import type { AlertSeverity } from '@/types/notificationContacts';
 import { CATHETER_TYPES, CATHETER_TYPE_CONFIG, BAG_TYPES, CHANGE_FREQUENCY_OPTIONS, FLUSH_FREQUENCY_OPTIONS, type CatheterType, type BagType } from '@/types/catheter';
+
+const MODULE_NAME = 'catheter';
 
 interface CatheterConfigSettingsProps {
   clientId?: string;
@@ -22,6 +27,31 @@ export function CatheterConfigSettings({ clientId }: CatheterConfigSettingsProps
   const { hasRole } = useAuth();
   const isAdmin = hasRole('admin');
   const { config, loading, updateConfig } = useCatheterConfig(clientId);
+
+  // Module alert recipients
+  const { data: recipients } = useModuleAlertRecipients(MODULE_NAME, clientId);
+  const setRecipients = useSetModuleAlertRecipients();
+
+  const [notificationSettings, setNotificationSettings] = useState<ModuleNotificationSettings>({
+    enableNotifications: false,
+    amberRecipientIds: [],
+    redRecipientIds: [],
+  });
+
+  // Initialize recipients from database
+  useEffect(() => {
+    if (recipients) {
+      setNotificationSettings({
+        enableNotifications: recipients.length > 0,
+        amberRecipientIds: recipients
+          .filter((r) => r.alert_severity === 'amber')
+          .map((r) => r.notification_contact_id),
+        redRecipientIds: recipients
+          .filter((r) => r.alert_severity === 'red')
+          .map((r) => r.notification_contact_id),
+      });
+    }
+  }, [recipients]);
 
   const [catheterType, setCatheterType] = useState<CatheterType>('idc');
   const [catheterSize, setCatheterSize] = useState('');
@@ -64,6 +94,23 @@ export function CatheterConfigSettings({ clientId }: CatheterConfigSettingsProps
     setHasChanges(changed);
   }, [config, catheterType, catheterSize, changeFrequency, flushFrequency, enableFlushTracking, enableStomaChecks, enableAD, bagTypes]);
 
+  const handleNotificationSettingsChange = (settings: ModuleNotificationSettings) => {
+    setNotificationSettings(settings);
+    setHasChanges(true);
+  };
+
+  const handleSaveRecipients = () => {
+    const allRecipients: { contactId: string; severity: AlertSeverity }[] = [
+      ...notificationSettings.amberRecipientIds.map((id) => ({ contactId: id, severity: 'amber' as AlertSeverity })),
+      ...notificationSettings.redRecipientIds.map((id) => ({ contactId: id, severity: 'red' as AlertSeverity })),
+    ];
+    setRecipients.mutate({
+      moduleName: MODULE_NAME,
+      clientId: clientId || null,
+      recipients: allRecipients,
+    });
+  };
+
   const handleSave = async () => {
     await updateConfig.mutateAsync({
       catheter_type: catheterType,
@@ -75,6 +122,8 @@ export function CatheterConfigSettings({ clientId }: CatheterConfigSettingsProps
       enable_autonomic_dysreflexia_risk: enableAD,
       bag_types: bagTypes,
     });
+    // Also save notification recipients
+    handleSaveRecipients();
     setHasChanges(false);
   };
 
@@ -182,15 +231,25 @@ export function CatheterConfigSettings({ clientId }: CatheterConfigSettingsProps
               </div>
               <Switch checked={enableAD} onCheckedChange={setEnableAD} disabled={!isAdmin} />
             </div>
-
-            {/* Save */}
-            {isAdmin && hasChanges && (
-              <Button onClick={handleSave} disabled={updateConfig.isPending}>
-                {updateConfig.isPending ? 'Saving...' : 'Save Settings'}
-              </Button>
-            )}
           </CardContent>
         </Card>
+
+        {/* Notification Recipients - Centralized */}
+        <ModuleNotificationsCard
+          moduleName={MODULE_NAME}
+          moduleDisplayName="Catheter Management"
+          settings={notificationSettings}
+          onSettingsChange={handleNotificationSettingsChange}
+          clientId={clientId}
+          disabled={!isAdmin}
+        />
+
+        {/* Save */}
+        {isAdmin && hasChanges && (
+          <Button onClick={handleSave} disabled={updateConfig.isPending}>
+            {updateConfig.isPending ? 'Saving...' : 'Save Settings'}
+          </Button>
+        )}
       </RestrictedSection>
     </div>
   );

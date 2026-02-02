@@ -8,33 +8,52 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { usePainConfig } from '@/hooks/usePainConfig';
 import { ASSESSMENT_TRIGGER_LABELS, AssessmentTrigger } from '@/types/painAssessment';
-import { Settings, Clock, Users, Save, AlertTriangle } from 'lucide-react';
+import { ModuleNotificationsCard, type ModuleNotificationSettings } from '@/components/module';
+import { useModuleAlertRecipients, useSetModuleAlertRecipients } from '@/hooks/useNotificationContacts';
+import type { AlertSeverity } from '@/types/notificationContacts';
+import { Settings, Clock, Save, AlertTriangle } from 'lucide-react';
 
 interface PainConfigSettingsProps {
   clientId?: string;
   onClose?: () => void;
 }
 
-const ALERT_RECIPIENT_OPTIONS = [
-  { value: 'supervisor', label: 'Supervisor / Team Leader' },
-  { value: 'nurse', label: 'Nurse / Clinician' },
-  { value: 'family', label: 'Family / Next of Kin' },
-  { value: 'gp', label: 'GP / Medical Professional' },
-  { value: 'on_call', label: 'On-call Support' },
-];
+const MODULE_NAME = 'pain-check';
 
 export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProps) {
   const { config, loading, saveConfig, getEffectiveConfig } = usePainConfig(clientId);
   const effectiveConfig = getEffectiveConfig();
+  
+  // Module alert recipients
+  const { data: recipients } = useModuleAlertRecipients(MODULE_NAME, clientId);
+  const setRecipients = useSetModuleAlertRecipients();
+  
+  const [notificationSettings, setNotificationSettings] = useState<ModuleNotificationSettings>({
+    enableNotifications: false,
+    amberRecipientIds: [],
+    redRecipientIds: [],
+  });
+
+  // Initialize recipients from database
+  useEffect(() => {
+    if (recipients) {
+      setNotificationSettings({
+        enableNotifications: recipients.length > 0,
+        amberRecipientIds: recipients
+          .filter((r) => r.alert_severity === 'amber')
+          .map((r) => r.notification_contact_id),
+        redRecipientIds: recipients
+          .filter((r) => r.alert_severity === 'red')
+          .map((r) => r.notification_contact_id),
+      });
+    }
+  }, [recipients]);
 
   const [triggers, setTriggers] = useState<AssessmentTrigger[]>(effectiveConfig.assessment_triggers);
   const [customTrigger, setCustomTrigger] = useState(effectiveConfig.custom_trigger_text || '');
   const [mildHours, setMildHours] = useState(effectiveConfig.mild_reassess_hours);
   const [moderateHours, setModerateHours] = useState(effectiveConfig.moderate_reassess_hours);
   const [severeHours, setSevereHours] = useState(effectiveConfig.severe_reassess_hours);
-  const [mildRecipients, setMildRecipients] = useState<string[]>(effectiveConfig.mild_alert_recipients);
-  const [moderateRecipients, setModerateRecipients] = useState<string[]>(effectiveConfig.moderate_alert_recipients);
-  const [severeRecipients, setSevereRecipients] = useState<string[]>(effectiveConfig.severe_alert_recipients);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -44,9 +63,6 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
       setMildHours(config.mild_reassess_hours);
       setModerateHours(config.moderate_reassess_hours);
       setSevereHours(config.severe_reassess_hours);
-      setMildRecipients(config.mild_alert_recipients);
-      setModerateRecipients(config.moderate_alert_recipients);
-      setSevereRecipients(config.severe_alert_recipients);
     }
   }, [config]);
 
@@ -58,16 +74,20 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
     );
   };
 
-  const handleRecipientToggle = (
-    recipient: string,
-    current: string[],
-    setter: (val: string[]) => void
-  ) => {
-    setter(
-      current.includes(recipient)
-        ? current.filter(r => r !== recipient)
-        : [...current, recipient]
-    );
+  const handleNotificationSettingsChange = (settings: ModuleNotificationSettings) => {
+    setNotificationSettings(settings);
+  };
+
+  const handleSaveNotifications = () => {
+    const allRecipients: { contactId: string; severity: AlertSeverity }[] = [
+      ...notificationSettings.amberRecipientIds.map((id) => ({ contactId: id, severity: 'amber' as AlertSeverity })),
+      ...notificationSettings.redRecipientIds.map((id) => ({ contactId: id, severity: 'red' as AlertSeverity })),
+    ];
+    setRecipients.mutate({
+      moduleName: MODULE_NAME,
+      clientId: clientId || null,
+      recipients: allRecipients,
+    });
   };
 
   const handleSave = async () => {
@@ -78,10 +98,12 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
       mild_reassess_hours: mildHours,
       moderate_reassess_hours: moderateHours,
       severe_reassess_hours: severeHours,
-      mild_alert_recipients: mildRecipients,
-      moderate_alert_recipients: moderateRecipients,
-      severe_alert_recipients: severeRecipients,
+      mild_alert_recipients: [], // Recipients are now managed centrally
+      moderate_alert_recipients: [],
+      severe_alert_recipients: [],
     });
+    // Also save notification recipients
+    handleSaveNotifications();
     setSaving(false);
     if (success && onClose) {
       onClose();
@@ -220,85 +242,14 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
         </CardContent>
       </Card>
 
-      {/* Alert Recipients */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Alert Recipients by Severity
-          </CardTitle>
-          <CardDescription>
-            Who should be notified when pain is detected?
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Mild Pain Recipients */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-orange-400" />
-              Mild Pain (3-7) - Notify:
-            </Label>
-            <div className="flex flex-wrap gap-3 ml-5">
-              {ALERT_RECIPIENT_OPTIONS.map((opt) => (
-                <div key={opt.value} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`mild-${opt.value}`}
-                    checked={mildRecipients.includes(opt.value)}
-                    onCheckedChange={() => handleRecipientToggle(opt.value, mildRecipients, setMildRecipients)}
-                  />
-                  <Label htmlFor={`mild-${opt.value}`} className="text-sm cursor-pointer">
-                    {opt.label}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Moderate Pain Recipients */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-orange-600" />
-              Moderate Pain (8-13) - Notify:
-            </Label>
-            <div className="flex flex-wrap gap-3 ml-5">
-              {ALERT_RECIPIENT_OPTIONS.map((opt) => (
-                <div key={opt.value} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`moderate-${opt.value}`}
-                    checked={moderateRecipients.includes(opt.value)}
-                    onCheckedChange={() => handleRecipientToggle(opt.value, moderateRecipients, setModerateRecipients)}
-                  />
-                  <Label htmlFor={`moderate-${opt.value}`} className="text-sm cursor-pointer">
-                    {opt.label}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Severe Pain Recipients */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-destructive" />
-              Severe Pain (14+) - Notify:
-            </Label>
-            <div className="flex flex-wrap gap-3 ml-5">
-              {ALERT_RECIPIENT_OPTIONS.map((opt) => (
-                <div key={opt.value} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`severe-${opt.value}`}
-                    checked={severeRecipients.includes(opt.value)}
-                    onCheckedChange={() => handleRecipientToggle(opt.value, severeRecipients, setSevereRecipients)}
-                  />
-                  <Label htmlFor={`severe-${opt.value}`} className="text-sm cursor-pointer">
-                    {opt.label}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Alert Recipients - Centralized */}
+      <ModuleNotificationsCard
+        moduleName={MODULE_NAME}
+        moduleDisplayName="Pain Assessment"
+        settings={notificationSettings}
+        onSettingsChange={handleNotificationSettingsChange}
+        clientId={clientId}
+      />
 
       {/* Clinical Governance Note */}
       <Alert className="border-primary/30 bg-primary/5">
