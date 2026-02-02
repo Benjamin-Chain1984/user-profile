@@ -141,10 +141,15 @@ export function WeightBmiConfigSettings({ clientId }: WeightBmiConfigSettingsPro
     }
   });
 
+  // react-hook-form helpers (stable references for effect deps)
+  const resetForm = form.reset;
+  const setValue = form.setValue;
+  const getValues = form.getValues;
+
   // Load config into form
   useEffect(() => {
     if (config) {
-      form.reset({
+      resetForm({
         baseline_weight_kg: config.baseline_weight_kg,
         monitoring_frequency: config.monitoring_frequency,
         min_target_weight_kg: config.min_target_weight_kg,
@@ -163,7 +168,7 @@ export function WeightBmiConfigSettings({ clientId }: WeightBmiConfigSettingsPro
         overdue_escalation_cycles: config.overdue_escalation_cycles
       });
     }
-  }, [config, form]);
+  }, [config, resetForm]);
 
   const heightMethod = form.watch('height_method');
   const kneeHeightCm = form.watch('knee_height_cm');
@@ -173,17 +178,24 @@ export function WeightBmiConfigSettings({ clientId }: WeightBmiConfigSettingsPro
   useEffect(() => {
     if (heightMethod === 'knee_height' && kneeHeightCm && kneeHeightSex) {
       const calculatedHeight = calculateHeightFromKneeHeight(kneeHeightCm, kneeHeightSex);
-      form.setValue('height_cm', Math.round(calculatedHeight * 10) / 10);
-      form.setValue('height_is_estimate', true);
+      const rounded = Math.round(calculatedHeight * 10) / 10;
+
+      // Avoid unnecessary updates (can cause nested update loops)
+      if (getValues('height_cm') !== rounded) {
+        setValue('height_cm', rounded);
+      }
+      if (getValues('height_is_estimate') !== true) {
+        setValue('height_is_estimate', true);
+      }
     }
-  }, [heightMethod, kneeHeightCm, kneeHeightSex, form]);
+  }, [heightMethod, kneeHeightCm, kneeHeightSex, getValues, setValue]);
 
   // Update height_is_estimate based on method
   useEffect(() => {
-    if (heightMethod !== 'standing') {
-      form.setValue('height_is_estimate', true);
+    if (heightMethod !== 'standing' && getValues('height_is_estimate') !== true) {
+      setValue('height_is_estimate', true);
     }
-  }, [heightMethod, form]);
+  }, [heightMethod, getValues, setValue]);
 
   const handleNotificationSettingsChange = (settings: ModuleNotificationSettings) => {
     setLocalNotificationSettings(settings);
