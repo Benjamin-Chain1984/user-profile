@@ -3,6 +3,7 @@
  */
 
 export { HealthMonitoringDashboard } from './HealthMonitoringDashboard';
+export { AlteredCriteriaSettings } from './AlteredCriteriaSettings';
 export { HealthMonitoringStatusCard } from './HealthMonitoringStatusCard';
 export { HealthMonitoringHistory } from './HealthMonitoringHistory';
 export { HealthMonitoringTrends } from './HealthMonitoringTrends';
