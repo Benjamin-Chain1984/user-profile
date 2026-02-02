@@ -2096,6 +2096,430 @@ export type Database = {
         }
         Relationships: []
       }
+      vital_sign_action_logs: {
+        Row: {
+          action_description: string
+          action_type: string
+          advice_received: string | null
+          alert_id: string | null
+          client_id: string | null
+          contact_role: string | null
+          contact_time: string | null
+          contacted_person: string | null
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          event_occurred_at: string
+          follow_up_due_at: string | null
+          follow_up_required: boolean | null
+          id: string
+          outcome: string | null
+          vital_entry_id: string | null
+        }
+        Insert: {
+          action_description: string
+          action_type: string
+          advice_received?: string | null
+          alert_id?: string | null
+          client_id?: string | null
+          contact_role?: string | null
+          contact_time?: string | null
+          contacted_person?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          follow_up_due_at?: string | null
+          follow_up_required?: boolean | null
+          id?: string
+          outcome?: string | null
+          vital_entry_id?: string | null
+        }
+        Update: {
+          action_description?: string
+          action_type?: string
+          advice_received?: string | null
+          alert_id?: string | null
+          client_id?: string | null
+          contact_role?: string | null
+          contact_time?: string | null
+          contacted_person?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          follow_up_due_at?: string | null
+          follow_up_required?: boolean | null
+          id?: string
+          outcome?: string | null
+          vital_entry_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vital_sign_action_logs_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "vital_sign_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vital_sign_action_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vital_sign_action_logs_vital_entry_id_fkey"
+            columns: ["vital_entry_id"]
+            isOneToOne: false
+            referencedRelation: "vital_sign_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vital_sign_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          action_taken: string | null
+          alert_type: string
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          emergency_contact_time: string | null
+          emergency_services_contacted: boolean | null
+          id: string
+          is_trend_alert: boolean
+          message: string
+          metadata: Json | null
+          outcome: string | null
+          recommended_action: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          resolved_reason: string | null
+          severity: string
+          trend_data: Json | null
+          vital_entry_id: string | null
+          vital_type: string | null
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          action_taken?: string | null
+          alert_type: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          emergency_contact_time?: string | null
+          emergency_services_contacted?: boolean | null
+          id?: string
+          is_trend_alert?: boolean
+          message: string
+          metadata?: Json | null
+          outcome?: string | null
+          recommended_action?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_reason?: string | null
+          severity?: string
+          trend_data?: Json | null
+          vital_entry_id?: string | null
+          vital_type?: string | null
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          action_taken?: string | null
+          alert_type?: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          emergency_contact_time?: string | null
+          emergency_services_contacted?: boolean | null
+          id?: string
+          is_trend_alert?: boolean
+          message?: string
+          metadata?: Json | null
+          outcome?: string | null
+          recommended_action?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_reason?: string | null
+          severity?: string
+          trend_data?: Json | null
+          vital_entry_id?: string | null
+          vital_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vital_sign_alerts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vital_sign_alerts_vital_entry_id_fkey"
+            columns: ["vital_entry_id"]
+            isOneToOne: false
+            referencedRelation: "vital_sign_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vital_sign_altered_criteria: {
+        Row: {
+          amber_high_max: number | null
+          amber_high_min: number | null
+          amber_low_max: number | null
+          amber_low_min: number | null
+          approved_at: string | null
+          approved_by: string | null
+          client_id: string
+          clinical_reason: string | null
+          confirmation_date: string | null
+          confirmed_by_medical_professional: boolean
+          created_at: string
+          created_by: string | null
+          green_max: number | null
+          green_min: number | null
+          id: string
+          is_active: boolean
+          medical_professional_name: string | null
+          medical_professional_role: string | null
+          updated_at: string
+          updated_by: string | null
+          vital_type: string
+        }
+        Insert: {
+          amber_high_max?: number | null
+          amber_high_min?: number | null
+          amber_low_max?: number | null
+          amber_low_min?: number | null
+          approved_at?: string | null
+          approved_by?: string | null
+          client_id: string
+          clinical_reason?: string | null
+          confirmation_date?: string | null
+          confirmed_by_medical_professional?: boolean
+          created_at?: string
+          created_by?: string | null
+          green_max?: number | null
+          green_min?: number | null
+          id?: string
+          is_active?: boolean
+          medical_professional_name?: string | null
+          medical_professional_role?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          vital_type: string
+        }
+        Update: {
+          amber_high_max?: number | null
+          amber_high_min?: number | null
+          amber_low_max?: number | null
+          amber_low_min?: number | null
+          approved_at?: string | null
+          approved_by?: string | null
+          client_id?: string
+          clinical_reason?: string | null
+          confirmation_date?: string | null
+          confirmed_by_medical_professional?: boolean
+          created_at?: string
+          created_by?: string | null
+          green_max?: number | null
+          green_min?: number | null
+          id?: string
+          is_active?: boolean
+          medical_professional_name?: string | null
+          medical_professional_role?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          vital_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vital_sign_altered_criteria_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vital_sign_config: {
+        Row: {
+          amber_recheck_hours: number
+          bp_enabled: boolean
+          bp_frequency_hours: number | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          enable_log_on_behalf: boolean
+          escalation_recipients: string[] | null
+          heart_rate_enabled: boolean
+          heart_rate_frequency_hours: number | null
+          id: string
+          oxygen_enabled: boolean
+          oxygen_frequency_hours: number | null
+          respiratory_enabled: boolean
+          respiratory_frequency_hours: number | null
+          temperature_enabled: boolean
+          temperature_frequency_hours: number | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          amber_recheck_hours?: number
+          bp_enabled?: boolean
+          bp_frequency_hours?: number | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          enable_log_on_behalf?: boolean
+          escalation_recipients?: string[] | null
+          heart_rate_enabled?: boolean
+          heart_rate_frequency_hours?: number | null
+          id?: string
+          oxygen_enabled?: boolean
+          oxygen_frequency_hours?: number | null
+          respiratory_enabled?: boolean
+          respiratory_frequency_hours?: number | null
+          temperature_enabled?: boolean
+          temperature_frequency_hours?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          amber_recheck_hours?: number
+          bp_enabled?: boolean
+          bp_frequency_hours?: number | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          enable_log_on_behalf?: boolean
+          escalation_recipients?: string[] | null
+          heart_rate_enabled?: boolean
+          heart_rate_frequency_hours?: number | null
+          id?: string
+          oxygen_enabled?: boolean
+          oxygen_frequency_hours?: number | null
+          respiratory_enabled?: boolean
+          respiratory_frequency_hours?: number | null
+          temperature_enabled?: boolean
+          temperature_frequency_hours?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vital_sign_config_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vital_sign_entries: {
+        Row: {
+          bp_diastolic: number | null
+          bp_status: string | null
+          bp_systolic: number | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          event_occurred_at: string
+          heart_rate: number | null
+          heart_rate_status: string | null
+          id: string
+          notes: string | null
+          overall_status: string
+          oxygen_saturation: number | null
+          oxygen_status: string | null
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
+          respiratory_rate: number | null
+          respiratory_status: string | null
+          symptoms: string[] | null
+          temperature_celsius: number | null
+          temperature_status: string | null
+        }
+        Insert: {
+          bp_diastolic?: number | null
+          bp_status?: string | null
+          bp_systolic?: number | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          heart_rate?: number | null
+          heart_rate_status?: string | null
+          id?: string
+          notes?: string | null
+          overall_status?: string
+          oxygen_saturation?: number | null
+          oxygen_status?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
+          respiratory_rate?: number | null
+          respiratory_status?: string | null
+          symptoms?: string[] | null
+          temperature_celsius?: number | null
+          temperature_status?: string | null
+        }
+        Update: {
+          bp_diastolic?: number | null
+          bp_status?: string | null
+          bp_systolic?: number | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          heart_rate?: number | null
+          heart_rate_status?: string | null
+          id?: string
+          notes?: string | null
+          overall_status?: string
+          oxygen_saturation?: number | null
+          oxygen_status?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
+          respiratory_rate?: number | null
+          respiratory_status?: string | null
+          symptoms?: string[] | null
+          temperature_celsius?: number | null
+          temperature_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vital_sign_entries_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       weight_bmi_alerts: {
         Row: {
           acknowledged_at: string | null
