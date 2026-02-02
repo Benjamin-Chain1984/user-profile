@@ -19,6 +19,9 @@ import {
 import { RestrictedSection } from '@/components/ui/restricted-section';
 import { useContinenceConfig } from '@/hooks/useContinence';
 import { useAuth } from '@/contexts/AuthContext';
+import { ModuleNotificationsCard, type ModuleNotificationSettings } from '@/components/module';
+import { useModuleAlertRecipients, useSetModuleAlertRecipients } from '@/hooks/useNotificationContacts';
+import type { AlertSeverity } from '@/types/notificationContacts';
 import {
   SCHEDULE_TYPES,
   UTI_FREQUENCIES,
@@ -26,6 +29,8 @@ import {
   UTITestingFrequency,
 } from '@/types/continence';
 import { Clock, TestTube, Droplets, Package, Save, X, Plus } from 'lucide-react';
+
+const MODULE_NAME = 'continence';
 
 interface ContinenceConfigSettingsProps {
   clientId?: string;
@@ -35,6 +40,31 @@ export function ContinenceConfigSettings({ clientId }: ContinenceConfigSettingsP
   const { config, loading, updateConfig } = useContinenceConfig(clientId);
   const { hasRole } = useAuth();
   const isAdmin = hasRole('admin');
+
+  // Module alert recipients
+  const { data: recipients } = useModuleAlertRecipients(MODULE_NAME, clientId);
+  const setRecipients = useSetModuleAlertRecipients();
+
+  const [notificationSettings, setNotificationSettings] = useState<ModuleNotificationSettings>({
+    enableNotifications: false,
+    amberRecipientIds: [],
+    redRecipientIds: [],
+  });
+
+  // Initialize recipients from database
+  useEffect(() => {
+    if (recipients) {
+      setNotificationSettings({
+        enableNotifications: recipients.length > 0,
+        amberRecipientIds: recipients
+          .filter((r) => r.alert_severity === 'amber')
+          .map((r) => r.notification_contact_id),
+        redRecipientIds: recipients
+          .filter((r) => r.alert_severity === 'red')
+          .map((r) => r.notification_contact_id),
+      });
+    }
+  }, [recipients]);
 
   const [scheduleType, setScheduleType] = useState<ScheduleType>('as_required');
   const [fixedTimes, setFixedTimes] = useState<string[]>([]);
@@ -74,6 +104,23 @@ export function ContinenceConfigSettings({ clientId }: ContinenceConfigSettingsP
     markChanged();
   };
 
+  const handleNotificationSettingsChange = (settings: ModuleNotificationSettings) => {
+    setNotificationSettings(settings);
+    setHasChanges(true);
+  };
+
+  const handleSaveRecipients = () => {
+    const allRecipients: { contactId: string; severity: AlertSeverity }[] = [
+      ...notificationSettings.amberRecipientIds.map((id) => ({ contactId: id, severity: 'amber' as AlertSeverity })),
+      ...notificationSettings.redRecipientIds.map((id) => ({ contactId: id, severity: 'red' as AlertSeverity })),
+    ];
+    setRecipients.mutate({
+      moduleName: MODULE_NAME,
+      clientId: clientId || null,
+      recipients: allRecipients,
+    });
+  };
+
   const handleSave = async () => {
     await updateConfig.mutateAsync({
       schedule_type: scheduleType,
@@ -84,6 +131,8 @@ export function ContinenceConfigSettings({ clientId }: ContinenceConfigSettingsP
       enable_consumables_monitoring: enableConsumables,
       uti_testing_frequency: utiFrequency,
     });
+    // Also save notification recipients
+    handleSaveRecipients();
     setHasChanges(false);
   };
 
@@ -305,6 +354,16 @@ export function ContinenceConfigSettings({ clientId }: ContinenceConfigSettingsP
           </CardContent>
         </Card>
       </RestrictedSection>
+
+      {/* Notification Recipients - Centralized */}
+      <ModuleNotificationsCard
+        moduleName={MODULE_NAME}
+        moduleDisplayName="Continence Management"
+        settings={notificationSettings}
+        onSettingsChange={handleNotificationSettingsChange}
+        clientId={clientId}
+        disabled={!isAdmin}
+      />
 
       {/* Save/Reset Buttons */}
       {isAdmin && hasChanges && (
