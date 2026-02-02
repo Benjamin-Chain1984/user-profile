@@ -2,7 +2,7 @@
  * Weight & BMI Config Settings - Admin configuration panel
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -141,15 +141,17 @@ export function WeightBmiConfigSettings({ clientId }: WeightBmiConfigSettingsPro
     }
   });
 
-  // react-hook-form helpers (stable references for effect deps)
-  const resetForm = form.reset;
-  const setValue = form.setValue;
-  const getValues = form.getValues;
+  // Keep stable references to RHF methods to prevent effect re-trigger loops
+  const rhfRef = useRef({
+    reset: form.reset,
+    setValue: form.setValue,
+    getValues: form.getValues,
+  });
 
   // Load config into form
   useEffect(() => {
     if (config) {
-      resetForm({
+      rhfRef.current.reset({
         baseline_weight_kg: config.baseline_weight_kg,
         monitoring_frequency: config.monitoring_frequency,
         min_target_weight_kg: config.min_target_weight_kg,
@@ -168,7 +170,7 @@ export function WeightBmiConfigSettings({ clientId }: WeightBmiConfigSettingsPro
         overdue_escalation_cycles: config.overdue_escalation_cycles
       });
     }
-  }, [config, resetForm]);
+  }, [config]);
 
   const heightMethod = form.watch('height_method');
   const kneeHeightCm = form.watch('knee_height_cm');
@@ -181,21 +183,21 @@ export function WeightBmiConfigSettings({ clientId }: WeightBmiConfigSettingsPro
       const rounded = Math.round(calculatedHeight * 10) / 10;
 
       // Avoid unnecessary updates (can cause nested update loops)
-      if (getValues('height_cm') !== rounded) {
-        setValue('height_cm', rounded);
+      if (rhfRef.current.getValues('height_cm') !== rounded) {
+        rhfRef.current.setValue('height_cm', rounded);
       }
-      if (getValues('height_is_estimate') !== true) {
-        setValue('height_is_estimate', true);
+      if (rhfRef.current.getValues('height_is_estimate') !== true) {
+        rhfRef.current.setValue('height_is_estimate', true);
       }
     }
-  }, [heightMethod, kneeHeightCm, kneeHeightSex, getValues, setValue]);
+  }, [heightMethod, kneeHeightCm, kneeHeightSex]);
 
   // Update height_is_estimate based on method
   useEffect(() => {
-    if (heightMethod !== 'standing' && getValues('height_is_estimate') !== true) {
-      setValue('height_is_estimate', true);
+    if (heightMethod !== 'standing' && rhfRef.current.getValues('height_is_estimate') !== true) {
+      rhfRef.current.setValue('height_is_estimate', true);
     }
-  }, [heightMethod, getValues, setValue]);
+  }, [heightMethod]);
 
   const handleNotificationSettingsChange = (settings: ModuleNotificationSettings) => {
     setLocalNotificationSettings(settings);
