@@ -26,11 +26,15 @@ export function AlertRecipientSelector({
 }: AlertRecipientSelectorProps) {
   const { data: contacts, isLoading } = useActiveNotificationContacts(clientId);
 
-  const handleToggle = (contactId: string) => {
-    if (selectedContactIds.includes(contactId)) {
-      onSelectionChange(selectedContactIds.filter((id) => id !== contactId));
-    } else {
+  const setChecked = (contactId: string, nextChecked: boolean) => {
+    const isSelected = selectedContactIds.includes(contactId);
+    // No-op if nothing changes (prevents accidental update loops)
+    if (nextChecked === isSelected) return;
+
+    if (nextChecked) {
       onSelectionChange([...selectedContactIds, contactId]);
+    } else {
+      onSelectionChange(selectedContactIds.filter((id) => id !== contactId));
     }
   };
 
@@ -81,12 +85,17 @@ export function AlertRecipientSelector({
                 'flex items-center gap-3 p-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors',
                 isSelected && 'bg-muted'
               )}
-              onClick={() => handleToggle(contact.id)}
+              onClick={() => setChecked(contact.id, !isSelected)}
             >
               <Checkbox
                 id={`${moduleName}-${severity}-${contact.id}`}
                 checked={isSelected}
-                onCheckedChange={() => handleToggle(contact.id)}
+                onCheckedChange={(checked) => {
+                  // Radix can emit "indeterminate"; treat it as unchecked.
+                  const nextChecked = checked === true;
+                  setChecked(contact.id, nextChecked);
+                }}
+                onClick={(e) => e.stopPropagation()}
               />
               <label
                 htmlFor={`${moduleName}-${severity}-${contact.id}`}
