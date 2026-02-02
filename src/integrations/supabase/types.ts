@@ -2282,7 +2282,7 @@ export type Database = {
           amber_low_min: number | null
           approved_at: string | null
           approved_by: string | null
-          client_id: string
+          client_id: string | null
           clinical_reason: string | null
           confirmation_date: string | null
           confirmed_by_medical_professional: boolean
@@ -2305,7 +2305,7 @@ export type Database = {
           amber_low_min?: number | null
           approved_at?: string | null
           approved_by?: string | null
-          client_id: string
+          client_id?: string | null
           clinical_reason?: string | null
           confirmation_date?: string | null
           confirmed_by_medical_professional?: boolean
@@ -2328,7 +2328,7 @@ export type Database = {
           amber_low_min?: number | null
           approved_at?: string | null
           approved_by?: string | null
-          client_id?: string
+          client_id?: string | null
           clinical_reason?: string | null
           confirmation_date?: string | null
           confirmed_by_medical_professional?: boolean
