@@ -1,14 +1,18 @@
 /**
  * VitalTilesDashboard - Grid of traffic-light vital sign tiles
+ * 
+ * IMPORTANT: This component respects Altered Criteria when enabled.
+ * Once altered criteria is active and confirmed, it becomes the authoritative source for status calculation.
  */
 
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { VitalTile, BloodPressureTile } from './VitalTile';
-import { useVitalSignEntries, useVitalSignConfig } from '@/hooks/useHealthMonitoring';
+import { useVitalSignEntries, useVitalSignConfig, useAlteredCriteria } from '@/hooks/useHealthMonitoring';
 import { calculateBpStatus, calculateVitalStatus } from '@/utils/vitalSignStatusCalculator';
 import type { VitalType, VitalStatus } from '@/types/healthMonitoring';
-import { Activity } from 'lucide-react';
+import { Activity, AlertTriangle } from 'lucide-react';
 
 interface VitalTilesDashboardProps {
   clientId?: string;
@@ -18,8 +22,16 @@ interface VitalTilesDashboardProps {
 export function VitalTilesDashboard({ clientId, onVitalClick }: VitalTilesDashboardProps) {
   const { entries } = useVitalSignEntries(clientId, 20);
   const { config } = useVitalSignConfig(clientId);
+  const { criteriaMap } = useAlteredCriteria(clientId);
 
-  // Calculate latest values and trends
+  // Check if any altered criteria is active
+  const hasActiveAlteredCriteria = useMemo(() => {
+    return Object.values(criteriaMap).some(
+      c => c?.is_active && c?.confirmed_by_medical_professional
+    );
+  }, [criteriaMap]);
+
+  // Calculate latest values and trends with REAL-TIME status calculation using altered criteria
   const vitalData = useMemo(() => {
     const latest = entries[0];
     const previous = entries[1];
@@ -31,40 +43,88 @@ export function VitalTilesDashboard({ clientId, onVitalClick }: VitalTilesDashbo
       return diff > 0 ? 'up' : 'down';
     };
 
+    // Get active altered criteria for each vital type
+    const getActiveCriteria = (vitalType: VitalType) => {
+      const criteria = criteriaMap[vitalType];
+      if (criteria?.is_active && criteria?.confirmed_by_medical_professional) {
+        return criteria;
+      }
+      return null;
+    };
+
+    // Calculate temperature status using altered criteria if active
+    const temperatureCriteria = getActiveCriteria('temperature');
+    const temperatureStatus = latest?.temperature_celsius !== null && latest?.temperature_celsius !== undefined
+      ? calculateVitalStatus(latest.temperature_celsius, 'temperature', temperatureCriteria)
+      : null;
+
+    // Calculate BP status using altered criteria if active (worst wins)
+    const bpSystolicCriteria = getActiveCriteria('bp_systolic');
+    const bpDiastolicCriteria = getActiveCriteria('bp_diastolic');
+    const bpStatus = calculateBpStatus(
+      latest?.bp_systolic ?? null,
+      latest?.bp_diastolic ?? null,
+      bpSystolicCriteria,
+      bpDiastolicCriteria
+    );
+
+    // Calculate oxygen status using altered criteria if active
+    const oxygenCriteria = getActiveCriteria('oxygen');
+    const oxygenStatus = latest?.oxygen_saturation !== null && latest?.oxygen_saturation !== undefined
+      ? calculateVitalStatus(latest.oxygen_saturation, 'oxygen', oxygenCriteria)
+      : null;
+
+    // Calculate heart rate status using altered criteria if active
+    const heartRateCriteria = getActiveCriteria('heart_rate');
+    const heartRateStatus = latest?.heart_rate !== null && latest?.heart_rate !== undefined
+      ? calculateVitalStatus(latest.heart_rate, 'heart_rate', heartRateCriteria)
+      : null;
+
+    // Calculate respiratory status using altered criteria if active
+    const respiratoryCriteria = getActiveCriteria('respiratory');
+    const respiratoryStatus = latest?.respiratory_rate !== null && latest?.respiratory_rate !== undefined
+      ? calculateVitalStatus(latest.respiratory_rate, 'respiratory', respiratoryCriteria)
+      : null;
+
     return {
       temperature: {
         value: latest?.temperature_celsius ?? null,
-        status: latest?.temperature_status as VitalStatus | null,
+        status: temperatureStatus,
         trend: calculateTrend(latest?.temperature_celsius ?? null, previous?.temperature_celsius ?? null),
         lastRecordedAt: latest?.event_occurred_at,
+        isAltered: !!temperatureCriteria,
       },
       bp: {
         systolic: latest?.bp_systolic ?? null,
         diastolic: latest?.bp_diastolic ?? null,
-        status: latest?.bp_status as VitalStatus | null,
+        status: bpStatus,
         trend: calculateTrend(latest?.bp_systolic ?? null, previous?.bp_systolic ?? null),
         lastRecordedAt: latest?.event_occurred_at,
+        isAltered: !!(bpSystolicCriteria || bpDiastolicCriteria),
       },
       oxygen: {
         value: latest?.oxygen_saturation ?? null,
-        status: latest?.oxygen_status as VitalStatus | null,
+        status: oxygenStatus,
         trend: calculateTrend(latest?.oxygen_saturation ?? null, previous?.oxygen_saturation ?? null),
         lastRecordedAt: latest?.event_occurred_at,
+        isAltered: !!oxygenCriteria,
       },
       heart_rate: {
         value: latest?.heart_rate ?? null,
-        status: latest?.heart_rate_status as VitalStatus | null,
+        status: heartRateStatus,
         trend: calculateTrend(latest?.heart_rate ?? null, previous?.heart_rate ?? null),
         lastRecordedAt: latest?.event_occurred_at,
+        isAltered: !!heartRateCriteria,
       },
       respiratory: {
         value: latest?.respiratory_rate ?? null,
-        status: latest?.respiratory_status as VitalStatus | null,
+        status: respiratoryStatus,
         trend: calculateTrend(latest?.respiratory_rate ?? null, previous?.respiratory_rate ?? null),
         lastRecordedAt: latest?.event_occurred_at,
+        isAltered: !!respiratoryCriteria,
       },
     };
-  }, [entries]);
+  }, [entries, criteriaMap]);
 
   // Get overall status for header
   const overallStatus = useMemo(() => {
@@ -108,9 +168,17 @@ export function VitalTilesDashboard({ clientId, onVitalClick }: VitalTilesDashbo
             <Activity className="h-5 w-5" />
             Vital Signs Overview
           </CardTitle>
-          <span className={`text-sm font-medium ${getOverallStatusColor()}`}>
-            {getOverallStatusText()}
-          </span>
+          <div className="flex items-center gap-2">
+            {hasActiveAlteredCriteria && (
+              <Badge variant="outline" className="text-xs border-amber-300 bg-amber-50 text-amber-700">
+                <AlertTriangle className="h-3 w-3 mr-1" />
+                Altered Criteria
+              </Badge>
+            )}
+            <span className={`text-sm font-medium ${getOverallStatusColor()}`}>
+              {getOverallStatusText()}
+            </span>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
