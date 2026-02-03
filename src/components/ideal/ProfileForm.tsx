@@ -1,5 +1,7 @@
+import { useState, useRef } from 'react';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useClientProfile } from '@/hooks/useClientProfile';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ProfileAvatar } from './ProfileAvatar';
@@ -10,32 +12,122 @@ import { QRPosterSection } from './QRPosterSection';
 import { SubscriptionBillingSection } from './SubscriptionBillingSection';
 import { NotificationContactsSection } from '@/components/profile';
 import { differenceInYears } from 'date-fns';
-import { Camera, User, Phone, Users, Lock } from 'lucide-react';
+import { Camera, User, Phone, Users, Lock, Loader2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { toast } from 'sonner';
+import type { IndividualProfile } from '@/types/ideal';
 
 export function ProfileForm() {
-  const { profile, setProfile } = useProfile();
+  const { profile: contextProfile, setProfile: setContextProfile } = useProfile();
   const { hasRole } = useAuth();
+  const { profile: dbProfile, saving, saveProfile, uploadPhoto, loading } = useClientProfile();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [localProfile, setLocalProfile] = useState<IndividualProfile | null>(null);
 
   const isAdmin = hasRole('admin');
 
-  if (!profile) return null;
+  // Use database profile if available, otherwise fall back to context
+  const profile = localProfile || dbProfile || contextProfile;
 
-  const age = differenceInYears(new Date(), new Date(profile.dateOfBirth));
+  if (!profile) {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center p-8">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      );
+    }
+    return null;
+  }
 
-  const handleChange = (field: string, value: string) => {
-    if (!isAdmin) return; // Prevent changes for non-admins
-    setProfile({
+  const age = profile.dateOfBirth ? differenceInYears(new Date(), new Date(profile.dateOfBirth)) : 0;
+
+  const handleChange = (field: keyof IndividualProfile, value: string) => {
+    if (!isAdmin) return;
+    
+    const updatedProfile = {
       ...profile,
       [field]: value,
       editedAt: new Date().toISOString(),
-      editedBy: 'Current User', // Would come from auth context
-    });
+      editedBy: 'Current User',
+    };
+    
+    setLocalProfile(updatedProfile);
+    setHasChanges(true);
+    
+    // Also update context for immediate UI feedback
+    setContextProfile(updatedProfile);
+  };
+
+  const handlePhotoClick = () => {
+    if (isAdmin && fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be less than 5MB');
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      const photoUrl = await uploadPhoto(file);
+      if (photoUrl) {
+        const updatedProfile = {
+          ...profile,
+          avatarUrl: photoUrl,
+          editedAt: new Date().toISOString(),
+        };
+        setLocalProfile(updatedProfile);
+        setContextProfile(updatedProfile);
+        setHasChanges(true);
+        toast.success('Photo uploaded successfully');
+      }
+    } finally {
+      setUploadingPhoto(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleSave = async () => {
+    if (!profile || !hasChanges) return;
+    
+    const success = await saveProfile(profile);
+    if (success) {
+      setHasChanges(false);
+      setLocalProfile(null);
+    }
   };
 
   return (
     <div className="space-y-8">
+      {/* Hidden file input for photo upload */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        accept="image/*"
+        onChange={handlePhotoChange}
+      />
+
       {/* Role Display */}
       <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl border border-border">
         <div className="flex items-center gap-2">
@@ -51,10 +143,15 @@ export function ProfileForm() {
           <div className="relative">
             <ProfileAvatar name={profile.fullName} avatarUrl={profile.avatarUrl} size="xl" />
             <button 
-              className="absolute bottom-0 right-0 p-2 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors"
-              disabled={!isAdmin}
+              className="absolute bottom-0 right-0 p-2 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+              disabled={!isAdmin || uploadingPhoto}
+              onClick={handlePhotoClick}
             >
-              <Camera className="w-5 h-5" />
+              {uploadingPhoto ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Camera className="w-5 h-5" />
+              )}
             </button>
           </div>
           <p className="text-sm text-muted-foreground">
@@ -200,8 +297,23 @@ export function ProfileForm() {
       </div>
 
       {isAdmin && (
-        <Button className="w-full" size="lg">
-          Save Changes
+        <Button 
+          className="w-full" 
+          size="lg" 
+          onClick={handleSave}
+          disabled={saving || !hasChanges}
+        >
+          {saving ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="w-4 h-4 mr-2" />
+              {hasChanges ? 'Save Changes' : 'No Changes'}
+            </>
+          )}
         </Button>
       )}
 

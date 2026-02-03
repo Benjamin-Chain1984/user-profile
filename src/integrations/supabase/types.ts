@@ -1034,36 +1034,66 @@ export type Database = {
       clients: {
         Row: {
           created_at: string
+          created_by: string | null
+          date_of_birth: string | null
+          edited_at: string | null
+          edited_by: string | null
+          email: string | null
+          full_name: string | null
           id: string
+          person_responsible_name: string | null
           photo_url: string | null
           poster_qr_token_created_at: string
           poster_qr_token_hash: string
           poster_qr_token_rotated_at: string | null
           preferred_name: string
+          primary_contact_number: string | null
+          relationship_to_individual: string | null
+          secondary_contact: string | null
           short_bio: string | null
           status: string
           updated_at: string
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
+          date_of_birth?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          email?: string | null
+          full_name?: string | null
           id?: string
+          person_responsible_name?: string | null
           photo_url?: string | null
           poster_qr_token_created_at?: string
           poster_qr_token_hash: string
           poster_qr_token_rotated_at?: string | null
           preferred_name: string
+          primary_contact_number?: string | null
+          relationship_to_individual?: string | null
+          secondary_contact?: string | null
           short_bio?: string | null
           status?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          created_by?: string | null
+          date_of_birth?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          email?: string | null
+          full_name?: string | null
           id?: string
+          person_responsible_name?: string | null
           photo_url?: string | null
           poster_qr_token_created_at?: string
           poster_qr_token_hash?: string
           poster_qr_token_rotated_at?: string | null
           preferred_name?: string
+          primary_contact_number?: string | null
+          relationship_to_individual?: string | null
+          secondary_contact?: string | null
           short_bio?: string | null
           status?: string
           updated_at?: string

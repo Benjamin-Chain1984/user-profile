@@ -155,17 +155,55 @@ function generateAlertsFromModules(
 }
 
 export function ProfileProvider({ children }: { children: ReactNode }) {
+  // Default fallback profile - will be replaced by database data
   const [profile, setProfile] = useState<IndividualProfile | null>({
     id: '1',
-    fullName: 'Sarah Mitchell',
-    dateOfBirth: '1985-03-15',
-    personResponsibleName: 'James Mitchell',
-    relationshipToIndividual: 'Spouse',
-    primaryContactNumber: '+44 7700 900123',
-    email: 'james.mitchell@email.com',
+    fullName: 'Loading...',
+    dateOfBirth: '1990-01-01',
+    personResponsibleName: '',
+    relationshipToIndividual: '',
+    primaryContactNumber: '',
+    email: '',
     createdAt: new Date().toISOString(),
-    createdBy: 'System Admin',
+    createdBy: 'System',
   });
+
+  // Fetch profile from database
+  const fetchProfileFromDb = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return;
+      }
+
+      if (data) {
+        // Map database fields to frontend format
+        setProfile({
+          id: data.id,
+          fullName: (data as any).full_name || data.preferred_name || '',
+          dateOfBirth: (data as any).date_of_birth || '1990-01-01',
+          avatarUrl: data.photo_url || undefined,
+          personResponsibleName: (data as any).person_responsible_name || '',
+          relationshipToIndividual: (data as any).relationship_to_individual || '',
+          primaryContactNumber: (data as any).primary_contact_number || '',
+          secondaryContact: (data as any).secondary_contact || undefined,
+          email: (data as any).email || undefined,
+          createdAt: data.created_at,
+          createdBy: (data as any).created_by || 'System',
+          editedAt: (data as any).edited_at || undefined,
+          editedBy: (data as any).edited_by || undefined,
+        });
+      }
+    } catch (err) {
+      console.error('Error in fetchProfileFromDb:', err);
+    }
+  };
 
   // Pain assessment state
   const [latestPainData, setLatestPainData] = useState<{ severity: PainSeverity; score: number; timestamp: string } | null>(null);
@@ -452,6 +490,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   // Fetch data on mount and set up realtime subscriptions
   useEffect(() => {
+    fetchProfileFromDb();
     fetchLatestPainAssessment();
     fetchBowelCareStatus();
     fetchWeightStatus();
@@ -521,11 +560,28 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       )
       .subscribe();
 
+    // Subscribe to realtime updates for profile/client changes
+    const profileChannel = supabase
+      .channel('profile-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'clients',
+        },
+        () => {
+          fetchProfileFromDb();
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(painChannel);
       supabase.removeChannel(bowelChannel);
       supabase.removeChannel(weightChannel);
       supabase.removeChannel(fluidChannel);
+      supabase.removeChannel(profileChannel);
     };
   }, []);
 
