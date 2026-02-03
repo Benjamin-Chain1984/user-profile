@@ -2,7 +2,7 @@
  * VitalEntryFormEnhanced - Enhanced form with iOS-style reel pickers
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -65,6 +65,13 @@ interface VitalEntryFormEnhancedProps {
   initialVitalType?: VitalType;
 }
 
+// Map VitalType to tab ID (bp_systolic and bp_diastolic both map to 'bp')
+const vitalTypeToTabId = (vitalType: VitalType | undefined): string => {
+  if (!vitalType) return 'temperature';
+  if (vitalType === 'bp_systolic' || vitalType === 'bp_diastolic') return 'bp';
+  return vitalType;
+};
+
 export function VitalEntryFormEnhanced({ 
   clientId, 
   open, 
@@ -77,12 +84,19 @@ export function VitalEntryFormEnhanced({
   
   const [showOnBehalf, setShowOnBehalf] = useState(false);
   const [showBackdated, setShowBackdated] = useState(false);
-  const [activeTab, setActiveTab] = useState<string>(initialVitalType || 'temperature');
+  const [activeTab, setActiveTab] = useState<string>(() => vitalTypeToTabId(initialVitalType));
   const [redZoneDialog, setRedZoneDialog] = useState<{ open: boolean; vitalType: VitalType; value: number } | null>(null);
+
+  // Update activeTab when initialVitalType changes (e.g., clicking different tiles)
+  useEffect(() => {
+    if (open && initialVitalType) {
+      setActiveTab(vitalTypeToTabId(initialVitalType));
+    }
+  }, [open, initialVitalType]);
 
   // Get default tab based on enabled vitals
   const getDefaultTab = () => {
-    if (initialVitalType) return initialVitalType;
+    if (initialVitalType) return vitalTypeToTabId(initialVitalType);
     if (config.temperature_enabled) return 'temperature';
     if (config.bp_enabled) return 'bp';
     if (config.oxygen_enabled) return 'oxygen';
