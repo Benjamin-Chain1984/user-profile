@@ -16,15 +16,8 @@ import { calculateWeightBmiStatus } from '@/utils/weightBmiCalculator';
 import { calculateFluidStatus } from '@/utils/fluidBalanceCalculator';
 import type { WeightEntry, WeightBmiConfig, WeightBmiAlert, WeightStatusInfo } from '@/types/weightBmi';
 import type { FluidConfig, FluidIntakeEntry, FluidOutputEntry, FluidStatus } from '@/types/fluidBalance';
-import { 
-  CANCER_SCREENING_PROGRAMS, 
-  VACCINATION_PROGRAMS,
-  calculateAge,
-  isEligibleForScreening,
-  getScreeningDisplayStatus,
-  getVaccinationDisplayStatus,
-} from '@/types/healthPrevention';
-import type { CancerScreeningRecord, VaccinationRecord, ScreeningProgram } from '@/types/healthPrevention';
+import type { CancerScreeningRecord, VaccinationRecord } from '@/types/healthPrevention';
+import { calculateHealthPreventionSummary } from '@/utils/healthPreventionStatusCalculator';
 
 interface ProfileContextType {
   profile: IndividualProfile | null;
@@ -528,7 +521,6 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     try {
       if (!profile?.id || !profile?.dateOfBirth) return;
 
-      const age = calculateAge(profile.dateOfBirth);
       const sex = (profile as { sex?: string })?.sex;
 
       // Fetch config
@@ -568,105 +560,65 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         .eq('client_id', profile.id)
         .order('created_at', { ascending: false });
 
-      // Calculate due/overdue items
-      let dueCount = 0;
-      let hasOverdue = false;
+      // Map DB rows to typed records
+      const typedScreenings: CancerScreeningRecord[] = (screenings || []).map((r: any) => ({
+        id: r.id,
+        clientId: r.client_id,
+        screeningType: r.screening_type,
+        status: r.status,
+        dateCompleted: r.date_completed,
+        location: r.location,
+        outcomeKnown: r.outcome_known,
+        deferredReason: r.deferred_reason,
+        notes: r.notes,
+        nextDueDate: r.next_due_date,
+        createdAt: r.created_at,
+        createdBy: r.created_by,
+        editedAt: r.edited_at,
+        editedBy: r.edited_by,
+        editReason: r.edit_reason,
+      })) as CancerScreeningRecord[];
 
-      // Check screenings
-      if (!configData || configData.enable_cancer_screening !== false) {
-        CANCER_SCREENING_PROGRAMS.forEach(program => {
-          const isEligible = isEligibleForScreening(program, age, sex || undefined);
-          if (!isEligible) return;
-          
-          const latestRecord = (screenings || []).find((r: any) => r.screening_type === program.id);
-          const status = getScreeningDisplayStatus(
-            latestRecord ? {
-              id: latestRecord.id,
-              clientId: latestRecord.client_id,
-              screeningType: latestRecord.screening_type as CancerScreeningRecord['screeningType'],
-              status: latestRecord.status as CancerScreeningRecord['status'],
-              dateCompleted: latestRecord.date_completed,
-              location: latestRecord.location,
-              outcomeKnown: latestRecord.outcome_known,
-              deferredReason: latestRecord.deferred_reason,
-              notes: latestRecord.notes,
-              nextDueDate: latestRecord.next_due_date,
-              createdAt: latestRecord.created_at,
-              createdBy: latestRecord.created_by,
-              editedAt: latestRecord.edited_at,
-              editedBy: latestRecord.edited_by,
-              editReason: latestRecord.edit_reason,
-            } as CancerScreeningRecord : null,
-            program,
-            isEligible
-          );
-          
-          if (status === 'overdue') {
-            dueCount++;
-            hasOverdue = true;
-          } else if (status === 'due') {
-            dueCount++;
-          }
-        });
-      }
+      const typedVaccinations: VaccinationRecord[] = (vaccinations || []).map((r: any) => ({
+        id: r.id,
+        clientId: r.client_id,
+        vaccinationType: r.vaccination_type,
+        status: r.status,
+        dateGiven: r.date_given,
+        givenBy: r.given_by,
+        vaccineBrand: r.vaccine_brand,
+        notes: r.notes,
+        nextDueDate: r.next_due_date,
+        createdAt: r.created_at,
+        createdBy: r.created_by,
+        editedAt: r.edited_at,
+        editedBy: r.edited_by,
+        editReason: r.edit_reason,
+      })) as VaccinationRecord[];
 
-      // Check vaccinations
-      if (!configData || configData.enable_vaccination_reminders !== false) {
-        VACCINATION_PROGRAMS.forEach(program => {
-          const latestRecord = (vaccinations || []).find((r: any) => r.vaccination_type === program.id);
-          const status = getVaccinationDisplayStatus(
-            latestRecord ? {
-              id: latestRecord.id,
-              clientId: latestRecord.client_id,
-              vaccinationType: latestRecord.vaccination_type as VaccinationRecord['vaccinationType'],
-              status: latestRecord.status as VaccinationRecord['status'],
-              dateGiven: latestRecord.date_given,
-              givenBy: latestRecord.given_by,
-              vaccineBrand: latestRecord.vaccine_brand,
-              notes: latestRecord.notes,
-              nextDueDate: latestRecord.next_due_date,
-              createdAt: latestRecord.created_at,
-              createdBy: latestRecord.created_by,
-              editedAt: latestRecord.edited_at,
-              editedBy: latestRecord.edited_by,
-              editReason: latestRecord.edit_reason,
-            } as VaccinationRecord : null
-          );
-          
-          if (status === 'overdue') {
-            dueCount++;
-            hasOverdue = true;
-          } else if (status === 'due' || status === 'not_recorded') {
-            dueCount++;
-          }
-        });
-      }
-
-      // Determine status
-      const moduleStatus: 'stable' | 'monitor' | 'action' = 
-        hasOverdue ? 'action' : 
-        dueCount > 0 ? 'monitor' : 
-        'stable';
-
-      const message = dueCount === 0 
-        ? 'All preventive health items up to date'
-        : dueCount === 1 
-          ? '1 preventive health action pending'
-          : `${dueCount} preventive health actions pending`;
+      const summary = calculateHealthPreventionSummary({
+        profile: { dateOfBirth: profile.dateOfBirth, sex },
+        config: {
+          enableCancerScreening: configData?.enable_cancer_screening ?? true,
+          enableVaccinationReminders: configData?.enable_vaccination_reminders ?? true,
+        },
+        screeningRecords: typedScreenings,
+        vaccinationRecords: typedVaccinations,
+      });
 
       setLatestHealthPreventionData({
-        status: moduleStatus,
-        message,
-        timestamp: new Date().toISOString(),
-        dueCount,
+        status: summary.status,
+        message: summary.message,
+        timestamp: summary.timestamp,
+        dueCount: summary.dueCount,
       });
 
       setEnabledModules(prev => prev.map(m => 
         m.id === 'health-prevention' 
           ? { 
               ...m, 
-              status: moduleStatus, 
-              lastEntry: dueCount === 0 ? 'Up to date' : `${dueCount} action(s) pending`
+              status: summary.status,
+              lastEntry: summary.lastEntry,
             }
           : m
       ));
