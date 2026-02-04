@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { ProfileProvider } from '@/contexts/ProfileContext';
 import { Navigation } from '@/components/ideal/Navigation';
 import { ProfileHeader } from '@/components/ideal/ProfileHeader';
 import { AlertDashboard } from '@/components/ideal/AlertDashboard';
@@ -73,12 +72,6 @@ function AppContent() {
   );
 }
 
-const Index = () => {
-  return (
-    <ProfileProvider>
-      <AppContent />
-    </ProfileProvider>
-  );
-};
-
-export default Index;
+export default function Index() {
+  return <AppContent />;
+}
