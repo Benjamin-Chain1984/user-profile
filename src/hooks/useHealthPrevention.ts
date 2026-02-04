@@ -29,6 +29,7 @@ import {
   getVaccinationDisplayStatus,
 } from '@/types/healthPrevention';
 import type { Sex } from '@/types/ideal';
+import { calculateHealthPreventionSummary } from '@/utils/healthPreventionStatusCalculator';
 
 interface UseHealthPreventionOptions {
   clientId?: string;
@@ -490,42 +491,37 @@ export function useHealthPrevention(options: UseHealthPreventionOptions = {}) {
 
   // Calculate overall module status
   const getModuleStatus = useCallback((): 'stable' | 'monitor' | 'action' => {
-    if (!config?.enableCancerScreening && !config?.enableVaccinationReminders) {
-      return 'stable';
-    }
+    const summary = calculateHealthPreventionSummary({
+      profile: { dateOfBirth: profile?.dateOfBirth, sex },
+      config: config
+        ? {
+            enableCancerScreening: config.enableCancerScreening,
+            enableVaccinationReminders: config.enableVaccinationReminders,
+          }
+        : null,
+      screeningRecords,
+      vaccinationRecords,
+    });
 
-    const screenings = getEligibleScreenings();
-    const vaccinations = getVaccinationsWithStatus();
-
-    // Check for overdue items (RED)
-    const hasOverdueScreening = screenings.some(s => s.displayStatus === 'overdue');
-    const hasOverdueVaccination = vaccinations.some(v => v.displayStatus === 'overdue');
-    
-    if (hasOverdueScreening || hasOverdueVaccination) {
-      return 'action';
-    }
-
-    // Check for due items (AMBER)
-    const hasDueScreening = screenings.some(s => s.displayStatus === 'due');
-    const hasDueVaccination = vaccinations.some(v => v.displayStatus === 'due' || v.displayStatus === 'not_recorded');
-    
-    if (hasDueScreening || hasDueVaccination) {
-      return 'monitor';
-    }
-
-    return 'stable';
-  }, [config, getEligibleScreenings, getVaccinationsWithStatus]);
+    return summary.status;
+  }, [config, profile?.dateOfBirth, screeningRecords, vaccinationRecords, sex]);
 
   // Get due/overdue count
   const getDueCount = useCallback(() => {
-    const screenings = getEligibleScreenings();
-    const vaccinations = getVaccinationsWithStatus();
-    
-    const dueScreenings = screenings.filter(s => s.displayStatus === 'due' || s.displayStatus === 'overdue').length;
-    const dueVaccinations = vaccinations.filter(v => v.displayStatus === 'due' || v.displayStatus === 'overdue' || v.displayStatus === 'not_recorded').length;
-    
-    return dueScreenings + dueVaccinations;
-  }, [getEligibleScreenings, getVaccinationsWithStatus]);
+    const summary = calculateHealthPreventionSummary({
+      profile: { dateOfBirth: profile?.dateOfBirth, sex },
+      config: config
+        ? {
+            enableCancerScreening: config.enableCancerScreening,
+            enableVaccinationReminders: config.enableVaccinationReminders,
+          }
+        : null,
+      screeningRecords,
+      vaccinationRecords,
+    });
+
+    return summary.dueCount;
+  }, [config, profile?.dateOfBirth, screeningRecords, vaccinationRecords, sex]);
 
   // Refresh data function
   const refreshData = async () => {
