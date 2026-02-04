@@ -1795,6 +1795,75 @@ export type Database = {
           },
         ]
       }
+      invoices: {
+        Row: {
+          amount_cents: number
+          billing_entity: string
+          billing_period_end: string
+          billing_period_start: string
+          client_id: string
+          created_at: string
+          due_date: string
+          gst_cents: number
+          id: string
+          invoice_number: string
+          paid_at: string | null
+          status: Database["public"]["Enums"]["invoice_status"]
+          subscription_id: string
+          total_cents: number
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          billing_entity?: string
+          billing_period_end: string
+          billing_period_start: string
+          client_id: string
+          created_at?: string
+          due_date: string
+          gst_cents: number
+          id?: string
+          invoice_number: string
+          paid_at?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subscription_id: string
+          total_cents: number
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          billing_entity?: string
+          billing_period_end?: string
+          billing_period_start?: string
+          client_id?: string
+          created_at?: string
+          due_date?: string
+          gst_cents?: number
+          id?: string
+          invoice_number?: string
+          paid_at?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subscription_id?: string
+          total_cents?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       module_alert_recipients: {
         Row: {
           alert_severity: string
@@ -2104,6 +2173,56 @@ export type Database = {
           locked_until?: string | null
         }
         Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          billing_cycle: Database["public"]["Enums"]["billing_cycle"]
+          client_id: string
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          grace_period_ends_at: string | null
+          id: string
+          status: Database["public"]["Enums"]["subscription_status"]
+          subscription_type: string
+          trial_ends_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          billing_cycle?: Database["public"]["Enums"]["billing_cycle"]
+          client_id: string
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          grace_period_ends_at?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["subscription_status"]
+          subscription_type?: string
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          billing_cycle?: Database["public"]["Enums"]["billing_cycle"]
+          client_id?: string
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          grace_period_ends_at?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["subscription_status"]
+          subscription_type?: string
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -2792,6 +2911,7 @@ export type Database = {
     }
     Enums: {
       app_role: "worker" | "team_leader" | "clinician" | "admin"
+      billing_cycle: "monthly" | "quarterly" | "annual"
       catheter_type:
         | "spc"
         | "idc"
@@ -2799,6 +2919,13 @@ export type Database = {
         | "intermittent"
         | "urostomy"
         | "condom"
+      invoice_status: "paid" | "due" | "overdue"
+      subscription_status:
+        | "trial"
+        | "active"
+        | "grace_period"
+        | "restricted"
+        | "suspended"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2927,6 +3054,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["worker", "team_leader", "clinician", "admin"],
+      billing_cycle: ["monthly", "quarterly", "annual"],
       catheter_type: [
         "spc",
         "idc",
@@ -2934,6 +3062,14 @@ export const Constants = {
         "intermittent",
         "urostomy",
         "condom",
+      ],
+      invoice_status: ["paid", "due", "overdue"],
+      subscription_status: [
+        "trial",
+        "active",
+        "grace_period",
+        "restricted",
+        "suspended",
       ],
     },
   },
