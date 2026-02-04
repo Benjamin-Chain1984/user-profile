@@ -565,6 +565,68 @@ export type Database = {
           },
         ]
       }
+      cancer_screening_records: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          date_completed: string | null
+          deferred_reason: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          id: string
+          location: string | null
+          next_due_date: string | null
+          notes: string | null
+          outcome_known: boolean | null
+          screening_type: string
+          status: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_completed?: string | null
+          deferred_reason?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          id?: string
+          location?: string | null
+          next_due_date?: string | null
+          notes?: string | null
+          outcome_known?: boolean | null
+          screening_type: string
+          status?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_completed?: string | null
+          deferred_reason?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          id?: string
+          location?: string | null
+          next_due_date?: string | null
+          notes?: string | null
+          outcome_known?: boolean | null
+          screening_type?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cancer_screening_records_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catheter_alerts: {
         Row: {
           acknowledged_at: string | null
@@ -1736,6 +1798,124 @@ export type Database = {
           },
         ]
       }
+      health_prevention_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          item_name: string
+          item_type: string
+          message: string
+          metadata: Json | null
+          resolved_at: string | null
+          resolved_by: string | null
+          resolved_reason: string | null
+          severity: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_name: string
+          item_type: string
+          message: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_reason?: string | null
+          severity?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_name?: string
+          item_type?: string
+          message?: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_reason?: string | null
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "health_prevention_alerts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      health_prevention_config: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          enable_cancer_screening: boolean
+          enable_vaccination_reminders: boolean
+          escalation_recipients: string[] | null
+          gp_contact_details: string | null
+          gp_practice_name: string | null
+          id: string
+          lung_screening_smoking_history: string | null
+          reminder_text: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          enable_cancer_screening?: boolean
+          enable_vaccination_reminders?: boolean
+          escalation_recipients?: string[] | null
+          gp_contact_details?: string | null
+          gp_practice_name?: string | null
+          id?: string
+          lung_screening_smoking_history?: string | null
+          reminder_text?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          enable_cancer_screening?: boolean
+          enable_vaccination_reminders?: boolean
+          escalation_recipients?: string[] | null
+          gp_contact_details?: string | null
+          gp_practice_name?: string | null
+          id?: string
+          lung_screening_smoking_history?: string | null
+          reminder_text?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "health_prevention_config_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hydration_symptom_checks: {
         Row: {
           check_date: string
@@ -2247,6 +2427,65 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vaccination_records: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          date_given: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          given_by: string | null
+          id: string
+          next_due_date: string | null
+          notes: string | null
+          status: string
+          vaccination_type: string
+          vaccine_brand: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_given?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          given_by?: string | null
+          id?: string
+          next_due_date?: string | null
+          notes?: string | null
+          status?: string
+          vaccination_type: string
+          vaccine_brand?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_given?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          given_by?: string | null
+          id?: string
+          next_due_date?: string | null
+          notes?: string | null
+          status?: string
+          vaccination_type?: string
+          vaccine_brand?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vaccination_records_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vital_sign_action_logs: {
         Row: {

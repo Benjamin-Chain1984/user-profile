@@ -22,6 +22,7 @@ import CatheterPage from "./pages/Catheter";
 import WeightBmiPage from "./pages/WeightBmi";
 import FluidBalancePage from "./pages/FluidBalance";
 import HealthMonitoringPage from "./pages/HealthMonitoring";
+import HealthPreventionPage from "./pages/HealthPrevention";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -123,6 +124,15 @@ const App = () => (
                   <ProtectedRoute>
                     <MainLayout>
                       <HealthMonitoringPage />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } />
+                
+                {/* Health Prevention module */}
+                <Route path="/module/health-prevention" element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <HealthPreventionPage />
                     </MainLayout>
                   </ProtectedRoute>
                 } />

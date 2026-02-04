@@ -16,6 +16,15 @@ import { calculateWeightBmiStatus } from '@/utils/weightBmiCalculator';
 import { calculateFluidStatus } from '@/utils/fluidBalanceCalculator';
 import type { WeightEntry, WeightBmiConfig, WeightBmiAlert, WeightStatusInfo } from '@/types/weightBmi';
 import type { FluidConfig, FluidIntakeEntry, FluidOutputEntry, FluidStatus } from '@/types/fluidBalance';
+import { 
+  CANCER_SCREENING_PROGRAMS, 
+  VACCINATION_PROGRAMS,
+  calculateAge,
+  isEligibleForScreening,
+  getScreeningDisplayStatus,
+  getVaccinationDisplayStatus,
+} from '@/types/healthPrevention';
+import type { CancerScreeningRecord, VaccinationRecord, ScreeningProgram } from '@/types/healthPrevention';
 
 interface ProfileContextType {
   profile: IndividualProfile | null;
@@ -31,6 +40,7 @@ interface ProfileContextType {
   refreshBowelStatus: () => void;
   refreshWeightStatus: () => void;
   refreshFluidStatus: () => void;
+  refreshHealthPreventionStatus: () => void;
 }
 
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
@@ -82,13 +92,23 @@ type FluidAlertData = {
   message: string;
   timestamp: string;
 };
+
+// Health Prevention alert data type
+type HealthPreventionAlertData = {
+  status: 'stable' | 'monitor' | 'action';
+  message: string;
+  timestamp: string;
+  dueCount: number;
+};
+
 // Generate alerts dynamically from module statuses
 function generateAlertsFromModules(
   modules: HealthModule[], 
   painData?: { severity: PainSeverity; score: number; timestamp: string },
   bowelData?: BowelAlertData,
   weightData?: WeightAlertData,
-  fluidData?: FluidAlertData
+  fluidData?: FluidAlertData,
+  healthPreventionData?: HealthPreventionAlertData
 ): Alert[] {
   return modules
     .filter((m) => m.enabled && (m.status === 'monitor' || m.status === 'action'))
@@ -138,6 +158,18 @@ function generateAlertsFromModules(
           message: fluidData.message,
           status: m.status === 'action' ? 'red' as const : 'amber' as const,
           timestamp: fluidData.timestamp,
+        };
+      }
+      
+      // Special handling for health prevention module with real data
+      if (m.id === 'health-prevention' && healthPreventionData) {
+        return {
+          id: m.id,
+          moduleId: m.id,
+          moduleName: 'Health Prevention',
+          message: healthPreventionData.message,
+          status: m.status === 'action' ? 'red' as const : 'amber' as const,
+          timestamp: healthPreventionData.timestamp,
         };
       }
       
@@ -216,6 +248,9 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   
   // Fluid state
   const [latestFluidData, setLatestFluidData] = useState<FluidAlertData | null>(null);
+  
+  // Health Prevention state
+  const [latestHealthPreventionData, setLatestHealthPreventionData] = useState<HealthPreventionAlertData | null>(null);
 
   // Enable ALL modules by default for master project development
   const [enabledModules, setEnabledModules] = useState<HealthModule[]>(
@@ -488,6 +523,158 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Fetch health prevention status
+  const fetchHealthPreventionStatus = async () => {
+    try {
+      if (!profile?.id || !profile?.dateOfBirth) return;
+
+      const age = calculateAge(profile.dateOfBirth);
+      const sex = (profile as { sex?: string })?.sex;
+
+      // Fetch config
+      const { data: configData } = await supabase
+        .from('health_prevention_config')
+        .select('*')
+        .eq('client_id', profile.id)
+        .maybeSingle();
+
+      // If disabled, set to stable
+      if (configData && !configData.enable_cancer_screening && !configData.enable_vaccination_reminders) {
+        setLatestHealthPreventionData({
+          status: 'stable',
+          message: 'Health prevention features disabled',
+          timestamp: new Date().toISOString(),
+          dueCount: 0,
+        });
+        setEnabledModules(prev => prev.map(m => 
+          m.id === 'health-prevention' 
+            ? { ...m, status: 'stable', lastEntry: 'Features disabled' }
+            : m
+        ));
+        return;
+      }
+
+      // Fetch screening records
+      const { data: screenings } = await supabase
+        .from('cancer_screening_records')
+        .select('*')
+        .eq('client_id', profile.id)
+        .order('created_at', { ascending: false });
+
+      // Fetch vaccination records
+      const { data: vaccinations } = await supabase
+        .from('vaccination_records')
+        .select('*')
+        .eq('client_id', profile.id)
+        .order('created_at', { ascending: false });
+
+      // Calculate due/overdue items
+      let dueCount = 0;
+      let hasOverdue = false;
+
+      // Check screenings
+      if (!configData || configData.enable_cancer_screening !== false) {
+        CANCER_SCREENING_PROGRAMS.forEach(program => {
+          const isEligible = isEligibleForScreening(program, age, sex || undefined);
+          if (!isEligible) return;
+          
+          const latestRecord = (screenings || []).find((r: any) => r.screening_type === program.id);
+          const status = getScreeningDisplayStatus(
+            latestRecord ? {
+              id: latestRecord.id,
+              clientId: latestRecord.client_id,
+              screeningType: latestRecord.screening_type as CancerScreeningRecord['screeningType'],
+              status: latestRecord.status as CancerScreeningRecord['status'],
+              dateCompleted: latestRecord.date_completed,
+              location: latestRecord.location,
+              outcomeKnown: latestRecord.outcome_known,
+              deferredReason: latestRecord.deferred_reason,
+              notes: latestRecord.notes,
+              nextDueDate: latestRecord.next_due_date,
+              createdAt: latestRecord.created_at,
+              createdBy: latestRecord.created_by,
+              editedAt: latestRecord.edited_at,
+              editedBy: latestRecord.edited_by,
+              editReason: latestRecord.edit_reason,
+            } as CancerScreeningRecord : null,
+            program,
+            isEligible
+          );
+          
+          if (status === 'overdue') {
+            dueCount++;
+            hasOverdue = true;
+          } else if (status === 'due') {
+            dueCount++;
+          }
+        });
+      }
+
+      // Check vaccinations
+      if (!configData || configData.enable_vaccination_reminders !== false) {
+        VACCINATION_PROGRAMS.forEach(program => {
+          const latestRecord = (vaccinations || []).find((r: any) => r.vaccination_type === program.id);
+          const status = getVaccinationDisplayStatus(
+            latestRecord ? {
+              id: latestRecord.id,
+              clientId: latestRecord.client_id,
+              vaccinationType: latestRecord.vaccination_type as VaccinationRecord['vaccinationType'],
+              status: latestRecord.status as VaccinationRecord['status'],
+              dateGiven: latestRecord.date_given,
+              givenBy: latestRecord.given_by,
+              vaccineBrand: latestRecord.vaccine_brand,
+              notes: latestRecord.notes,
+              nextDueDate: latestRecord.next_due_date,
+              createdAt: latestRecord.created_at,
+              createdBy: latestRecord.created_by,
+              editedAt: latestRecord.edited_at,
+              editedBy: latestRecord.edited_by,
+              editReason: latestRecord.edit_reason,
+            } as VaccinationRecord : null
+          );
+          
+          if (status === 'overdue') {
+            dueCount++;
+            hasOverdue = true;
+          } else if (status === 'due' || status === 'not_recorded') {
+            dueCount++;
+          }
+        });
+      }
+
+      // Determine status
+      const moduleStatus: 'stable' | 'monitor' | 'action' = 
+        hasOverdue ? 'action' : 
+        dueCount > 0 ? 'monitor' : 
+        'stable';
+
+      const message = dueCount === 0 
+        ? 'All preventive health items up to date'
+        : dueCount === 1 
+          ? '1 preventive health action pending'
+          : `${dueCount} preventive health actions pending`;
+
+      setLatestHealthPreventionData({
+        status: moduleStatus,
+        message,
+        timestamp: new Date().toISOString(),
+        dueCount,
+      });
+
+      setEnabledModules(prev => prev.map(m => 
+        m.id === 'health-prevention' 
+          ? { 
+              ...m, 
+              status: moduleStatus, 
+              lastEntry: dueCount === 0 ? 'Up to date' : `${dueCount} action(s) pending`
+            }
+          : m
+      ));
+    } catch (err) {
+      console.error('Error in fetchHealthPreventionStatus:', err);
+    }
+  };
+
   // Fetch data on mount and set up realtime subscriptions
   useEffect(() => {
     fetchProfileFromDb();
@@ -495,6 +682,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     fetchBowelCareStatus();
     fetchWeightStatus();
     fetchFluidStatus();
+    fetchHealthPreventionStatus();
 
     // Subscribe to realtime updates for pain assessments
     const painChannel = supabase
@@ -629,7 +817,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     latestPainData || undefined,
     latestBowelData || undefined,
     latestWeightData || undefined,
-    latestFluidData || undefined
+    latestFluidData || undefined,
+    latestHealthPreventionData || undefined
   );
   const hasRedAlert = activeEnabledModules.some((m) => m.status === 'action');
   const hasAmberAlert = activeEnabledModules.some((m) => m.status === 'monitor');
@@ -667,6 +856,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         refreshBowelStatus: fetchBowelCareStatus,
         refreshWeightStatus: fetchWeightStatus,
         refreshFluidStatus: fetchFluidStatus,
+        refreshHealthPreventionStatus: fetchHealthPreventionStatus,
       }}
     >
       {children}
