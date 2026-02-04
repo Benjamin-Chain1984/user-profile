@@ -317,21 +317,21 @@ export function ProfileForm() {
         </Button>
       )}
 
-      {/* Notification Contacts Section - Admin Only */}
-      <Separator className="my-8" />
-      <NotificationContactsSection />
-
       {/* QR & Poster Section */}
       <Separator className="my-8" />
       <QRPosterSection />
 
-      {/* Subscription & Billing Section */}
-      <Separator className="my-8" />
-      <SubscriptionBillingSection />
-
       {/* My Team Section - Admin Only */}
       <Separator className="my-8" />
       <MyTeam />
+
+      {/* Notification Contacts Section - Admin Only */}
+      <Separator className="my-8" />
+      <NotificationContactsSection />
+
+      {/* Subscription & Billing Section - MUST BE LAST */}
+      <Separator className="my-8" />
+      <SubscriptionBillingSection />
     </div>
   );
 }
