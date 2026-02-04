@@ -7,6 +7,7 @@ interface ClientProfileData {
   id: string;
   preferred_name: string;
   full_name: string | null;
+  sex: string | null;
   date_of_birth: string | null;
   photo_url: string | null;
   short_bio: string | null;
@@ -26,6 +27,7 @@ function mapDbToProfile(data: ClientProfileData): IndividualProfile {
   return {
     id: data.id,
     fullName: data.full_name || data.preferred_name || '',
+    sex: (data.sex as IndividualProfile['sex']) || undefined,
     dateOfBirth: data.date_of_birth || '1990-01-01',
     avatarUrl: data.photo_url || undefined,
     personResponsibleName: data.person_responsible_name || '',
@@ -91,6 +93,7 @@ export function useClientProfile(clientId?: string) {
       const updateData = {
         full_name: updatedProfile.fullName,
         preferred_name: updatedProfile.fullName, // Keep in sync
+        sex: updatedProfile.sex || null,
         date_of_birth: updatedProfile.dateOfBirth || null,
         photo_url: updatedProfile.avatarUrl || null,
         person_responsible_name: updatedProfile.personResponsibleName || null,

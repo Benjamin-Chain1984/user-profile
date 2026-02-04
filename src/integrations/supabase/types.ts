@@ -1050,6 +1050,7 @@ export type Database = {
           primary_contact_number: string | null
           relationship_to_individual: string | null
           secondary_contact: string | null
+          sex: string | null
           short_bio: string | null
           status: string
           updated_at: string
@@ -1072,6 +1073,7 @@ export type Database = {
           primary_contact_number?: string | null
           relationship_to_individual?: string | null
           secondary_contact?: string | null
+          sex?: string | null
           short_bio?: string | null
           status?: string
           updated_at?: string
@@ -1094,6 +1096,7 @@ export type Database = {
           primary_contact_number?: string | null
           relationship_to_individual?: string | null
           secondary_contact?: string | null
+          sex?: string | null
           short_bio?: string | null
           status?: string
           updated_at?: string
