@@ -180,6 +180,23 @@ export function ProfileForm() {
               />
             </div>
 
+            <div>
+              <Label htmlFor="sex">Sex</Label>
+              <select
+                id="sex"
+                value={profile.sex || ''}
+                onChange={(e) => handleChange('sex', e.target.value)}
+                className="mt-1.5 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                disabled={!isAdmin}
+              >
+                <option value="">Select...</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="intersex">Intersex</option>
+                <option value="prefer_not_to_say">Prefer not to say</option>
+              </select>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="dob">Date of Birth</Label>

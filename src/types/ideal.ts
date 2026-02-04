@@ -1,9 +1,12 @@
 export type HealthStatus = 'stable' | 'monitor' | 'action';
 
+export type Sex = 'male' | 'female' | 'intersex' | 'prefer_not_to_say';
+
 export interface IndividualProfile {
   id: string;
   avatarUrl?: string;
   fullName: string;
+  sex?: Sex;
   dateOfBirth: string;
   personResponsibleName: string;
   relationshipToIndividual: string;
