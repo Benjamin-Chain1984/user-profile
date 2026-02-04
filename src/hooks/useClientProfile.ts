@@ -126,7 +126,7 @@ export function useClientProfile(clientId?: string) {
     }
   }, []);
 
-  // Upload profile photo
+  // Upload profile photo and save to database immediately
   const uploadPhoto = useCallback(async (file: File): Promise<string | null> => {
     if (!profile) return null;
 
@@ -152,6 +152,28 @@ export function useClientProfile(clientId?: string) {
       const { data: { publicUrl } } = supabase.storage
         .from('profile-photos')
         .getPublicUrl(filePath);
+
+      // Save the photo URL to the database immediately
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { error: updateError } = await supabase
+        .from('clients')
+        .update({
+          photo_url: publicUrl,
+          edited_at: new Date().toISOString(),
+          edited_by: user?.email || 'Unknown',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', profile.id);
+
+      if (updateError) {
+        console.error('Error saving photo URL:', updateError);
+        toast.error('Photo uploaded but failed to save to profile');
+        return publicUrl; // Still return URL even if save failed
+      }
+
+      // Update local state
+      setProfile({ ...profile, avatarUrl: publicUrl });
 
       return publicUrl;
     } catch (err) {
