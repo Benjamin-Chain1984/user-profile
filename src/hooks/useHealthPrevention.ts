@@ -2,6 +2,9 @@
  * useHealthPrevention Hook
  * Manages health prevention data including screenings, vaccinations, and alerts
  * Using React Query for proper cache invalidation and reactivity
+ * 
+ * IMPORTANT: After mutations, this hook calls refreshHealthPreventionStatus from ProfileContext
+ * to ensure the dashboard indicator stays in sync (single source of truth for global alerts).
  */
 
 import { useCallback } from 'react';
@@ -33,7 +36,7 @@ interface UseHealthPreventionOptions {
 
 export function useHealthPrevention(options: UseHealthPreventionOptions = {}) {
   const { user } = useAuth();
-  const { profile } = useProfile();
+  const { profile, refreshHealthPreventionStatus } = useProfile();
   const clientId = options.clientId || profile?.id;
   const queryClient = useQueryClient();
 
@@ -249,6 +252,8 @@ export function useHealthPrevention(options: UseHealthPreventionOptions = {}) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['healthPreventionConfig', clientId] });
+      // Sync with global dashboard status (config changes may affect status)
+      refreshHealthPreventionStatus();
       toast.success('Configuration saved');
     },
     onError: (error) => {
@@ -308,6 +313,8 @@ export function useHealthPrevention(options: UseHealthPreventionOptions = {}) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cancerScreeningRecords', clientId] });
       queryClient.invalidateQueries({ queryKey: ['healthPreventionAlerts', clientId] });
+      // Sync with global dashboard status
+      refreshHealthPreventionStatus();
       toast.success('Screening logged successfully');
     },
     onError: (error) => {
@@ -341,6 +348,8 @@ export function useHealthPrevention(options: UseHealthPreventionOptions = {}) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cancerScreeningRecords', clientId] });
+      // Sync with global dashboard status
+      refreshHealthPreventionStatus();
       toast.success('Screening deferred');
     },
     onError: (error) => {
@@ -402,6 +411,8 @@ export function useHealthPrevention(options: UseHealthPreventionOptions = {}) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vaccinationRecords', clientId] });
       queryClient.invalidateQueries({ queryKey: ['healthPreventionAlerts', clientId] });
+      // Sync with global dashboard status
+      refreshHealthPreventionStatus();
       toast.success('Vaccination logged successfully');
     },
     onError: (error) => {

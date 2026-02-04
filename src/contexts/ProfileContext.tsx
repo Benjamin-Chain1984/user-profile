@@ -764,12 +764,45 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       )
       .subscribe();
 
+    // Subscribe to realtime updates for health prevention tables
+    const screeningChannel = supabase
+      .channel('screening-alerts')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'cancer_screening_records',
+        },
+        () => {
+          fetchHealthPreventionStatus();
+        }
+      )
+      .subscribe();
+
+    const vaccinationChannel = supabase
+      .channel('vaccination-alerts')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'vaccination_records',
+        },
+        () => {
+          fetchHealthPreventionStatus();
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(painChannel);
       supabase.removeChannel(bowelChannel);
       supabase.removeChannel(weightChannel);
       supabase.removeChannel(fluidChannel);
       supabase.removeChannel(profileChannel);
+      supabase.removeChannel(screeningChannel);
+      supabase.removeChannel(vaccinationChannel);
     };
   }, []);
 
