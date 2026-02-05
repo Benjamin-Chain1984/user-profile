@@ -13,6 +13,8 @@ import { WeightBmiTrends } from './WeightBmiTrends';
 import { WeightBmiConfigSettings } from './WeightBmiConfigSettings';
 import { WeightBmiExportReports } from './WeightBmiExportReports';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
+import { useProfile } from '@/contexts/ProfileContext';
+import { MonitoringPausedBanner } from '@/components/monitoring';
 import { RoleTabsTrigger } from '@/components/ui/role-tabs-trigger';
 import { 
   Plus, 
@@ -51,6 +53,7 @@ export function WeightBmiDashboard({ clientId }: WeightBmiDashboardProps) {
   const [showLogForm, setShowLogForm] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const { isAdmin } = useRoleAccess();
+  const { isMonitoringPaused, monitoringStatus } = useProfile();
 
   // Show export view
   if (showExport) {
@@ -75,12 +78,21 @@ export function WeightBmiDashboard({ clientId }: WeightBmiDashboardProps) {
             <FileDown className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button onClick={() => setShowLogForm(true)}>
+          <Button onClick={() => setShowLogForm(true)} disabled={isMonitoringPaused}>
             <Plus className="h-4 w-4 mr-2" />
             Log Weight
           </Button>
         </div>
       </div>
+
+      {/* Monitoring Paused Banner */}
+      {isMonitoringPaused && monitoringStatus && (
+        <MonitoringPausedBanner
+          pauseReason={monitoringStatus.pauseReason}
+          pauseStartDatetime={monitoringStatus.pauseStartDatetime}
+          pauseEndDatetime={monitoringStatus.pauseEndDatetime}
+        />
+      )}
 
       {/* Mandatory Safety Disclaimer */}
       <Card className="border-amber-200 bg-amber-50/50">

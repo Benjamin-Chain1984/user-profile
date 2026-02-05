@@ -1,14 +1,31 @@
 import { useProfile } from '@/contexts/ProfileContext';
-import { AlertTriangle, CheckCircle, AlertCircle, ChevronRight } from 'lucide-react';
+import { AlertTriangle, CheckCircle, AlertCircle, ChevronRight, PauseCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 
 export function AlertDashboard() {
-  const { globalAlertState } = useProfile();
+  const { globalAlertState, isMonitoringPaused } = useProfile();
   const { currentStatus, alerts } = globalAlertState;
 
   const redAlerts = alerts.filter((a) => a.status === 'red');
   const amberAlerts = alerts.filter((a) => a.status === 'amber');
+
+  // Show paused state when monitoring is suspended
+  if (isMonitoringPaused) {
+    return (
+      <div className="bg-warning/10 border border-warning/20 rounded-2xl p-5">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-warning/20 rounded-full">
+            <PauseCircle className="w-6 h-6 text-warning" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-foreground">Monitoring Paused</h3>
+            <p className="text-sm text-muted-foreground">Alerts are suspended during this pause period</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Only show Amber and Red alerts - IDEAL status means no alerts to display
   if (currentStatus === 'stable' || (redAlerts.length === 0 && amberAlerts.length === 0)) {

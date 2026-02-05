@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePainAssessments } from '@/hooks/usePainAssessments';
+import { useProfile } from '@/contexts/ProfileContext';
+import { MonitoringPausedBanner } from '@/components/monitoring';
 import { PainAssessmentForm } from './PainAssessmentForm';
 import { PainAssessmentHistory } from './PainAssessmentHistory';
 import { PainTrendChart } from './PainTrendChart';
@@ -33,6 +35,7 @@ export function PainCheckDashboard() {
   const [showExport, setShowExport] = useState(false);
   const { assessments, loading, getLatestAssessment, getTrendDirection, refresh } = usePainAssessments();
   const { isAdmin } = useRoleAccess();
+  const { isMonitoringPaused, monitoringStatus } = useProfile();
 
   const latestAssessment = getLatestAssessment();
   const trendDirection = getTrendDirection();
@@ -72,12 +75,21 @@ export function PainCheckDashboard() {
             <FileDown className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button onClick={() => setShowForm(true)}>
+          <Button onClick={() => setShowForm(true)} disabled={isMonitoringPaused}>
             <Plus className="h-4 w-4 mr-2" />
             Begin Assessment
           </Button>
         </div>
       </div>
+
+      {/* Monitoring Paused Banner */}
+      {isMonitoringPaused && monitoringStatus && (
+        <MonitoringPausedBanner
+          pauseReason={monitoringStatus.pauseReason}
+          pauseStartDatetime={monitoringStatus.pauseStartDatetime}
+          pauseEndDatetime={monitoringStatus.pauseEndDatetime}
+        />
+      )}
 
       {/* Mandatory Disclaimer */}
       <Card className="border-amber-200 bg-amber-50/50">

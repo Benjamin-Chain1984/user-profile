@@ -18,6 +18,8 @@ import { ConsumablesCheckForm } from './ConsumablesCheckForm';
 import { UTITestForm } from './UTITestForm';
 import { useContinenceConfig } from '@/hooks/useContinence';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
+import { useProfile } from '@/contexts/ProfileContext';
+import { MonitoringPausedBanner } from '@/components/monitoring';
 import { RoleTabsTrigger } from '@/components/ui/role-tabs-trigger';
 
 interface ContinenceDashboardProps {
@@ -27,6 +29,7 @@ interface ContinenceDashboardProps {
 export function ContinenceDashboard({ clientId }: ContinenceDashboardProps) {
   const { config } = useContinenceConfig(clientId);
   const { isAdmin } = useRoleAccess();
+  const { isMonitoringPaused, monitoringStatus } = useProfile();
   
   const [showPadChangeForm, setShowPadChangeForm] = useState(false);
   const [showSkinCheckForm, setShowSkinCheckForm] = useState(false);
@@ -52,12 +55,21 @@ export function ContinenceDashboard({ clientId }: ContinenceDashboardProps) {
             <FileDown className="h-4 w-4" />
             Export
           </Button>
-          <Button onClick={() => setShowPadChangeForm(true)} className="gap-2">
+          <Button onClick={() => setShowPadChangeForm(true)} className="gap-2" disabled={isMonitoringPaused}>
             <Plus className="h-4 w-4" />
             Log Pad Change
           </Button>
         </div>
       </div>
+
+      {/* Monitoring Paused Banner */}
+      {isMonitoringPaused && monitoringStatus && (
+        <MonitoringPausedBanner
+          pauseReason={monitoringStatus.pauseReason}
+          pauseStartDatetime={monitoringStatus.pauseStartDatetime}
+          pauseEndDatetime={monitoringStatus.pauseEndDatetime}
+        />
+      )}
 
       {/* Clinical Disclaimer */}
       <Alert className="border-amber-200 bg-amber-50">

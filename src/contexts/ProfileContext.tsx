@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useMonitoringStatus } from '@/hooks/useMonitoringStatus';
+import type { MonitoringStatus, PauseReason, PauseEndType } from '@/types/monitoringStatus';
 import { 
   IndividualProfile, 
   HealthModule, 
@@ -34,6 +36,17 @@ interface ProfileContextType {
   refreshWeightStatus: () => void;
   refreshFluidStatus: () => void;
   refreshHealthPreventionStatus: () => void;
+   // Monitoring pause state
+   monitoringStatus: MonitoringStatus | null;
+   isMonitoringPaused: boolean;
+   pauseMonitoring: (data: {
+     reason: PauseReason;
+     notes?: string;
+     pauseStartDatetime: string;
+     pauseEndType: PauseEndType;
+     pauseEndDatetime?: string;
+   }) => Promise<boolean>;
+   resumeMonitoring: () => Promise<boolean>;
 }
 
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
@@ -192,6 +205,14 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     createdAt: new Date().toISOString(),
     createdBy: 'System',
   });
+
+   // Monitoring status hook - use profile.id when available
+   const {
+     status: monitoringStatus,
+     isPaused: isMonitoringPaused,
+     pauseMonitoring,
+     resumeMonitoring,
+   } = useMonitoringStatus(profile?.id ?? null);
 
   // Fetch profile from database
   const fetchProfileFromDb = async () => {
@@ -797,7 +818,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   });
 
   // Calculate global alert state dynamically from module statuses
-  const activeAlerts = generateAlertsFromModules(
+  // When monitoring is paused, suppress all alerts
+  const activeAlerts = isMonitoringPaused ? [] : generateAlertsFromModules(
     activeEnabledModules, 
     latestPainData || undefined,
     latestBowelData || undefined,
@@ -805,8 +827,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     latestFluidData || undefined,
     latestHealthPreventionData || undefined
   );
-  const hasRedAlert = activeEnabledModules.some((m) => m.status === 'action');
-  const hasAmberAlert = activeEnabledModules.some((m) => m.status === 'monitor');
+  const hasRedAlert = !isMonitoringPaused && activeEnabledModules.some((m) => m.status === 'action');
+  const hasAmberAlert = !isMonitoringPaused && activeEnabledModules.some((m) => m.status === 'monitor');
   
   const globalAlertState: GlobalAlertState = {
     currentStatus: hasRedAlert ? 'action' : hasAmberAlert ? 'monitor' : 'stable',
@@ -842,6 +864,10 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         refreshWeightStatus: fetchWeightStatus,
         refreshFluidStatus: fetchFluidStatus,
         refreshHealthPreventionStatus: fetchHealthPreventionStatus,
+         monitoringStatus,
+         isMonitoringPaused,
+         pauseMonitoring,
+         resumeMonitoring,
       }}
     >
       {children}

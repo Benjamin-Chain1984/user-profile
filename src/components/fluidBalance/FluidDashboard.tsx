@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { AlertTriangle, Droplets, FileText, Settings, TrendingUp, Clock } from 'lucide-react';
 import { useFluidBalance } from '@/hooks/useFluidBalance';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
+import { useProfile } from '@/contexts/ProfileContext';
+import { MonitoringPausedBanner } from '@/components/monitoring';
 import { RoleTabsTrigger } from '@/components/ui/role-tabs-trigger';
 import { FluidStatusCard } from './FluidStatusCard';
 import { HydrationInfographic } from './HydrationInfographic';
@@ -45,6 +47,7 @@ export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
   } = useFluidBalance(clientId);
   
   const { isAdmin } = useRoleAccess();
+  const { isMonitoringPaused, monitoringStatus } = useProfile();
   
   if (isLoading) {
     return (
@@ -74,6 +77,15 @@ export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
   
   return (
     <div className="space-y-6">
+      {/* Monitoring Paused Banner */}
+      {isMonitoringPaused && monitoringStatus && (
+        <MonitoringPausedBanner
+          pauseReason={monitoringStatus.pauseReason}
+          pauseStartDatetime={monitoringStatus.pauseStartDatetime}
+          pauseEndDatetime={monitoringStatus.pauseEndDatetime}
+        />
+      )}
+
       {/* Clinical Disclaimer */}
       <Alert className="bg-amber-50 border-amber-200">
         <AlertTriangle className="h-4 w-4 text-amber-600" />
