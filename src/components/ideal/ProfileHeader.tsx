@@ -4,7 +4,7 @@ import { StatusBadge } from './StatusBadge';
 import { differenceInYears } from 'date-fns';
 
 export function ProfileHeader() {
-  const { profile, globalAlertState } = useProfile();
+  const { profile, globalAlertState, isMonitoringPaused } = useProfile();
 
   if (!profile) return null;
 
@@ -26,7 +26,11 @@ export function ProfileHeader() {
             Age {age}
           </p>
           <div className="mt-2 sm:mt-3">
-            <StatusBadge status={globalAlertState.currentStatus} size="md" />
+            <StatusBadge 
+              status={globalAlertState.currentStatus} 
+              size="md" 
+              isPaused={isMonitoringPaused}
+            />
           </div>
         </div>
       </div>

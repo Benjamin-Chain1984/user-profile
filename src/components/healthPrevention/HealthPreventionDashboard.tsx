@@ -6,6 +6,8 @@
 import { ModuleHeader, ModuleDisclaimer, ModuleTabs, ModuleCitation } from '@/components/module';
 import { useHealthPrevention } from '@/hooks/useHealthPrevention';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
+import { useProfile } from '@/contexts/ProfileContext';
+import { MonitoringPausedBanner } from '@/components/monitoring';
 import { HealthPreventionStatusCard } from './HealthPreventionStatusCard';
 import { ScreeningSection } from './ScreeningSection';
 import { VaccinationSection } from './VaccinationSection';
@@ -18,6 +20,7 @@ import { Card, CardContent } from '@/components/ui/card';
 
 export function HealthPreventionDashboard() {
   const { isAdmin } = useRoleAccess();
+  const { isMonitoringPaused, monitoringStatus } = useProfile();
   const {
     config,
     isLoading,
@@ -42,6 +45,15 @@ export function HealthPreventionDashboard() {
 
   const trackingContent = (
     <div className="space-y-6">
+      {/* Monitoring Paused Banner */}
+      {isMonitoringPaused && monitoringStatus && (
+        <MonitoringPausedBanner
+          pauseReason={monitoringStatus.pauseReason}
+          pauseStartDatetime={monitoringStatus.pauseStartDatetime}
+          pauseEndDatetime={monitoringStatus.pauseEndDatetime}
+        />
+      )}
+
       {/* Status Card */}
       <HealthPreventionStatusCard
         status={moduleStatus}

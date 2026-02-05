@@ -19,7 +19,9 @@ export type AuditAction =
   | 'TEAM_MEMBER_REACTIVATED'
   | 'PHONE_VERIFIED'
   | 'PHONE_CHANGED'
-  | 'ACCESS_DENIED_ROLE';
+   | 'ACCESS_DENIED_ROLE'
+   | 'MONITORING_PAUSED'
+   | 'MONITORING_RESUMED';
 
 export interface AuditEvent {
   id: string;

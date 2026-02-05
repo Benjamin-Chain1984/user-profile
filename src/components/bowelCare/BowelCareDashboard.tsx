@@ -16,6 +16,8 @@ import { BowelCareExportReports } from './BowelCareExportReports';
 import { useBowelCareStatus } from '@/hooks/useBowelCare';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { RoleTabsTrigger } from '@/components/ui/role-tabs-trigger';
+import { useProfile } from '@/contexts/ProfileContext';
+import { MonitoringPausedBanner } from '@/components/monitoring';
 import { 
   Plus, 
   Settings, 
@@ -53,6 +55,7 @@ export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
   const [showExport, setShowExport] = useState(false);
   const statusInfo = useBowelCareStatus(clientId);
   const { isAdmin } = useRoleAccess();
+  const { isMonitoringPaused, monitoringStatus } = useProfile();
 
   // Show export view
   if (showExport) {
@@ -74,12 +77,21 @@ export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
             <FileDown className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button onClick={() => setShowLogForm(true)}>
+          <Button onClick={() => setShowLogForm(true)} disabled={isMonitoringPaused}>
             <Plus className="h-4 w-4 mr-2" />
             Log Bowel Entry
           </Button>
         </div>
       </div>
+
+      {/* Monitoring Paused Banner */}
+      {isMonitoringPaused && monitoringStatus && (
+        <MonitoringPausedBanner
+          pauseReason={monitoringStatus.pauseReason}
+          pauseStartDatetime={monitoringStatus.pauseStartDatetime}
+          pauseEndDatetime={monitoringStatus.pauseEndDatetime}
+        />
+      )}
 
       {/* Mandatory Disclaimer */}
       <Card className="border-amber-200 bg-amber-50/50">

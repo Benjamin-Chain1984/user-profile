@@ -8,9 +8,17 @@ import { ModuleSelector } from '@/components/ideal/ModuleSelector';
 import { ProfileCompletionBanner } from '@/components/ideal/ProfileCompletionBanner';
 import { IndustryResources } from '@/components/ideal/IndustryResources';
 import { AppHeader } from '@/components/ideal/AppHeader';
+import { useProfile } from '@/contexts/ProfileContext';
+import { PauseResumeButton, MonitoringPausedBanner } from '@/components/monitoring';
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState('home');
+  const {
+    isMonitoringPaused,
+    monitoringStatus,
+    pauseMonitoring,
+    resumeMonitoring,
+  } = useProfile();
 
   return (
     <div className="min-h-screen bg-background pb-20 sm:pb-24 safe-area-inset">
@@ -23,8 +31,26 @@ function AppContent() {
           <div className="space-y-4 sm:space-y-6 animate-fade-in">
             <ProfileHeader />
             
+            {/* Pause/Resume Button */}
+            <div className="flex justify-end">
+              <PauseResumeButton
+                isPaused={isMonitoringPaused}
+                onPause={pauseMonitoring}
+                onResume={resumeMonitoring}
+              />
+            </div>
+
+            {/* Monitoring Paused Banner */}
+            {isMonitoringPaused && monitoringStatus && (
+              <MonitoringPausedBanner
+                pauseReason={monitoringStatus.pauseReason}
+                pauseStartDatetime={monitoringStatus.pauseStartDatetime}
+                pauseEndDatetime={monitoringStatus.pauseEndDatetime}
+              />
+            )}
+
             {/* Two-column layout on larger screens */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <div className={`grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 ${isMonitoringPaused ? 'opacity-60' : ''}`}>
               <section>
                 <h2 className="text-lg font-semibold text-foreground mb-3 sm:mb-4">Alerts</h2>
                 <AlertDashboard />

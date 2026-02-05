@@ -2297,6 +2297,59 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_monitoring_status: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          is_paused: boolean
+          pause_end_datetime: string | null
+          pause_notes: string | null
+          pause_reason: string | null
+          pause_start_datetime: string | null
+          paused_by_user_id: string | null
+          resumed_at: string | null
+          resumed_by_user_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          is_paused?: boolean
+          pause_end_datetime?: string | null
+          pause_notes?: string | null
+          pause_reason?: string | null
+          pause_start_datetime?: string | null
+          paused_by_user_id?: string | null
+          resumed_at?: string | null
+          resumed_by_user_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          is_paused?: boolean
+          pause_end_datetime?: string | null
+          pause_notes?: string | null
+          pause_reason?: string | null
+          pause_start_datetime?: string | null
+          paused_by_user_id?: string | null
+          resumed_at?: string | null
+          resumed_by_user_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_monitoring_status_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string

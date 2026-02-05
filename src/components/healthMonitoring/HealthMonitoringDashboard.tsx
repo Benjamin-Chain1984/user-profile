@@ -20,6 +20,8 @@ import { useHealthMonitoringStatus, useVitalSignAlerts } from '@/hooks/useHealth
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { RoleTabsTrigger } from '@/components/ui/role-tabs-trigger';
 import { ModuleDisclaimer } from '@/components/module/ModuleDisclaimer';
+import { useProfile } from '@/contexts/ProfileContext';
+import { MonitoringPausedBanner } from '@/components/monitoring';
 import {
   Plus,
   Settings,
@@ -60,6 +62,7 @@ export function HealthMonitoringDashboard({ clientId }: HealthMonitoringDashboar
   const statusInfo = useHealthMonitoringStatus(clientId);
   const { alerts } = useVitalSignAlerts(clientId);
   const { isAdmin } = useRoleAccess();
+  const { isMonitoringPaused, monitoringStatus } = useProfile();
 
   // Check for red alerts and show emergency dialog (except temperature)
   useEffect(() => {
@@ -97,12 +100,21 @@ export function HealthMonitoringDashboard({ clientId }: HealthMonitoringDashboar
           </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={handleOpenLogForm}>
+          <Button onClick={handleOpenLogForm} disabled={isMonitoringPaused}>
             <Plus className="h-4 w-4 mr-2" />
             Record Vital Signs
           </Button>
         </div>
       </div>
+
+      {/* Monitoring Paused Banner */}
+      {isMonitoringPaused && monitoringStatus && (
+        <MonitoringPausedBanner
+          pauseReason={monitoringStatus.pauseReason}
+          pauseStartDatetime={monitoringStatus.pauseStartDatetime}
+          pauseEndDatetime={monitoringStatus.pauseEndDatetime}
+        />
+      )}
 
       {/* Mandatory Disclaimer */}
       <ModuleDisclaimer 
