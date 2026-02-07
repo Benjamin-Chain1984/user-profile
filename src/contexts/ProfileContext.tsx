@@ -20,6 +20,8 @@ import type { WeightEntry, WeightBmiConfig, WeightBmiAlert, WeightStatusInfo } f
 import type { FluidConfig, FluidIntakeEntry, FluidOutputEntry, FluidStatus } from '@/types/fluidBalance';
 import type { CancerScreeningRecord, VaccinationRecord } from '@/types/healthPrevention';
 import { calculateHealthPreventionSummary } from '@/utils/healthPreventionStatusCalculator';
+import { calculateSleepStatus } from '@/utils/sleepStatusCalculator';
+import type { SleepEntry, SleepConfig } from '@/types/sleep';
 
 interface ProfileContextType {
   profile: IndividualProfile | null;
@@ -36,6 +38,7 @@ interface ProfileContextType {
   refreshWeightStatus: () => void;
   refreshFluidStatus: () => void;
   refreshHealthPreventionStatus: () => void;
+  refreshSleepStatus: () => void;
    // Monitoring pause state
    monitoringStatus: MonitoringStatus | null;
    isMonitoringPaused: boolean;
@@ -107,6 +110,13 @@ type HealthPreventionAlertData = {
   dueCount: number;
 };
 
+// Sleep alert data type
+type SleepAlertData = {
+  status: 'stable' | 'monitor' | 'action';
+  message: string;
+  timestamp: string;
+};
+
 // Generate alerts dynamically from module statuses
 function generateAlertsFromModules(
   modules: HealthModule[], 
@@ -114,7 +124,8 @@ function generateAlertsFromModules(
   bowelData?: BowelAlertData,
   weightData?: WeightAlertData,
   fluidData?: FluidAlertData,
-  healthPreventionData?: HealthPreventionAlertData
+  healthPreventionData?: HealthPreventionAlertData,
+  sleepData?: SleepAlertData
 ): Alert[] {
   return modules
     .filter((m) => m.enabled && (m.status === 'monitor' || m.status === 'action'))
@@ -176,6 +187,18 @@ function generateAlertsFromModules(
           message: healthPreventionData.message,
           status: m.status === 'action' ? 'red' as const : 'amber' as const,
           timestamp: healthPreventionData.timestamp,
+        };
+      }
+
+      // Special handling for sleep module with real data
+      if (m.id === 'sleep' && sleepData) {
+        return {
+          id: m.id,
+          moduleId: m.id,
+          moduleName: 'Sleep Chart',
+          message: sleepData.message,
+          status: m.status === 'action' ? 'red' as const : 'amber' as const,
+          timestamp: sleepData.timestamp,
         };
       }
       
@@ -265,6 +288,9 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   
   // Health Prevention state
   const [latestHealthPreventionData, setLatestHealthPreventionData] = useState<HealthPreventionAlertData | null>(null);
+
+  // Sleep state
+  const [latestSleepData, setLatestSleepData] = useState<SleepAlertData | null>(null);
 
   // Enable ALL modules by default for master project development
   const [enabledModules, setEnabledModules] = useState<HealthModule[]>(
@@ -648,6 +674,55 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Fetch sleep status
+  const fetchSleepStatus = async () => {
+    try {
+      const { data: configData } = await supabase
+        .from('sleep_config')
+        .select('*')
+        .maybeSingle();
+
+      const { data: entries, error } = await supabase
+        .from('sleep_entries')
+        .select('*')
+        .order('event_occurred_at', { ascending: false })
+        .limit(50);
+
+      if (error) {
+        console.error('Error fetching sleep entries:', error);
+        return;
+      }
+
+      const typedEntries = (entries || []) as unknown as SleepEntry[];
+      const sleepStatusResult = calculateSleepStatus({
+        entries: typedEntries,
+        config: {
+          min_expected_sleep_hours: configData?.min_expected_sleep_hours ?? 7,
+          disruption_threshold: configData?.disruption_threshold ?? 3,
+          poor_sleep_threshold_hours: configData?.poor_sleep_threshold_hours ?? 5,
+          consecutive_disruption_alert_days: configData?.consecutive_disruption_alert_days ?? 3,
+        },
+      });
+
+      const moduleStatus = sleepStatusResult.status === 'ideal' ? 'stable' : sleepStatusResult.status;
+      const sleepData: SleepAlertData = {
+        status: moduleStatus,
+        message: sleepStatusResult.message,
+        timestamp: typedEntries[0]?.event_occurred_at || new Date().toISOString(),
+      };
+
+      setLatestSleepData(sleepData);
+
+      setEnabledModules(prev => prev.map(m =>
+        m.id === 'sleep'
+          ? { ...m, status: moduleStatus, lastEntry: sleepStatusResult.lastEntry }
+          : m
+      ));
+    } catch (err) {
+      console.error('Error in fetchSleepStatus:', err);
+    }
+  };
+
   // Fetch data on mount and set up realtime subscriptions
   useEffect(() => {
     fetchProfileFromDb();
@@ -656,6 +731,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     fetchWeightStatus();
     fetchFluidStatus();
     fetchHealthPreventionStatus();
+    fetchSleepStatus();
 
     // Subscribe to realtime updates for pain assessments
     const painChannel = supabase
@@ -768,6 +844,22 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       )
       .subscribe();
 
+    // Subscribe to realtime updates for sleep entries
+    const sleepChannel = supabase
+      .channel('sleep-alerts')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sleep_entries',
+        },
+        () => {
+          fetchSleepStatus();
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(painChannel);
       supabase.removeChannel(bowelChannel);
@@ -776,6 +868,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       supabase.removeChannel(profileChannel);
       supabase.removeChannel(screeningChannel);
       supabase.removeChannel(vaccinationChannel);
+      supabase.removeChannel(sleepChannel);
     };
   }, []);
 
@@ -825,7 +918,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     latestBowelData || undefined,
     latestWeightData || undefined,
     latestFluidData || undefined,
-    latestHealthPreventionData || undefined
+    latestHealthPreventionData || undefined,
+    latestSleepData || undefined
   );
   const hasRedAlert = !isMonitoringPaused && activeEnabledModules.some((m) => m.status === 'action');
   const hasAmberAlert = !isMonitoringPaused && activeEnabledModules.some((m) => m.status === 'monitor');
@@ -864,6 +958,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         refreshWeightStatus: fetchWeightStatus,
         refreshFluidStatus: fetchFluidStatus,
         refreshHealthPreventionStatus: fetchHealthPreventionStatus,
+        refreshSleepStatus: fetchSleepStatus,
          monitoringStatus,
          isMonitoringPaused,
          pauseMonitoring,

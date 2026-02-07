@@ -24,6 +24,7 @@ import WeightBmiPage from "./pages/WeightBmi";
 import FluidBalancePage from "./pages/FluidBalance";
 import HealthMonitoringPage from "./pages/HealthMonitoring";
 import HealthPreventionPage from "./pages/HealthPrevention";
+import SleepPage from "./pages/Sleep";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -82,6 +83,7 @@ const App = () => (
                   <Route path="/module/fluid-balance" element={<FluidBalancePage />} />
                   <Route path="/module/health-monitoring" element={<HealthMonitoringPage />} />
                   <Route path="/module/health-prevention" element={<HealthPreventionPage />} />
+                  <Route path="/module/sleep" element={<SleepPage />} />
                   <Route path="/module/:moduleId" element={<ModulePlaceholder />} />
 
                   {/* Admin */}
