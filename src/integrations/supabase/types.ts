@@ -2410,6 +2410,204 @@ export type Database = {
         }
         Relationships: []
       }
+      sleep_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          resolved_at: string | null
+          resolved_by: string | null
+          resolved_reason: string | null
+          severity: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_reason?: string | null
+          severity?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_reason?: string | null
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sleep_alerts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sleep_config: {
+        Row: {
+          client_id: string | null
+          consecutive_disruption_alert_days: number
+          created_at: string
+          created_by: string | null
+          disruption_threshold: number
+          escalation_recipients: string[]
+          id: string
+          min_expected_sleep_hours: number
+          poor_sleep_threshold_hours: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          consecutive_disruption_alert_days?: number
+          created_at?: string
+          created_by?: string | null
+          disruption_threshold?: number
+          escalation_recipients?: string[]
+          id?: string
+          min_expected_sleep_hours?: number
+          poor_sleep_threshold_hours?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          consecutive_disruption_alert_days?: number
+          created_at?: string
+          created_by?: string | null
+          disruption_threshold?: number
+          escalation_recipients?: string[]
+          id?: string
+          min_expected_sleep_hours?: number
+          poor_sleep_threshold_hours?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sleep_config_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sleep_entries: {
+        Row: {
+          assistance_other_text: string | null
+          assistance_types: string[]
+          awake_period_length: string | null
+          bedtime: string
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          day_nap: boolean
+          day_nap_behaviour_before: string | null
+          day_nap_duration_minutes: number | null
+          day_nap_notes: string | null
+          day_nap_time: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          estimated_hours_slept: number
+          event_occurred_at: string
+          id: string
+          notes: string | null
+          number_of_awakenings: number
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
+          restlessness: boolean
+          wake_time: string
+        }
+        Insert: {
+          assistance_other_text?: string | null
+          assistance_types?: string[]
+          awake_period_length?: string | null
+          bedtime: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          day_nap?: boolean
+          day_nap_behaviour_before?: string | null
+          day_nap_duration_minutes?: number | null
+          day_nap_notes?: string | null
+          day_nap_time?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          estimated_hours_slept: number
+          event_occurred_at?: string
+          id?: string
+          notes?: string | null
+          number_of_awakenings?: number
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
+          restlessness?: boolean
+          wake_time: string
+        }
+        Update: {
+          assistance_other_text?: string | null
+          assistance_types?: string[]
+          awake_period_length?: string | null
+          bedtime?: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          day_nap?: boolean
+          day_nap_behaviour_before?: string | null
+          day_nap_duration_minutes?: number | null
+          day_nap_notes?: string | null
+          day_nap_time?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          estimated_hours_slept?: number
+          event_occurred_at?: string
+          id?: string
+          notes?: string | null
+          number_of_awakenings?: number
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
+          restlessness?: boolean
+          wake_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sleep_entries_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           billing_cycle: Database["public"]["Enums"]["billing_cycle"]
