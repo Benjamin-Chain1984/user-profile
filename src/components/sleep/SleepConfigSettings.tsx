@@ -11,9 +11,8 @@ import { RestrictedSection } from '@/components/ui/restricted-section';
 import { AlertRecipientSelector } from '@/components/profile';
 import { useModuleAlertRecipients, useSetModuleAlertRecipients } from '@/hooks/useNotificationContacts';
 import { useSleepConfig } from '@/hooks/useSleep';
-import { useAuth } from '@/contexts/AuthContext';
-import { useProfile } from '@/contexts/ProfileContext';
-import { Settings, Loader2, Bell } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Settings, Loader2, Bell, HelpCircle } from 'lucide-react';
 import type { AlertSeverity } from '@/types/notificationContacts';
 
 interface SleepConfigSettingsProps {
@@ -22,12 +21,13 @@ interface SleepConfigSettingsProps {
 
 export function SleepConfigSettings({ clientId }: SleepConfigSettingsProps) {
   const { config, isLoading, updateConfig, isUpdating } = useSleepConfig(clientId);
-  const { profile } = useProfile();
 
   const [minSleep, setMinSleep] = useState(7);
   const [disruptionThreshold, setDisruptionThreshold] = useState(3);
   const [poorSleep, setPoorSleep] = useState(5);
   const [consecutiveDays, setConsecutiveDays] = useState(3);
+  const [maxSleep, setMaxSleep] = useState(12);
+  const [consecutiveExcessive, setConsecutiveExcessive] = useState(2);
 
   useEffect(() => {
     if (config) {
@@ -35,6 +35,8 @@ export function SleepConfigSettings({ clientId }: SleepConfigSettingsProps) {
       setDisruptionThreshold(config.disruption_threshold ?? 3);
       setPoorSleep(config.poor_sleep_threshold_hours ?? 5);
       setConsecutiveDays(config.consecutive_disruption_alert_days ?? 3);
+      setMaxSleep(config.max_sleep_threshold_hours ?? 12);
+      setConsecutiveExcessive(config.consecutive_excessive_sleep_trigger ?? 2);
     }
   }, [config]);
 
@@ -44,6 +46,8 @@ export function SleepConfigSettings({ clientId }: SleepConfigSettingsProps) {
       disruption_threshold: disruptionThreshold,
       poor_sleep_threshold_hours: poorSleep,
       consecutive_disruption_alert_days: consecutiveDays,
+      max_sleep_threshold_hours: maxSleep,
+      consecutive_excessive_sleep_trigger: consecutiveExcessive,
     });
   };
 
@@ -102,6 +106,28 @@ export function SleepConfigSettings({ clientId }: SleepConfigSettingsProps) {
                 <Label>Poor Sleep Threshold (hrs)</Label>
                 <Input type="number" step="0.5" min="1" max="12" value={poorSleep} onChange={e => setPoorSleep(parseFloat(e.target.value))} />
                 <p className="text-xs text-muted-foreground">Below this → Red alert</p>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5">
+                  <Label>Excessive Sleep Threshold (hrs)</Label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p>Set the number of hours that would be considered unusually long sleep for this individual. Prolonged sleep may indicate illness, medication effects, depression, or fatigue.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <Input type="number" step="0.5" min="8" max="24" value={maxSleep} onChange={e => setMaxSleep(parseFloat(e.target.value))} />
+                <p className="text-xs text-muted-foreground">Above this → Monitor alert</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Consecutive Excessive Sleep Alert (nights)</Label>
+                <Input type="number" min="1" max="14" value={consecutiveExcessive} onChange={e => setConsecutiveExcessive(parseInt(e.target.value))} />
+                <p className="text-xs text-muted-foreground">Persistent excessive sleep → Red alert</p>
               </div>
               <div className="space-y-2">
                 <Label>Disruption Threshold (awakenings)</Label>

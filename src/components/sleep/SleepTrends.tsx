@@ -1,13 +1,14 @@
 /**
- * Sleep Trends - Visual trend charts
+ * Sleep Trends - Visual trend charts with awakening detail
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSleepEntries, useSleepConfig } from '@/hooks/useSleep';
+import { getAwakeningCount, countProlongedAwakenings } from '@/types/sleep';
 import { format } from 'date-fns';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, ReferenceLine, BarChart, Bar, Legend,
+  ResponsiveContainer, ReferenceLine, BarChart, Bar,
 } from 'recharts';
 
 interface SleepTrendsProps {
@@ -23,7 +24,8 @@ export function SleepTrends({ clientId }: SleepTrendsProps) {
     .map(e => ({
       date: format(new Date(e.event_occurred_at), 'dd/MM'),
       hours: Number(e.estimated_hours_slept),
-      awakenings: e.number_of_awakenings,
+      awakenings: getAwakeningCount(e),
+      prolonged: countProlongedAwakenings(e),
       napMinutes: e.day_nap ? (e.day_nap_duration_minutes || 0) : 0,
     }));
 
@@ -35,6 +37,21 @@ export function SleepTrends({ clientId }: SleepTrendsProps) {
     });
   });
   const assistanceData = Object.entries(assistanceCounts).map(([type, count]) => ({ type, count }));
+
+  // Insights
+  const insights: string[] = [];
+  const recentWeek = entries.slice(0, 7);
+  const prolongedNights = recentWeek.filter(e => countProlongedAwakenings(e) > 0).length;
+  if (prolongedNights >= 3) insights.push('Multiple prolonged awakenings (>30 mins) recorded this week.');
+  const toiletNights = recentWeek.filter(e => {
+    const reasons = e.awakening_events?.map(ae => ae.reason) || [];
+    return reasons.includes('toilet');
+  }).length;
+  if (toiletNights >= 5) insights.push('Frequent night toileting — consider continence review.');
+  const excessiveNights = recentWeek.filter(e => Number(e.estimated_hours_slept) > (config.max_sleep_threshold_hours ?? 12)).length;
+  if (excessiveNights >= 2) insights.push(`Sleep duration high for ${excessiveNights} nights this week.`);
+  const disruptedNights = recentWeek.filter(e => getAwakeningCount(e) >= (config.disruption_threshold ?? 3)).length;
+  if (disruptedNights >= 3) insights.push(`Sleep disrupted more than ${disruptedNights} nights this week.`);
 
   if (entries.length === 0) {
     return (
@@ -48,6 +65,26 @@ export function SleepTrends({ clientId }: SleepTrendsProps) {
 
   return (
     <div className="space-y-4">
+      {/* Insights */}
+      {insights.length > 0 && (
+        <Card className="border-amber-200 bg-amber-50/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Insights</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-1">
+              {insights.map((insight, i) => (
+                <li key={i} className="text-sm text-amber-800 flex gap-2">
+                  <span className="shrink-0">•</span>
+                  {insight}
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-muted-foreground mt-2 italic">If concerns persist, consult a GP or health professional.</p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Sleep Duration Trend */}
       <Card>
         <CardHeader>
@@ -58,16 +95,18 @@ export function SleepTrends({ clientId }: SleepTrendsProps) {
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-              <YAxis domain={[0, 12]} tick={{ fontSize: 12 }} />
+              <YAxis domain={[0, 'auto']} tick={{ fontSize: 12 }} />
               <Tooltip />
-              <ReferenceLine y={config.min_expected_sleep_hours} stroke="hsl(var(--warning))" strokeDasharray="5 5" label="Target" />
+              <ReferenceLine y={config.min_expected_sleep_hours} stroke="hsl(var(--warning))" strokeDasharray="5 5" label="Min" />
               <ReferenceLine y={config.poor_sleep_threshold_hours} stroke="hsl(var(--destructive))" strokeDasharray="5 5" label="Poor" />
+              <ReferenceLine y={config.max_sleep_threshold_hours ?? 12} stroke="hsl(var(--warning))" strokeDasharray="3 3" label="Max" />
               <Line type="monotone" dataKey="hours" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} name="Hours Slept" />
             </LineChart>
           </ResponsiveContainer>
-          <div className="flex gap-4 justify-center mt-2 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-warning inline-block" /> Target ({config.min_expected_sleep_hours}h)</span>
+          <div className="flex gap-4 justify-center mt-2 text-xs text-muted-foreground flex-wrap">
+            <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-warning inline-block" /> Min ({config.min_expected_sleep_hours}h)</span>
             <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-destructive inline-block" /> Poor ({config.poor_sleep_threshold_hours}h)</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-warning inline-block" /> Max ({config.max_sleep_threshold_hours ?? 12}h)</span>
           </div>
         </CardContent>
       </Card>
@@ -85,7 +124,8 @@ export function SleepTrends({ clientId }: SleepTrendsProps) {
               <YAxis tick={{ fontSize: 12 }} />
               <Tooltip />
               <ReferenceLine y={config.disruption_threshold} stroke="hsl(var(--warning))" strokeDasharray="5 5" />
-              <Bar dataKey="awakenings" fill="hsl(var(--primary))" name="Awakenings" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="awakenings" fill="hsl(var(--primary))" name="Total Awakenings" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="prolonged" fill="hsl(var(--destructive))" name="Prolonged (>30min)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>

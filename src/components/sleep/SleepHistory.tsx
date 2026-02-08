@@ -1,12 +1,13 @@
 /**
- * Sleep History - Recent sleep log entries
+ * Sleep History - Recent sleep log entries with structured awakening display
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useSleepEntries } from '@/hooks/useSleep';
+import { getAwakeningCount, hasProlongedAwakenings, estimateAwakeMinutes } from '@/types/sleep';
 import { format } from 'date-fns';
-import { Moon, Sun, AlertCircle } from 'lucide-react';
+import { Moon } from 'lucide-react';
 
 interface SleepHistoryProps {
   clientId?: string;
@@ -34,7 +35,10 @@ export function SleepHistory({ clientId }: SleepHistoryProps) {
         ) : (
           entries.map(entry => {
             const hours = Number(entry.estimated_hours_slept);
-            const statusColor = hours < 5 ? 'text-destructive' : hours < 7 ? 'text-warning' : 'text-success';
+            const awakenings = getAwakeningCount(entry);
+            const hasEvents = entry.awakening_events?.length > 0;
+            const prolonged = hasProlongedAwakenings(entry);
+            const statusColor = hours < 5 ? 'text-destructive' : hours < 7 ? 'text-warning' : hours > 12 ? 'text-warning' : 'text-success';
 
             return (
               <div key={entry.id} className="flex items-start gap-3 p-3 rounded-lg border bg-card">
@@ -44,11 +48,14 @@ export function SleepHistory({ clientId }: SleepHistoryProps) {
                     <span className="font-medium text-sm">
                       {format(new Date(entry.event_occurred_at), 'EEE d MMM')}
                     </span>
-                    <Badge variant={hours < 5 ? 'destructive' : hours < 7 ? 'secondary' : 'default'} className="text-xs">
+                    <Badge variant={hours < 5 ? 'destructive' : hours < 7 ? 'secondary' : hours > 12 ? 'secondary' : 'default'} className="text-xs">
                       {hours.toFixed(1)}h
                     </Badge>
-                    {entry.number_of_awakenings > 0 && (
-                      <Badge variant="outline" className="text-xs">{entry.number_of_awakenings} awakenings</Badge>
+                    {awakenings > 0 && (
+                      <Badge variant="outline" className="text-xs">{awakenings} awakenings</Badge>
+                    )}
+                    {prolonged && (
+                      <Badge variant="outline" className="text-xs border-destructive/50 text-destructive">&gt;30min wake</Badge>
                     )}
                     {entry.restlessness && (
                       <Badge variant="outline" className="text-xs border-destructive/50 text-destructive">Restless</Badge>
@@ -60,6 +67,19 @@ export function SleepHistory({ clientId }: SleepHistoryProps) {
                       <> • Nap: {entry.day_nap_duration_minutes}min</>
                     )}
                   </p>
+                  {/* Awakening detail */}
+                  {hasEvents && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {entry.awakening_events.map((evt, i) => (
+                        <span key={evt.id || i}>
+                          {i > 0 && ' • '}
+                          {evt.duration_category === 'less_than_10' ? '<10min' : evt.duration_category === '10_to_30' ? '10-30min' : '>30min'}
+                          {evt.reason && evt.reason !== 'unknown' && ` (${evt.reason})`}
+                        </span>
+                      ))}
+                      {' '}• ~{estimateAwakeMinutes(entry.awakening_events)}min awake
+                    </div>
+                  )}
                   {entry.assistance_types.length > 0 && (
                     <p className="text-xs text-muted-foreground mt-0.5">
                       Assistance: {entry.assistance_types.join(', ')}

@@ -2470,11 +2470,13 @@ export type Database = {
         Row: {
           client_id: string | null
           consecutive_disruption_alert_days: number
+          consecutive_excessive_sleep_trigger: number | null
           created_at: string
           created_by: string | null
           disruption_threshold: number
           escalation_recipients: string[]
           id: string
+          max_sleep_threshold_hours: number | null
           min_expected_sleep_hours: number
           poor_sleep_threshold_hours: number
           updated_at: string
@@ -2483,11 +2485,13 @@ export type Database = {
         Insert: {
           client_id?: string | null
           consecutive_disruption_alert_days?: number
+          consecutive_excessive_sleep_trigger?: number | null
           created_at?: string
           created_by?: string | null
           disruption_threshold?: number
           escalation_recipients?: string[]
           id?: string
+          max_sleep_threshold_hours?: number | null
           min_expected_sleep_hours?: number
           poor_sleep_threshold_hours?: number
           updated_at?: string
@@ -2496,11 +2500,13 @@ export type Database = {
         Update: {
           client_id?: string | null
           consecutive_disruption_alert_days?: number
+          consecutive_excessive_sleep_trigger?: number | null
           created_at?: string
           created_by?: string | null
           disruption_threshold?: number
           escalation_recipients?: string[]
           id?: string
+          max_sleep_threshold_hours?: number | null
           min_expected_sleep_hours?: number
           poor_sleep_threshold_hours?: number
           updated_at?: string
@@ -2521,6 +2527,7 @@ export type Database = {
           assistance_other_text: string | null
           assistance_types: string[]
           awake_period_length: string | null
+          awakening_events: Json | null
           bedtime: string
           client_id: string | null
           created_at: string
@@ -2548,6 +2555,7 @@ export type Database = {
           assistance_other_text?: string | null
           assistance_types?: string[]
           awake_period_length?: string | null
+          awakening_events?: Json | null
           bedtime: string
           client_id?: string | null
           created_at?: string
@@ -2575,6 +2583,7 @@ export type Database = {
           assistance_other_text?: string | null
           assistance_types?: string[]
           awake_period_length?: string | null
+          awakening_events?: Json | null
           bedtime?: string
           client_id?: string | null
           created_at?: string
