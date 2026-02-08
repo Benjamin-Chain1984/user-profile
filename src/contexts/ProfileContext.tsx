@@ -701,6 +701,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           disruption_threshold: configData?.disruption_threshold ?? 3,
           poor_sleep_threshold_hours: configData?.poor_sleep_threshold_hours ?? 5,
           consecutive_disruption_alert_days: configData?.consecutive_disruption_alert_days ?? 3,
+          max_sleep_threshold_hours: configData?.max_sleep_threshold_hours ?? 12,
+          consecutive_excessive_sleep_trigger: configData?.consecutive_excessive_sleep_trigger ?? 2,
         },
       });
 

@@ -1,12 +1,12 @@
 /**
- * Sleep Export Reports - Generate PDF/CSV reports
+ * Sleep Export Reports - Generate PDF/CSV reports with awakening detail
  */
 
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { useSleepEntries, useSleepConfig } from '@/hooks/useSleep';
+import { getAwakeningCount, estimateAwakeMinutes } from '@/types/sleep';
 import { format, subDays, subMonths, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { FileDown, ArrowLeft, Loader2 } from 'lucide-react';
 import jsPDF from 'jspdf';
@@ -16,7 +16,7 @@ interface SleepExportReportsProps {
   onClose: () => void;
 }
 
-type DateRangePreset = 'last7' | 'last30' | 'custom';
+type DateRangePreset = 'last7' | 'last30';
 
 export function SleepExportReports({ clientId, onClose }: SleepExportReportsProps) {
   const [datePreset, setDatePreset] = useState<DateRangePreset>('last7');
@@ -45,7 +45,8 @@ export function SleepExportReports({ clientId, onClose }: SleepExportReportsProp
     const avgHours = totalHours / filteredEntries.length;
     const disruptedNights = filteredEntries.filter(e => Number(e.estimated_hours_slept) < (config.min_expected_sleep_hours ?? 7)).length;
     const totalAssistance = filteredEntries.reduce((s, e) => s + e.assistance_types.length, 0);
-    return { avgHours, disruptedNights, totalAssistance, totalEntries: filteredEntries.length };
+    const totalAwakenings = filteredEntries.reduce((s, e) => s + getAwakeningCount(e), 0);
+    return { avgHours, disruptedNights, totalAssistance, totalEntries: filteredEntries.length, totalAwakenings };
   }, [filteredEntries, config]);
 
   const exportPDF = async () => {
@@ -64,10 +65,11 @@ export function SleepExportReports({ clientId, onClose }: SleepExportReportsProp
         doc.setFontSize(10);
         doc.text(`Average sleep: ${stats.avgHours.toFixed(1)} hours`, 20, 58);
         doc.text(`Disrupted nights: ${stats.disruptedNights} of ${stats.totalEntries}`, 20, 64);
-        doc.text(`Overnight assistance events: ${stats.totalAssistance}`, 20, 70);
+        doc.text(`Total awakenings: ${stats.totalAwakenings}`, 20, 70);
+        doc.text(`Overnight assistance events: ${stats.totalAssistance}`, 20, 76);
       }
 
-      let y = 85;
+      let y = 91;
       doc.setFontSize(12);
       doc.text('Entries', 20, y);
       y += 8;
@@ -75,12 +77,24 @@ export function SleepExportReports({ clientId, onClose }: SleepExportReportsProp
 
       filteredEntries.forEach(e => {
         if (y > 270) { doc.addPage(); y = 20; }
-        const line = `${format(new Date(e.event_occurred_at), 'dd/MM')} | ${Number(e.estimated_hours_slept).toFixed(1)}h | ${e.number_of_awakenings} awakenings${e.restlessness ? ' | Restless' : ''}${e.notes ? ` | ${e.notes}` : ''}`;
+        const awakenings = getAwakeningCount(e);
+        const hasEvents = e.awakening_events?.length > 0;
+        const line = `${format(new Date(e.event_occurred_at), 'dd/MM')} | ${Number(e.estimated_hours_slept).toFixed(1)}h | ${awakenings} awakenings${e.restlessness ? ' | Restless' : ''}${e.notes ? ` | ${e.notes}` : ''}`;
         doc.text(line, 20, y);
         y += 6;
+
+        // Awakening detail
+        if (hasEvents) {
+          e.awakening_events.forEach((evt, i) => {
+            if (y > 270) { doc.addPage(); y = 20; }
+            const dur = evt.duration_category === 'less_than_10' ? '<10min' : evt.duration_category === '10_to_30' ? '10-30min' : '>30min';
+            const reason = evt.reason && evt.reason !== 'unknown' ? ` (${evt.reason})` : '';
+            doc.text(`  Awakening ${i + 1}: ${dur}${reason}`, 25, y);
+            y += 5;
+          });
+        }
       });
 
-      // Disclaimer
       y += 10;
       if (y > 260) { doc.addPage(); y = 20; }
       doc.setFontSize(8);
@@ -93,18 +107,28 @@ export function SleepExportReports({ clientId, onClose }: SleepExportReportsProp
   };
 
   const exportCSV = () => {
-    const headers = ['Date', 'Bedtime', 'Wake Time', 'Hours Slept', 'Awakenings', 'Restless', 'Nap', 'Assistance', 'Notes'];
-    const rows = filteredEntries.map(e => [
-      format(new Date(e.event_occurred_at), 'yyyy-MM-dd'),
-      format(new Date(e.bedtime), 'HH:mm'),
-      format(new Date(e.wake_time), 'HH:mm'),
-      Number(e.estimated_hours_slept).toFixed(1),
-      e.number_of_awakenings,
-      e.restlessness ? 'Yes' : 'No',
-      e.day_nap ? `Yes (${e.day_nap_duration_minutes || 0}min)` : 'No',
-      e.assistance_types.join('; '),
-      e.notes || '',
-    ]);
+    const headers = ['Date', 'Bedtime', 'Wake Time', 'Hours Slept', 'Awakenings', 'Awakening Details', 'Restless', 'Nap', 'Assistance', 'Notes'];
+    const rows = filteredEntries.map(e => {
+      const hasEvents = e.awakening_events?.length > 0;
+      const awakeningDetail = hasEvents
+        ? e.awakening_events.map((evt, i) => {
+          const dur = evt.duration_category === 'less_than_10' ? '<10min' : evt.duration_category === '10_to_30' ? '10-30min' : '>30min';
+          return `#${i + 1}:${dur}${evt.reason ? `(${evt.reason})` : ''}`;
+        }).join('; ')
+        : '';
+      return [
+        format(new Date(e.event_occurred_at), 'yyyy-MM-dd'),
+        format(new Date(e.bedtime), 'HH:mm'),
+        format(new Date(e.wake_time), 'HH:mm'),
+        Number(e.estimated_hours_slept).toFixed(1),
+        getAwakeningCount(e),
+        awakeningDetail,
+        e.restlessness ? 'Yes' : 'No',
+        e.day_nap ? `Yes (${e.day_nap_duration_minutes || 0}min)` : 'No',
+        e.assistance_types.join('; '),
+        e.notes || '',
+      ];
+    });
 
     const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -136,7 +160,7 @@ export function SleepExportReports({ clientId, onClose }: SleepExportReportsProp
           </div>
 
           {stats && (
-            <div className="grid grid-cols-3 gap-3 p-3 bg-muted rounded-lg">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-muted rounded-lg">
               <div className="text-center">
                 <p className="text-lg font-bold">{stats.avgHours.toFixed(1)}h</p>
                 <p className="text-xs text-muted-foreground">Avg Sleep</p>
@@ -144,6 +168,10 @@ export function SleepExportReports({ clientId, onClose }: SleepExportReportsProp
               <div className="text-center">
                 <p className="text-lg font-bold">{stats.disruptedNights}</p>
                 <p className="text-xs text-muted-foreground">Disrupted</p>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-bold">{stats.totalAwakenings}</p>
+                <p className="text-xs text-muted-foreground">Awakenings</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-bold">{stats.totalAssistance}</p>

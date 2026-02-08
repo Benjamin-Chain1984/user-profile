@@ -1,8 +1,10 @@
 /**
  * Centralized Sleep Status Calculator - Single Source of Truth
+ * Supports both excessive sleep and structured awakening events.
  */
 
-import type { SleepEntry, SleepConfig, SleepStatus, SleepStatusInfo, DEFAULT_SLEEP_CONFIG } from '@/types/sleep';
+import type { SleepEntry, SleepStatus, SleepStatusInfo } from '@/types/sleep';
+import { getAwakeningCount, hasProlongedAwakenings, countProlongedAwakenings } from '@/types/sleep';
 
 interface CalculateSleepStatusParams {
   entries: SleepEntry[];
@@ -11,6 +13,8 @@ interface CalculateSleepStatusParams {
     disruption_threshold: number;
     poor_sleep_threshold_hours: number;
     consecutive_disruption_alert_days: number;
+    max_sleep_threshold_hours: number;
+    consecutive_excessive_sleep_trigger: number;
   };
 }
 
@@ -25,9 +29,12 @@ export function calculateSleepStatus({ entries, config }: CalculateSleepStatusPa
 
   const latest = entries[0];
   const hours = Number(latest.estimated_hours_slept);
-  const awakenings = latest.number_of_awakenings;
+  const awakenings = getAwakeningCount(latest);
+  const prolongedCount = countProlongedAwakenings(latest);
 
-  // Check for RED: poor sleep threshold
+  // === RED CHECKS ===
+
+  // Poor sleep threshold
   if (hours < config.poor_sleep_threshold_hours) {
     return {
       status: 'action',
@@ -36,7 +43,7 @@ export function calculateSleepStatus({ entries, config }: CalculateSleepStatusPa
     };
   }
 
-  // Check for RED: severe restlessness
+  // Severe restlessness with frequent awakenings
   if (latest.restlessness && awakenings >= config.disruption_threshold) {
     return {
       status: 'action',
@@ -45,12 +52,23 @@ export function calculateSleepStatus({ entries, config }: CalculateSleepStatusPa
     };
   }
 
-  // Check consecutive disrupted nights (last N days)
-  const recentEntries = entries.slice(0, config.consecutive_disruption_alert_days);
-  const disruptedNights = recentEntries.filter(
-    e => Number(e.estimated_hours_slept) < config.min_expected_sleep_hours || e.number_of_awakenings >= config.disruption_threshold
+  // Multiple prolonged awakenings (>30 min)
+  if (prolongedCount >= 2) {
+    return {
+      status: 'action',
+      message: `${prolongedCount} prolonged awakenings (>30 min) recorded`,
+      lastEntry: `${hours.toFixed(1)}h sleep • ${prolongedCount} prolonged awakenings`,
+    };
+  }
+
+  // Consecutive disrupted nights
+  const recentForDisruption = entries.slice(0, config.consecutive_disruption_alert_days);
+  const disruptedNights = recentForDisruption.filter(
+    e => Number(e.estimated_hours_slept) < config.min_expected_sleep_hours ||
+      getAwakeningCount(e) >= config.disruption_threshold
   );
-  if (recentEntries.length >= config.consecutive_disruption_alert_days && disruptedNights.length >= config.consecutive_disruption_alert_days) {
+  if (recentForDisruption.length >= config.consecutive_disruption_alert_days &&
+    disruptedNights.length >= config.consecutive_disruption_alert_days) {
     return {
       status: 'action',
       message: `${config.consecutive_disruption_alert_days} consecutive disrupted nights`,
@@ -58,7 +76,32 @@ export function calculateSleepStatus({ entries, config }: CalculateSleepStatusPa
     };
   }
 
-  // Check for AMBER: below minimum or frequent awakenings
+  // Consecutive excessive sleep
+  const recentForExcessive = entries.slice(0, config.consecutive_excessive_sleep_trigger);
+  const excessiveNights = recentForExcessive.filter(
+    e => Number(e.estimated_hours_slept) > config.max_sleep_threshold_hours
+  );
+  if (recentForExcessive.length >= config.consecutive_excessive_sleep_trigger &&
+    excessiveNights.length >= config.consecutive_excessive_sleep_trigger) {
+    return {
+      status: 'action',
+      message: `Excessive sleep for ${config.consecutive_excessive_sleep_trigger} consecutive nights. Consider illness, medication effects, mood changes, or fatigue. Seek clinical advice if concerned.`,
+      lastEntry: `${hours.toFixed(1)}h sleep • Excessive`,
+    };
+  }
+
+  // === AMBER CHECKS ===
+
+  // Single night excessive sleep
+  if (hours > config.max_sleep_threshold_hours) {
+    return {
+      status: 'monitor',
+      message: `Sleep duration unusually high: ${hours.toFixed(1)} hours (threshold ${config.max_sleep_threshold_hours}h). Consider illness, medication effects, mood changes, or fatigue. Seek clinical advice if concerned.`,
+      lastEntry: `${hours.toFixed(1)}h sleep • High`,
+    };
+  }
+
+  // Below minimum
   if (hours < config.min_expected_sleep_hours) {
     return {
       status: 'monitor',
@@ -67,6 +110,7 @@ export function calculateSleepStatus({ entries, config }: CalculateSleepStatusPa
     };
   }
 
+  // Frequent awakenings
   if (awakenings >= config.disruption_threshold) {
     return {
       status: 'monitor',
@@ -75,7 +119,7 @@ export function calculateSleepStatus({ entries, config }: CalculateSleepStatusPa
     };
   }
 
-  // GREEN: IDEAL
+  // === GREEN ===
   return {
     status: 'ideal',
     message: `Good sleep: ${hours.toFixed(1)} hours with ${awakenings} awakening${awakenings !== 1 ? 's' : ''}`,

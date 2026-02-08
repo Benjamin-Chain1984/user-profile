@@ -7,13 +7,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { calculateSleepStatus } from '@/utils/sleepStatusCalculator';
-import type { SleepConfig, SleepEntry, SleepAlert, SleepStatusInfo, DEFAULT_SLEEP_CONFIG } from '@/types/sleep';
+import type { SleepConfig, SleepEntry, AwakeningEvent } from '@/types/sleep';
 
 const DEFAULT_CONFIG_VALUES = {
   min_expected_sleep_hours: 7,
   disruption_threshold: 3,
   poor_sleep_threshold_hours: 5,
   consecutive_disruption_alert_days: 3,
+  max_sleep_threshold_hours: 12,
+  consecutive_excessive_sleep_trigger: 2,
   escalation_recipients: [],
 };
 
@@ -106,7 +108,11 @@ export function useSleepEntries(clientId?: string, limit = 50) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as SleepEntry[];
+      // Normalize awakening_events from DB (JSONB comes as parsed JSON)
+      return (data || []).map(row => ({
+        ...row,
+        awakening_events: Array.isArray(row.awakening_events) ? row.awakening_events : [],
+      })) as unknown as SleepEntry[];
     },
   });
 
@@ -114,14 +120,18 @@ export function useSleepEntries(clientId?: string, limit = 50) {
     mutationFn: async (entry: Partial<SleepEntry>) => {
       if (!user?.id) throw new Error('Not authenticated');
 
+      const awakeningEvents: AwakeningEvent[] = entry.awakening_events || [];
+      const awakeningCount = awakeningEvents.length || entry.number_of_awakenings || 0;
+
       const { data, error } = await supabase
         .from('sleep_entries')
         .insert([{
           bedtime: entry.bedtime,
           wake_time: entry.wake_time,
           estimated_hours_slept: entry.estimated_hours_slept ?? 0,
-          number_of_awakenings: entry.number_of_awakenings ?? 0,
+          number_of_awakenings: awakeningCount,
           awake_period_length: entry.awake_period_length,
+          awakening_events: JSON.parse(JSON.stringify(awakeningEvents)),
           restlessness: entry.restlessness ?? false,
           day_nap: entry.day_nap ?? false,
           day_nap_duration_minutes: entry.day_nap_duration_minutes,
@@ -174,6 +184,8 @@ export function useSleepStatus(clientId?: string) {
       disruption_threshold: config.disruption_threshold ?? 3,
       poor_sleep_threshold_hours: config.poor_sleep_threshold_hours ?? 5,
       consecutive_disruption_alert_days: config.consecutive_disruption_alert_days ?? 3,
+      max_sleep_threshold_hours: config.max_sleep_threshold_hours ?? 12,
+      consecutive_excessive_sleep_trigger: config.consecutive_excessive_sleep_trigger ?? 2,
     },
   });
 }
