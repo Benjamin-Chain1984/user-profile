@@ -22,6 +22,8 @@ import type { CancerScreeningRecord, VaccinationRecord } from '@/types/healthPre
 import { calculateHealthPreventionSummary } from '@/utils/healthPreventionStatusCalculator';
 import { calculateSleepStatus } from '@/utils/sleepStatusCalculator';
 import type { SleepEntry, SleepConfig } from '@/types/sleep';
+import { calculateOralHealthStatus } from '@/utils/oralHealthStatusCalculator';
+import type { OralHealthAssessment, OralHealthTaskLog, OralHealthConfig } from '@/types/oralHealth';
 
 interface ProfileContextType {
   profile: IndividualProfile | null;
@@ -39,6 +41,7 @@ interface ProfileContextType {
   refreshFluidStatus: () => void;
   refreshHealthPreventionStatus: () => void;
   refreshSleepStatus: () => void;
+  refreshOralHealthStatus: () => void;
    // Monitoring pause state
    monitoringStatus: MonitoringStatus | null;
    isMonitoringPaused: boolean;
@@ -117,6 +120,13 @@ type SleepAlertData = {
   timestamp: string;
 };
 
+// Oral Health alert data type
+type OralHealthAlertData = {
+  status: 'stable' | 'monitor' | 'action';
+  message: string;
+  timestamp: string;
+};
+
 // Generate alerts dynamically from module statuses
 function generateAlertsFromModules(
   modules: HealthModule[], 
@@ -125,7 +135,8 @@ function generateAlertsFromModules(
   weightData?: WeightAlertData,
   fluidData?: FluidAlertData,
   healthPreventionData?: HealthPreventionAlertData,
-  sleepData?: SleepAlertData
+  sleepData?: SleepAlertData,
+  oralHealthData?: OralHealthAlertData
 ): Alert[] {
   return modules
     .filter((m) => m.enabled && (m.status === 'monitor' || m.status === 'action'))
@@ -199,6 +210,18 @@ function generateAlertsFromModules(
           message: sleepData.message,
           status: m.status === 'action' ? 'red' as const : 'amber' as const,
           timestamp: sleepData.timestamp,
+        };
+      }
+
+      // Special handling for oral health module with real data
+      if (m.id === 'oral-health' && oralHealthData) {
+        return {
+          id: m.id,
+          moduleId: m.id,
+          moduleName: 'Oral Health',
+          message: oralHealthData.message,
+          status: m.status === 'action' ? 'red' as const : 'amber' as const,
+          timestamp: oralHealthData.timestamp,
         };
       }
       
@@ -291,6 +314,9 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   // Sleep state
   const [latestSleepData, setLatestSleepData] = useState<SleepAlertData | null>(null);
+
+  // Oral Health state
+  const [latestOralHealthData, setLatestOralHealthData] = useState<OralHealthAlertData | null>(null);
 
   // Enable ALL modules by default for master project development
   const [enabledModules, setEnabledModules] = useState<HealthModule[]>(
@@ -725,6 +751,60 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Fetch oral health status
+  const fetchOralHealthStatus = async () => {
+    try {
+      const { data: configData } = await supabase
+        .from('oral_health_config')
+        .select('*')
+        .maybeSingle();
+
+      const { data: assessmentData } = await supabase
+        .from('oral_health_assessments')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      const { data: taskLogData } = await supabase
+        .from('oral_health_task_logs')
+        .select('*')
+        .order('log_date', { ascending: false })
+        .limit(50);
+
+      const typedAssessments = (assessmentData || []).map((d: any) => ({
+        ...d,
+        mouth_annotations: (d.mouth_annotations || []),
+      })) as OralHealthAssessment[];
+      const typedLogs = (taskLogData || []) as OralHealthTaskLog[];
+
+      const statusResult = calculateOralHealthStatus({
+        assessments: typedAssessments,
+        taskLogs: typedLogs,
+        config: {
+          assessment_frequency: configData?.assessment_frequency ?? 'weekly',
+          enable_compliance_monitoring: configData?.enable_compliance_monitoring ?? false,
+        } as Partial<OralHealthConfig>,
+      });
+
+      const moduleStatus = statusResult.status === 'ideal' ? 'stable' : statusResult.status;
+      const ohData: OralHealthAlertData = {
+        status: moduleStatus,
+        message: statusResult.message,
+        timestamp: typedAssessments[0]?.created_at || new Date().toISOString(),
+      };
+
+      setLatestOralHealthData(ohData);
+
+      setEnabledModules(prev => prev.map(m =>
+        m.id === 'oral-health'
+          ? { ...m, status: moduleStatus, lastEntry: statusResult.lastEntry }
+          : m
+      ));
+    } catch (err) {
+      console.error('Error in fetchOralHealthStatus:', err);
+    }
+  };
+
   // Fetch data on mount and set up realtime subscriptions
   useEffect(() => {
     fetchProfileFromDb();
@@ -734,6 +814,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     fetchFluidStatus();
     fetchHealthPreventionStatus();
     fetchSleepStatus();
+    fetchOralHealthStatus();
 
     // Subscribe to realtime updates for pain assessments
     const painChannel = supabase
@@ -862,6 +943,22 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       )
       .subscribe();
 
+    // Subscribe to realtime updates for oral health assessments
+    const oralHealthChannel = supabase
+      .channel('oral-health-alerts')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'oral_health_assessments',
+        },
+        () => {
+          fetchOralHealthStatus();
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(painChannel);
       supabase.removeChannel(bowelChannel);
@@ -871,6 +968,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       supabase.removeChannel(screeningChannel);
       supabase.removeChannel(vaccinationChannel);
       supabase.removeChannel(sleepChannel);
+      supabase.removeChannel(oralHealthChannel);
     };
   }, []);
 
@@ -921,7 +1019,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     latestWeightData || undefined,
     latestFluidData || undefined,
     latestHealthPreventionData || undefined,
-    latestSleepData || undefined
+    latestSleepData || undefined,
+    latestOralHealthData || undefined
   );
   const hasRedAlert = !isMonitoringPaused && activeEnabledModules.some((m) => m.status === 'action');
   const hasAmberAlert = !isMonitoringPaused && activeEnabledModules.some((m) => m.status === 'monitor');
@@ -961,6 +1060,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         refreshFluidStatus: fetchFluidStatus,
         refreshHealthPreventionStatus: fetchHealthPreventionStatus,
         refreshSleepStatus: fetchSleepStatus,
+        refreshOralHealthStatus: fetchOralHealthStatus,
          monitoringStatus,
          isMonitoringPaused,
          pauseMonitoring,

@@ -2220,6 +2220,307 @@ export type Database = {
           },
         ]
       }
+      oral_health_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          resolved_at: string | null
+          resolved_by: string | null
+          resolved_reason: string | null
+          severity: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_reason?: string | null
+          severity?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_reason?: string | null
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oral_health_alerts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oral_health_assessments: {
+        Row: {
+          action_notes: string | null
+          action_taken: string | null
+          assessment_trigger: string
+          breath: string
+          cleanliness: string
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          dental_pain: string
+          dentures: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          escalation_contact: string | null
+          gums: string
+          id: string
+          lips: string
+          mouth_annotations: Json | null
+          overall_status: string
+          roof_of_mouth: string
+          teeth: string
+          tongue: string
+        }
+        Insert: {
+          action_notes?: string | null
+          action_taken?: string | null
+          assessment_trigger?: string
+          breath?: string
+          cleanliness?: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          dental_pain?: string
+          dentures?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          escalation_contact?: string | null
+          gums?: string
+          id?: string
+          lips?: string
+          mouth_annotations?: Json | null
+          overall_status?: string
+          roof_of_mouth?: string
+          teeth?: string
+          tongue?: string
+        }
+        Update: {
+          action_notes?: string | null
+          action_taken?: string | null
+          assessment_trigger?: string
+          breath?: string
+          cleanliness?: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          dental_pain?: string
+          dentures?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          escalation_contact?: string | null
+          gums?: string
+          id?: string
+          lips?: string
+          mouth_annotations?: Json | null
+          overall_status?: string
+          roof_of_mouth?: string
+          teeth?: string
+          tongue?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oral_health_assessments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oral_health_config: {
+        Row: {
+          assessment_frequency: string
+          client_id: string | null
+          consecutive_missed_tasks_alert: number
+          created_at: string
+          created_by: string | null
+          enable_compliance_monitoring: boolean
+          escalation_recipients: string[]
+          global_assistance_level: string
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          assessment_frequency?: string
+          client_id?: string | null
+          consecutive_missed_tasks_alert?: number
+          created_at?: string
+          created_by?: string | null
+          enable_compliance_monitoring?: boolean
+          escalation_recipients?: string[]
+          global_assistance_level?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          assessment_frequency?: string
+          client_id?: string | null
+          consecutive_missed_tasks_alert?: number
+          created_at?: string
+          created_by?: string | null
+          enable_compliance_monitoring?: boolean
+          escalation_recipients?: string[]
+          global_assistance_level?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oral_health_config_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oral_health_plan_categories: {
+        Row: {
+          additional_instructions: string | null
+          am_required: boolean
+          assistance_level: string | null
+          category: string
+          cleaning_method: string | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          dentist_instructions: string | null
+          display_order: number
+          id: string
+          pm_required: boolean
+          products: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          additional_instructions?: string | null
+          am_required?: boolean
+          assistance_level?: string | null
+          category: string
+          cleaning_method?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          dentist_instructions?: string | null
+          display_order?: number
+          id?: string
+          pm_required?: boolean
+          products?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          additional_instructions?: string | null
+          am_required?: boolean
+          assistance_level?: string | null
+          category?: string
+          cleaning_method?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          dentist_instructions?: string | null
+          display_order?: number
+          id?: string
+          pm_required?: boolean
+          products?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oral_health_plan_categories_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oral_health_task_logs: {
+        Row: {
+          client_id: string | null
+          completed: boolean
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          id: string
+          log_date: string
+          notes: string | null
+          period: string
+        }
+        Insert: {
+          client_id?: string | null
+          completed?: boolean
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          id?: string
+          log_date?: string
+          notes?: string | null
+          period: string
+        }
+        Update: {
+          client_id?: string | null
+          completed?: boolean
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          id?: string
+          log_date?: string
+          notes?: string | null
+          period?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oral_health_task_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pain_action_records: {
         Row: {
           action_taken: string
