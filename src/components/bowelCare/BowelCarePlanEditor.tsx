@@ -264,14 +264,14 @@ export function BowelCarePlanEditor({ clientId, onClose }: BowelCarePlanEditorPr
         </Card>
       </Collapsible>
 
-      {/* A2: Participant Profile */}
+      {/* A2: Profile & Baseline */}
       <Collapsible>
         <Card>
           <CollapsibleTrigger asChild>
             <CardHeader className="cursor-pointer hover:bg-muted/30">
               <CardTitle className="flex items-center gap-2">
                 <User className="h-5 w-5" />
-                Participant Profile & Baseline
+                Profile & Baseline
                 <ChevronDown className="h-4 w-4 ml-auto" />
               </CardTitle>
             </CardHeader>

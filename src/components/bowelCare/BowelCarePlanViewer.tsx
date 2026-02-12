@@ -18,9 +18,13 @@ import {
 } from '@/components/ui/dialog';
 import { useBowelCarePlan, useBowelCarePlanAcknowledgements, useBowelCarePlanVersions } from '@/hooks/useBowelCarePlan';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
+import { useClientProfile } from '@/hooks/useClientProfile';
+import { useBowelCareConfig } from '@/hooks/useBowelCare';
 import { BRISTOL_TYPES } from '@/types/bowelCare';
 import { RISK_TYPES, RISK_ACTIONS, TOILETING_ASSISTANCE_OPTIONS } from '@/types/bowelCarePlan';
 import type { RiskEntry, PrnEscalationStep, EmergencyResponse, EquipmentChecklist } from '@/types/bowelCarePlan';
+import { ProfileAvatar } from '@/components/ideal/ProfileAvatar';
+import { PrnEscalationFlowchart } from './PrnEscalationFlowchart';
 import { format } from 'date-fns';
 import jsPDF from 'jspdf';
 import {
@@ -36,6 +40,8 @@ interface BowelCarePlanViewerProps {
 
 export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlanViewerProps) {
   const { plan, isLoading } = useBowelCarePlan(clientId);
+  const { profile } = useClientProfile(clientId);
+  const { config } = useBowelCareConfig(clientId);
   const { acknowledgements, hasCurrentUserAcknowledged, acknowledge, isAcknowledging } = useBowelCarePlanAcknowledgements(plan?.id, plan?.version);
   const { data: versions = [] } = useBowelCarePlanVersions(plan?.id);
   const { isAdmin } = useRoleAccess();
@@ -155,29 +161,37 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-2xl font-bold">Digital Bowel Care Plan</h2>
-          <div className="flex items-center gap-2 mt-1">
-            <Badge variant="outline">Version {plan.version}</Badge>
-            <Badge className="bg-green-100 text-green-800">Published</Badge>
-            {plan.plan_author && <span className="text-sm text-muted-foreground">by {plan.plan_author}</span>}
+      {/* Header with Profile Photo */}
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div className="flex gap-4 items-start flex-1">
+          <ProfileAvatar
+            name={profile?.fullName || 'Client'}
+            avatarUrl={profile?.avatarUrl}
+            size="md"
+          />
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold">Digital Bowel Care Plan</h2>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <Badge variant="outline">v{plan.version}</Badge>
+              <Badge className="bg-green-100 text-green-800">Published</Badge>
+              {plan.plan_author && <span className="text-sm text-muted-foreground">by {plan.plan_author}</span>}
+              {plan.next_review_due && <span className="text-sm text-muted-foreground">Review: {plan.next_review_due}</span>}
+            </div>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setShowVersionHistory(true)}>
+        <div className="flex gap-2 flex-wrap justify-end w-full sm:w-auto">
+          <Button variant="outline" onClick={() => setShowVersionHistory(true)} size="sm">
             <History className="h-4 w-4 mr-2" />
             History
           </Button>
-          <Button variant="outline" onClick={handlePrint}>
+          <Button variant="outline" onClick={handlePrint} size="sm">
             <Printer className="h-4 w-4 mr-2" />
-            Print Plan
+            Print
           </Button>
           {isAdmin && onEdit && (
-            <Button onClick={onEdit}>Edit Plan</Button>
+            <Button onClick={onEdit} size="sm">Edit</Button>
           )}
-          <Button variant="outline" onClick={onClose}>Back</Button>
+          <Button variant="outline" onClick={onClose} size="sm">Back</Button>
         </div>
       </div>
 
@@ -224,14 +238,14 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
         </CardContent>
       </Card>
 
-      {/* Participant Profile */}
+      {/* Profile & Baseline */}
       <Collapsible defaultOpen>
         <Card>
           <CollapsibleTrigger asChild>
             <CardHeader className="cursor-pointer hover:bg-muted/30">
               <CardTitle className="flex items-center gap-2">
                 <User className="h-5 w-5" />
-                Participant Profile & Baseline
+                Profile & Baseline
                 <ChevronDown className="h-4 w-4 ml-auto" />
               </CardTitle>
             </CardHeader>
@@ -278,24 +292,34 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5" />
-              Risk Monitoring
+              Risk Monitoring & Early Warning Signs
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {riskEntries.map(risk => (
-                <div key={risk.id} className="p-3 bg-muted/50 rounded-lg">
-                  <p className="font-medium text-sm">{getRiskLabel(risk.risk_type)}</p>
-                  {risk.threshold_value && (
-                    <p className="text-xs text-muted-foreground">Threshold: {risk.threshold_value} {risk.threshold_unit || 'days'}</p>
-                  )}
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {risk.actions.map(a => (
-                      <Badge key={a} variant="outline" className="text-xs">{getActionLabel(a)}</Badge>
-                    ))}
+              {riskEntries.map(risk => {
+                // Get configured threshold for no_bm_days
+                let displayLabel = getRiskLabel(risk.risk_type);
+                if (risk.risk_type === 'no_bm_days' && config?.no_bm_days_threshold) {
+                  displayLabel = `No bowel motion for ${config.no_bm_days_threshold} days`;
+                } else if (risk.risk_type === 'hard_pellets' && config?.type1_consecutive_days_threshold) {
+                  displayLabel = `Hard pellets (Type 1) for ${config.type1_consecutive_days_threshold} days`;
+                }
+
+                return (
+                  <div key={risk.id} className="p-3 bg-muted/50 rounded-lg border-l-4 border-amber-300">
+                    <p className="font-medium text-sm">{displayLabel}</p>
+                    {risk.custom_label && (
+                      <p className="text-xs text-muted-foreground italic mt-1">{risk.custom_label}</p>
+                    )}
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {risk.actions.map(a => (
+                        <Badge key={a} variant="outline" className="text-xs">{getActionLabel(a)}</Badge>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -311,19 +335,10 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {prnSteps.map((step, i) => (
-                <div key={step.id} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                  <Badge className="mt-0.5">{i + 1}</Badge>
-                  <div className="text-sm">
-                    <p className="font-medium">{step.medication_name} – {step.dose} ({step.route})</p>
-                    <p className="text-muted-foreground">
-                      If no BM after {step.wait_hours}h → {step.next_action.replace('_', ' ')}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <PrnEscalationFlowchart 
+              steps={prnSteps} 
+              monitoringHours={config?.monitor_hours_after_prn || 8}
+            />
           </CardContent>
         </Card>
       )}
