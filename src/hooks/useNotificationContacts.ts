@@ -16,7 +16,7 @@ export function useNotificationContacts(clientId?: string) {
     queryFn: async () => {
       let query = supabase.from('notification_contacts').select('*').order('full_name');
       if (clientId) {
-        query = query.eq('client_id', clientId);
+        query = query.or(`client_id.eq.${clientId},client_id.is.null`);
       }
       const { data, error } = await query;
       if (error) throw error;
@@ -35,7 +35,7 @@ export function useActiveNotificationContacts(clientId?: string) {
         .eq('is_active', true)
         .order('full_name');
       if (clientId) {
-        query = query.eq('client_id', clientId);
+        query = query.or(`client_id.eq.${clientId},client_id.is.null`);
       }
       const { data, error } = await query;
       if (error) throw error;
