@@ -390,6 +390,7 @@ export type Database = {
           date_developed: string | null
           dietary_considerations: string | null
           emergency_responses: Json | null
+          enable_autonomic_dysreflexia: boolean
           equipment_checklist: Json | null
           equipment_required: string | null
           fluid_intake_expectations: string | null
@@ -423,6 +424,7 @@ export type Database = {
           date_developed?: string | null
           dietary_considerations?: string | null
           emergency_responses?: Json | null
+          enable_autonomic_dysreflexia?: boolean
           equipment_checklist?: Json | null
           equipment_required?: string | null
           fluid_intake_expectations?: string | null
@@ -456,6 +458,7 @@ export type Database = {
           date_developed?: string | null
           dietary_considerations?: string | null
           emergency_responses?: Json | null
+          enable_autonomic_dysreflexia?: boolean
           equipment_checklist?: Json | null
           equipment_required?: string | null
           fluid_intake_expectations?: string | null

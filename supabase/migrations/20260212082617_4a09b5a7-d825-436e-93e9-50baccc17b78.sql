@@ -1,0 +1,1 @@
+ALTER TABLE public.bowel_care_plans ADD COLUMN enable_autonomic_dysreflexia boolean NOT NULL DEFAULT false;

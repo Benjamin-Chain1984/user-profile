@@ -3,7 +3,7 @@
  * Includes acknowledgement log and version history
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,10 +16,13 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useBowelCarePlan, useBowelCarePlanAcknowledgements, useBowelCarePlanVersions } from '@/hooks/useBowelCarePlan';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { useClientProfile } from '@/hooks/useClientProfile';
 import { useBowelCareConfig } from '@/hooks/useBowelCare';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { BRISTOL_TYPES } from '@/types/bowelCare';
 import { RISK_TYPES, RISK_ACTIONS, TOILETING_ASSISTANCE_OPTIONS } from '@/types/bowelCarePlan';
 import type { RiskEntry, PrnEscalationStep, EmergencyResponse, EquipmentChecklist } from '@/types/bowelCarePlan';
@@ -27,7 +30,7 @@ import { ProfileAvatar } from '@/components/ideal/ProfileAvatar';
 import jsPDF from 'jspdf';
 import {
   FileText, ChevronDown, Printer, CheckCircle2,
-  AlertTriangle, Loader2, History, User, Heart, Shield, Pill, Package, Users,
+  AlertTriangle, Loader2, History, User, Heart, Shield, Pill, Package, Users, Zap, Phone, XCircle,
 } from 'lucide-react';
 
 /** Format a date string or Date to DD/MM/YYYY */
@@ -78,6 +81,20 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
 
   const [ackChecked, setAckChecked] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<{ id: string; full_name: string | null }[]>([]);
+
+  // Fetch team members from profiles
+  useEffect(() => {
+    const fetchTeam = async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .eq('is_active', true)
+        .order('full_name');
+      if (data) setTeamMembers(data);
+    };
+    fetchTeam();
+  }, []);
 
   if (isLoading) {
     return (
@@ -302,15 +319,41 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
     addField('Required', items.length > 0 ? items.join(', ') : 'None specified');
     y += 2;
 
-    // Acknowledgement Log
-    if (acknowledgements.length > 0) {
-      addSectionHeader('Staff Acknowledgement Log');
-      acknowledgements.forEach(ack => {
-        checkPage(6);
-        addBullet(`User ${ack.user_id.substring(0, 8)}… — Acknowledged: ${formatDateTime(ack.acknowledged_at)}`);
-      });
+    // Autonomic Dysreflexia
+    if ((plan as any).enable_autonomic_dysreflexia) {
+      addSectionHeader('Autonomic Dysreflexia — Signs, Symptoms & Action Plan');
+      addBullet('Symptoms: Pounding headache, flushing/sweating above injury level, blurred vision, nasal congestion, slow heart rate, high blood pressure, goosebumps, anxiety');
+      y += 2;
+      doc.setFont('helvetica', 'bold');
+      checkPage(6);
+      doc.text('Immediate Actions:', margin + 2, y);
+      doc.setFont('helvetica', 'normal');
+      y += 5;
+      addBullet('1. Sit the person upright immediately');
+      addBullet('2. Loosen tight clothing — belts, straps, clothing around waist');
+      addBullet('3. Check the catheter — look for blockages, kinks, or twists');
+      addBullet('4. Drain the bladder if required');
+      addBullet('5. Check for bowel impaction — constipation can be a trigger');
+      addBullet('6. Seek urgent medical help if symptoms persist');
       y += 2;
     }
+
+    // Acknowledgement Log
+    addSectionHeader('Staff Acknowledgement Log');
+    if (teamMembers.length > 0) {
+      teamMembers.forEach(member => {
+        const ack = acknowledgements.find(a => a.user_id === member.id);
+        checkPage(6);
+        if (ack) {
+          addBullet(`${member.full_name || 'Unnamed'} — Acknowledged: ${formatDateTime(ack.acknowledged_at)}`);
+        } else {
+          addBullet(`${member.full_name || 'Unnamed'} — Not yet acknowledged`);
+        }
+      });
+    } else {
+      addBullet('No team members found');
+    }
+    y += 2;
 
     // Footer
     checkPage(15);
@@ -571,6 +614,60 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
         </CardContent>
       </Card>
 
+      {/* Autonomic Dysreflexia Section */}
+      {(plan as any).enable_autonomic_dysreflexia && (
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <Zap className="h-5 w-5" />
+              Autonomic Dysreflexia — Signs, Symptoms & Action Plan
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert className="border-destructive/30">
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+              <AlertTitle className="text-destructive">Emergency Response</AlertTitle>
+              <AlertDescription className="space-y-2">
+                <p className="font-medium">If you notice any of these symptoms, act immediately:</p>
+                <ul className="list-disc list-inside text-sm space-y-1">
+                  <li>Pounding headache</li>
+                  <li>Flushing or sweating above injury level</li>
+                  <li>Blurred vision</li>
+                  <li>Nasal congestion</li>
+                  <li>Slow heart rate (bradycardia)</li>
+                  <li>High blood pressure</li>
+                  <li>Goosebumps below injury level</li>
+                  <li>Anxiety or sense of unease</li>
+                </ul>
+              </AlertDescription>
+            </Alert>
+
+            <div className="bg-background rounded-lg p-4 space-y-3 border">
+              <h4 className="font-semibold text-destructive">Immediate Actions:</h4>
+              <ol className="list-decimal list-inside space-y-2 text-sm">
+                <li><strong>Sit the person upright</strong> immediately</li>
+                <li><strong>Loosen tight clothing</strong> — belts, straps, clothing around waist</li>
+                <li><strong>Check the catheter</strong> — look for blockages, kinks, or twists</li>
+                <li><strong>Drain the bladder</strong> if required</li>
+                <li><strong>Check for bowel impaction</strong> — constipation can be a trigger</li>
+                <li><strong>Seek urgent medical help</strong> if symptoms persist</li>
+              </ol>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                variant="destructive"
+                className="gap-2"
+                onClick={() => window.location.href = 'tel:000'}
+              >
+                <Phone className="h-4 w-4" />
+                Call 000
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Staff Acknowledgement Log */}
       <Card>
         <CardHeader>
@@ -580,21 +677,28 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {acknowledgements.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">No acknowledgements recorded for this version.</p>
+          {teamMembers.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">No team members found.</p>
           ) : (
             <div className="space-y-2">
-              {acknowledgements.map(ack => (
-                <div key={ack.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg text-sm">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
-                    <span className="font-medium">User {ack.user_id.substring(0, 8)}…</span>
+              {teamMembers.map(member => {
+                const ack = acknowledgements.find(a => a.user_id === member.id);
+                return (
+                  <div key={member.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg text-sm">
+                    <div className="flex items-center gap-2">
+                      {ack ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      )}
+                      <span className="font-medium">{member.full_name || 'Unnamed User'}</span>
+                    </div>
+                    <span className="text-muted-foreground text-xs">
+                      {ack ? `Acknowledged: ${formatDateTime(ack.acknowledged_at)}` : 'Not yet acknowledged'}
+                    </span>
                   </div>
-                  <span className="text-muted-foreground text-xs">
-                    {formatDateTime(ack.acknowledged_at)} — v{plan.version}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>

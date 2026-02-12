@@ -80,6 +80,9 @@ export interface BowelCarePlan {
   // A6: Equipment
   equipment_checklist: EquipmentChecklist;
 
+  // Autonomic Dysreflexia
+  enable_autonomic_dysreflexia: boolean;
+
   // Audit
   created_at: string;
   created_by: string | null;
