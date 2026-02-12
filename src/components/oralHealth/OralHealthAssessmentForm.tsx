@@ -24,6 +24,7 @@ import {
   type MouthAnnotation,
 } from '@/types/oralHealth';
 import { AlertCircle, Plus, Trash2, MapPin } from 'lucide-react';
+import { InteractiveMouthDiagram } from './InteractiveMouthDiagram';
 
 interface Props {
   clientId?: string;
@@ -57,8 +58,8 @@ export function OralHealthAssessmentForm({ clientId, open, onOpenChange }: Props
   const hasChanges = categoryRatings.includes('changes');
   const overallStatus = hasUnhealthy ? 'unhealthy' : hasChanges ? 'changes' : 'healthy';
 
-  const addAnnotation = () => {
-    setAnnotations(prev => [...prev, { issue_type: '', location: '', notes: '' }]);
+  const addAnnotation = (presetLocation?: string) => {
+    setAnnotations(prev => [...prev, { issue_type: '', location: presetLocation || '', notes: '' }]);
   };
 
   const updateAnnotation = (idx: number, field: keyof MouthAnnotation, value: string) => {
@@ -67,6 +68,14 @@ export function OralHealthAssessmentForm({ clientId, open, onOpenChange }: Props
 
   const removeAnnotation = (idx: number) => {
     setAnnotations(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleZoneClick = (location: string) => {
+    // If an annotation already exists for this location without an issue_type, focus that one
+    const existingEmpty = annotations.findIndex(a => a.location === location && !a.issue_type);
+    if (existingEmpty === -1) {
+      addAnnotation(location);
+    }
   };
 
   const handleSubmit = () => {
@@ -214,13 +223,18 @@ export function OralHealthAssessmentForm({ clientId, open, onOpenChange }: Props
               <Label className="flex items-center gap-2">
                 <MapPin className="h-4 w-4" /> Mouth Diagram Annotations
               </Label>
-              <Button type="button" variant="outline" size="sm" onClick={addAnnotation}>
+              <Button type="button" variant="outline" size="sm" onClick={() => addAnnotation()}>
                 <Plus className="h-4 w-4 mr-1" /> Add Mark
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground mb-2">
-              Use the legend to mark where issues are seen in the mouth.
+            <p className="text-xs text-muted-foreground mb-3">
+              Tap a zone on the diagram to mark where issues are seen, or use "Add Mark" manually.
             </p>
+
+            <InteractiveMouthDiagram
+              annotations={annotations}
+              onZoneClick={handleZoneClick}
+            />
             {annotations.map((ann, idx) => (
               <Card key={idx} className="p-3 mb-2">
                 <div className="grid grid-cols-2 gap-2">
