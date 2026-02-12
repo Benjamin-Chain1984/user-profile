@@ -11,6 +11,7 @@ import { MonitoringPausedBanner } from '@/components/monitoring';
 import { HealthPreventionStatusCard } from './HealthPreventionStatusCard';
 import { ScreeningSection } from './ScreeningSection';
 import { VaccinationSection } from './VaccinationSection';
+import { HealthAssessmentSection } from './HealthAssessmentSection';
 import { HealthPreventionConfigSettings } from './HealthPreventionConfigSettings';
 import { HealthPreventionHistory } from './HealthPreventionHistory';
 import { HealthPreventionExportReports } from './HealthPreventionExportReports';
@@ -30,6 +31,9 @@ export function HealthPreventionDashboard() {
     getDueCount,
     getEligibleScreenings,
     getVaccinationsWithStatus,
+    getAssessmentStatus,
+    getLatestAssessment,
+    logAssessment,
   } = useHealthPrevention();
 
   if (isLoading) {
@@ -79,6 +83,14 @@ export function HealthPreventionDashboard() {
           age={age}
         />
       )}
+
+      {/* Annual Comprehensive Health Assessment Section */}
+      <HealthAssessmentSection
+        latestRecord={getLatestAssessment()}
+        displayStatus={getAssessmentStatus()}
+        gpReminderText={config?.reminderText || 'Discuss at next GP visit'}
+        onLogAssessment={logAssessment}
+      />
 
       {/* Disclaimer */}
       <ModuleDisclaimer message={HEALTH_PREVENTION_DISCLAIMER} />

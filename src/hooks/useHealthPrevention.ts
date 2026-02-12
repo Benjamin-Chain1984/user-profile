@@ -9,6 +9,7 @@
 
 import { useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { HealthAssessmentRecord, HealthAssessmentDisplayStatus } from '@/components/healthPrevention/HealthAssessmentSection';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/contexts/ProfileContext';
@@ -214,7 +215,36 @@ export function useHealthPrevention(options: UseHealthPreventionOptions = {}) {
     enabled: !!clientId,
   });
 
-  const isLoading = isConfigLoading || isScreeningsLoading || isVaccinationsLoading || isAlertsLoading;
+  // Fetch annual health assessment records
+  const { data: assessmentRecords = [], isLoading: isAssessmentsLoading } = useQuery({
+    queryKey: ['annualHealthAssessments', clientId],
+    queryFn: async () => {
+      if (!clientId) return [];
+      const { data, error } = await supabase
+        .from('annual_health_assessment_records')
+        .select('*')
+        .eq('client_id', clientId)
+        .order('date_completed', { ascending: false });
+      if (error) {
+        console.error('Error fetching assessment records:', error);
+        return [];
+      }
+      return (data || []).map(r => ({
+        id: r.id,
+        clientId: r.client_id,
+        dateCompleted: r.date_completed,
+        completedBy: r.completed_by,
+        location: r.location,
+        notes: r.notes,
+        nextDueDate: r.next_due_date,
+        createdAt: r.created_at,
+        createdBy: r.created_by,
+      })) as HealthAssessmentRecord[];
+    },
+    enabled: !!clientId,
+  });
+
+  const isLoading = isConfigLoading || isScreeningsLoading || isVaccinationsLoading || isAlertsLoading || isAssessmentsLoading;
 
   // Save config mutation
   const saveConfigMutation = useMutation({
@@ -422,6 +452,44 @@ export function useHealthPrevention(options: UseHealthPreventionOptions = {}) {
     },
   });
 
+  // Log annual health assessment mutation
+  const logAssessmentMutation = useMutation({
+    mutationFn: async (data: {
+      dateCompleted: string;
+      completedBy?: string;
+      location?: string;
+      notes?: string;
+    }) => {
+      if (!clientId || !user) throw new Error('Not authenticated or no client');
+
+      const nextDueDate = new Date(data.dateCompleted);
+      nextDueDate.setFullYear(nextDueDate.getFullYear() + 1);
+
+      const { error } = await supabase
+        .from('annual_health_assessment_records')
+        .insert({
+          client_id: clientId,
+          date_completed: data.dateCompleted,
+          completed_by: data.completedBy || null,
+          location: data.location || null,
+          notes: data.notes || null,
+          next_due_date: nextDueDate.toISOString().split('T')[0],
+          created_by: user.id,
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['annualHealthAssessments', clientId] });
+      refreshHealthPreventionStatus();
+      toast.success('Health assessment logged successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to log health assessment');
+      console.error('Error logging assessment:', error);
+    },
+  });
+
   // Wrapper functions that maintain backward compatibility
   const saveConfig = async (updatedConfig: Partial<HealthPreventionConfig>) => {
     await saveConfigMutation.mutateAsync(updatedConfig);
@@ -454,6 +522,29 @@ export function useHealthPrevention(options: UseHealthPreventionOptions = {}) {
   ) => {
     await logVaccinationMutation.mutateAsync({ vaccinationType, data });
   };
+
+  const logAssessment = async (data: {
+    dateCompleted: string;
+    completedBy?: string;
+    location?: string;
+    notes?: string;
+  }) => {
+    await logAssessmentMutation.mutateAsync(data);
+  };
+
+  // Get assessment display status
+  const getAssessmentStatus = useCallback((): HealthAssessmentDisplayStatus => {
+    const latest = assessmentRecords[0]; // already sorted desc by date_completed
+    if (!latest) return 'not_recorded';
+    if (!latest.nextDueDate) return 'up_to_date';
+    const now = new Date();
+    const due = new Date(latest.nextDueDate);
+    return now > due ? 'overdue' : 'up_to_date';
+  }, [assessmentRecords]);
+
+  const getLatestAssessment = useCallback((): HealthAssessmentRecord | null => {
+    return assessmentRecords[0] || null;
+  }, [assessmentRecords]);
 
   // Get eligible screenings for this profile
   const getEligibleScreenings = useCallback(() => {
@@ -489,7 +580,7 @@ export function useHealthPrevention(options: UseHealthPreventionOptions = {}) {
     });
   }, [age, vaccinationRecords]);
 
-  // Calculate overall module status
+  // Calculate overall module status (includes assessment)
   const getModuleStatus = useCallback((): 'stable' | 'monitor' | 'action' => {
     const summary = calculateHealthPreventionSummary({
       profile: { dateOfBirth: profile?.dateOfBirth, sex },
@@ -501,10 +592,11 @@ export function useHealthPrevention(options: UseHealthPreventionOptions = {}) {
         : null,
       screeningRecords,
       vaccinationRecords,
+      assessmentRecords,
     });
 
     return summary.status;
-  }, [config, profile?.dateOfBirth, screeningRecords, vaccinationRecords, sex]);
+  }, [config, profile?.dateOfBirth, screeningRecords, vaccinationRecords, assessmentRecords, sex]);
 
   // Get due/overdue count
   const getDueCount = useCallback(() => {
@@ -518,10 +610,11 @@ export function useHealthPrevention(options: UseHealthPreventionOptions = {}) {
         : null,
       screeningRecords,
       vaccinationRecords,
+      assessmentRecords,
     });
 
     return summary.dueCount;
-  }, [config, profile?.dateOfBirth, screeningRecords, vaccinationRecords, sex]);
+  }, [config, profile?.dateOfBirth, screeningRecords, vaccinationRecords, assessmentRecords, sex]);
 
   // Refresh data function
   const refreshData = async () => {
@@ -529,7 +622,7 @@ export function useHealthPrevention(options: UseHealthPreventionOptions = {}) {
       queryClient.invalidateQueries({ queryKey: ['healthPreventionConfig', clientId] }),
       queryClient.invalidateQueries({ queryKey: ['cancerScreeningRecords', clientId] }),
       queryClient.invalidateQueries({ queryKey: ['vaccinationRecords', clientId] }),
-      queryClient.invalidateQueries({ queryKey: ['healthPreventionAlerts', clientId] }),
+      queryClient.invalidateQueries({ queryKey: ['annualHealthAssessments', clientId] }),
     ]);
   };
 
@@ -537,6 +630,7 @@ export function useHealthPrevention(options: UseHealthPreventionOptions = {}) {
     config,
     screeningRecords,
     vaccinationRecords,
+    assessmentRecords,
     alerts,
     isLoading,
     age,
@@ -545,8 +639,11 @@ export function useHealthPrevention(options: UseHealthPreventionOptions = {}) {
     logScreeningCompletion,
     deferScreening,
     logVaccination,
+    logAssessment,
     getEligibleScreenings,
     getVaccinationsWithStatus,
+    getAssessmentStatus,
+    getLatestAssessment,
     getModuleStatus,
     getDueCount,
     refreshData,

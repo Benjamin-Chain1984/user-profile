@@ -19,6 +19,7 @@ import { calculateFluidStatus } from '@/utils/fluidBalanceCalculator';
 import type { WeightEntry, WeightBmiConfig, WeightBmiAlert, WeightStatusInfo } from '@/types/weightBmi';
 import type { FluidConfig, FluidIntakeEntry, FluidOutputEntry, FluidStatus } from '@/types/fluidBalance';
 import type { CancerScreeningRecord, VaccinationRecord } from '@/types/healthPrevention';
+import type { HealthAssessmentRecord } from '@/components/healthPrevention/HealthAssessmentSection';
 import { calculateHealthPreventionSummary } from '@/utils/healthPreventionStatusCalculator';
 import { calculateSleepStatus } from '@/utils/sleepStatusCalculator';
 import type { SleepEntry, SleepConfig } from '@/types/sleep';
@@ -669,6 +670,25 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         editReason: r.edit_reason,
       })) as VaccinationRecord[];
 
+      // Fetch annual health assessment records
+      const { data: assessments } = await supabase
+        .from('annual_health_assessment_records')
+        .select('*')
+        .eq('client_id', profile.id)
+        .order('date_completed', { ascending: false });
+
+      const typedAssessments: HealthAssessmentRecord[] = (assessments || []).map((r: any) => ({
+        id: r.id,
+        clientId: r.client_id,
+        dateCompleted: r.date_completed,
+        completedBy: r.completed_by,
+        location: r.location,
+        notes: r.notes,
+        nextDueDate: r.next_due_date,
+        createdAt: r.created_at,
+        createdBy: r.created_by,
+      })) as HealthAssessmentRecord[];
+
       const summary = calculateHealthPreventionSummary({
         profile: { dateOfBirth: profile.dateOfBirth, sex },
         config: {
@@ -677,6 +697,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         },
         screeningRecords: typedScreenings,
         vaccinationRecords: typedVaccinations,
+        assessmentRecords: typedAssessments,
       });
 
       setLatestHealthPreventionData({
