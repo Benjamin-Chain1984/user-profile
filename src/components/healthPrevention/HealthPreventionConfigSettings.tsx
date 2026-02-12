@@ -18,19 +18,55 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { RestrictedSection } from '@/components/ui/restricted-section';
-import { ModuleNotificationsCard, ModuleNotificationSettings } from '@/components/module/ModuleNotificationsCard';
+import { AlertRecipientSelector } from '@/components/profile/AlertRecipientSelector';
+import { useModuleAlertRecipients, useSetModuleAlertRecipients } from '@/hooks/useNotificationContacts';
 import { useHealthPrevention } from '@/hooks/useHealthPrevention';
 import { useProfile } from '@/contexts/ProfileContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   REMINDER_TEXT_OPTIONS,
   SmokingHistory,
 } from '@/types/healthPrevention';
-import { Settings, Stethoscope, FileSearch, Syringe, Save } from 'lucide-react';
+import { Settings, Stethoscope, FileSearch, Syringe, Save, Bell } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function HealthPreventionConfigSettings() {
   const { config, saveConfig } = useHealthPrevention();
   const { profile } = useProfile();
+  const { session } = useAuth();
+  const clientId = profile?.id;
+  const MODULE_NAME = 'health-prevention';
+
+  // Alert recipients
+  const { data: savedRecipients } = useModuleAlertRecipients(MODULE_NAME, clientId);
+  const setRecipients = useSetModuleAlertRecipients();
+  const [amberRecipients, setAmberRecipients] = useState<string[]>([]);
+  const [redRecipients, setRedRecipients] = useState<string[]>([]);
+  const isAdmin = true; // Already inside RestrictedSection
+
+  useEffect(() => {
+    if (savedRecipients) {
+      setAmberRecipients(
+        savedRecipients.filter((r) => r.alert_severity === 'amber').map((r) => r.notification_contact_id)
+      );
+      setRedRecipients(
+        savedRecipients.filter((r) => r.alert_severity === 'red').map((r) => r.notification_contact_id)
+      );
+    }
+  }, [savedRecipients]);
+
+  const handleSaveRecipients = () => {
+    if (!clientId) return;
+    const recipients = [
+      ...amberRecipients.map((id) => ({ contactId: id, severity: 'amber' as const })),
+      ...redRecipients.map((id) => ({ contactId: id, severity: 'red' as const })),
+    ];
+    setRecipients.mutate({
+      clientId,
+      moduleName: MODULE_NAME,
+      recipients,
+    });
+  };
   
   const [enableCancerScreening, setEnableCancerScreening] = useState(true);
   const [enableVaccinationReminders, setEnableVaccinationReminders] = useState(true);
@@ -40,11 +76,6 @@ export function HealthPreventionConfigSettings() {
   const [customReminderText, setCustomReminderText] = useState('');
   const [isCustomReminder, setIsCustomReminder] = useState(false);
   const [lungSmokingHistory, setLungSmokingHistory] = useState<SmokingHistory | ''>('');
-  const [notificationSettings, setNotificationSettings] = useState<ModuleNotificationSettings>({
-    enableNotifications: false,
-    amberRecipientIds: [],
-    redRecipientIds: [],
-  });
   const [hasChanges, setHasChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -252,17 +283,49 @@ export function HealthPreventionConfigSettings() {
           </Card>
         )}
 
-        {/* Notification Settings */}
-        <ModuleNotificationsCard
-          moduleName="health-prevention"
-          moduleDisplayName="Health Prevention"
-          settings={notificationSettings}
-          onSettingsChange={(settings) => {
-            setNotificationSettings(settings);
-            markChanged();
-          }}
-          clientId={profile?.id}
-        />
+        {/* Alert Notification Recipients */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Bell className="h-5 w-5" />
+              Alert Notification Recipients
+            </CardTitle>
+            <CardDescription>
+              Select who should receive email notifications when alerts occur for this module.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <RestrictedSection requiredRole="admin">
+              <AlertRecipientSelector
+                moduleName={MODULE_NAME}
+                severity="amber"
+                selectedContactIds={amberRecipients}
+                onSelectionChange={setAmberRecipients}
+                clientId={clientId}
+              />
+
+              <AlertRecipientSelector
+                moduleName={MODULE_NAME}
+                severity="red"
+                selectedContactIds={redRecipients}
+                onSelectionChange={setRedRecipients}
+                clientId={clientId}
+                className="mt-6"
+              />
+
+              {isAdmin && (
+                <Button
+                  onClick={handleSaveRecipients}
+                  disabled={setRecipients.isPending}
+                  variant="outline"
+                  className="w-full mt-4"
+                >
+                  {setRecipients.isPending ? 'Saving...' : 'Save Alert Recipients'}
+                </Button>
+              )}
+            </RestrictedSection>
+          </CardContent>
+        </Card>
 
         {/* Save Button */}
         {hasChanges && (
