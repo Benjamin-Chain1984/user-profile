@@ -1,6 +1,6 @@
 /**
  * Bowel Care Plan Viewer - Read-only structured view for all staff
- * Includes acknowledgement and version history
+ * Includes acknowledgement log and version history
  */
 
 import { useState } from 'react';
@@ -14,7 +14,7 @@ import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
 import { useBowelCarePlan, useBowelCarePlanAcknowledgements, useBowelCarePlanVersions } from '@/hooks/useBowelCarePlan';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
@@ -24,13 +24,43 @@ import { BRISTOL_TYPES } from '@/types/bowelCare';
 import { RISK_TYPES, RISK_ACTIONS, TOILETING_ASSISTANCE_OPTIONS } from '@/types/bowelCarePlan';
 import type { RiskEntry, PrnEscalationStep, EmergencyResponse, EquipmentChecklist } from '@/types/bowelCarePlan';
 import { ProfileAvatar } from '@/components/ideal/ProfileAvatar';
-import { PrnEscalationFlowchart } from './PrnEscalationFlowchart';
-import { format } from 'date-fns';
 import jsPDF from 'jspdf';
 import {
-  FileText, ChevronDown, Printer, Clock, CheckCircle2,
-  AlertTriangle, Loader2, History, User, Heart, Shield, Pill, Package,
+  FileText, ChevronDown, Printer, CheckCircle2,
+  AlertTriangle, Loader2, History, User, Heart, Shield, Pill, Package, Users,
 } from 'lucide-react';
+
+/** Format a date string or Date to DD/MM/YYYY */
+function formatDate(val: string | Date | null | undefined): string {
+  if (!val) return 'Not specified';
+  const d = typeof val === 'string' ? new Date(val.includes('T') ? val : val + 'T00:00:00') : val;
+  if (isNaN(d.getTime())) return String(val);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+/** Format a date string or Date to "12 February 2026" style */
+function formatDateLong(val: string | Date | null | undefined): string {
+  if (!val) return 'Not specified';
+  const d = typeof val === 'string' ? new Date(val.includes('T') ? val : val + 'T00:00:00') : val;
+  if (isNaN(d.getTime())) return String(val);
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+/** Format datetime for acknowledgement log */
+function formatDateTime(val: string | Date): string {
+  const d = typeof val === 'string' ? new Date(val) : val;
+  if (isNaN(d.getTime())) return String(val);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
 
 interface BowelCarePlanViewerProps {
   clientId?: string;
@@ -93,70 +123,208 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
   const getActionLabel = (action: string) => RISK_ACTIONS.find(r => r.value === action)?.label || action;
   const getAssistanceLabel = (val: string) => TOILETING_ASSISTANCE_OPTIONS.find(o => o.value === val)?.label || val;
 
+  const getNextActionLabel = (action: string) => {
+    switch (action) {
+      case 'second_dose': return 'Administer second dose';
+      case 'escalate_gp': return 'Contact GP';
+      case 'attend_hospital': return 'Attend Hospital';
+      case 'repeat': return 'Repeat dose';
+      default: return action;
+    }
+  };
+
+  const monitoringHours = config?.monitor_hours_after_prn || 8;
+
+  // --- PDF Generation ---
   const handlePrint = () => {
     const doc = new jsPDF();
-    let y = 20;
     const margin = 15;
+    const pageWidth = doc.internal.pageSize.getWidth() - margin * 2;
+    let y = 20;
 
-    doc.setFontSize(18);
+    const checkPage = (needed: number) => {
+      if (y + needed > 275) { doc.addPage(); y = 20; }
+    };
+
+    const addSectionHeader = (title: string) => {
+      checkPage(15);
+      y += 4;
+      doc.setFillColor(240, 240, 240);
+      doc.rect(margin, y - 5, pageWidth, 8, 'F');
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 30, 30);
+      doc.text(title, margin + 2, y);
+      y += 8;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(60, 60, 60);
+    };
+
+    const addField = (label: string, value: string) => {
+      checkPage(7);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${label}:`, margin + 2, y);
+      doc.setFont('helvetica', 'normal');
+      const labelWidth = doc.getTextWidth(`${label}: `);
+      const lines = doc.splitTextToSize(value, pageWidth - labelWidth - 4);
+      doc.text(lines, margin + 2 + labelWidth, y);
+      y += lines.length * 4.5 + 1.5;
+    };
+
+    const addBullet = (text: string) => {
+      checkPage(6);
+      const lines = doc.splitTextToSize(text, pageWidth - 10);
+      doc.text('•', margin + 4, y);
+      doc.text(lines, margin + 10, y);
+      y += lines.length * 4.5 + 1;
+    };
+
+    // Title
+    doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
     doc.text('Digital Bowel Care Plan', margin, y);
-    y += 10;
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Version: ${plan.version}`, margin, y); y += 5;
-    doc.text(`Author: ${plan.plan_author || 'Not specified'}`, margin, y); y += 5;
-    if (plan.last_reviewed_date) doc.text(`Last Reviewed: ${plan.last_reviewed_date}`, margin, y); y += 5;
-    if (plan.next_review_due) doc.text(`Next Review Due: ${plan.next_review_due}`, margin, y); y += 5;
-    doc.text(`Generated: ${format(new Date(), 'PPp')}`, margin, y); y += 10;
+    y += 8;
 
-    // Baseline
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Participant Baseline', margin, y); y += 8;
+    // Header info
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    if (plan.typical_bowel_frequency) { doc.text(`Frequency: ${plan.typical_bowel_frequency}`, margin, y); y += 5; }
-    if (plan.known_bowel_patterns) { doc.text(`Patterns: ${plan.known_bowel_patterns}`, margin, y); y += 5; }
-    if (plan.dietary_considerations) { doc.text(`Diet: ${plan.dietary_considerations}`, margin, y); y += 5; }
-    if (plan.fluid_intake_expectations) { doc.text(`Fluids: ${plan.fluid_intake_expectations}`, margin, y); y += 5; }
-    y += 5;
+    doc.setTextColor(60, 60, 60);
+    const clientName = profile?.fullName || 'Client';
+    addField('Client', clientName);
+    addField('Plan Version', `v${plan.version}`);
+    addField('Author', plan.plan_author || 'Not specified');
+    addField('Date Developed', formatDate(plan.date_developed));
+    addField('Last Reviewed', formatDate(plan.last_reviewed_date));
+    addField('Next Review Due', formatDate(plan.next_review_due));
+    addField('Generated', formatDateTime(new Date()));
+    y += 3;
 
-    doc.text(`Toileting Assistance: ${getAssistanceLabel(plan.toileting_assistance)}`, margin, y); y += 10;
+    // Divider
+    doc.setDrawColor(180, 180, 180);
+    doc.line(margin, y, margin + pageWidth, y);
+    y += 6;
 
-    // Risk entries
+    // Plan Overview
+    addSectionHeader('Plan Overview');
+    addField('Involvement Confirmed', plan.participant_involvement_confirmed ? 'Yes' : 'No');
+    addField('Consent to Share', plan.consent_to_share ? 'Yes' : 'No');
+    y += 2;
+
+    // Profile & Baseline
+    addSectionHeader('Profile & Baseline');
+    if (plan.normal_stool_bristol_types?.length) {
+      const types = plan.normal_stool_bristol_types.map(t => {
+        const info = BRISTOL_TYPES.find(b => b.type === t);
+        return info ? `Type ${t} (${info.name})` : `Type ${t}`;
+      }).join(', ');
+      addField('Normal Stool Types', types);
+    }
+    if (plan.typical_bowel_frequency) addField('Typical Frequency', plan.typical_bowel_frequency);
+    if (plan.known_bowel_patterns) addField('Known Patterns', plan.known_bowel_patterns);
+    if (plan.dietary_considerations) addField('Dietary', plan.dietary_considerations);
+    if (plan.fluid_intake_expectations) addField('Fluid Intake', plan.fluid_intake_expectations);
+    if (plan.mobility_considerations) addField('Mobility', plan.mobility_considerations);
+    if (plan.communication_preferences) addField('Communication', plan.communication_preferences);
+    y += 2;
+
+    // Support Requirements
+    addSectionHeader('Support Requirements');
+    addField('Toileting Assistance', getAssistanceLabel(plan.toileting_assistance));
+    if (plan.positioning_requirements) addField('Positioning', plan.positioning_requirements);
+    if (plan.equipment_required) addField('Equipment', plan.equipment_required);
+    addField('Continence Support', plan.continence_support ? 'Yes' : 'No');
+    y += 2;
+
+    // Risk Monitoring
     if (riskEntries.length > 0) {
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Risk Monitoring', margin, y); y += 8;
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
+      addSectionHeader('Risk Monitoring & Early Warning Signs');
       riskEntries.forEach(risk => {
-        doc.text(`• ${getRiskLabel(risk.risk_type)} → ${risk.actions.map(getActionLabel).join(', ')}`, margin, y);
-        y += 5;
+        let displayLabel = getRiskLabel(risk.risk_type);
+        if (risk.risk_type === 'no_bm_days' && config?.no_bm_days_threshold) {
+          displayLabel = `No bowel motion for ${config.no_bm_days_threshold} days`;
+        } else if (risk.risk_type === 'hard_pellets' && config?.type1_consecutive_days_threshold) {
+          displayLabel = `Hard pellets (Type 1) for ${config.type1_consecutive_days_threshold} days`;
+        }
+        checkPage(8);
+        addBullet(`${displayLabel} → ${risk.actions.map(getActionLabel).join(', ')}`);
       });
-      y += 5;
+      y += 2;
     }
 
-    // PRN steps
+    // PRN Escalation
     if (prnSteps.length > 0) {
-      if (y > 260) { doc.addPage(); y = 20; }
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('PRN Escalation', margin, y); y += 8;
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
+      addSectionHeader('PRN Escalation Pathway');
       prnSteps.forEach((step, i) => {
-        doc.text(`Step ${i + 1}: ${step.medication_name} ${step.dose} (${step.route}) → wait ${step.wait_hours}h → ${step.next_action}`, margin, y);
+        checkPage(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Step ${i + 1}:`, margin + 2, y);
+        doc.setFont('helvetica', 'normal');
         y += 5;
+        addBullet(`Medication: ${step.medication_name}`);
+        addBullet(`Dose: ${step.dose}`);
+        addBullet(`Route: ${step.route === 'rectal' ? 'Rectal' : 'Oral'}`);
+        addBullet(`Monitor for ${step.wait_hours || monitoringHours} hours after administration`);
+        addBullet(`If no bowel motion: ${getNextActionLabel(step.next_action)}`);
+        if (step.next_medication_name) {
+          addBullet(`Next medication: ${step.next_medication_name} ${step.next_dose || ''}`);
+        }
+        y += 2;
       });
     }
 
-    doc.setFontSize(8);
-    doc.text('NDIS Practice Standards – High Intensity Support Skills Descriptors, November 2022', margin, 285);
+    // Emergency Response
+    if (emergencyResponses.length > 0) {
+      addSectionHeader('Emergency Response');
+      emergencyResponses.forEach(resp => {
+        checkPage(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(resp.scenario, margin + 2, y);
+        doc.setFont('helvetica', 'normal');
+        y += 5;
+        resp.steps.forEach(step => addBullet(step));
+        y += 2;
+      });
+    }
 
-    doc.save(`bowel-care-plan-v${plan.version}-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    // Equipment
+    addSectionHeader('Equipment & Consumables');
+    const items: string[] = [];
+    if (equipChecklist.gloves) items.push('Gloves');
+    if (equipChecklist.lubricant) items.push('Lubricant');
+    if (equipChecklist.enema) items.push('Enema');
+    if (equipChecklist.suppositories) items.push('Suppositories');
+    if (equipChecklist.continence_pads) items.push('Continence Pads');
+    if (equipChecklist.hoist) items.push('Hoist');
+    if (equipChecklist.commode) items.push('Commode');
+    if (equipChecklist.other) items.push(equipChecklist.other);
+    addField('Required', items.length > 0 ? items.join(', ') : 'None specified');
+    y += 2;
+
+    // Acknowledgement Log
+    if (acknowledgements.length > 0) {
+      addSectionHeader('Staff Acknowledgement Log');
+      acknowledgements.forEach(ack => {
+        checkPage(6);
+        addBullet(`User ${ack.user_id.substring(0, 8)}… — Acknowledged: ${formatDateTime(ack.acknowledged_at)}`);
+      });
+      y += 2;
+    }
+
+    // Footer
+    checkPage(15);
+    y += 4;
+    doc.setDrawColor(180, 180, 180);
+    doc.line(margin, y, margin + pageWidth, y);
+    y += 5;
+    doc.setFontSize(7);
+    doc.setTextColor(120, 120, 120);
+    doc.text('Reference: NDIS Practice Standards – High Intensity Support Skills Descriptors, November 2022.', margin, y);
+    y += 4;
+    doc.text('This plan supports bowel care practice. If concerns are identified, escalate to a GP or qualified health practitioner.', margin, y);
+
+    doc.save(`bowel-care-plan-v${plan.version}-${formatDate(new Date()).replace(/\//g, '-')}.pdf`);
   };
 
   return (
@@ -175,7 +343,7 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
               <Badge variant="outline">v{plan.version}</Badge>
               <Badge className="bg-green-100 text-green-800">Published</Badge>
               {plan.plan_author && <span className="text-sm text-muted-foreground">by {plan.plan_author}</span>}
-              {plan.next_review_due && <span className="text-sm text-muted-foreground">Review: {plan.next_review_due}</span>}
+              {plan.next_review_due && <span className="text-sm text-muted-foreground">Review: {formatDateLong(plan.next_review_due)}</span>}
             </div>
           </div>
         </div>
@@ -229,10 +397,10 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
         <CardContent className="space-y-3">
           <div className="grid sm:grid-cols-2 gap-4 text-sm">
             <div><strong>Author:</strong> {plan.plan_author || 'Not specified'}</div>
-            <div><strong>Date Developed:</strong> {plan.date_developed || 'Not specified'}</div>
-            <div><strong>Last Reviewed:</strong> {plan.last_reviewed_date || 'Not reviewed'}</div>
-            <div><strong>Next Review Due:</strong> {plan.next_review_due || 'Not set'}</div>
-            <div><strong>Participant Involvement:</strong> {plan.participant_involvement_confirmed ? 'Yes' : 'No'}</div>
+            <div><strong>Date Developed:</strong> {formatDate(plan.date_developed)}</div>
+            <div><strong>Last Reviewed:</strong> {formatDate(plan.last_reviewed_date)}</div>
+            <div><strong>Next Review Due:</strong> {formatDateLong(plan.next_review_due)}</div>
+            <div><strong>Involvement Confirmed:</strong> {plan.participant_involvement_confirmed ? 'Yes' : 'No'}</div>
             <div><strong>Consent to Share:</strong> {plan.consent_to_share ? 'Yes' : 'No'}</div>
           </div>
         </CardContent>
@@ -298,7 +466,6 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
           <CardContent>
             <div className="space-y-3">
               {riskEntries.map(risk => {
-                // Get configured threshold for no_bm_days
                 let displayLabel = getRiskLabel(risk.risk_type);
                 if (risk.risk_type === 'no_bm_days' && config?.no_bm_days_threshold) {
                   displayLabel = `No bowel motion for ${config.no_bm_days_threshold} days`;
@@ -325,7 +492,7 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
         </Card>
       )}
 
-      {/* PRN Escalation */}
+      {/* PRN Escalation — Text-based */}
       {prnSteps.length > 0 && (
         <Card>
           <CardHeader>
@@ -335,10 +502,23 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <PrnEscalationFlowchart 
-              steps={prnSteps} 
-              monitoringHours={config?.monitor_hours_after_prn || 8}
-            />
+            <div className="space-y-4">
+              {prnSteps.map((step, i) => (
+                <div key={step.id} className="p-4 bg-muted/50 rounded-lg border-l-4 border-blue-300">
+                  <p className="font-semibold text-sm mb-2">Step {i + 1}</p>
+                  <div className="space-y-1 text-sm">
+                    <p><strong>Medication:</strong> {step.medication_name}</p>
+                    <p><strong>Dose:</strong> {step.dose}</p>
+                    <p><strong>Route:</strong> {step.route === 'rectal' ? 'Rectal' : 'Oral'}</p>
+                    <p><strong>Monitor for:</strong> {step.wait_hours || monitoringHours} hours after administration</p>
+                    <p><strong>If no bowel motion:</strong> {getNextActionLabel(step.next_action)}</p>
+                    {step.next_medication_name && (
+                      <p><strong>Next medication:</strong> {step.next_medication_name} {step.next_dose || ''}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}
@@ -391,6 +571,35 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
         </CardContent>
       </Card>
 
+      {/* Staff Acknowledgement Log */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Staff Acknowledgement Log
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {acknowledgements.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">No acknowledgements recorded for this version.</p>
+          ) : (
+            <div className="space-y-2">
+              {acknowledgements.map(ack => (
+                <div key={ack.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg text-sm">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                    <span className="font-medium">User {ack.user_id.substring(0, 8)}…</span>
+                  </div>
+                  <span className="text-muted-foreground text-xs">
+                    {formatDateTime(ack.acknowledged_at)} — v{plan.version}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Safety Footer */}
       <div className="text-xs text-muted-foreground border-t pt-4 space-y-1">
         <p>Reference: NDIS Practice Standards – High Intensity Support Skills Descriptors, November 2022.</p>
@@ -409,7 +618,7 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
               <div className="flex items-center justify-between">
                 <Badge>v{plan.version} (Current)</Badge>
                 <span className="text-xs text-muted-foreground">
-                  {plan.published_at ? format(new Date(plan.published_at), 'PPp') : 'Draft'}
+                  {plan.published_at ? formatDateTime(plan.published_at) : 'Draft'}
                 </span>
               </div>
             </div>
@@ -417,7 +626,7 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
               <div key={v.id} className="p-3 border rounded-lg">
                 <div className="flex items-center justify-between">
                   <Badge variant="outline">v{v.version}</Badge>
-                  <span className="text-xs text-muted-foreground">{format(new Date(v.created_at), 'PPp')}</span>
+                  <span className="text-xs text-muted-foreground">{formatDateTime(v.created_at)}</span>
                 </div>
                 {v.change_summary && <p className="text-sm mt-1">{v.change_summary}</p>}
                 {v.change_reason && <p className="text-xs text-muted-foreground mt-1">Reason: {v.change_reason}</p>}
