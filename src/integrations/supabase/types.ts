@@ -306,6 +306,189 @@ export type Database = {
           },
         ]
       }
+      bowel_care_plan_acknowledgements: {
+        Row: {
+          acknowledged_at: string
+          id: string
+          plan_id: string
+          plan_version: number
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string
+          id?: string
+          plan_id: string
+          plan_version: number
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string
+          id?: string
+          plan_id?: string
+          plan_version?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bowel_care_plan_acknowledgements_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "bowel_care_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bowel_care_plan_versions: {
+        Row: {
+          change_reason: string | null
+          change_summary: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          plan_id: string
+          snapshot: Json
+          version: number
+        }
+        Insert: {
+          change_reason?: string | null
+          change_summary?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          plan_id: string
+          snapshot: Json
+          version: number
+        }
+        Update: {
+          change_reason?: string | null
+          change_summary?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          plan_id?: string
+          snapshot?: Json
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bowel_care_plan_versions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "bowel_care_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bowel_care_plans: {
+        Row: {
+          client_id: string | null
+          communication_preferences: string | null
+          consent_to_share: boolean | null
+          continence_support: boolean | null
+          created_at: string
+          created_by: string | null
+          date_developed: string | null
+          dietary_considerations: string | null
+          emergency_responses: Json | null
+          equipment_checklist: Json | null
+          equipment_required: string | null
+          fluid_intake_expectations: string | null
+          id: string
+          known_bowel_patterns: string | null
+          last_reviewed_date: string | null
+          mobility_considerations: string | null
+          next_review_due: string | null
+          normal_stool_bristol_types: number[] | null
+          participant_involvement_confirmed: boolean | null
+          plan_author: string | null
+          positioning_requirements: string | null
+          prn_escalation_steps: Json | null
+          published_at: string | null
+          published_by: string | null
+          risk_entries: Json | null
+          status: string
+          toileting_assistance: string | null
+          typical_bowel_frequency: string | null
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          client_id?: string | null
+          communication_preferences?: string | null
+          consent_to_share?: boolean | null
+          continence_support?: boolean | null
+          created_at?: string
+          created_by?: string | null
+          date_developed?: string | null
+          dietary_considerations?: string | null
+          emergency_responses?: Json | null
+          equipment_checklist?: Json | null
+          equipment_required?: string | null
+          fluid_intake_expectations?: string | null
+          id?: string
+          known_bowel_patterns?: string | null
+          last_reviewed_date?: string | null
+          mobility_considerations?: string | null
+          next_review_due?: string | null
+          normal_stool_bristol_types?: number[] | null
+          participant_involvement_confirmed?: boolean | null
+          plan_author?: string | null
+          positioning_requirements?: string | null
+          prn_escalation_steps?: Json | null
+          published_at?: string | null
+          published_by?: string | null
+          risk_entries?: Json | null
+          status?: string
+          toileting_assistance?: string | null
+          typical_bowel_frequency?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          client_id?: string | null
+          communication_preferences?: string | null
+          consent_to_share?: boolean | null
+          continence_support?: boolean | null
+          created_at?: string
+          created_by?: string | null
+          date_developed?: string | null
+          dietary_considerations?: string | null
+          emergency_responses?: Json | null
+          equipment_checklist?: Json | null
+          equipment_required?: string | null
+          fluid_intake_expectations?: string | null
+          id?: string
+          known_bowel_patterns?: string | null
+          last_reviewed_date?: string | null
+          mobility_considerations?: string | null
+          next_review_due?: string | null
+          normal_stool_bristol_types?: number[] | null
+          participant_involvement_confirmed?: boolean | null
+          plan_author?: string | null
+          positioning_requirements?: string | null
+          prn_escalation_steps?: Json | null
+          published_at?: string | null
+          published_by?: string | null
+          risk_entries?: Json | null
+          status?: string
+          toileting_assistance?: string | null
+          typical_bowel_frequency?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bowel_care_plans_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bowel_escalation_records: {
         Row: {
           advice_received: string | null
