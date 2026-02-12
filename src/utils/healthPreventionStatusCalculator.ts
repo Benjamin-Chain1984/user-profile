@@ -22,6 +22,7 @@ import {
   type VaccinationRecord,
   type HealthPreventionConfig,
 } from '@/types/healthPrevention';
+import type { HealthAssessmentRecord } from '@/components/healthPrevention/HealthAssessmentSection';
 
 type SexLike = string | null | undefined;
 
@@ -62,6 +63,7 @@ export function calculateHealthPreventionSummary(params: {
   config: Pick<HealthPreventionConfig, 'enableCancerScreening' | 'enableVaccinationReminders'> | null;
   screeningRecords: CancerScreeningRecord[];
   vaccinationRecords: VaccinationRecord[];
+  assessmentRecords?: HealthAssessmentRecord[];
   now?: Date;
 }): HealthPreventionSummary {
   const now = params.now ?? new Date();
@@ -136,6 +138,21 @@ export function calculateHealthPreventionSummary(params: {
         hasOverdue = true;
       } else if (display === 'due' || display === 'not_recorded') {
         dueCount += 1;
+      }
+    }
+  }
+
+  // Annual Comprehensive Health Assessment check
+  const assessments = params.assessmentRecords || [];
+  if (assessments.length === 0) {
+    dueCount += 1;
+  } else {
+    const latest = assessments[0];
+    if (latest.nextDueDate) {
+      const dueDate = new Date(latest.nextDueDate);
+      if (now > dueDate) {
+        dueCount += 1;
+        hasOverdue = true;
       }
     }
   }

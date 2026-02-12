@@ -144,6 +144,59 @@ export type Database = {
           },
         ]
       }
+      annual_health_assessment_records: {
+        Row: {
+          client_id: string | null
+          completed_by: string | null
+          created_at: string
+          created_by: string | null
+          date_completed: string
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          id: string
+          location: string | null
+          next_due_date: string | null
+          notes: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          completed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_completed: string
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          id?: string
+          location?: string | null
+          next_due_date?: string | null
+          notes?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          completed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_completed?: string
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          id?: string
+          location?: string | null
+          next_due_date?: string | null
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "annual_health_assessment_records_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_events: {
         Row: {
           action: string

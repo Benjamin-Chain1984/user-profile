@@ -10,3 +10,4 @@ export { VaccinationSection } from './VaccinationSection';
 export { HealthPreventionConfigSettings } from './HealthPreventionConfigSettings';
 export { HealthPreventionHistory } from './HealthPreventionHistory';
 export { HealthPreventionExportReports } from './HealthPreventionExportReports';
+export { HealthAssessmentSection } from './HealthAssessmentSection';
