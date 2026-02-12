@@ -656,52 +656,31 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
                 Call 000
               </Button>
             </div>
-
-            {/* Equipment & Consumables under AD */}
-            <Separator className="my-4" />
-            <div className="space-y-3">
-              <h4 className="font-semibold flex items-center gap-2">
-                <Package className="h-4 w-4" />
-                Equipment & Consumables
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {equipChecklist.gloves && <Badge variant="outline">Gloves</Badge>}
-                {equipChecklist.lubricant && <Badge variant="outline">Lubricant</Badge>}
-                {equipChecklist.enema && <Badge variant="outline">Enema</Badge>}
-                {equipChecklist.suppositories && <Badge variant="outline">Suppositories</Badge>}
-                {equipChecklist.continence_pads && <Badge variant="outline">Continence Pads</Badge>}
-                {equipChecklist.hoist && <Badge variant="outline">Hoist</Badge>}
-                {equipChecklist.commode && <Badge variant="outline">Commode</Badge>}
-                {equipChecklist.other && <Badge variant="outline">{equipChecklist.other}</Badge>}
-              </div>
-            </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Equipment (standalone if no AD) */}
-      {!(plan as any).enable_autonomic_dysreflexia && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Equipment & Consumables
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {equipChecklist.gloves && <Badge variant="outline">Gloves</Badge>}
-              {equipChecklist.lubricant && <Badge variant="outline">Lubricant</Badge>}
-              {equipChecklist.enema && <Badge variant="outline">Enema</Badge>}
-              {equipChecklist.suppositories && <Badge variant="outline">Suppositories</Badge>}
-              {equipChecklist.continence_pads && <Badge variant="outline">Continence Pads</Badge>}
-              {equipChecklist.hoist && <Badge variant="outline">Hoist</Badge>}
-              {equipChecklist.commode && <Badge variant="outline">Commode</Badge>}
-              {equipChecklist.other && <Badge variant="outline">{equipChecklist.other}</Badge>}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Equipment & Consumables — always shown, separate card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            Equipment & Consumables
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {equipChecklist.gloves && <Badge variant="outline">Gloves</Badge>}
+            {equipChecklist.lubricant && <Badge variant="outline">Lubricant</Badge>}
+            {equipChecklist.enema && <Badge variant="outline">Enema</Badge>}
+            {equipChecklist.suppositories && <Badge variant="outline">Suppositories</Badge>}
+            {equipChecklist.continence_pads && <Badge variant="outline">Continence Pads</Badge>}
+            {equipChecklist.hoist && <Badge variant="outline">Hoist</Badge>}
+            {equipChecklist.commode && <Badge variant="outline">Commode</Badge>}
+            {equipChecklist.other && <Badge variant="outline">{equipChecklist.other}</Badge>}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Staff Acknowledgement Log */}
       <Card>
