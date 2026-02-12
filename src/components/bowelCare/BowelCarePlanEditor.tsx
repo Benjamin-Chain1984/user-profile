@@ -33,7 +33,7 @@ import {
 } from '@/types/bowelCarePlan';
 import {
   Save, ChevronDown, Plus, Trash2, Loader2, Send,
-  Shield, User, Heart, AlertTriangle, Pill, Package, FileText,
+  Shield, User, Heart, AlertTriangle, Pill, Package, FileText, Zap,
 } from 'lucide-react';
 
 
@@ -77,6 +77,7 @@ export function BowelCarePlanEditor({ clientId, onClose }: BowelCarePlanEditorPr
     gloves: false, lubricant: false, enema: false, suppositories: false,
     continence_pads: false, hoist: false, commode: false, other: '',
   });
+  const [enableAD, setEnableAD] = useState(false);
 
   const [showPublishDialog, setShowPublishDialog] = useState(false);
   const [changeReason, setChangeReason] = useState('');
@@ -104,6 +105,7 @@ export function BowelCarePlanEditor({ clientId, onClose }: BowelCarePlanEditorPr
       setPrnSteps((plan.prn_escalation_steps as unknown as PrnEscalationStep[]) || []);
       setEmergencyResponses((plan.emergency_responses as unknown as EmergencyResponse[]) || DEFAULT_EMERGENCY_RESPONSES);
       setEquipChecklist((plan.equipment_checklist as unknown as EquipmentChecklist) || equipChecklist);
+      setEnableAD(!!(plan as any).enable_autonomic_dysreflexia);
     }
   }, [plan]);
 
@@ -128,6 +130,7 @@ export function BowelCarePlanEditor({ clientId, onClose }: BowelCarePlanEditorPr
       prn_escalation_steps: prnSteps,
       emergency_responses: emergencyResponses,
       equipment_checklist: equipChecklist,
+      enable_autonomic_dysreflexia: enableAD,
       changeReason,
       changeSummary,
     });
@@ -668,6 +671,26 @@ export function BowelCarePlanEditor({ clientId, onClose }: BowelCarePlanEditorPr
           </CollapsibleContent>
         </Card>
       </Collapsible>
+
+      {/* Autonomic Dysreflexia Toggle */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="h-5 w-5" />
+            Autonomic Dysreflexia
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Enable this if the individual is at risk of autonomic dysreflexia. When enabled, the signs, symptoms
+            and action plan will appear in the published care plan.
+          </p>
+          <div className="flex items-center gap-2">
+            <Switch checked={enableAD} onCheckedChange={v => setEnableAD(v)} disabled={!isAdmin} />
+            <Label>Include Autonomic Dysreflexia action plan in this care plan</Label>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Safety Footer */}
       <div className="text-xs text-muted-foreground border-t pt-4">
