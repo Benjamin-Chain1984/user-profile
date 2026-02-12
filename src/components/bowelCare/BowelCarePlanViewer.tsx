@@ -305,20 +305,6 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
       });
     }
 
-    // Equipment
-    addSectionHeader('Equipment & Consumables');
-    const items: string[] = [];
-    if (equipChecklist.gloves) items.push('Gloves');
-    if (equipChecklist.lubricant) items.push('Lubricant');
-    if (equipChecklist.enema) items.push('Enema');
-    if (equipChecklist.suppositories) items.push('Suppositories');
-    if (equipChecklist.continence_pads) items.push('Continence Pads');
-    if (equipChecklist.hoist) items.push('Hoist');
-    if (equipChecklist.commode) items.push('Commode');
-    if (equipChecklist.other) items.push(equipChecklist.other);
-    addField('Required', items.length > 0 ? items.join(', ') : 'None specified');
-    y += 2;
-
     // Autonomic Dysreflexia
     if ((plan as any).enable_autonomic_dysreflexia) {
       addSectionHeader('Autonomic Dysreflexia — Signs, Symptoms & Action Plan');
@@ -335,6 +321,34 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
       addBullet('4. Drain the bladder if required');
       addBullet('5. Check for bowel impaction — constipation can be a trigger');
       addBullet('6. Seek urgent medical help if symptoms persist');
+      y += 2;
+
+      // Equipment under AD section
+      addSectionHeader('Equipment & Consumables');
+      const items: string[] = [];
+      if (equipChecklist.gloves) items.push('Gloves');
+      if (equipChecklist.lubricant) items.push('Lubricant');
+      if (equipChecklist.enema) items.push('Enema');
+      if (equipChecklist.suppositories) items.push('Suppositories');
+      if (equipChecklist.continence_pads) items.push('Continence Pads');
+      if (equipChecklist.hoist) items.push('Hoist');
+      if (equipChecklist.commode) items.push('Commode');
+      if (equipChecklist.other) items.push(equipChecklist.other);
+      addField('Required', items.length > 0 ? items.join(', ') : 'None specified');
+      y += 2;
+    } else {
+      // Equipment section (standalone if AD disabled)
+      addSectionHeader('Equipment & Consumables');
+      const items: string[] = [];
+      if (equipChecklist.gloves) items.push('Gloves');
+      if (equipChecklist.lubricant) items.push('Lubricant');
+      if (equipChecklist.enema) items.push('Enema');
+      if (equipChecklist.suppositories) items.push('Suppositories');
+      if (equipChecklist.continence_pads) items.push('Continence Pads');
+      if (equipChecklist.hoist) items.push('Hoist');
+      if (equipChecklist.commode) items.push('Commode');
+      if (equipChecklist.other) items.push(equipChecklist.other);
+      addField('Required', items.length > 0 ? items.join(', ') : 'None specified');
       y += 2;
     }
 
@@ -592,28 +606,6 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
         </Card>
       )}
 
-      {/* Equipment */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            Equipment & Consumables
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {equipChecklist.gloves && <Badge variant="outline">Gloves</Badge>}
-            {equipChecklist.lubricant && <Badge variant="outline">Lubricant</Badge>}
-            {equipChecklist.enema && <Badge variant="outline">Enema</Badge>}
-            {equipChecklist.suppositories && <Badge variant="outline">Suppositories</Badge>}
-            {equipChecklist.continence_pads && <Badge variant="outline">Continence Pads</Badge>}
-            {equipChecklist.hoist && <Badge variant="outline">Hoist</Badge>}
-            {equipChecklist.commode && <Badge variant="outline">Commode</Badge>}
-            {equipChecklist.other && <Badge variant="outline">{equipChecklist.other}</Badge>}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Autonomic Dysreflexia Section */}
       {(plan as any).enable_autonomic_dysreflexia && (
         <Card className="border-destructive/30 bg-destructive/5">
@@ -663,6 +655,49 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
                 <Phone className="h-4 w-4" />
                 Call 000
               </Button>
+            </div>
+
+            {/* Equipment & Consumables under AD */}
+            <Separator className="my-4" />
+            <div className="space-y-3">
+              <h4 className="font-semibold flex items-center gap-2">
+                <Package className="h-4 w-4" />
+                Equipment & Consumables
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {equipChecklist.gloves && <Badge variant="outline">Gloves</Badge>}
+                {equipChecklist.lubricant && <Badge variant="outline">Lubricant</Badge>}
+                {equipChecklist.enema && <Badge variant="outline">Enema</Badge>}
+                {equipChecklist.suppositories && <Badge variant="outline">Suppositories</Badge>}
+                {equipChecklist.continence_pads && <Badge variant="outline">Continence Pads</Badge>}
+                {equipChecklist.hoist && <Badge variant="outline">Hoist</Badge>}
+                {equipChecklist.commode && <Badge variant="outline">Commode</Badge>}
+                {equipChecklist.other && <Badge variant="outline">{equipChecklist.other}</Badge>}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Equipment (standalone if no AD) */}
+      {!(plan as any).enable_autonomic_dysreflexia && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Equipment & Consumables
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {equipChecklist.gloves && <Badge variant="outline">Gloves</Badge>}
+              {equipChecklist.lubricant && <Badge variant="outline">Lubricant</Badge>}
+              {equipChecklist.enema && <Badge variant="outline">Enema</Badge>}
+              {equipChecklist.suppositories && <Badge variant="outline">Suppositories</Badge>}
+              {equipChecklist.continence_pads && <Badge variant="outline">Continence Pads</Badge>}
+              {equipChecklist.hoist && <Badge variant="outline">Hoist</Badge>}
+              {equipChecklist.commode && <Badge variant="outline">Commode</Badge>}
+              {equipChecklist.other && <Badge variant="outline">{equipChecklist.other}</Badge>}
             </div>
           </CardContent>
         </Card>
