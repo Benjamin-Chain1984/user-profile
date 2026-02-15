@@ -157,7 +157,8 @@ export function calculateHealthPreventionSummary(params: {
     }
   }
 
-  const status: 'stable' | 'monitor' | 'action' = hasOverdue ? 'action' : dueCount > 0 ? 'monitor' : 'stable';
+  // Health Prevention uses only green/amber — overdue items are amber, not red
+  const status: 'stable' | 'monitor' | 'action' = dueCount > 0 ? 'monitor' : 'stable';
   const message =
     dueCount === 0
       ? 'All preventive health items are up to date.'
