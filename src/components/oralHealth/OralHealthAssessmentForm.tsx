@@ -155,21 +155,31 @@ export function OralHealthAssessmentForm({ clientId, open, onOpenChange }: Props
                   onValueChange={(v) => setRating(cat, v as AssessmentRating)}
                   className="grid grid-cols-2 sm:grid-cols-4 gap-2"
                 >
-                  {(['healthy', 'changes', 'unhealthy', 'n_a'] as AssessmentRating[]).map((rating) => (
-                    <div key={rating} className="flex items-start gap-2">
-                      <RadioGroupItem value={rating} id={`${cat}-${rating}`} className="mt-1" />
-                      <Label htmlFor={`${cat}-${rating}`} className="font-normal text-xs leading-tight cursor-pointer">
-                        <span className="font-medium block">
-                          {rating === 'n_a' ? 'N/A' : rating.charAt(0).toUpperCase() + rating.slice(1)}
-                        </span>
-                        {rating !== 'n_a' && ASSESSMENT_DESCRIPTORS[cat] && (
-                          <span className="text-muted-foreground">
-                            {ASSESSMENT_DESCRIPTORS[cat][rating]}
+                  {(['healthy', 'changes', 'unhealthy', 'n_a'] as AssessmentRating[]).map((rating) => {
+                    const colBg = rating === 'healthy' ? 'bg-success/10 border-success/30'
+                      : rating === 'changes' ? 'bg-warning/10 border-warning/30'
+                      : rating === 'unhealthy' ? 'bg-destructive/10 border-destructive/30'
+                      : 'bg-muted/40 border-muted';
+                    const colText = rating === 'healthy' ? 'text-success'
+                      : rating === 'changes' ? 'text-warning'
+                      : rating === 'unhealthy' ? 'text-destructive'
+                      : 'text-muted-foreground';
+                    return (
+                      <div key={rating} className={`flex items-start gap-2 rounded-lg border p-2 ${colBg}`}>
+                        <RadioGroupItem value={rating} id={`${cat}-${rating}`} className="mt-0.5" />
+                        <Label htmlFor={`${cat}-${rating}`} className="font-normal text-xs leading-tight cursor-pointer">
+                          <span className={`font-semibold block ${colText}`}>
+                            {rating === 'n_a' ? 'N/A' : rating.charAt(0).toUpperCase() + rating.slice(1)}
                           </span>
-                        )}
-                      </Label>
-                    </div>
-                  ))}
+                          {rating !== 'n_a' && ASSESSMENT_DESCRIPTORS[cat] && (
+                            <span className="text-muted-foreground">
+                              {ASSESSMENT_DESCRIPTORS[cat][rating]}
+                            </span>
+                          )}
+                        </Label>
+                      </div>
+                    );
+                  })}
                 </RadioGroup>
               </Card>
             ))}

@@ -50,10 +50,14 @@ export function OralHealthHistory({ clientId }: Props) {
                   <div className="grid grid-cols-3 gap-1 text-xs">
                     {(['lips', 'tongue', 'roof_of_mouth', 'gums', 'teeth', 'dentures', 'breath', 'cleanliness', 'dental_pain'] as OralHealthCategory[]).map(cat => {
                       const val = a[cat as keyof typeof a] as string | null;
-                      if (!val || val === 'n_a') return null;
+                      if (!val) return null;
+                      const pillClass = val === 'healthy' ? 'bg-success/10 text-success'
+                        : val === 'changes' ? 'bg-warning/10 text-warning'
+                        : val === 'unhealthy' ? 'bg-destructive/10 text-destructive'
+                        : 'bg-muted/40 text-muted-foreground';
                       return (
-                        <div key={cat} className="flex items-center gap-1">
-                          <span className={`w-2 h-2 rounded-full ${val === 'healthy' ? 'bg-success' : val === 'changes' ? 'bg-warning' : 'bg-destructive'}`} />
+                        <div key={cat} className={`flex items-center gap-1 rounded px-1.5 py-0.5 ${pillClass}`}>
+                          <span className={`w-2 h-2 rounded-full ${val === 'healthy' ? 'bg-success' : val === 'changes' ? 'bg-warning' : val === 'unhealthy' ? 'bg-destructive' : 'bg-muted-foreground'}`} />
                           <span>{CATEGORY_LABELS[cat]}</span>
                         </div>
                       );
