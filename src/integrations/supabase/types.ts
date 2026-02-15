@@ -2648,6 +2648,41 @@ export type Database = {
           },
         ]
       }
+      oral_health_plan_acknowledgements: {
+        Row: {
+          acknowledged_at: string
+          id: string
+          notes: string | null
+          plan_id: string
+          plan_version: number
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string
+          id?: string
+          notes?: string | null
+          plan_id: string
+          plan_version: number
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string
+          id?: string
+          notes?: string | null
+          plan_id?: string
+          plan_version?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oral_health_plan_acknowledgements_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "oral_health_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       oral_health_plan_categories: {
         Row: {
           additional_instructions: string | null
@@ -2703,6 +2738,118 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "oral_health_plan_categories_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oral_health_plan_versions: {
+        Row: {
+          change_reason: string | null
+          change_summary: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          plan_id: string
+          snapshot: Json
+          version: number
+        }
+        Insert: {
+          change_reason?: string | null
+          change_summary?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          plan_id: string
+          snapshot: Json
+          version: number
+        }
+        Update: {
+          change_reason?: string | null
+          change_summary?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          plan_id?: string
+          snapshot?: Json
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oral_health_plan_versions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "oral_health_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oral_health_plans: {
+        Row: {
+          additional_instructions: string | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          date_developed: string | null
+          dentist_instructions: string | null
+          global_assistance_level: string | null
+          id: string
+          last_reviewed_date: string | null
+          next_review_due: string | null
+          plan_author: string | null
+          plan_categories: Json | null
+          published_at: string | null
+          published_by: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          additional_instructions?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_developed?: string | null
+          dentist_instructions?: string | null
+          global_assistance_level?: string | null
+          id?: string
+          last_reviewed_date?: string | null
+          next_review_due?: string | null
+          plan_author?: string | null
+          plan_categories?: Json | null
+          published_at?: string | null
+          published_by?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          additional_instructions?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_developed?: string | null
+          dentist_instructions?: string | null
+          global_assistance_level?: string | null
+          id?: string
+          last_reviewed_date?: string | null
+          next_review_due?: string | null
+          plan_author?: string | null
+          plan_categories?: Json | null
+          published_at?: string | null
+          published_by?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oral_health_plans_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"

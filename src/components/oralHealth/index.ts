@@ -4,7 +4,8 @@
 
 export { OralHealthDashboard } from './OralHealthDashboard';
 export { OralHealthStatusCard } from './OralHealthStatusCard';
-export { OralHealthPlanView } from './OralHealthPlanView';
+export { OralHealthPlanViewer } from './OralHealthPlanViewer';
+export { OralHealthPlanEditor } from './OralHealthPlanEditor';
 export { OralHealthTaskLogging } from './OralHealthTaskLogging';
 export { OralHealthAssessmentForm } from './OralHealthAssessmentForm';
 export { OralHealthHistory } from './OralHealthHistory';
