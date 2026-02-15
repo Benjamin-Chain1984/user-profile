@@ -17,6 +17,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
+  ReferenceArea,
   Legend
 } from 'recharts';
 import type { WeightEntry, WeightBmiConfig, WeightBmiAlert } from '@/types/weightBmi';
@@ -180,19 +181,11 @@ export function WeightBmiTrends({ clientId }: WeightBmiTrendsProps) {
                   />
                 )}
 
-                {/* BMI range reference lines */}
-                <ReferenceLine 
-                  yAxisId="bmi"
-                  y={18.5} 
-                  stroke="hsl(var(--muted-foreground))" 
-                  strokeDasharray="3 3"
-                />
-                <ReferenceLine 
-                  yAxisId="bmi"
-                  y={25} 
-                  stroke="hsl(var(--muted-foreground))" 
-                  strokeDasharray="3 3"
-                />
+                {/* BMI classification background zones */}
+                <ReferenceArea yAxisId="bmi" y1={15} y2={18.5} fill="#f59e0b" fillOpacity={0.08} label={{ value: 'Underweight', position: 'insideTopRight', fontSize: 10, fill: '#b45309' }} />
+                <ReferenceArea yAxisId="bmi" y1={18.5} y2={25} fill="#22c55e" fillOpacity={0.08} label={{ value: 'Normal', position: 'insideTopRight', fontSize: 10, fill: '#15803d' }} />
+                <ReferenceArea yAxisId="bmi" y1={25} y2={30} fill="#f59e0b" fillOpacity={0.08} label={{ value: 'Overweight', position: 'insideTopRight', fontSize: 10, fill: '#b45309' }} />
+                <ReferenceArea yAxisId="bmi" y1={30} y2={40} fill="#ef4444" fillOpacity={0.08} label={{ value: 'Obese', position: 'insideTopRight', fontSize: 10, fill: '#b91c1c' }} />
 
                 <Line 
                   yAxisId="weight"
