@@ -59,11 +59,11 @@ export function VaccinationSection({ vaccinations, age }: VaccinationSectionProp
   const getStatusBadge = (status: VaccinationWithStatus['displayStatus']) => {
     switch (status) {
       case 'completed':
-        return <Badge className="bg-success text-success-foreground gap-1"><CheckCircle2 className="h-3 w-3" /> Completed</Badge>;
+        return <Badge className="bg-success text-success-foreground gap-1"><CheckCircle2 className="h-3 w-3" /> Up to date</Badge>;
       case 'due':
         return <Badge className="bg-warning text-warning-foreground gap-1"><Clock className="h-3 w-3" /> Due</Badge>;
       case 'overdue':
-        return <Badge className="bg-destructive text-destructive-foreground gap-1"><AlertTriangle className="h-3 w-3" /> Overdue</Badge>;
+        return <Badge className="bg-warning text-warning-foreground gap-1"><AlertTriangle className="h-3 w-3" /> Overdue</Badge>;
       case 'not_recorded':
         return <Badge variant="outline" className="gap-1"><HelpCircle className="h-3 w-3" /> Not recorded</Badge>;
     }

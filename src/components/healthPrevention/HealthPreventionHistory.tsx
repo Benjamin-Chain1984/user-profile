@@ -26,7 +26,7 @@ export function HealthPreventionHistory() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge className="bg-success text-success-foreground">Completed</Badge>;
+        return <Badge className="bg-success text-success-foreground">Up to date</Badge>;
       case 'deferred':
         return <Badge variant="outline">Deferred</Badge>;
       case 'not_applicable':
