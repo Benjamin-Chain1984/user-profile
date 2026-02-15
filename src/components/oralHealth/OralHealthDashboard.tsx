@@ -74,7 +74,7 @@ export function OralHealthDashboard({ clientId }: OralHealthDashboardProps) {
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => setShowPlanViewer(true)}>
             <FileText className="h-4 w-4 mr-2" />
-            Oral Health Care Plan
+            Digital Oral Health Care Plan
           </Button>
           <Button variant="outline" onClick={() => setShowExport(true)}>
             <FileDown className="h-4 w-4 mr-2" />
