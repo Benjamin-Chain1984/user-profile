@@ -32,6 +32,7 @@ export interface OralHealthPlan {
 
 export interface PlanCategoryEntry {
   category: string;
+  is_na: boolean;
   am_required: boolean;
   pm_required: boolean;
   products: string | null;

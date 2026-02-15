@@ -32,6 +32,7 @@ interface Props {
 
 const DEFAULT_CATEGORIES: PlanCategoryEntry[] = ORAL_HEALTH_CATEGORIES.map((cat, i) => ({
   category: cat,
+  is_na: false,
   am_required: true,
   pm_required: true,
   products: null,
@@ -149,37 +150,49 @@ export function OralHealthPlanEditor({ clientId, onClose }: Props) {
         </CardHeader>
         <CardContent className="space-y-4">
           {categories.map((cat, idx) => (
-            <Card key={cat.category} className="p-4">
+            <Card key={cat.category} className={`p-4 ${cat.is_na ? 'opacity-60' : ''}`}>
               <div className="flex items-center justify-between mb-3">
                 <h4 className="font-medium">{CATEGORY_LABELS[cat.category as OralHealthCategory] || cat.category}</h4>
-                {cat.assistance_level && (
-                  <Badge variant="outline">{ASSISTANCE_LABELS[cat.assistance_level as AssistanceLevel] || cat.assistance_level}</Badge>
-                )}
-              </div>
-              <div className="grid gap-3">
-                <div className="flex gap-4">
-                  <div className="flex items-center gap-2">
-                    <Switch checked={cat.am_required} onCheckedChange={(v) => updateCategory(idx, 'am_required', v)} />
-                    <Label className="text-sm">AM</Label>
+                <div className="flex items-center gap-2">
+                  {cat.assistance_level && !cat.is_na && (
+                    <Badge variant="outline">{ASSISTANCE_LABELS[cat.assistance_level as AssistanceLevel] || cat.assistance_level}</Badge>
+                  )}
+                  {cat.is_na && <Badge variant="secondary" className="text-xs">N/A</Badge>}
+                  <div className="flex items-center gap-1.5">
+                    <Switch checked={cat.is_na} onCheckedChange={(v) => updateCategory(idx, 'is_na', v)} />
+                    <Label className="text-xs text-muted-foreground">N/A</Label>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Switch checked={cat.pm_required} onCheckedChange={(v) => updateCategory(idx, 'pm_required', v)} />
-                    <Label className="text-sm">PM</Label>
-                  </div>
-                  <Select value={cat.assistance_level || ''} onValueChange={(v) => updateCategory(idx, 'assistance_level', v || null)}>
-                    <SelectTrigger className="w-[180px]"><SelectValue placeholder="Assistance level" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="reminding">Reminding</SelectItem>
-                      <SelectItem value="supervision">Supervision</SelectItem>
-                      <SelectItem value="full_assistance">Full Assistance</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
-                <Input placeholder="Products required" value={cat.products || ''} onChange={(e) => updateCategory(idx, 'products', e.target.value || null)} />
-                <Input placeholder="Cleaning method" value={cat.cleaning_method || ''} onChange={(e) => updateCategory(idx, 'cleaning_method', e.target.value || null)} />
-                <Textarea placeholder="Additional instructions" value={cat.additional_instructions || ''} onChange={(e) => updateCategory(idx, 'additional_instructions', e.target.value || null)} rows={2} />
-                <Textarea placeholder="Dentist instructions" value={cat.dentist_instructions || ''} onChange={(e) => updateCategory(idx, 'dentist_instructions', e.target.value || null)} rows={2} />
               </div>
+              {!cat.is_na && (
+                <div className="grid gap-3">
+                  <div className="flex gap-4">
+                    <div className="flex items-center gap-2">
+                      <Switch checked={cat.am_required} onCheckedChange={(v) => updateCategory(idx, 'am_required', v)} />
+                      <Label className="text-sm">AM</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch checked={cat.pm_required} onCheckedChange={(v) => updateCategory(idx, 'pm_required', v)} />
+                      <Label className="text-sm">PM</Label>
+                    </div>
+                    <Select value={cat.assistance_level || ''} onValueChange={(v) => updateCategory(idx, 'assistance_level', v || null)}>
+                      <SelectTrigger className="w-[180px]"><SelectValue placeholder="Assistance level" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="reminding">Reminding</SelectItem>
+                        <SelectItem value="supervision">Supervision</SelectItem>
+                        <SelectItem value="full_assistance">Full Assistance</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Input placeholder="Products required" value={cat.products || ''} onChange={(e) => updateCategory(idx, 'products', e.target.value || null)} />
+                  <Input placeholder="Cleaning method" value={cat.cleaning_method || ''} onChange={(e) => updateCategory(idx, 'cleaning_method', e.target.value || null)} />
+                  <Textarea placeholder="Additional instructions" value={cat.additional_instructions || ''} onChange={(e) => updateCategory(idx, 'additional_instructions', e.target.value || null)} rows={2} />
+                  <Textarea placeholder="Dentist instructions" value={cat.dentist_instructions || ''} onChange={(e) => updateCategory(idx, 'dentist_instructions', e.target.value || null)} rows={2} />
+                </div>
+              )}
+              {cat.is_na && (
+                <p className="text-sm text-muted-foreground italic">This category is not applicable to this client.</p>
+              )}
             </Card>
           ))}
         </CardContent>
