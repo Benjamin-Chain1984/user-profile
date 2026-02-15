@@ -3,10 +3,12 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { useOralHealthAssessments, useOralHealthTaskLogs } from '@/hooks/useOralHealth';
-import { format, parseISO, subDays } from 'date-fns';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, LineChart, Line, CartesianGrid } from 'recharts';
-import { BarChart3, TrendingUp, AlertTriangle } from 'lucide-react';
+import { format, parseISO, subDays, differenceInDays } from 'date-fns';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts';
+import { BarChart3, TrendingUp, AlertTriangle, Lightbulb, CheckCircle, TrendingDown, Clock } from 'lucide-react';
+import { CATEGORY_LABELS, type OralHealthCategory } from '@/types/oralHealth';
 
 interface Props {
   clientId?: string;
@@ -38,36 +40,135 @@ export function OralHealthTrends({ clientId }: Props) {
     });
   }
 
-  // Insights
-  const insights: string[] = [];
-  const recentAssessments = assessments.slice(0, 3);
-  const consecutiveChanges = recentAssessments.filter(a => a.overall_status !== 'healthy').length;
-  if (consecutiveChanges >= 2) insights.push('Repeated oral health changes detected – consider dental review.');
-  
-  const dentalPainCount = assessments.filter(a => a.dental_pain === 'unhealthy' || a.dental_pain === 'changes').length;
-  if (dentalPainCount >= 2) insights.push('Recurring dental pain recorded. Assess for underlying cause.');
+  // --- Insights Engine ---
+  type Insight = { text: string; type: 'warning' | 'positive' | 'info' };
+  const insights: Insight[] = [];
 
-  const recentAm = amComplianceData.slice(-7);
-  const avgCompliance = recentAm.reduce((s, d) => s + (d.am + d.pm) / 2, 0) / Math.max(recentAm.length, 1);
-  if (avgCompliance > 0 && avgCompliance < 70) insights.push('Oral health compliance is below 70%. Review adherence.');
+  // Compliance insights
+  const last7Am = amComplianceData.slice(-7);
+  const amCompletedDays = last7Am.filter(d => d.am === 100).length;
+  const pmCompletedDays = last7Am.filter(d => d.pm === 100).length;
+  const avgAmPercent = Math.round(last7Am.reduce((s, d) => s + d.am, 0) / 7);
+  const avgPmPercent = Math.round(last7Am.reduce((s, d) => s + d.pm, 0) / 7);
+
+  if (amCompletedDays === 7 && pmCompletedDays === 7) {
+    insights.push({ text: 'Excellent! 100% oral care compliance this week — both morning and night care completed every day.', type: 'positive' });
+  } else {
+    if (avgAmPercent >= 85) {
+      insights.push({ text: `Morning oral care compliance is strong at ${avgAmPercent}% this week (${amCompletedDays}/7 days).`, type: 'positive' });
+    } else if (avgAmPercent > 0 && avgAmPercent < 70) {
+      insights.push({ text: `Morning oral care compliance is ${avgAmPercent}% (${amCompletedDays}/7 days). Consider reviewing barriers to AM care.`, type: 'warning' });
+    }
+    if (avgPmPercent >= 85) {
+      insights.push({ text: `Night oral care compliance is strong at ${avgPmPercent}% this week (${pmCompletedDays}/7 days).`, type: 'positive' });
+    } else if (avgPmPercent > 0 && avgPmPercent < 70) {
+      insights.push({ text: `Night oral care compliance is ${avgPmPercent}% (${pmCompletedDays}/7 days). Review evening care routine.`, type: 'warning' });
+    }
+    if (avgAmPercent > 0 && avgPmPercent > 0 && Math.abs(avgAmPercent - avgPmPercent) > 30) {
+      const weaker = avgAmPercent < avgPmPercent ? 'Morning' : 'Night';
+      insights.push({ text: `${weaker} care is significantly lower than the other period. Consider adjusting staffing or routines.`, type: 'info' });
+    }
+  }
+
+  // Assessment insights
+  const recentAssessments = assessments.slice(0, 5);
+  if (recentAssessments.length >= 2) {
+    const consecutiveUnhealthy = recentAssessments.filter(a => a.overall_status === 'unhealthy').length;
+    const consecutiveChanges = recentAssessments.filter(a => a.overall_status !== 'healthy').length;
+
+    if (consecutiveUnhealthy >= 2) {
+      insights.push({ text: `${consecutiveUnhealthy} of the last ${recentAssessments.length} assessments recorded as Unhealthy — escalate to dentist or health practitioner.`, type: 'warning' });
+    } else if (consecutiveChanges >= 3) {
+      insights.push({ text: 'Multiple consecutive assessments show changes. Monitor closely and consider a dental review.', type: 'warning' });
+    }
+
+    if (recentAssessments.length >= 3) {
+      const scores = recentAssessments.map(a => a.overall_status === 'healthy' ? 3 : a.overall_status === 'changes' ? 2 : 1);
+      if (scores[0] > scores[1] && scores[1] >= scores[2]) {
+        insights.push({ text: 'Assessment outcomes are trending positively — oral health is improving.', type: 'positive' });
+      }
+    }
+  }
+
+  const categories = ['lips', 'tongue', 'roof_of_mouth', 'gums', 'teeth', 'dentures', 'breath', 'cleanliness', 'dental_pain'] as OralHealthCategory[];
+  // Category-specific recurring issues
+  const recurringIssues: string[] = [];
+  categories.forEach(cat => {
+    const recent = assessments.slice(0, 5);
+    const unhealthyCount = recent.filter(a => (a[cat as keyof typeof a] as string) === 'unhealthy').length;
+    if (unhealthyCount >= 2) recurringIssues.push(CATEGORY_LABELS[cat]);
+  });
+  if (recurringIssues.length > 0) {
+    insights.push({ text: `Recurring concerns in: ${recurringIssues.join(', ')}. These areas have been flagged as unhealthy in multiple recent assessments.`, type: 'warning' });
+  }
+
+  // Dental pain
+  const dentalPainRecent = assessments.slice(0, 5).filter(a => a.dental_pain === 'unhealthy');
+  if (dentalPainRecent.length >= 2) {
+    insights.push({ text: 'Persistent dental pain detected across multiple assessments. Assess for underlying cause and consider pain management referral.', type: 'warning' });
+  } else if (dentalPainRecent.length === 1) {
+    insights.push({ text: 'Dental pain was recorded in a recent assessment. Monitor at next assessment and document any changes.', type: 'info' });
+  }
+
+  // Days since last assessment
+  if (assessments.length > 0) {
+    const daysSince = differenceInDays(new Date(), parseISO(assessments[0].created_at));
+    if (daysSince > 30) {
+      insights.push({ text: `It has been ${daysSince} days since the last oral health assessment. Consider scheduling one.`, type: 'warning' });
+    } else if (daysSince <= 7 && assessments[0].overall_status === 'healthy') {
+      insights.push({ text: `Last assessment (${daysSince === 0 ? 'today' : `${daysSince} day${daysSince !== 1 ? 's' : ''} ago`}) showed a healthy result.`, type: 'positive' });
+    }
+  } else {
+    insights.push({ text: 'No assessments have been recorded yet. Complete an initial oral health assessment to establish a baseline.', type: 'info' });
+  }
+
+  if (logs.length === 0 && assessments.length > 0) {
+    insights.push({ text: 'No oral health tasks have been logged. Enable compliance monitoring in Settings to track AM/PM care.', type: 'info' });
+  }
+
+  if (insights.length === 0) {
+    insights.push({ text: 'Oral health data is being collected. Continue logging tasks and assessments to generate detailed insights.', type: 'info' });
+  }
+
+  const insightIcon = (type: Insight['type']) => {
+    switch (type) {
+      case 'warning': return <AlertTriangle className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />;
+      case 'positive': return <CheckCircle className="h-4 w-4 text-success flex-shrink-0 mt-0.5" />;
+      case 'info': return <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />;
+    }
+  };
+
+  const insightColor = (type: Insight['type']) => {
+    switch (type) {
+      case 'warning': return 'text-warning';
+      case 'positive': return 'text-success';
+      case 'info': return 'text-muted-foreground';
+    }
+  };
+
+  
 
   return (
     <div className="space-y-4">
       {/* Insights */}
-      {insights.length > 0 && (
-        <Card className="border-warning/30 bg-warning/5">
-          <CardContent className="py-4">
-            <div className="flex gap-2">
-              <AlertTriangle className="h-5 w-5 text-warning flex-shrink-0" />
-              <div className="space-y-1">
-                {insights.map((insight, i) => (
-                  <p key={i} className="text-sm text-warning">{insight}</p>
-                ))}
-              </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Lightbulb className="h-4 w-4" /> Insights
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {insights.map((insight, i) => (
+            <div key={i} className="flex items-start gap-2">
+              {insightIcon(insight.type)}
+              <p className={`text-sm ${insightColor(insight.type)}`}>{insight.text}</p>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          ))}
+          <p className="text-xs text-muted-foreground mt-3 pt-2 border-t border-border/50 italic">
+            These insights are based on recorded data and do not replace professional dental advice. Refer to the individual's oral health care plan.
+          </p>
+        </CardContent>
+      </Card>
 
       {/* Assessment Outcome Trend */}
       {assessmentTrend.length > 0 && (
