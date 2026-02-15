@@ -5,6 +5,7 @@
 
 import type { SleepEntry, SleepStatus, SleepStatusInfo } from '@/types/sleep';
 import { getAwakeningCount, hasProlongedAwakenings, countProlongedAwakenings } from '@/types/sleep';
+import { startOfDay, subDays, isAfter, isBefore } from 'date-fns';
 
 interface CalculateSleepStatusParams {
   entries: SleepEntry[];
@@ -18,13 +19,35 @@ interface CalculateSleepStatusParams {
   };
 }
 
+/** Check if there is a missing entry for the previous night */
+export function isMissingPreviousNight(entries: SleepEntry[]): boolean {
+  const now = new Date();
+  const todayStart = startOfDay(now);
+  const yesterdayStart = subDays(todayStart, 1);
+
+  // Only flag after 10am to give staff time to log
+  if (now.getHours() < 10) return false;
+
+  // Check if any entry's event_occurred_at falls within yesterday or later
+  return !entries.some(entry => {
+    const eventDate = startOfDay(new Date(entry.event_occurred_at));
+    return !isBefore(eventDate, yesterdayStart);
+  });
+}
+
 export function calculateSleepStatus({ entries, config }: CalculateSleepStatusParams): SleepStatusInfo {
   if (!entries.length) {
     return {
-      status: 'ideal',
-      message: 'No sleep data logged yet',
+      status: 'monitor',
+      message: 'No sleep data logged yet — please log last night\'s sleep.',
       lastEntry: 'Not yet logged',
     };
+  }
+
+  // Check for missing previous night
+  if (isMissingPreviousNight(entries)) {
+    // Still calculate based on last entry, but append missing night info
+    // Don't override red statuses below — only flag if status would otherwise be ideal
   }
 
   const latest = entries[0];
@@ -119,7 +142,15 @@ export function calculateSleepStatus({ entries, config }: CalculateSleepStatusPa
     };
   }
 
-  // === GREEN ===
+  // === GREEN (but check for missing night) ===
+  if (isMissingPreviousNight(entries)) {
+    return {
+      status: 'monitor',
+      message: `Last night's sleep has not been logged. Most recent: ${hours.toFixed(1)}h sleep.`,
+      lastEntry: `${hours.toFixed(1)}h sleep • Missing entry`,
+    };
+  }
+
   return {
     status: 'ideal',
     message: `Good sleep: ${hours.toFixed(1)} hours with ${awakenings} awakening${awakenings !== 1 ? 's' : ''}`,

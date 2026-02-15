@@ -7,7 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { useSleepEntries } from '@/hooks/useSleep';
 import { getAwakeningCount, hasProlongedAwakenings, estimateAwakeMinutes } from '@/types/sleep';
 import { format } from 'date-fns';
-import { Moon } from 'lucide-react';
+import { Moon, User } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SleepHistoryProps {
   clientId?: string;
@@ -15,6 +17,27 @@ interface SleepHistoryProps {
 
 export function SleepHistory({ clientId }: SleepHistoryProps) {
   const { entries, isLoading } = useSleepEntries(clientId, 20);
+
+  // Fetch staff names for created_by UUIDs
+  const creatorIds = [...new Set(entries.map(e => e.created_by).filter(Boolean))];
+  const { data: profiles } = useQuery({
+    queryKey: ['sleepHistoryProfiles', creatorIds],
+    queryFn: async () => {
+      if (!creatorIds.length) return [];
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', creatorIds as string[]);
+      return data || [];
+    },
+    enabled: creatorIds.length > 0,
+  });
+
+  const getStaffName = (userId: string | null) => {
+    if (!userId || !profiles) return null;
+    const p = profiles.find(pr => pr.id === userId);
+    return p?.full_name || null;
+  };
 
   if (isLoading) {
     return (
@@ -88,6 +111,17 @@ export function SleepHistory({ clientId }: SleepHistoryProps) {
                   {entry.notes && (
                     <p className="text-xs text-muted-foreground mt-0.5 italic">{entry.notes}</p>
                   )}
+                  {/* Staff attribution */}
+                  {(() => {
+                    const staffName = entry.recorded_on_behalf_of_name || getStaffName(entry.created_by);
+                    return staffName ? (
+                      <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                        <User className="h-3 w-3" />
+                        Logged by: {staffName}
+                        {entry.recorded_on_behalf_of_role && ` — ${entry.recorded_on_behalf_of_role}`}
+                      </p>
+                    ) : null;
+                  })()}
                 </div>
               </div>
             );
