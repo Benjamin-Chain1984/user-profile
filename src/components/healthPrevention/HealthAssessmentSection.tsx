@@ -75,7 +75,7 @@ export function HealthAssessmentSection({
       case 'due':
         return <Badge className="bg-warning text-warning-foreground gap-1"><Clock className="h-3 w-3" /> Due</Badge>;
       case 'overdue':
-        return <Badge className="bg-destructive text-destructive-foreground gap-1"><AlertTriangle className="h-3 w-3" /> Overdue</Badge>;
+        return <Badge className="bg-warning text-warning-foreground gap-1"><AlertTriangle className="h-3 w-3" /> Overdue</Badge>;
       case 'not_recorded':
         return <Badge variant="outline" className="gap-1"><Clock className="h-3 w-3" /> Not recorded</Badge>;
     }

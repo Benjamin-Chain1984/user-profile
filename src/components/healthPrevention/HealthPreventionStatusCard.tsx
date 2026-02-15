@@ -3,8 +3,8 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { StatusBadge } from '@/components/ideal/StatusBadge';
-import { Shield, CheckCircle2, Clock } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Shield, CheckCircle2, Clock, Circle } from 'lucide-react';
 
 interface HealthPreventionStatusCardProps {
   status: 'stable' | 'monitor' | 'action';
@@ -50,7 +50,10 @@ export function HealthPreventionStatusCard({
             <Shield className="h-5 w-5" />
             <span>Preventive Health Status</span>
           </div>
-          <StatusBadge status={status} />
+          <Badge variant={status === 'stable' ? 'stable' : 'monitor'} className="gap-1.5 text-sm px-3 py-1">
+            <Circle className="w-2 h-2 fill-current" />
+            {status === 'stable' ? 'Up to date' : 'AMBER'}
+          </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent>

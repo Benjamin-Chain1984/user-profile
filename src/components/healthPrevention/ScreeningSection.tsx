@@ -77,7 +77,7 @@ export function ScreeningSection({
       case 'due':
         return <Badge className="bg-warning text-warning-foreground gap-1"><Clock className="h-3 w-3" /> Due</Badge>;
       case 'overdue':
-        return <Badge className="bg-destructive text-destructive-foreground gap-1"><AlertTriangle className="h-3 w-3" /> Overdue</Badge>;
+        return <Badge className="bg-warning text-warning-foreground gap-1"><AlertTriangle className="h-3 w-3" /> Overdue</Badge>;
       case 'not_eligible':
         return <Badge variant="secondary" className="gap-1"><XCircle className="h-3 w-3" /> Not eligible</Badge>;
       case 'deferred':
