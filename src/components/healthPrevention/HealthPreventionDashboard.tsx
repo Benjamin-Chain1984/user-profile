@@ -65,6 +65,9 @@ export function HealthPreventionDashboard() {
         reminderText={config?.reminderText || 'Discuss at next GP visit'}
       />
 
+      {/* Disclaimer - moved to top, under status */}
+      <ModuleDisclaimer message={HEALTH_PREVENTION_DISCLAIMER} />
+
       {/* Cancer Screening Section */}
       {config?.enableCancerScreening && (
         <ScreeningSection
@@ -91,9 +94,6 @@ export function HealthPreventionDashboard() {
         gpReminderText={config?.reminderText || 'Discuss at next GP visit'}
         onLogAssessment={logAssessment}
       />
-
-      {/* Disclaimer */}
-      <ModuleDisclaimer message={HEALTH_PREVENTION_DISCLAIMER} />
 
       {/* References */}
       <Card className="bg-muted/30">

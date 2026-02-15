@@ -4,7 +4,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/ideal/StatusBadge';
-import { Shield, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
+import { Shield, CheckCircle2, Clock } from 'lucide-react';
 
 interface HealthPreventionStatusCardProps {
   status: 'stable' | 'monitor' | 'action';
@@ -13,18 +13,19 @@ interface HealthPreventionStatusCardProps {
 }
 
 export function HealthPreventionStatusCard({
-  status,
+  status: rawStatus,
   dueCount,
   reminderText,
 }: HealthPreventionStatusCardProps) {
+  // Health Prevention only uses green or amber — clamp any 'action' to 'monitor'
+  const status = rawStatus === 'action' ? 'monitor' : rawStatus;
+
   const getStatusIcon = () => {
     switch (status) {
       case 'stable':
         return <CheckCircle2 className="h-5 w-5 text-success" />;
       case 'monitor':
         return <Clock className="h-5 w-5 text-warning" />;
-      case 'action':
-        return <AlertTriangle className="h-5 w-5 text-destructive" />;
     }
   };
 
@@ -40,7 +41,6 @@ export function HealthPreventionStatusCard({
 
   return (
     <Card className={
-      status === 'action' ? 'border-destructive/50 bg-destructive/5' :
       status === 'monitor' ? 'border-warning/50 bg-warning/5' :
       'border-success/50 bg-success/5'
     }>
