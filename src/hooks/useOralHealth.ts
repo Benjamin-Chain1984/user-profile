@@ -146,12 +146,15 @@ export function useOralHealthTaskLogs(clientId?: string) {
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ['oralHealthTaskLogs', clientId],
     queryFn: async () => {
-      let query = supabase.from('oral_health_task_logs').select('*').order('log_date', { ascending: false }).limit(100);
+      let query = supabase.from('oral_health_task_logs').select('*, profiles:created_by(full_name)').order('log_date', { ascending: false }).limit(100);
       if (clientId) query = query.eq('client_id', clientId);
       else query = query.is('client_id', null);
       const { data, error } = await query;
       if (error) throw error;
-      return data as OralHealthTaskLog[];
+      return (data || []).map((d: any) => ({
+        ...d,
+        staff_name: d.profiles?.full_name || null,
+      })) as (OralHealthTaskLog & { staff_name?: string | null })[];
     },
   });
 

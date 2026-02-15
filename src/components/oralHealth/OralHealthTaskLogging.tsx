@@ -142,14 +142,17 @@ export function OralHealthTaskLogging({ clientId }: Props) {
             <p className="text-sm text-muted-foreground">No tasks logged yet.</p>
           ) : (
             <div className="space-y-2 max-h-60 overflow-y-auto">
-              {logs.slice(0, 20).map((log) => (
-                <div key={log.id} className="flex items-center justify-between py-1 border-b border-border/50 last:border-0">
-                  <div className="flex items-center gap-2">
-                    {log.period === 'am' ? <Sun className="h-3 w-3 text-warning" /> : <Moon className="h-3 w-3 text-primary" />}
+              {logs.slice(0, 20).map((log: any) => (
+                <div key={log.id} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
+                  <div className="flex items-center gap-2 min-w-0">
+                    {log.period === 'am' ? <Sun className="h-3 w-3 text-warning shrink-0" /> : <Moon className="h-3 w-3 text-primary shrink-0" />}
                     <span className="text-sm">{format(parseISO(log.log_date), 'dd MMM yyyy')}</span>
                     <Badge variant="outline" className="text-xs uppercase">{log.period}</Badge>
+                    {log.staff_name && (
+                      <span className="text-xs text-muted-foreground truncate">— {log.staff_name}</span>
+                    )}
                   </div>
-                  <Badge variant={log.completed ? 'default' : 'destructive'} className="text-xs">
+                  <Badge variant={log.completed ? 'default' : 'destructive'} className="text-xs shrink-0">
                     {log.completed ? 'Done' : 'Missed'}
                   </Badge>
                 </div>
