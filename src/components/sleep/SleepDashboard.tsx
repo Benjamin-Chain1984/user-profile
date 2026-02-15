@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RoleTabsTrigger } from '@/components/ui/role-tabs-trigger';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { useProfile } from '@/contexts/ProfileContext';
+import { useSleepEntries } from '@/hooks/useSleep';
+import { isMissingPreviousNight } from '@/utils/sleepStatusCalculator';
 import { MonitoringPausedBanner } from '@/components/monitoring';
 import { SleepStatusCard } from './SleepStatusCard';
 import { SleepLogForm } from './SleepLogForm';
@@ -17,7 +19,7 @@ import { SleepTrends } from './SleepTrends';
 import { SleepConfigSettings } from './SleepConfigSettings';
 import { SleepExportReports } from './SleepExportReports';
 import {
-  Plus, Settings, BarChart3, Clock, AlertCircle, FileDown, Moon,
+  Plus, Settings, BarChart3, Clock, AlertCircle, FileDown, Moon, AlertTriangle,
 } from 'lucide-react';
 
 interface SleepDashboardProps {
@@ -29,6 +31,8 @@ export function SleepDashboard({ clientId }: SleepDashboardProps) {
   const [showExport, setShowExport] = useState(false);
   const { isAdmin } = useRoleAccess();
   const { isMonitoringPaused, monitoringStatus } = useProfile();
+  const { entries } = useSleepEntries(clientId, 50);
+  const missingNight = isMissingPreviousNight(entries);
 
   if (showExport) {
     return <SleepExportReports clientId={clientId} onClose={() => setShowExport(false)} />;
@@ -76,6 +80,32 @@ export function SleepDashboard({ clientId }: SleepDashboardProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Missing Night Banner */}
+      {missingNight && !isMonitoringPaused && (
+        <Card className="border-amber-300 bg-amber-50/60">
+          <CardContent className="py-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-amber-800">Last night's sleep has not been logged</p>
+                <p className="text-xs text-amber-700 mt-0.5">
+                  Please log the previous night's sleep to keep records accurate.
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-2 border-amber-300 text-amber-800 hover:bg-amber-100"
+                  onClick={() => setShowLogForm(true)}
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" />
+                  Log Now
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Status Card */}
       <SleepStatusCard clientId={clientId} />
