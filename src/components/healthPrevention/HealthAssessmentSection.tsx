@@ -105,37 +105,7 @@ export function HealthAssessmentSection({
           Annual Comprehensive Health Assessment
         </h3>
 
-        {/* Information card */}
-        <Card className="bg-muted/30">
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-start gap-3">
-              <Info className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p>
-                  Adults and children with an intellectual disability are eligible for a Medicare-supported 
-                  annual comprehensive health assessment once every 12 months. This is recognised under 
-                  the Medicare Benefits Schedule (MBS) specifically to address the complexity and unmet 
-                  health needs faced by people with intellectual disability.
-                </p>
-                <p>
-                  The Australian Government Department of Health & Aged Care encourages the use of the 
-                  Comprehensive Health Assessment Program (CHAP) as an evidence-based tool to support 
-                  these assessments. It involves collaboration between the person, their supporters and 
-                  their GP or practice nurse to develop a holistic health profile and management plan.
-                </p>
-                <a
-                  href="https://www.health.gov.au/topics/disability/health-care-for-people-with-disability"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-primary hover:underline inline-flex items-center gap-1"
-                >
-                  Learn more at health.gov.au
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+
 
         {/* Status card */}
         <Card>
@@ -190,6 +160,31 @@ export function HealthAssessmentSection({
                 {gpReminderText}
               </p>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Information card */}
+        <Card className="bg-muted/30">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-start gap-3">
+              <Info className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>
+                  People with an intellectual disability can get a free yearly health check-up 
+                  through Medicare. This helps their GP spot any health issues early and make a plan 
+                  to stay well.
+                </p>
+                <a
+                  href="https://www.health.gov.au/topics/disability/health-care-for-people-with-disability"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  Learn more at health.gov.au
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
