@@ -198,6 +198,15 @@ export function OralHealthPlanViewer({ clientId, onClose, onEdit }: OralHealthPl
     categories.forEach((cat: PlanCategoryEntry) => {
       checkPage(12);
       const catLabel = CATEGORY_LABELS[cat.category as OralHealthCategory] || cat.category;
+      if (cat.is_na) {
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${catLabel} — N/A`, margin + 2, y);
+        doc.setFont('helvetica', 'normal');
+        y += 5;
+        addBullet('Not applicable');
+        y += 2;
+        return;
+      }
       const periods = [cat.am_required && 'AM', cat.pm_required && 'PM'].filter(Boolean).join(' / ');
       doc.setFont('helvetica', 'bold');
       doc.text(`${catLabel} (${periods})`, margin + 2, y);
@@ -372,6 +381,18 @@ export function OralHealthPlanViewer({ clientId, onClose, onEdit }: OralHealthPl
               const catAssistance = cat.assistance_level
                 ? (ASSISTANCE_LABELS[cat.assistance_level as AssistanceLevel] || cat.assistance_level)
                 : null;
+
+              if (cat.is_na) {
+                return (
+                  <div key={idx} className="p-4 bg-muted/30 rounded-lg border-l-4 border-muted-foreground/20 opacity-60">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium">{catLabel}</h4>
+                      <Badge variant="secondary" className="text-xs">N/A</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground italic mt-1">Not applicable</p>
+                  </div>
+                );
+              }
 
               return (
                 <div key={idx} className="p-4 bg-muted/50 rounded-lg border-l-4 border-primary/30">
