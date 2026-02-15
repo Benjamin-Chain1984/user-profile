@@ -13,7 +13,7 @@ import { HealthMonitoringHistory } from './HealthMonitoringHistory';
 import { HealthMonitoringTrends } from './HealthMonitoringTrends';
 import { HealthMonitoringConfigSettings } from './HealthMonitoringConfigSettings';
 import { HealthMonitoringExportReports } from './HealthMonitoringExportReports';
-import { AIRiskAssessmentPanel } from './AIRiskAssessmentPanel';
+
 import { AustralianGuidelinesFooter } from './AustralianGuidelinesFooter';
 import { EmergencyAlertDialog } from './EmergencyAlertDialog';
 import { useHealthMonitoringStatus, useVitalSignAlerts } from '@/hooks/useHealthMonitoring';
@@ -127,8 +127,6 @@ export function HealthMonitoringDashboard({ clientId }: HealthMonitoringDashboar
         onVitalClick={handleVitalClick}
       />
 
-      {/* AI Risk Assessment */}
-      <AIRiskAssessmentPanel clientId={clientId} />
 
       {/* Tabs */}
       <Tabs defaultValue="tracking" className="space-y-4">

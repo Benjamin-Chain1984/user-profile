@@ -17,7 +17,7 @@ export { BloodPressureInput } from './BloodPressureInput';
 export { BloodPressureReelPicker } from './BloodPressureReelPicker';
 export { VitalTile, BloodPressureTile } from './VitalTile';
 export { VitalTilesDashboard } from './VitalTilesDashboard';
-export { AIRiskAssessmentPanel } from './AIRiskAssessmentPanel';
+
 export { AustralianGuidelinesFooter } from './AustralianGuidelinesFooter';
 export { ObservationContextSelector } from './ObservationContextSelector';
 export { RedZoneConfirmationDialog } from './RedZoneConfirmationDialog';
