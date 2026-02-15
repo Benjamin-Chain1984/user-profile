@@ -1783,6 +1783,212 @@ export type Database = {
           },
         ]
       }
+      epilepsy_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          resolved_at: string | null
+          resolved_by: string | null
+          resolved_reason: string | null
+          severity: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_reason?: string | null
+          severity?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_reason?: string | null
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epilepsy_alerts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      epilepsy_config: {
+        Row: {
+          call_000_after_minutes: number
+          client_id: string | null
+          cluster_seizure_count: number
+          cluster_seizure_hours: number
+          created_at: string
+          created_by: string | null
+          duration_threshold_minutes: number
+          enable_seizure_monitoring: boolean
+          escalation_recipients: string[]
+          expected_seizure_frequency: string
+          id: string
+          max_seizures_24h: number
+          rescue_medication_dose: string | null
+          rescue_medication_name: string | null
+          rescue_medication_prescribed: boolean
+          rescue_medication_route: string | null
+          rescue_medication_when: string | null
+          typical_seizure_duration_minutes: number | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          call_000_after_minutes?: number
+          client_id?: string | null
+          cluster_seizure_count?: number
+          cluster_seizure_hours?: number
+          created_at?: string
+          created_by?: string | null
+          duration_threshold_minutes?: number
+          enable_seizure_monitoring?: boolean
+          escalation_recipients?: string[]
+          expected_seizure_frequency?: string
+          id?: string
+          max_seizures_24h?: number
+          rescue_medication_dose?: string | null
+          rescue_medication_name?: string | null
+          rescue_medication_prescribed?: boolean
+          rescue_medication_route?: string | null
+          rescue_medication_when?: string | null
+          typical_seizure_duration_minutes?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          call_000_after_minutes?: number
+          client_id?: string | null
+          cluster_seizure_count?: number
+          cluster_seizure_hours?: number
+          created_at?: string
+          created_by?: string | null
+          duration_threshold_minutes?: number
+          enable_seizure_monitoring?: boolean
+          escalation_recipients?: string[]
+          expected_seizure_frequency?: string
+          id?: string
+          max_seizures_24h?: number
+          rescue_medication_dose?: string | null
+          rescue_medication_name?: string | null
+          rescue_medication_prescribed?: boolean
+          rescue_medication_route?: string | null
+          rescue_medication_when?: string | null
+          typical_seizure_duration_minutes?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epilepsy_config_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      epilepsy_escalation_records: {
+        Row: {
+          advice_received: string | null
+          alert_id: string | null
+          client_id: string | null
+          contact_role: string | null
+          contact_time: string
+          contacted_person: string
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          escalation_reason: string
+          id: string
+          seizure_event_id: string | null
+        }
+        Insert: {
+          advice_received?: string | null
+          alert_id?: string | null
+          client_id?: string | null
+          contact_role?: string | null
+          contact_time?: string
+          contacted_person: string
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          escalation_reason: string
+          id?: string
+          seizure_event_id?: string | null
+        }
+        Update: {
+          advice_received?: string | null
+          alert_id?: string | null
+          client_id?: string | null
+          contact_role?: string | null
+          contact_time?: string
+          contacted_person?: string
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          escalation_reason?: string
+          id?: string
+          seizure_event_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epilepsy_escalation_records_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "epilepsy_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epilepsy_escalation_records_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epilepsy_escalation_records_seizure_event_id_fkey"
+            columns: ["seizure_event_id"]
+            isOneToOne: false
+            referencedRelation: "seizure_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fluid_balance_alerts: {
         Row: {
           acknowledged_at: string | null
@@ -3096,6 +3302,173 @@ export type Database = {
           locked_until?: string | null
         }
         Relationships: []
+      }
+      seizure_actions: {
+        Row: {
+          action_type: string
+          ambulance_called: boolean
+          ambulance_outcome: string | null
+          ambulance_time_called: string | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          dose_change_reason: string | null
+          dose_matches_plan: boolean | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          escalation_completed: boolean
+          id: string
+          injuries_noted: string | null
+          medication_dose: string | null
+          medication_name: string | null
+          medication_route: string | null
+          post_event_notes: string | null
+          seizure_event_id: string | null
+          time_administered: string | null
+          total_recovery_time_minutes: number | null
+          total_seizure_duration_minutes: number | null
+          witness_name: string | null
+        }
+        Insert: {
+          action_type?: string
+          ambulance_called?: boolean
+          ambulance_outcome?: string | null
+          ambulance_time_called?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          dose_change_reason?: string | null
+          dose_matches_plan?: boolean | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          escalation_completed?: boolean
+          id?: string
+          injuries_noted?: string | null
+          medication_dose?: string | null
+          medication_name?: string | null
+          medication_route?: string | null
+          post_event_notes?: string | null
+          seizure_event_id?: string | null
+          time_administered?: string | null
+          total_recovery_time_minutes?: number | null
+          total_seizure_duration_minutes?: number | null
+          witness_name?: string | null
+        }
+        Update: {
+          action_type?: string
+          ambulance_called?: boolean
+          ambulance_outcome?: string | null
+          ambulance_time_called?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          dose_change_reason?: string | null
+          dose_matches_plan?: boolean | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          escalation_completed?: boolean
+          id?: string
+          injuries_noted?: string | null
+          medication_dose?: string | null
+          medication_name?: string | null
+          medication_route?: string | null
+          post_event_notes?: string | null
+          seizure_event_id?: string | null
+          time_administered?: string | null
+          total_recovery_time_minutes?: number | null
+          total_seizure_duration_minutes?: number | null
+          witness_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seizure_actions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seizure_actions_seizure_event_id_fkey"
+            columns: ["seizure_event_id"]
+            isOneToOne: false
+            referencedRelation: "seizure_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seizure_events: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          duration_minutes: number
+          duration_seconds: number
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          event_occurred_at: string
+          id: string
+          notes: string | null
+          observation_type: string
+          recovery: string[]
+          recovery_notes: string | null
+          seizure_category: string
+          seizure_type: string
+          trigger_other: string | null
+          triggers: string[]
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_minutes?: number
+          duration_seconds?: number
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          id?: string
+          notes?: string | null
+          observation_type?: string
+          recovery?: string[]
+          recovery_notes?: string | null
+          seizure_category?: string
+          seizure_type?: string
+          trigger_other?: string | null
+          triggers?: string[]
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_minutes?: number
+          duration_seconds?: number
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          id?: string
+          notes?: string | null
+          observation_type?: string
+          recovery?: string[]
+          recovery_notes?: string | null
+          seizure_category?: string
+          seizure_type?: string
+          trigger_other?: string | null
+          triggers?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seizure_events_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sleep_alerts: {
         Row: {
