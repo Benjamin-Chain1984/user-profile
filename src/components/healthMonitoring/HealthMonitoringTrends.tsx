@@ -21,7 +21,7 @@ import {
 import { useVitalSignEntries, useVitalSignConfig, useAlteredCriteria } from '@/hooks/useHealthMonitoring';
 import { VITAL_THRESHOLDS, type VitalType, type AlteredCriteria } from '@/types/healthMonitoring';
 import { format, subDays } from 'date-fns';
-import { TrendingUp, AlertTriangle, CheckCircle, Thermometer, Heart, Activity, Wind, Gauge } from 'lucide-react';
+import { TrendingUp, AlertTriangle, CheckCircle, Info, Thermometer, Heart, Activity, Wind, Gauge } from 'lucide-react';
 
 interface HealthMonitoringTrendsProps {
   clientId?: string;
@@ -75,11 +75,34 @@ export function HealthMonitoringTrends({ clientId }: HealthMonitoringTrendsProps
 
   // Calculate trend insights
   const insights = useMemo(() => {
-    if (entries.length < 2) return [];
+    if (entries.length === 0) return [];
 
     const results: { type: 'warning' | 'info' | 'success'; message: string }[] = [];
     const recent = entries.slice(0, 5);
-    const older = entries.slice(5, 10);
+    const older = entries.slice(5, 15);
+
+    // Data recency check
+    if (entries.length > 0) {
+      const lastEntry = new Date(entries[0].event_occurred_at);
+      const daysSinceLast = Math.floor((Date.now() - lastEntry.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysSinceLast > 7) {
+        results.push({ type: 'warning', message: `Last vital signs recorded ${daysSinceLast} days ago. Regular monitoring recommended.` });
+      }
+    }
+
+    if (entries.length < 2) return results;
+
+    // RED status in recent entries
+    const recentRedCount = recent.filter(e => e.overall_status === 'red').length;
+    if (recentRedCount > 0) {
+      results.push({ type: 'warning', message: `${recentRedCount} recent reading(s) in the RED zone — ensure follow-up actions are documented.` });
+    }
+
+    // AMBER trend
+    const recentAmberCount = recent.filter(e => e.overall_status === 'amber').length;
+    if (recentAmberCount >= 2) {
+      results.push({ type: 'warning', message: `${recentAmberCount} of last 5 readings in AMBER zone — increased observation frequency recommended.` });
+    }
 
     // Temperature trend
     const recentTemps = recent.filter(e => e.temperature_celsius).map(e => e.temperature_celsius!);
@@ -88,20 +111,31 @@ export function HealthMonitoringTrends({ clientId }: HealthMonitoringTrendsProps
       const recentAvg = recentTemps.reduce((a, b) => a + b, 0) / recentTemps.length;
       const olderAvg = olderTemps.reduce((a, b) => a + b, 0) / olderTemps.length;
       if (recentAvg > olderAvg + 0.3) {
-        results.push({ type: 'warning', message: 'Temperature gradually rising over recent entries — possible infection risk' });
+        results.push({ type: 'warning', message: 'Temperature gradually rising over recent entries — possible infection risk.' });
       }
     }
 
     // BP trend
     const recentBP = recent.filter(e => e.bp_systolic).map(e => e.bp_systolic!);
     if (recentBP.length >= 3) {
-      const isRising = recentBP.every((v, i, a) => i === 0 || v >= a[i - 1] - 5);
-      const isFalling = recentBP.every((v, i, a) => i === 0 || v <= a[i - 1] + 5);
-      if (isRising && recentBP[0] > recentBP[recentBP.length - 1] + 15) {
-        results.push({ type: 'warning', message: 'Blood pressure showing upward trend — monitor for hypertensive symptoms' });
+      const avgSys = recentBP.reduce((a, b) => a + b, 0) / recentBP.length;
+      if (recentBP[0] > recentBP[recentBP.length - 1] + 15) {
+        results.push({ type: 'warning', message: 'Blood pressure showing upward trend — monitor for hypertensive symptoms.' });
       }
-      if (isFalling && recentBP[0] < recentBP[recentBP.length - 1] - 15) {
-        results.push({ type: 'warning', message: 'Blood pressure dropping — monitor for dizziness or hypotension' });
+      if (recentBP[0] < recentBP[recentBP.length - 1] - 15) {
+        results.push({ type: 'warning', message: 'Blood pressure dropping — monitor for dizziness or hypotension.' });
+      }
+      if (recentBP.length >= 2 && recentBP[0] < recentBP[1] - 20) {
+        results.push({ type: 'warning', message: `Sudden BP drop of ${recentBP[1] - recentBP[0]} mmHg — assess for falls risk.` });
+      }
+    }
+
+    // Oxygen saturation
+    const recentO2 = recent.filter(e => e.oxygen_saturation).map(e => e.oxygen_saturation!);
+    if (recentO2.length >= 2) {
+      const lowCount = recentO2.filter(v => v < 94).length;
+      if (lowCount >= 2) {
+        results.push({ type: 'warning', message: `${lowCount} readings below 94% SpO₂ — assess breathing and consider escalation.` });
       }
     }
 
@@ -115,10 +149,10 @@ export function HealthMonitoringTrends({ clientId }: HealthMonitoringTrendsProps
       const rrRising = recentRR[0] > recentRR[recentRR.length - 1];
       const hrRising = recentHR[0] > recentHR[recentHR.length - 1];
       
-      if (oxygenFalling && rrRising && hrRising) {
+      if ((oxygenFalling && rrRising) || (oxygenFalling && hrRising) || (rrRising && hrRising)) {
         results.push({ 
           type: 'warning', 
-          message: 'Multi-parameter deterioration detected: SpO₂ falling while RR and HR rising — prompt medical review recommended' 
+          message: 'Multi-parameter deterioration detected: combined changes in SpO₂, RR, and/or HR — prompt medical review recommended.' 
         });
       }
     }
@@ -126,7 +160,12 @@ export function HealthMonitoringTrends({ clientId }: HealthMonitoringTrendsProps
     // Check for consistent ideal readings
     const recentIdeal = recent.filter(e => e.overall_status === 'ideal');
     if (recentIdeal.length >= 4 && recent.length >= 4) {
-      results.push({ type: 'success', message: 'Vital signs consistently within normal range' });
+      results.push({ type: 'success', message: 'Vital signs consistently within normal range — continue routine monitoring.' });
+    }
+
+    // Data sufficiency info
+    if (entries.length < 5) {
+      results.push({ type: 'info', message: `Only ${entries.length} entries recorded. More data will improve trend analysis.` });
     }
 
     return results;
@@ -340,42 +379,6 @@ export function HealthMonitoringTrends({ clientId }: HealthMonitoringTrendsProps
 
   return (
     <div className="space-y-6">
-      {/* AI Insights */}
-      {insights.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              AI Trend Insights
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {insights.map((insight, idx) => (
-                <div
-                  key={idx}
-                  className={`flex items-start gap-2 p-3 rounded-lg ${
-                    insight.type === 'warning' ? 'bg-amber-50 text-amber-800 border border-amber-200' :
-                    insight.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' :
-                    'bg-blue-50 text-blue-800 border border-blue-200'
-                  }`}
-                >
-                  {insight.type === 'warning' ? (
-                    <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                  ) : (
-                    <CheckCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                  )}
-                  <p className="text-sm">{insight.message}</p>
-                </div>
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground mt-3">
-              These insights are based on pattern analysis and do not replace clinical assessment.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Charts */}
       <Card>
         <CardHeader>
@@ -459,6 +462,44 @@ export function HealthMonitoringTrends({ clientId }: HealthMonitoringTrendsProps
           </div>
         </CardContent>
       </Card>
+
+      {/* Insights */}
+      {insights.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Insights
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {insights.map((insight, idx) => (
+                <div
+                  key={idx}
+                  className={`flex items-start gap-2 p-3 rounded-lg ${
+                    insight.type === 'warning' ? 'bg-amber-50 text-amber-800 border border-amber-200' :
+                    insight.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' :
+                    'bg-blue-50 text-blue-800 border border-blue-200'
+                  }`}
+                >
+                  {insight.type === 'warning' ? (
+                    <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  ) : insight.type === 'success' ? (
+                    <CheckCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  ) : (
+                    <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  )}
+                  <p className="text-sm">{insight.message}</p>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-3">
+              These insights are based on pattern analysis and do not replace clinical assessment.
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
