@@ -86,11 +86,12 @@ export const ASSISTANCE_LABELS: Record<AssistanceLevel, string> = {
   full_assistance: 'Full Assistance',
 };
 
-export type AssessmentFrequency = 'daily' | 'weekly' | 'monthly' | 'if_concerns';
+export type AssessmentFrequency = 'daily' | 'weekly' | 'fortnightly' | 'monthly' | 'if_concerns';
 
 export const FREQUENCY_LABELS: Record<AssessmentFrequency, string> = {
   daily: 'Daily',
   weekly: 'Weekly',
+  fortnightly: 'Fortnightly',
   monthly: 'Monthly',
   if_concerns: 'If Concerns Identified',
 };
