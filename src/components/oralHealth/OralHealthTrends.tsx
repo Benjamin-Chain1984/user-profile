@@ -23,26 +23,20 @@ export function OralHealthTrends({ clientId }: Props) {
     label: a.overall_status,
   }));
 
-  // Compliance over last 14 days
-  const complianceData: { date: string; percent: number }[] = [];
+  // AM/PM compliance over last 14 days
+  const amComplianceData: { date: string; am: number; pm: number }[] = [];
   for (let i = 13; i >= 0; i--) {
     const d = subDays(new Date(), i);
     const dateStr = format(d, 'yyyy-MM-dd');
     const dayLogs = logs.filter(l => l.log_date === dateStr);
-    const completed = dayLogs.filter(l => l.completed).length;
-    const total = dayLogs.length;
-    complianceData.push({
+    const amLogs = dayLogs.filter(l => l.period === 'am');
+    const pmLogs = dayLogs.filter(l => l.period === 'pm');
+    amComplianceData.push({
       date: format(d, 'dd/MM'),
-      percent: total > 0 ? Math.round((completed / total) * 100) : 0,
+      am: amLogs.length > 0 ? (amLogs.some(l => l.completed) ? 100 : 0) : 0,
+      pm: pmLogs.length > 0 ? (pmLogs.some(l => l.completed) ? 100 : 0) : 0,
     });
   }
-
-  // Category issue frequency
-  const categoryIssues = (['lips', 'tongue', 'roof_of_mouth', 'gums', 'teeth', 'dentures', 'breath', 'cleanliness', 'dental_pain'] as const).map(cat => {
-    const unhealthy = assessments.filter(a => (a[cat as keyof typeof a] as string) === 'unhealthy').length;
-    const changes = assessments.filter(a => (a[cat as keyof typeof a] as string) === 'changes').length;
-    return { category: cat.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), unhealthy, changes };
-  }).filter(c => c.unhealthy > 0 || c.changes > 0);
 
   // Insights
   const insights: string[] = [];
@@ -53,8 +47,8 @@ export function OralHealthTrends({ clientId }: Props) {
   const dentalPainCount = assessments.filter(a => a.dental_pain === 'unhealthy' || a.dental_pain === 'changes').length;
   if (dentalPainCount >= 2) insights.push('Recurring dental pain recorded. Assess for underlying cause.');
 
-  const recentCompliance = complianceData.slice(-7);
-  const avgCompliance = recentCompliance.reduce((s, d) => s + d.percent, 0) / Math.max(recentCompliance.length, 1);
+  const recentAm = amComplianceData.slice(-7);
+  const avgCompliance = recentAm.reduce((s, d) => s + (d.am + d.pm) / 2, 0) / Math.max(recentAm.length, 1);
   if (avgCompliance > 0 && avgCompliance < 70) insights.push('Oral health compliance is below 70%. Review adherence.');
 
   return (
@@ -96,43 +90,24 @@ export function OralHealthTrends({ clientId }: Props) {
         </Card>
       )}
 
-      {/* Compliance Trend */}
+      {/* AM/PM Compliance Trend */}
       {logs.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" /> Compliance Over Time
+              <BarChart3 className="h-4 w-4" /> Morning & Night Oral Care Compliance
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={complianceData}>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={amComplianceData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" fontSize={11} />
                 <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} fontSize={10} />
                 <Tooltip formatter={(v: number) => `${v}%`} />
-                <Line type="monotone" dataKey="percent" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Category Issues */}
-      {categoryIssues.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Category Issue Frequency</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={categoryIssues} layout="vertical">
-                <XAxis type="number" />
-                <YAxis type="category" dataKey="category" fontSize={11} width={100} />
-                <Tooltip />
                 <Legend />
-                <Bar dataKey="changes" fill="hsl(var(--warning))" name="Changes" stackId="a" />
-                <Bar dataKey="unhealthy" fill="hsl(var(--destructive))" name="Unhealthy" stackId="a" />
+                <Bar dataKey="am" name="Morning (AM)" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="pm" name="Night (PM)" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
