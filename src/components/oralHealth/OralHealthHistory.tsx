@@ -69,8 +69,19 @@ export function OralHealthHistory({ clientId }: Props) {
                     </p>
                   )}
                   {annotations.length > 0 && (
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {annotations.length} annotation(s)</span>
+                    <div className="mt-2 space-y-1">
+                      <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                        <MapPin className="h-3 w-3" /> {annotations.length} annotation{annotations.length !== 1 ? 's' : ''}
+                      </span>
+                      <div className="space-y-1 pl-4">
+                        {annotations.map((ann, i) => (
+                          <div key={i} className="text-xs rounded bg-muted/50 px-2 py-1.5">
+                            <span className="font-medium">{ann.location}</span>
+                            <span className="text-muted-foreground"> — {ann.issue_type}</span>
+                            {ann.notes && <p className="text-muted-foreground mt-0.5">{ann.notes}</p>}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </Card>
