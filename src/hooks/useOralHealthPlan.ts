@@ -150,7 +150,7 @@ export function useOralHealthCarePlan(clientId?: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['oralHealthCarePlan', clientId] });
       queryClient.invalidateQueries({ queryKey: ['oralHealthPlanVersions'] });
-      toast({ title: 'Plan saved', description: 'Oral Health Care Plan has been updated.' });
+      toast({ title: 'Plan saved', description: 'Digital Oral Health Care Plan has been updated.' });
     },
     onError: (error) => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -253,7 +253,7 @@ export function useOralHealthPlanAcknowledgements(planId?: string, planVersion?:
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['oralHealthPlanAcks', planId, planVersion] });
-      toast({ title: 'Acknowledged', description: 'You have acknowledged the Oral Health Care Plan.' });
+      toast({ title: 'Acknowledged', description: 'You have acknowledged the Digital Oral Health Care Plan.' });
     },
     onError: (error) => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });

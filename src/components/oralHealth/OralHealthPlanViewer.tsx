@@ -99,7 +99,7 @@ export function OralHealthPlanViewer({ clientId, onClose, onEdit }: OralHealthPl
           <CardContent className="py-12 text-center">
             <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground">
-              {plan?.status === 'draft' ? 'The Oral Health Care Plan is currently in draft. Please ask an admin to publish it.' : 'No Oral Health Care Plan has been created yet.'}
+              {plan?.status === 'draft' ? 'The Digital Oral Health Care Plan is currently in draft. Please ask an admin to publish it.' : 'No Digital Oral Health Care Plan has been created yet.'}
             </p>
             {isAdmin && onEdit && (
               <Button className="mt-4" onClick={onEdit}>
@@ -310,7 +310,7 @@ export function OralHealthPlanViewer({ clientId, onClose, onEdit }: OralHealthPl
                 <p className="text-sm text-amber-700">You must read and acknowledge this plan before providing oral health care support.</p>
                 <div className="flex items-center gap-2">
                   <Checkbox checked={ackChecked} onCheckedChange={v => setAckChecked(!!v)} />
-                  <Label className="text-sm">I have read and understand this Oral Health Care Plan.</Label>
+                  <Label className="text-sm">I have read and understand this Digital Oral Health Care Plan.</Label>
                 </div>
                 <Button size="sm" disabled={!ackChecked || isAcknowledging} onClick={() => acknowledge(undefined)}>
                   {isAcknowledging ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
@@ -484,7 +484,7 @@ export function OralHealthPlanViewer({ clientId, onClose, onEdit }: OralHealthPl
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Version History</DialogTitle>
-            <DialogDescription>All changes to the Oral Health Care Plan</DialogDescription>
+            <DialogDescription>All changes to the Digital Oral Health Care Plan</DialogDescription>
           </DialogHeader>
           <div className="max-h-96 overflow-y-auto space-y-3">
             <div className="p-3 bg-muted/50 rounded-lg">

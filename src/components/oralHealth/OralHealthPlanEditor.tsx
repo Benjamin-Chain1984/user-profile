@@ -100,7 +100,7 @@ export function OralHealthPlanEditor({ clientId, onClose }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Edit Oral Health Care Plan</h2>
+          <h2 className="text-2xl font-bold">Edit Digital Oral Health Care Plan</h2>
           <p className="text-sm text-muted-foreground">
             {plan ? `Editing v${plan.version} — ${plan.status}` : 'Creating new plan'}
           </p>
@@ -236,7 +236,7 @@ export function OralHealthPlanEditor({ clientId, onClose }: Props) {
       <Dialog open={showPublish} onOpenChange={setShowPublish}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Publish Oral Health Care Plan</DialogTitle>
+            <DialogTitle>Publish Digital Oral Health Care Plan</DialogTitle>
             <DialogDescription>
               Publishing this plan will require all staff to re-acknowledge it. Previous acknowledgements will become outdated.
             </DialogDescription>
