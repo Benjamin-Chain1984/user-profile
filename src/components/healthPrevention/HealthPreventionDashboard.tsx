@@ -3,7 +3,7 @@
  * Follows IDEAL module patterns with Tracking, Trends, and Settings tabs
  */
 
-import { ModuleHeader, ModuleDisclaimer, ModuleTabs, ModuleCitation } from '@/components/module';
+import { ModuleHeader, ModuleDisclaimer, ModuleTabs } from '@/components/module';
 import { useHealthPrevention } from '@/hooks/useHealthPrevention';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { useProfile } from '@/contexts/ProfileContext';
@@ -95,28 +95,39 @@ export function HealthPreventionDashboard() {
         onLogAssessment={logAssessment}
       />
 
-      {/* References */}
+      {/* References & Guidelines */}
       <Card className="bg-muted/30">
-        <CardContent className="pt-4 pb-4">
-          <h4 className="text-sm font-medium mb-2">References</h4>
-          <p className="text-xs text-muted-foreground mb-2">
-            Screening recommendations based on Australian national programs: National Bowel Cancer 
-            Screening Program (ages 45–74, biennial), National Cervical Screening Program 
-            (ages 25–74, every 5 years), and BreastScreen Australia (women 50–74, biennial).
+        <CardContent className="pt-4 pb-4 space-y-3">
+          <h4 className="text-sm font-medium">References & Guidelines</h4>
+          <ul className="text-xs text-muted-foreground space-y-1.5 list-disc list-inside">
+            <li>National Bowel Cancer Screening Program (ages 50–74, biennial)</li>
+            <li>National Cervical Screening Program (ages 25–74, every 5 years)</li>
+            <li>BreastScreen Australia (women 50–74, biennial)</li>
+            <li>Australian Government National Immunisation Program Schedule</li>
+          </ul>
+          <p className="text-xs text-muted-foreground italic">
+            Source: Department of Health and Aged Care
           </p>
-          <p className="text-xs text-muted-foreground mb-3">
-            Vaccination guidance based on the Australian Government National Immunisation Program 
-            Schedule and the Australian Immunisation Handbook.
-          </p>
-          <a
-            href="https://immunisationhandbook.health.gov.au/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-primary hover:underline inline-flex items-center gap-1"
-          >
-            health.gov.au Immunisation Handbook
-            <ExternalLink className="h-3 w-3" />
-          </a>
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            <a
+              href="https://immunisationhandbook.health.gov.au/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+            >
+              Immunisation Handbook
+              <ExternalLink className="h-3 w-3" />
+            </a>
+            <a
+              href="https://www.health.gov.au/topics/cancer/screening"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+            >
+              Cancer Screening Programs
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
         </CardContent>
       </Card>
     </div>
@@ -148,11 +159,6 @@ export function HealthPreventionDashboard() {
         exportContent={exportContent}
       />
 
-      <ModuleCitation
-        title="Australian Health Guidelines"
-        source="Department of Health and Aged Care"
-        citation="Based on National Immunisation Program Schedule and cancer screening guidelines"
-      />
     </div>
   );
 }
