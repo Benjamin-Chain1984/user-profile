@@ -95,150 +95,160 @@ export function WeightBmiTrends({ clientId }: WeightBmiTrendsProps) {
       fullDate: entry.event_occurred_at
     }));
 
+  const hasBmiData = chartData.some(d => d.bmi != null);
+
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
-            Weight Trends
-          </CardTitle>
-          <div className="flex gap-1">
-            {(['1m', '3m', '6m', '1y', 'all'] as TimeRange[]).map(range => (
-              <Button
-                key={range}
-                size="sm"
-                variant={timeRange === range ? 'default' : 'outline'}
-                onClick={() => setTimeRange(range)}
-                className="text-xs"
-              >
-                {range === 'all' ? 'All' : range.toUpperCase()}
-              </Button>
-            ))}
+    <div className="space-y-4">
+      {/* Weight Chart */}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Weight Trends
+            </CardTitle>
+            <div className="flex gap-1">
+              {(['1m', '3m', '6m', '1y', 'all'] as TimeRange[]).map(range => (
+                <Button
+                  key={range}
+                  size="sm"
+                  variant={timeRange === range ? 'default' : 'outline'}
+                  onClick={() => setTimeRange(range)}
+                  className="text-xs"
+                >
+                  {range === 'all' ? 'All' : range.toUpperCase()}
+                </Button>
+              ))}
+            </div>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {chartData.length < 2 ? (
-          <div className="py-12 text-center text-muted-foreground">
-            Not enough data to display trends. Log at least 2 weight entries.
-          </div>
-        ) : (
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis 
-                  dataKey="date" 
-                  tick={{ fontSize: 12 }}
-                  tickLine={false}
-                />
-                <YAxis 
-                  yAxisId="weight"
-                  domain={['auto', 'auto']}
-                  tick={{ fontSize: 12 }}
-                  tickLine={false}
-                  label={{ value: 'kg', angle: -90, position: 'insideLeft', fontSize: 12 }}
-                />
-                <YAxis 
-                  yAxisId="bmi"
-                  orientation="right"
-                  domain={[15, 40]}
-                  tick={{ fontSize: 12 }}
-                  tickLine={false}
-                  label={{ value: 'BMI', angle: 90, position: 'insideRight', fontSize: 12 }}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--background))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
-                  formatter={(value: number, name: string) => [
-                    name === 'weight' ? `${value} kg` : value?.toFixed(1),
-                    name === 'weight' ? 'Weight' : 'BMI'
-                  ]}
-                />
-                <Legend />
+        </CardHeader>
+        <CardContent>
+          {chartData.length < 2 ? (
+            <div className="py-12 text-center text-muted-foreground">
+              Not enough data to display trends. Log at least 2 weight entries.
+            </div>
+          ) : (
+            <>
+              <div className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} tickLine={false} />
+                    <YAxis
+                      domain={['auto', 'auto']}
+                      tick={{ fontSize: 12 }}
+                      tickLine={false}
+                      label={{ value: 'kg', angle: -90, position: 'insideLeft', fontSize: 12 }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--background))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                      formatter={(value: number) => [`${value} kg`, 'Weight']}
+                    />
+                    {config?.min_target_weight_kg && (
+                      <ReferenceLine
+                        y={config.min_target_weight_kg}
+                        stroke="hsl(var(--destructive))"
+                        strokeDasharray="5 5"
+                        label={{ value: 'Min Target', position: 'left', fontSize: 10 }}
+                      />
+                    )}
+                    {config?.max_target_weight_kg && (
+                      <ReferenceLine
+                        y={config.max_target_weight_kg}
+                        stroke="hsl(var(--destructive))"
+                        strokeDasharray="5 5"
+                        label={{ value: 'Max Target', position: 'left', fontSize: 10 }}
+                      />
+                    )}
+                    <Line
+                      type="monotone"
+                      dataKey="weight"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 3 }}
+                      activeDot={{ r: 5 }}
+                      name="Weight"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
 
-                {/* Target range reference lines */}
-                {config?.min_target_weight_kg && (
-                  <ReferenceLine 
-                    yAxisId="weight"
-                    y={config.min_target_weight_kg} 
-                    stroke="hsl(var(--destructive))" 
-                    strokeDasharray="5 5"
-                    label={{ value: 'Min', position: 'left', fontSize: 10 }}
+              {/* Summary Stats */}
+              <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t">
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">Lowest</p>
+                  <p className="font-bold">
+                    {Math.min(...filteredEntries.map(e => e.weight_kg)).toFixed(1)} kg
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">Highest</p>
+                  <p className="font-bold">
+                    {Math.max(...filteredEntries.map(e => e.weight_kg)).toFixed(1)} kg
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">Change</p>
+                  <p className="font-bold">
+                    {(filteredEntries[0].weight_kg - filteredEntries[filteredEntries.length - 1].weight_kg).toFixed(1)} kg
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* BMI Chart - separate card */}
+      {hasBmiData && chartData.length >= 2 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">BMI Trend</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                  <ReferenceArea y1={15} y2={18.5} fill="#f59e0b" fillOpacity={0.1} label={{ value: 'Underweight', position: 'insideLeft', fontSize: 10, fill: '#b45309' }} />
+                  <ReferenceArea y1={18.5} y2={25} fill="#22c55e" fillOpacity={0.1} label={{ value: 'Normal', position: 'insideLeft', fontSize: 10, fill: '#15803d' }} />
+                  <ReferenceArea y1={25} y2={30} fill="#f59e0b" fillOpacity={0.1} label={{ value: 'Overweight', position: 'insideLeft', fontSize: 10, fill: '#b45309' }} />
+                  <ReferenceArea y1={30} y2={40} fill="#ef4444" fillOpacity={0.1} label={{ value: 'Obese', position: 'insideLeft', fontSize: 10, fill: '#b91c1c' }} />
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="date" tick={{ fontSize: 12 }} tickLine={false} />
+                  <YAxis domain={[15, 40]} tick={{ fontSize: 12 }} tickLine={false} label={{ value: 'BMI', angle: -90, position: 'insideLeft', fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--background))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }}
+                    formatter={(value: number) => [value?.toFixed(1), 'BMI']}
                   />
-                )}
-                {config?.max_target_weight_kg && (
-                  <ReferenceLine 
-                    yAxisId="weight"
-                    y={config.max_target_weight_kg} 
-                    stroke="hsl(var(--destructive))" 
-                    strokeDasharray="5 5"
-                    label={{ value: 'Max', position: 'left', fontSize: 10 }}
+                  <Line
+                    type="monotone"
+                    dataKey="bmi"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={2}
+                    dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 3 }}
+                    activeDot={{ r: 5 }}
+                    name="BMI"
+                    connectNulls
                   />
-                )}
-
-                {/* BMI classification background zones */}
-                <ReferenceArea yAxisId="bmi" y1={15} y2={18.5} fill="#f59e0b" fillOpacity={0.08} label={{ value: 'Underweight', position: 'insideTopRight', fontSize: 10, fill: '#b45309' }} />
-                <ReferenceArea yAxisId="bmi" y1={18.5} y2={25} fill="#22c55e" fillOpacity={0.08} label={{ value: 'Normal', position: 'insideTopRight', fontSize: 10, fill: '#15803d' }} />
-                <ReferenceArea yAxisId="bmi" y1={25} y2={30} fill="#f59e0b" fillOpacity={0.08} label={{ value: 'Overweight', position: 'insideTopRight', fontSize: 10, fill: '#b45309' }} />
-                <ReferenceArea yAxisId="bmi" y1={30} y2={40} fill="#ef4444" fillOpacity={0.08} label={{ value: 'Obese', position: 'insideTopRight', fontSize: 10, fill: '#b91c1c' }} />
-
-                <Line 
-                  yAxisId="weight"
-                  type="monotone" 
-                  dataKey="weight" 
-                  stroke="hsl(var(--primary))" 
-                  strokeWidth={2}
-                  dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2 }}
-                  activeDot={{ r: 6 }}
-                  name="Weight"
-                />
-                <Line 
-                  yAxisId="bmi"
-                  type="monotone" 
-                  dataKey="bmi" 
-                  stroke="hsl(var(--secondary-foreground))" 
-                  strokeWidth={2}
-                  strokeDasharray="5 5"
-                  dot={{ fill: 'hsl(var(--secondary-foreground))', strokeWidth: 2 }}
-                  name="BMI"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-
-        {/* Summary Stats */}
-        {chartData.length >= 2 && (
-          <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t">
-            <div className="text-center">
-              <p className="text-xs text-muted-foreground">Lowest</p>
-              <p className="font-bold">
-                {Math.min(...filteredEntries.map(e => e.weight_kg)).toFixed(1)} kg
-              </p>
+                </LineChart>
+              </ResponsiveContainer>
             </div>
-            <div className="text-center">
-              <p className="text-xs text-muted-foreground">Highest</p>
-              <p className="font-bold">
-                {Math.max(...filteredEntries.map(e => e.weight_kg)).toFixed(1)} kg
-              </p>
-            </div>
-            <div className="text-center">
-              <p className="text-xs text-muted-foreground">Change</p>
-              <p className="font-bold">
-                {(filteredEntries[0].weight_kg - filteredEntries[filteredEntries.length - 1].weight_kg).toFixed(1)} kg
-              </p>
-            </div>
-          </div>
-        )}
+          </CardContent>
+        </Card>
+      )}
 
-        {/* Insights */}
-        {insights.length > 0 && (
-          <div className="mt-4 pt-4 border-t space-y-2">
+      {/* Insights */}
+      {insights.length > 0 && (
+        <Card>
+          <CardContent className="pt-6 space-y-2">
             <h4 className="text-sm font-semibold flex items-center gap-1.5">
               <Info className="h-4 w-4 text-muted-foreground" />
               Insights
@@ -260,10 +270,10 @@ export function WeightBmiTrends({ clientId }: WeightBmiTrendsProps) {
             <p className="text-[11px] text-muted-foreground italic mt-2">
               These insights are generated from recorded data and do not constitute medical advice. Always refer to the individual's health plan and consult a qualified health professional.
             </p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
 
