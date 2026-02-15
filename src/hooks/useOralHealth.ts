@@ -146,14 +146,26 @@ export function useOralHealthTaskLogs(clientId?: string) {
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ['oralHealthTaskLogs', clientId],
     queryFn: async () => {
-      let query = supabase.from('oral_health_task_logs').select('*, profiles:created_by(full_name)').order('log_date', { ascending: false }).limit(100);
+      let query = supabase.from('oral_health_task_logs').select('*').order('log_date', { ascending: false }).limit(100);
       if (clientId) query = query.eq('client_id', clientId);
       else query = query.is('client_id', null);
       const { data, error } = await query;
       if (error) throw error;
-      return (data || []).map((d: any) => ({
+      if (!data || data.length === 0) return [] as (OralHealthTaskLog & { staff_name?: string | null })[];
+
+      // Fetch staff names from profiles
+      const userIds = [...new Set(data.map((d: any) => d.created_by).filter(Boolean))];
+      let profileMap: Record<string, string> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase.from('profiles').select('id, full_name').in('id', userIds);
+        if (profiles) {
+          profileMap = Object.fromEntries(profiles.map((p: any) => [p.id, p.full_name]));
+        }
+      }
+
+      return data.map((d: any) => ({
         ...d,
-        staff_name: d.profiles?.full_name || null,
+        staff_name: profileMap[d.created_by] || null,
       })) as (OralHealthTaskLog & { staff_name?: string | null })[];
     },
   });
