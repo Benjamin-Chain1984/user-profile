@@ -112,6 +112,7 @@ export function useVitalSignEntries(clientId?: string, limit = 50) {
         .from('vital_sign_entries')
         .select('*')
         .order('event_occurred_at', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(limit);
 
       if (clientId) {
