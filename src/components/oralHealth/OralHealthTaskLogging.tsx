@@ -50,20 +50,22 @@ export function OralHealthTaskLogging({ clientId }: Props) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* AM */}
             <Card className={`p-4 ${amDone ? 'bg-success/5 border-success/30' : ''}`}>
-              <div className="flex items-center gap-2 mb-3">
-                <Sun className="h-4 w-4 text-warning" />
-                <span className="font-medium">AM Care</span>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Sun className="h-4 w-4 text-warning" />
+                  <span className="font-medium">AM Care</span>
+                </div>
                 {amDone && <Badge variant="outline" className="text-success text-xs">Done</Badge>}
               </div>
               {!amDone ? (
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={() => handleLog('am', true)} disabled={isLogging}>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button className="w-full" size="sm" onClick={() => handleLog('am', true)} disabled={isLogging}>
                     <CheckCircle className="h-4 w-4 mr-1" /> Complete
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleLog('am', false)} disabled={isLogging}>
+                  <Button className="w-full" size="sm" variant="outline" onClick={() => handleLog('am', false)} disabled={isLogging}>
                     <XCircle className="h-4 w-4 mr-1" /> Missed
                   </Button>
                 </div>
@@ -74,17 +76,19 @@ export function OralHealthTaskLogging({ clientId }: Props) {
 
             {/* PM */}
             <Card className={`p-4 ${pmDone ? 'bg-success/5 border-success/30' : ''}`}>
-              <div className="flex items-center gap-2 mb-3">
-                <Moon className="h-4 w-4 text-primary" />
-                <span className="font-medium">PM Care</span>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Moon className="h-4 w-4 text-primary" />
+                  <span className="font-medium">PM Care</span>
+                </div>
                 {pmDone && <Badge variant="outline" className="text-success text-xs">Done</Badge>}
               </div>
               {!pmDone ? (
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={() => handleLog('pm', true)} disabled={isLogging}>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button className="w-full" size="sm" onClick={() => handleLog('pm', true)} disabled={isLogging}>
                     <CheckCircle className="h-4 w-4 mr-1" /> Complete
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleLog('pm', false)} disabled={isLogging}>
+                  <Button className="w-full" size="sm" variant="outline" onClick={() => handleLog('pm', false)} disabled={isLogging}>
                     <XCircle className="h-4 w-4 mr-1" /> Missed
                   </Button>
                 </div>
