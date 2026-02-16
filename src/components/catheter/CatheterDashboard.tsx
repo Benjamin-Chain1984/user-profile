@@ -126,6 +126,7 @@ export function CatheterDashboard({ clientId }: CatheterDashboardProps) {
       <CatheterStatusCard
         clientId={clientId}
         onLogChange={() => setShowChangeForm(true)}
+        onLogFlush={plan?.flush_prescribed ? () => setShowFlushForm(true) : undefined}
       />
 
       {/* Quick Actions - Dynamic based on catheter type */}

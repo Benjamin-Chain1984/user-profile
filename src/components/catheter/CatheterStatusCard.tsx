@@ -14,9 +14,10 @@ import { format, parseISO } from 'date-fns';
 interface CatheterStatusCardProps {
   clientId?: string;
   onLogChange: () => void;
+  onLogFlush?: () => void;
 }
 
-export function CatheterStatusCard({ clientId, onLogChange }: CatheterStatusCardProps) {
+export function CatheterStatusCard({ clientId, onLogChange, onLogFlush }: CatheterStatusCardProps) {
   const { config } = useCatheterConfig(clientId);
   const {
     status,
@@ -163,10 +164,18 @@ export function CatheterStatusCard({ clientId, onLogChange }: CatheterStatusCard
           )}
         </div>
 
-        {/* Action Button */}
-        <Button onClick={onLogChange} className="w-full md:w-auto">
-          Log Catheter Change
-        </Button>
+        {/* Action Buttons */}
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={onLogChange} className="w-full md:w-auto">
+            Log Catheter Change
+          </Button>
+          {onLogFlush && (
+            <Button variant="outline" onClick={onLogFlush} className="w-full md:w-auto gap-2">
+              <Droplets className="h-4 w-4" />
+              Log Catheter Flush
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
