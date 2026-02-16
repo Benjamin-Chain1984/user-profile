@@ -1,5 +1,6 @@
 /**
  * Catheter Change Form - Log catheter changes
+ * Pulls catheter type/size from the Digital Care Plan as the single source of truth.
  */
 
 import { useState } from 'react';
@@ -10,8 +11,10 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
@@ -20,14 +23,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCatheterChanges, useCatheterConfig } from '@/hooks/useCatheter';
+import { ShieldAlert } from 'lucide-react';
+import { useCatheterChanges } from '@/hooks/useCatheter';
+import { useCatheterCarePlan } from '@/hooks/useCatheterCarePlan';
 import {
   CATHETER_TYPES,
   CHANGE_REASONS,
-  CATHETER_TYPE_CONFIG,
   type CatheterType,
   type ChangeReason,
 } from '@/types/catheter';
+import { format } from 'date-fns';
 
 interface CatheterChangeFormProps {
   clientId?: string;
@@ -36,27 +41,33 @@ interface CatheterChangeFormProps {
 }
 
 export function CatheterChangeForm({ clientId, open, onOpenChange }: CatheterChangeFormProps) {
-  const { config } = useCatheterConfig(clientId);
+  const { plan } = useCatheterCarePlan(clientId);
   const { addChange } = useCatheterChanges(clientId);
 
-  const [catheterType, setCatheterType] = useState<CatheterType>(config?.catheter_type || 'idc');
-  const [catheterSize, setCatheterSize] = useState<string>(config?.catheter_size || '');
+  // Derive catheter details from plan (read-only)
+  const planCatheterType = (plan?.catheter_type as CatheterType) || 'idc';
+  const planCatheterSize = plan?.catheter_size_fr || '';
+  const catheterTypeLabel = CATHETER_TYPES.find(t => t.value === planCatheterType)?.label || planCatheterType;
+
   const [changeReason, setChangeReason] = useState<ChangeReason>('routine');
+  const [eventDate, setEventDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [notes, setNotes] = useState('');
 
-  const typeConfig = CATHETER_TYPE_CONFIG[catheterType];
-
   const handleSubmit = async () => {
+    const eventOccurredAt = new Date(eventDate + 'T' + format(new Date(), 'HH:mm:ss')).toISOString();
+
     await addChange.mutateAsync({
-      catheter_type: catheterType,
-      catheter_size: catheterSize || undefined,
+      catheter_type: planCatheterType,
+      catheter_size: planCatheterSize || undefined,
       change_reason: changeReason,
       notes: notes || undefined,
+      event_occurred_at: eventOccurredAt,
     });
 
     // Reset form
     setNotes('');
     setChangeReason('routine');
+    setEventDate(format(new Date(), 'yyyy-MM-dd'));
     onOpenChange(false);
   };
 
@@ -68,47 +79,62 @@ export function CatheterChangeForm({ clientId, open, onOpenChange }: CatheterCha
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* Catheter Type */}
+          {/* Clinical Safety Flag */}
+          <Alert className="border-destructive/50 bg-destructive/5">
+            <ShieldAlert className="h-4 w-4 text-destructive" />
+            <AlertDescription className="text-destructive font-medium">
+              Urinary catheter changes must only be performed by a qualified health professional.
+            </AlertDescription>
+          </Alert>
+
+          {/* Catheter Type - Read-only from Care Plan */}
           <div className="space-y-2">
             <Label>Catheter Type</Label>
-            <Select
-              value={catheterType}
-              onValueChange={(v) => {
-                setCatheterType(v as CatheterType);
-                setCatheterSize('');
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select type" />
-              </SelectTrigger>
-              <SelectContent>
-                {CATHETER_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Input
+              value={catheterTypeLabel}
+              readOnly
+              disabled
+              className="bg-muted"
+            />
+            <p className="text-xs text-muted-foreground">As per Digital Urinary Catheter Care Plan</p>
           </div>
 
-          {/* Catheter Size - Dynamic based on type */}
-          {typeConfig.sizeOptions.length > 0 && (
+          {/* Catheter Size - Read-only from Care Plan */}
+          {planCatheterSize && (
             <div className="space-y-2">
-              <Label>{typeConfig.sizeLabel}</Label>
-              <Select value={catheterSize} onValueChange={setCatheterSize}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select size" />
-                </SelectTrigger>
-                <SelectContent>
-                  {typeConfig.sizeOptions.map((size) => (
-                    <SelectItem key={size} value={size}>
-                      {size}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Catheter Size</Label>
+              <Input
+                value={planCatheterSize}
+                readOnly
+                disabled
+                className="bg-muted"
+              />
             </div>
           )}
+
+          {/* Change Interval - Read-only from Care Plan */}
+          {plan?.change_interval && (
+            <div className="space-y-2">
+              <Label>Change Interval</Label>
+              <Input
+                value={plan.change_interval}
+                readOnly
+                disabled
+                className="bg-muted"
+              />
+            </div>
+          )}
+
+          {/* Date Changed */}
+          <div className="space-y-2">
+            <Label>Date Changed</Label>
+            <Input
+              type="date"
+              value={eventDate}
+              onChange={(e) => setEventDate(e.target.value)}
+              max={format(new Date(), 'yyyy-MM-dd')}
+            />
+          </div>
 
           {/* Change Reason */}
           <div className="space-y-2">
