@@ -14,7 +14,7 @@ export type FlushFrequency = 'prn' | 'daily' | 'twice_daily' | 'custom';
 
 export type FlushPerformer = 'rn' | 'support_worker';
 
-export type FlushReason = 'low_output' | 'sediment' | 'blockage_risk' | 'urology_plan' | 'other';
+export type FlushReason = 'routine' | 'low_output' | 'sediment' | 'blockage_risk' | 'urology_plan' | 'other';
 
 export type UrineAppearance = 'clear' | 'cloudy' | 'blood' | 'sediment';
 
@@ -308,6 +308,7 @@ export const FLUSH_PERFORMERS: { value: FlushPerformer; label: string }[] = [
 ];
 
 export const FLUSH_REASONS: { value: FlushReason; label: string }[] = [
+  { value: 'routine', label: 'Routine Flush' },
   { value: 'low_output', label: 'Low output' },
   { value: 'sediment', label: 'Sediment' },
   { value: 'blockage_risk', label: 'Blockage risk' },
