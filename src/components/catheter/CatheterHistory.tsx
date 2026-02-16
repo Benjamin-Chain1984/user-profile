@@ -21,6 +21,9 @@ import {
   BAG_CHANGE_REASONS,
   BAG_CONDITIONS,
   STOMA_CONDITIONS,
+  STOMA_FINDINGS,
+  STOMA_PAIN_LEVELS,
+  STOMA_DRESSING_OPTIONS,
   CATHETER_TYPE_CONFIG,
 } from '@/types/catheter';
 import { format, parseISO } from 'date-fns';
@@ -148,31 +151,49 @@ export function CatheterHistory({ clientId }: CatheterHistoryProps) {
             ) : (
               <ScrollArea className="h-[400px]">
                 <div className="space-y-3">
-                  {stomaChecks.map((check) => (
-                    <div key={check.id} className="border rounded-lg p-3 space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">Stoma Check</span>
-                        <span className="text-sm text-muted-foreground">
-                          {format(parseISO(check.event_occurred_at), 'dd MMM yyyy, HH:mm')}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Badge
-                          variant={check.stoma_condition === 'healthy' ? 'default' : 'destructive'}
-                        >
-                          {getLabel(check.stoma_condition, STOMA_CONDITIONS)}
-                        </Badge>
-                        {check.escalated_to_clinician && (
-                          <Badge variant="outline" className="text-amber-600">
-                            Escalated
+                  {stomaChecks.map((check) => {
+                    const checkFindings = (check.findings as string[]) || [];
+                    const statusColor = check.status_level === 'red' ? 'destructive' :
+                      check.status_level === 'amber' ? 'secondary' : 'default';
+                    return (
+                      <div key={check.id} className="border rounded-lg p-3 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">Stoma Check</span>
+                          <span className="text-sm text-muted-foreground">
+                            {format(parseISO(check.event_occurred_at), 'dd MMM yyyy, HH:mm')}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant={statusColor}>
+                            {check.status_level === 'red' ? 'Action Required' :
+                              check.status_level === 'amber' ? 'Monitor' : 'IDEAL'}
                           </Badge>
+                          {check.pain_level && check.pain_level !== 'none' && (
+                            <Badge variant="outline">
+                              {getLabel(check.pain_level, STOMA_PAIN_LEVELS)}
+                            </Badge>
+                          )}
+                          {check.escalated_to_clinician && (
+                            <Badge variant="outline" className="text-amber-600">
+                              Escalated
+                            </Badge>
+                          )}
+                        </div>
+                        {checkFindings.length > 0 && (
+                          <div className="flex flex-wrap gap-1 pt-1">
+                            {checkFindings.map(f => (
+                              <Badge key={f} variant="outline" className="text-xs">
+                                {getLabel(f, STOMA_FINDINGS)}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                        {check.notes && (
+                          <p className="text-sm text-muted-foreground">{check.notes}</p>
                         )}
                       </div>
-                      {check.notes && (
-                        <p className="text-sm text-muted-foreground">{check.notes}</p>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </ScrollArea>
             )}

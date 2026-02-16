@@ -8,6 +8,28 @@ export type BagType = 'night_bag' | 'leg_bag' | 'belly_bag' | 'flip_flow' | 'uro
 
 export type StomaCondition = 'healthy' | 'redness' | 'swelling' | 'pain' | 'leaking' | 'maceration' | 'granulation';
 
+// Enhanced stoma check types
+export type StomaFinding =
+  | 'clean_and_dry'
+  | 'mild_redness'
+  | 'slight_tenderness'
+  | 'minor_crusting'
+  | 'moisture_around_site'
+  | 'leakage_around_catheter'
+  | 'swelling'
+  | 'bleeding'
+  | 'pus_discharge'
+  | 'strong_odour'
+  | 'skin_breakdown';
+
+export type StomaPainLevel = 'none' | 'mild_discomfort' | 'moderate_pain' | 'severe_pain';
+
+export type StomaDressingStatus = 'intact' | 'changed' | 'not_applicable';
+
+export type StomaStatusLevel = 'green' | 'amber' | 'red';
+
+export type StomaEscalationType = 'rn' | 'gp' | 'on_call' | 'emergency' | 'not_yet';
+
 export type BagCondition = 'clear_urine' | 'cloudy' | 'sediment' | 'blood_visible' | 'odour' | 'other';
 
 export type BagChangeFrequency = 'daily' | 'every_x_days' | 'prn';
@@ -177,6 +199,12 @@ export interface StomaCheck {
   leaking: boolean;
   maceration: boolean;
   granulation: boolean;
+  findings: StomaFinding[];
+  pain_level: StomaPainLevel;
+  dressing_status: StomaDressingStatus;
+  status_level: StomaStatusLevel;
+  escalation_type: StomaEscalationType | null;
+  action_taken: string | null;
   notes: string | null;
   escalated_to_clinician: boolean;
   escalation_notes: string | null;
@@ -292,6 +320,41 @@ export const STOMA_CONDITIONS: { value: StomaCondition; label: string }[] = [
   { value: 'leaking', label: 'Leaking' },
   { value: 'maceration', label: 'Maceration (skin softening)' },
   { value: 'granulation', label: 'Granulation (extra tissue growth)' },
+];
+
+export const STOMA_FINDINGS: { value: StomaFinding; label: string; severity: 'green' | 'amber' | 'red' }[] = [
+  { value: 'clean_and_dry', label: 'Clean and dry', severity: 'green' },
+  { value: 'mild_redness', label: 'Mild redness', severity: 'amber' },
+  { value: 'slight_tenderness', label: 'Slight tenderness', severity: 'amber' },
+  { value: 'minor_crusting', label: 'Minor crusting', severity: 'amber' },
+  { value: 'moisture_around_site', label: 'Moisture around site', severity: 'amber' },
+  { value: 'leakage_around_catheter', label: 'Leakage around catheter', severity: 'red' },
+  { value: 'swelling', label: 'Swelling', severity: 'red' },
+  { value: 'bleeding', label: 'Bleeding', severity: 'red' },
+  { value: 'pus_discharge', label: 'Pus / discharge', severity: 'red' },
+  { value: 'strong_odour', label: 'Strong odour', severity: 'red' },
+  { value: 'skin_breakdown', label: 'Skin breakdown', severity: 'red' },
+];
+
+export const STOMA_PAIN_LEVELS: { value: StomaPainLevel; label: string; severity: 'green' | 'amber' | 'red' }[] = [
+  { value: 'none', label: 'None', severity: 'green' },
+  { value: 'mild_discomfort', label: 'Mild discomfort', severity: 'amber' },
+  { value: 'moderate_pain', label: 'Moderate pain', severity: 'red' },
+  { value: 'severe_pain', label: 'Severe pain', severity: 'red' },
+];
+
+export const STOMA_DRESSING_OPTIONS: { value: StomaDressingStatus; label: string }[] = [
+  { value: 'intact', label: 'Intact' },
+  { value: 'changed', label: 'Changed' },
+  { value: 'not_applicable', label: 'Not applicable' },
+];
+
+export const STOMA_ESCALATION_TYPES: { value: StomaEscalationType; label: string }[] = [
+  { value: 'rn', label: 'Registered Nurse' },
+  { value: 'gp', label: 'GP' },
+  { value: 'on_call', label: 'On-call' },
+  { value: 'emergency', label: 'Emergency' },
+  { value: 'not_yet', label: 'Not yet (reason required)' },
 ];
 
 export const CHANGE_REASONS: { value: ChangeReason; label: string }[] = [

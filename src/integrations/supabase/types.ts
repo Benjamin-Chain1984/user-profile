@@ -1568,62 +1568,80 @@ export type Database = {
       }
       catheter_stoma_checks: {
         Row: {
+          action_taken: string | null
           client_id: string | null
           created_at: string
           created_by: string | null
+          dressing_status: string | null
           edit_reason: string | null
           edited_at: string | null
           edited_by: string | null
           escalated_to_clinician: boolean
           escalation_notes: string | null
+          escalation_type: string | null
           event_occurred_at: string
+          findings: string[] | null
           granulation: boolean
           id: string
           leaking: boolean
           maceration: boolean
           notes: string | null
           pain: boolean
+          pain_level: string | null
           redness: boolean
+          status_level: string | null
           stoma_condition: string
           swelling: boolean
         }
         Insert: {
+          action_taken?: string | null
           client_id?: string | null
           created_at?: string
           created_by?: string | null
+          dressing_status?: string | null
           edit_reason?: string | null
           edited_at?: string | null
           edited_by?: string | null
           escalated_to_clinician?: boolean
           escalation_notes?: string | null
+          escalation_type?: string | null
           event_occurred_at?: string
+          findings?: string[] | null
           granulation?: boolean
           id?: string
           leaking?: boolean
           maceration?: boolean
           notes?: string | null
           pain?: boolean
+          pain_level?: string | null
           redness?: boolean
+          status_level?: string | null
           stoma_condition: string
           swelling?: boolean
         }
         Update: {
+          action_taken?: string | null
           client_id?: string | null
           created_at?: string
           created_by?: string | null
+          dressing_status?: string | null
           edit_reason?: string | null
           edited_at?: string | null
           edited_by?: string | null
           escalated_to_clinician?: boolean
           escalation_notes?: string | null
+          escalation_type?: string | null
           event_occurred_at?: string
+          findings?: string[] | null
           granulation?: boolean
           id?: string
           leaking?: boolean
           maceration?: boolean
           notes?: string | null
           pain?: boolean
+          pain_level?: string | null
           redness?: boolean
+          status_level?: string | null
           stoma_condition?: string
           swelling?: boolean
         }
