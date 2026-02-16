@@ -10,6 +10,18 @@ export type StomaCondition = 'healthy' | 'redness' | 'swelling' | 'pain' | 'leak
 
 export type FlushSolution = 'saline' | 'sterile_water' | 'other';
 
+export type FlushFrequency = 'prn' | 'daily' | 'twice_daily' | 'custom';
+
+export type FlushPerformer = 'rn' | 'support_worker';
+
+export type FlushReason = 'low_output' | 'sediment' | 'blockage_risk' | 'urology_plan' | 'other';
+
+export type UrineAppearance = 'clear' | 'cloudy' | 'blood' | 'sediment';
+
+export type FlowAfterFlush = 'improved' | 'unchanged' | 'worse';
+
+export type PersonResponse = 'comfortable' | 'pain' | 'distressed';
+
 export type ChangeReason = 'routine' | 'blockage' | 'leakage' | 'infection' | 'malfunction' | 'scheduled' | 'other';
 
 export type BagChangeReason = 'routine' | 'leakage' | 'blockage' | 'odour' | 'other';
@@ -136,6 +148,13 @@ export interface FlushLog {
   flush_solution: FlushSolution;
   output_description: string | null;
   notes: string | null;
+  return_volume_ml: number | null;
+  flush_reason: string | null;
+  urine_appearance: string | null;
+  flow_after_flush: string | null;
+  person_response: string | null;
+  training_confirmed: boolean;
+  escalation_required: boolean;
   created_at: string;
   created_by: string | null;
   edited_at: string | null;
@@ -274,6 +293,45 @@ export const FLUSH_SOLUTIONS: { value: FlushSolution; label: string }[] = [
   { value: 'saline', label: 'Saline' },
   { value: 'sterile_water', label: 'Sterile Water' },
   { value: 'other', label: 'Other' },
+];
+
+export const FLUSH_FREQUENCIES: { value: FlushFrequency; label: string }[] = [
+  { value: 'prn', label: 'PRN (As Needed)' },
+  { value: 'daily', label: 'Daily' },
+  { value: 'twice_daily', label: 'Twice Daily' },
+  { value: 'custom', label: 'Custom Interval' },
+];
+
+export const FLUSH_PERFORMERS: { value: FlushPerformer; label: string }[] = [
+  { value: 'rn', label: 'Registered Nurse' },
+  { value: 'support_worker', label: 'Support Worker (delegated scope)' },
+];
+
+export const FLUSH_REASONS: { value: FlushReason; label: string }[] = [
+  { value: 'low_output', label: 'Low output' },
+  { value: 'sediment', label: 'Sediment' },
+  { value: 'blockage_risk', label: 'Blockage risk' },
+  { value: 'urology_plan', label: 'As per urology plan' },
+  { value: 'other', label: 'Other' },
+];
+
+export const URINE_APPEARANCES: { value: UrineAppearance; label: string }[] = [
+  { value: 'clear', label: 'Clear' },
+  { value: 'cloudy', label: 'Cloudy' },
+  { value: 'blood', label: 'Blood present' },
+  { value: 'sediment', label: 'Sediment present' },
+];
+
+export const FLOW_AFTER_FLUSH_OPTIONS: { value: FlowAfterFlush; label: string }[] = [
+  { value: 'improved', label: 'Improved' },
+  { value: 'unchanged', label: 'Unchanged' },
+  { value: 'worse', label: 'Worse' },
+];
+
+export const PERSON_RESPONSE_OPTIONS: { value: PersonResponse; label: string }[] = [
+  { value: 'comfortable', label: 'Comfortable' },
+  { value: 'pain', label: 'Pain' },
+  { value: 'distressed', label: 'Distressed' },
 ];
 
 export const AD_SYMPTOMS: { value: ADSymptom; label: string }[] = [

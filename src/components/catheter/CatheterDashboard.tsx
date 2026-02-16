@@ -124,10 +124,10 @@ export function CatheterDashboard({ clientId }: CatheterDashboardProps) {
 
       {/* Quick Actions - Dynamic based on catheter type */}
       <div className="flex flex-wrap gap-2">
-        {config?.enable_flush_tracking && typeConfig?.enableFlushTracking && (
-          <Button variant="outline" onClick={() => setShowFlushForm(true)} className="gap-2">
+        {plan?.flush_prescribed && config?.enable_flush_tracking && typeConfig?.enableFlushTracking && (
+          <Button variant="outline" onClick={() => setShowFlushForm(true)} className="gap-2" disabled={isMonitoringPaused}>
             <Droplets className="h-4 w-4" />
-            Log Flush
+            Log Catheter Flush
           </Button>
         )}
         {config?.enable_stoma_checks && typeConfig?.enableStomaChecks && (

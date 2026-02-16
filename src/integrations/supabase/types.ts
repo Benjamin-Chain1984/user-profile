@@ -1120,6 +1120,13 @@ export type Database = {
           enable_autonomic_dysreflexia: boolean
           escalation_instructions: Json | null
           fluid_advice_checklist: Json | null
+          flush_frequency: string | null
+          flush_performer: string | null
+          flush_prescribed: boolean
+          flush_reason: string | null
+          flush_solution_other: string | null
+          flush_solution_type: string | null
+          flush_volume_ml: number | null
           full_system_change_protocol: string | null
           hygiene_checklist: Json | null
           id: string
@@ -1154,6 +1161,13 @@ export type Database = {
           enable_autonomic_dysreflexia?: boolean
           escalation_instructions?: Json | null
           fluid_advice_checklist?: Json | null
+          flush_frequency?: string | null
+          flush_performer?: string | null
+          flush_prescribed?: boolean
+          flush_reason?: string | null
+          flush_solution_other?: string | null
+          flush_solution_type?: string | null
+          flush_volume_ml?: number | null
           full_system_change_protocol?: string | null
           hygiene_checklist?: Json | null
           id?: string
@@ -1188,6 +1202,13 @@ export type Database = {
           enable_autonomic_dysreflexia?: boolean
           escalation_instructions?: Json | null
           fluid_advice_checklist?: Json | null
+          flush_frequency?: string | null
+          flush_performer?: string | null
+          flush_prescribed?: boolean
+          flush_reason?: string | null
+          flush_solution_other?: string | null
+          flush_solution_type?: string | null
+          flush_volume_ml?: number | null
           full_system_change_protocol?: string | null
           hygiene_checklist?: Json | null
           id?: string
@@ -1402,12 +1423,19 @@ export type Database = {
           edit_reason: string | null
           edited_at: string | null
           edited_by: string | null
+          escalation_required: boolean
           event_occurred_at: string
+          flow_after_flush: string | null
+          flush_reason: string | null
           flush_solution: string | null
           flush_volume_ml: number | null
           id: string
           notes: string | null
           output_description: string | null
+          person_response: string | null
+          return_volume_ml: number | null
+          training_confirmed: boolean
+          urine_appearance: string | null
         }
         Insert: {
           client_id?: string | null
@@ -1416,12 +1444,19 @@ export type Database = {
           edit_reason?: string | null
           edited_at?: string | null
           edited_by?: string | null
+          escalation_required?: boolean
           event_occurred_at?: string
+          flow_after_flush?: string | null
+          flush_reason?: string | null
           flush_solution?: string | null
           flush_volume_ml?: number | null
           id?: string
           notes?: string | null
           output_description?: string | null
+          person_response?: string | null
+          return_volume_ml?: number | null
+          training_confirmed?: boolean
+          urine_appearance?: string | null
         }
         Update: {
           client_id?: string | null
@@ -1430,12 +1465,19 @@ export type Database = {
           edit_reason?: string | null
           edited_at?: string | null
           edited_by?: string | null
+          escalation_required?: boolean
           event_occurred_at?: string
+          flow_after_flush?: string | null
+          flush_reason?: string | null
           flush_solution?: string | null
           flush_volume_ml?: number | null
           id?: string
           notes?: string | null
           output_description?: string | null
+          person_response?: string | null
+          return_volume_ml?: number | null
+          training_confirmed?: boolean
+          urine_appearance?: string | null
         }
         Relationships: [
           {

@@ -193,6 +193,13 @@ export function useFlushLogs(clientId?: string) {
       output_description?: string;
       notes?: string;
       event_occurred_at?: string;
+      return_volume_ml?: number;
+      flush_reason?: string;
+      urine_appearance?: string;
+      flow_after_flush?: string;
+      person_response?: string;
+      training_confirmed?: boolean;
+      escalation_required?: boolean;
     }) => {
       const { error } = await supabase.from('catheter_flush_logs').insert({
         client_id: clientId || null,
@@ -201,6 +208,13 @@ export function useFlushLogs(clientId?: string) {
         output_description: entry.output_description || null,
         notes: entry.notes || null,
         event_occurred_at: entry.event_occurred_at || new Date().toISOString(),
+        return_volume_ml: entry.return_volume_ml || null,
+        flush_reason: entry.flush_reason || null,
+        urine_appearance: entry.urine_appearance || null,
+        flow_after_flush: entry.flow_after_flush || null,
+        person_response: entry.person_response || null,
+        training_confirmed: entry.training_confirmed || false,
+        escalation_required: entry.escalation_required || false,
         created_by: user?.id,
       });
       if (error) throw error;

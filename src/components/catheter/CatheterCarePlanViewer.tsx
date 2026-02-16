@@ -212,6 +212,20 @@ export function CatheterCarePlanViewer({ clientId, onClose, onEdit }: CatheterCa
     if (plan.full_system_change_protocol) addField('Full System', plan.full_system_change_protocol);
     y += 2;
 
+    // Flush Procedure
+    if (plan.flush_prescribed) {
+      addSectionHeader('Catheter Flush Procedure');
+      addField('Solution', plan.flush_solution_type === 'other' ? (plan.flush_solution_other || 'Other') : (plan.flush_solution_type || 'Not specified'));
+      if (plan.flush_volume_ml) addField('Prescribed Volume', `${plan.flush_volume_ml} mL`);
+      addField('Frequency', plan.flush_frequency || 'Not specified');
+      if (plan.flush_reason) addField('Reason', plan.flush_reason);
+      addField('Performed By', plan.flush_performer === 'rn' ? 'Registered Nurse' : plan.flush_performer === 'support_worker' ? 'Support Worker (delegated)' : 'Not specified');
+      if (plan.flush_performer === 'rn') {
+        addBullet('Catheter flush to be completed by Registered Nurse in accordance with clinical scope of practice.');
+      }
+      y += 2;
+    }
+
     // Escalation
     addSectionHeader('Escalation — Contact RN/GP Immediately If');
     enabledEscalations.forEach((e: EscalationInstruction) => addBullet(e.condition));
@@ -413,7 +427,55 @@ export function CatheterCarePlanViewer({ clientId, onClose, onEdit }: CatheterCa
         </Card>
       )}
 
-      {/* Autonomic Dysreflexia Action Plan */}
+      {/* Flush Procedure Section */}
+      {plan.flush_prescribed && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Droplets className="h-5 w-5" />
+              Catheter Flush Procedure
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Safety Notice */}
+            <Alert className="border-amber-200 bg-amber-50">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-amber-700 text-xs">
+                This procedure must only be performed if prescribed and if the staff member has been trained and delegated.
+                If concerned, escalate to a Registered Nurse or GP immediately.
+              </AlertDescription>
+            </Alert>
+
+            <div className="grid sm:grid-cols-2 gap-4 text-sm">
+              <div><strong>Solution:</strong> {plan.flush_solution_type === 'other' ? plan.flush_solution_other || 'Other' : plan.flush_solution_type || 'Not specified'}</div>
+              {plan.flush_volume_ml && <div><strong>Prescribed Volume:</strong> {plan.flush_volume_ml} mL</div>}
+              <div><strong>Frequency:</strong> {plan.flush_frequency === 'prn' ? 'PRN (As Needed)' : plan.flush_frequency === 'daily' ? 'Daily' : plan.flush_frequency === 'twice_daily' ? 'Twice Daily' : plan.flush_frequency || 'Not specified'}</div>
+              {plan.flush_reason && <div><strong>Reason:</strong> {plan.flush_reason === 'low_output' ? 'Low output' : plan.flush_reason === 'sediment' ? 'Sediment' : plan.flush_reason === 'blockage_risk' ? 'Blockage risk' : plan.flush_reason === 'urology_plan' ? 'As per urology plan' : plan.flush_reason}</div>}
+              <div><strong>Performed By:</strong> {plan.flush_performer === 'rn' ? 'Registered Nurse' : plan.flush_performer === 'support_worker' ? 'Support Worker (delegated)' : 'Not specified'}</div>
+            </div>
+
+            {plan.flush_performer === 'rn' && (
+              <Alert className="border-primary/30 bg-primary/5">
+                <Shield className="h-4 w-4 text-primary" />
+                <AlertDescription className="text-sm">
+                  Catheter flush to be completed by Registered Nurse in accordance with clinical scope of practice.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {plan.flush_performer === 'support_worker' && (
+              <Alert className="border-primary/30 bg-primary/5">
+                <CheckCircle2 className="h-4 w-4 text-primary" />
+                <AlertDescription className="text-sm">
+                  Support Worker must confirm training and delegation before performing flush. Procedural guide is available in the logging workflow.
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+
       {plan.enable_autonomic_dysreflexia && (
         <Card className="border-destructive/30 bg-destructive/5">
           <CardHeader>

@@ -36,6 +36,13 @@ export interface CatheterCarePlan {
   escalation_instructions: EscalationInstruction[];
   additional_instructions: string | null;
   enable_autonomic_dysreflexia: boolean;
+  flush_prescribed: boolean;
+  flush_solution_type: string | null;
+  flush_solution_other: string | null;
+  flush_volume_ml: number | null;
+  flush_frequency: string | null;
+  flush_reason: string | null;
+  flush_performer: string | null;
   published_at: string | null;
   published_by: string | null;
   created_at: string;
