@@ -261,7 +261,7 @@ function StomaCheckTile({
           )}
         </div>
 
-        <Button onClick={onLog} variant="outline" className="w-full gap-2" size="sm">
+        <Button onClick={onLog} className="w-full gap-2 bg-purple-600 hover:bg-purple-700 text-white" size="sm">
           <Activity className="h-4 w-4" />
           Log Stoma Check
         </Button>
