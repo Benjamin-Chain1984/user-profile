@@ -20,7 +20,6 @@ import { BagChangeForm } from './BagChangeForm';
 import { AutonomicDysreflexiaPanel } from './AutonomicDysreflexiaPanel';
 import { CatheterCarePlanViewer } from './CatheterCarePlanViewer';
 import { CatheterCarePlanEditor } from './CatheterCarePlanEditor';
-import { useCatheterConfig } from '@/hooks/useCatheter';
 import { useCatheterCarePlan, useCatheterCarePlanAcknowledgements, useCatheterCarePlanStatus } from '@/hooks/useCatheterCarePlan';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { useProfile } from '@/contexts/ProfileContext';
@@ -33,7 +32,6 @@ interface CatheterDashboardProps {
 }
 
 export function CatheterDashboard({ clientId }: CatheterDashboardProps) {
-  const { config } = useCatheterConfig(clientId);
   const { isAdmin } = useRoleAccess();
   const { isMonitoringPaused, monitoringStatus } = useProfile();
 
@@ -49,7 +47,8 @@ export function CatheterDashboard({ clientId }: CatheterDashboardProps) {
   const planStatus = useCatheterCarePlanStatus(plan);
   const { hasCurrentUserAcknowledged } = useCatheterCarePlanAcknowledgements(plan?.id, plan?.version);
 
-  const typeConfig = config?.catheter_type ? CATHETER_TYPE_CONFIG[config.catheter_type] : null;
+  const planCatheterType = plan?.catheter_type as import('@/types/catheter').CatheterType | undefined;
+  const typeConfig = planCatheterType ? CATHETER_TYPE_CONFIG[planCatheterType] : null;
 
   // Show plan editor (admin only)
   if (showPlanEditor) {
@@ -129,30 +128,24 @@ export function CatheterDashboard({ clientId }: CatheterDashboardProps) {
         onLogFlush={plan?.flush_prescribed ? () => setShowFlushForm(true) : undefined}
       />
 
-      {/* Quick Actions - Dynamic based on catheter type */}
+      {/* Quick Actions - Dynamic based on care plan */}
       <div className="flex flex-wrap gap-2">
-        {plan?.flush_prescribed && config?.enable_flush_tracking && typeConfig?.enableFlushTracking && (
-          <Button variant="outline" onClick={() => setShowFlushForm(true)} className="gap-2" disabled={isMonitoringPaused}>
-            <Droplets className="h-4 w-4" />
-            Log Catheter Flush
-          </Button>
-        )}
-        {config?.enable_stoma_checks && typeConfig?.enableStomaChecks && (
+        {typeConfig?.enableStomaChecks && (
           <Button variant="outline" onClick={() => setShowStomaForm(true)} className="gap-2">
             <Activity className="h-4 w-4" />
             Stoma Check
           </Button>
         )}
-        {config?.bag_types && config.bag_types.length > 0 && (
+        {plan?.leg_bag_change_frequency || plan?.night_bag_change_frequency ? (
           <Button variant="outline" onClick={() => setShowBagForm(true)} className="gap-2">
             <Package className="h-4 w-4" />
             Log Bag Change
           </Button>
-        )}
+        ) : null}
       </div>
 
       {/* Autonomic Dysreflexia Action Plan */}
-      {config?.enable_autonomic_dysreflexia_risk && (
+      {plan?.enable_autonomic_dysreflexia && (
         <AutonomicDysreflexiaPanel clientId={clientId} />
       )}
 

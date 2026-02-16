@@ -39,6 +39,7 @@ interface CatheterStatus {
   stomaAlertActive: boolean;
   activeAlerts: CatheterAlert[];
   monthlyBagUsage: number;
+  changeFrequencyDays: number;
 }
 
 export function useCatheterConfig(clientId?: string) {
@@ -632,6 +633,7 @@ export function useCatheterStatus(clientId?: string): CatheterStatus & { loading
     stomaAlertActive: hasConcern || false,
     activeAlerts: alerts,
     monthlyBagUsage: monthlyUsage,
+    changeFrequencyDays,
     loading: configLoading || changesLoading || flushLoading || stomaLoading || alertsLoading || planQuery.isLoading,
   };
 }

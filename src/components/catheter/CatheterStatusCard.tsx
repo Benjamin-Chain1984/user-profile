@@ -1,14 +1,16 @@
 /**
  * Catheter Status Card - Visual dashboard summary
+ * Now pulls catheter type/size from the Digital Care Plan as single source of truth.
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Clock, Droplets, AlertCircle, Package, Activity } from 'lucide-react';
-import { useCatheterStatus, useCatheterConfig, useBagChanges } from '@/hooks/useCatheter';
-import { CATHETER_TYPES, CATHETER_TYPE_CONFIG } from '@/types/catheter';
+import { Clock, Droplets, Activity, Package } from 'lucide-react';
+import { useCatheterStatus, useBagChanges } from '@/hooks/useCatheter';
+import { useCatheterCarePlan } from '@/hooks/useCatheterCarePlan';
+import { CATHETER_TYPES, CATHETER_TYPE_CONFIG, type CatheterType } from '@/types/catheter';
 import { format, parseISO } from 'date-fns';
 
 interface CatheterStatusCardProps {
@@ -18,7 +20,7 @@ interface CatheterStatusCardProps {
 }
 
 export function CatheterStatusCard({ clientId, onLogChange, onLogFlush }: CatheterStatusCardProps) {
-  const { config } = useCatheterConfig(clientId);
+  const { plan } = useCatheterCarePlan(clientId);
   const {
     status,
     daysUntilChange,
@@ -28,6 +30,7 @@ export function CatheterStatusCard({ clientId, onLogChange, onLogFlush }: Cathet
     lastStomaCheck,
     stomaAlertActive,
     monthlyBagUsage,
+    changeFrequencyDays,
     loading,
   } = useCatheterStatus(clientId);
 
@@ -44,11 +47,14 @@ export function CatheterStatusCard({ clientId, onLogChange, onLogFlush }: Cathet
     );
   }
 
-  const catheterTypeLabel = config?.catheter_type
-    ? CATHETER_TYPES.find(t => t.value === config.catheter_type)?.label
-    : 'Not configured';
+  // Pull catheter type/size from the Digital Care Plan
+  const planCatheterType = plan?.catheter_type as CatheterType | undefined;
+  const catheterTypeLabel = planCatheterType
+    ? CATHETER_TYPES.find(t => t.value === planCatheterType)?.label
+    : 'Not configured — update Care Plan';
+  const catheterSize = plan?.catheter_size_fr || null;
 
-  const typeConfig = config?.catheter_type ? CATHETER_TYPE_CONFIG[config.catheter_type] : null;
+  const typeConfig = planCatheterType ? CATHETER_TYPE_CONFIG[planCatheterType] : null;
 
   const statusColors = {
     stable: 'bg-green-100 border-green-300 text-green-800',
@@ -68,9 +74,9 @@ export function CatheterStatusCard({ clientId, onLogChange, onLogFlush }: Cathet
     action: '🔴',
   };
 
-  // Calculate change countdown progress
-  const changeProgress = config?.change_frequency_days && daysUntilChange !== null
-    ? Math.max(0, Math.min(100, ((config.change_frequency_days - Math.max(0, daysUntilChange)) / config.change_frequency_days) * 100))
+  // Calculate change countdown progress using plan-derived frequency
+  const changeProgress = changeFrequencyDays && changeFrequencyDays > 0 && daysUntilChange !== null
+    ? Math.max(0, Math.min(100, ((changeFrequencyDays - Math.max(0, daysUntilChange)) / changeFrequencyDays) * 100))
     : 0;
 
   return (
@@ -87,11 +93,18 @@ export function CatheterStatusCard({ clientId, onLogChange, onLogFlush }: Cathet
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Catheter Type */}
+        {/* Catheter Type - from Care Plan */}
         <div className="text-sm text-muted-foreground">
           <strong>Type:</strong> {catheterTypeLabel}
-          {config?.catheter_size && ` • ${config.catheter_size}`}
+          {catheterSize && ` • ${catheterSize}`}
         </div>
+
+        {/* Change Interval - from Care Plan */}
+        {plan?.change_interval && (
+          <div className="text-sm text-muted-foreground">
+            <strong>Change Interval:</strong> {plan.change_interval}
+          </div>
+        )}
 
         {/* Status Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -103,7 +116,7 @@ export function CatheterStatusCard({ clientId, onLogChange, onLogFlush }: Cathet
             </div>
             {daysUntilChange !== null ? (
               <>
-                <div className={`text-2xl font-bold ${isChangeOverdue ? 'text-red-600' : ''}`}>
+                <div className={`text-2xl font-bold ${isChangeOverdue ? 'text-destructive' : ''}`}>
                   {isChangeOverdue ? `${Math.abs(daysUntilChange)} days overdue` : `${daysUntilChange} days`}
                 </div>
                 <Progress value={changeProgress} className="h-2" />
@@ -113,15 +126,15 @@ export function CatheterStatusCard({ clientId, onLogChange, onLogFlush }: Cathet
             )}
           </div>
 
-          {/* Flush Status */}
-          {typeConfig?.enableFlushTracking && config?.enable_flush_tracking && (
+          {/* Flush Status - from Care Plan */}
+          {plan?.flush_prescribed && (
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <Droplets className="h-4 w-4" />
                 Next Flush
               </div>
               {hoursUntilFlush !== null ? (
-                <div className={`text-2xl font-bold ${isFlushOverdue ? 'text-red-600' : ''}`}>
+                <div className={`text-2xl font-bold ${isFlushOverdue ? 'text-destructive' : ''}`}>
                   {isFlushOverdue ? `${Math.abs(hoursUntilFlush)}h overdue` : `${hoursUntilFlush}h`}
                 </div>
               ) : (
@@ -130,8 +143,8 @@ export function CatheterStatusCard({ clientId, onLogChange, onLogFlush }: Cathet
             </div>
           )}
 
-          {/* Stoma Status */}
-          {typeConfig?.enableStomaChecks && config?.enable_stoma_checks && (
+          {/* Stoma Status - from Care Plan catheter type */}
+          {typeConfig?.enableStomaChecks && (
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <Activity className="h-4 w-4" />
@@ -153,7 +166,7 @@ export function CatheterStatusCard({ clientId, onLogChange, onLogFlush }: Cathet
           )}
 
           {/* Bag Usage */}
-          {config?.bag_types && config.bag_types.length > 0 && (
+          {monthlyBagUsage > 0 && (
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <Package className="h-4 w-4" />
