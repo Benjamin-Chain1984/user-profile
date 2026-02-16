@@ -46,6 +46,7 @@ const IDC_FLUSH_STEPS = [
   'Ensure urine drains freely.',
   'Dispose of equipment safely.',
   'Perform hand hygiene.',
+  'Log Catheter Flush in IDEAL.',
 ];
 
 const IDC_ESCALATION_PROMPTS = [
@@ -72,6 +73,7 @@ const SPC_FLUSH_STEPS = [
   'Inspect insertion site for leakage/swelling.',
   'Dispose of equipment safely.',
   'Perform hand hygiene.',
+  'Log Catheter Flush in IDEAL.',
 ];
 
 const SPC_ESCALATION_PROMPTS = [
