@@ -28,8 +28,12 @@ import {
   type FlowAfterFlush, type PersonResponse,
 } from '@/types/catheter';
 import {
-  AlertTriangle, ChevronDown, Shield, CheckCircle2,
+  AlertTriangle, ChevronDown, Shield, CheckCircle2, CalendarIcon,
 } from 'lucide-react';
+import { format } from 'date-fns';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 // Indwelling (Urethral) flush steps
 const IDC_FLUSH_STEPS = [
@@ -97,6 +101,7 @@ export function FlushLogForm({ clientId, open, onOpenChange }: FlushLogFormProps
   const [flushVolume, setFlushVolume] = useState('');
   const [returnVolume, setReturnVolume] = useState('');
   const [flushSolution, setFlushSolution] = useState<FlushSolution>('saline');
+  const [eventDate, setEventDate] = useState<Date>(new Date());
   const [flushReason, setFlushReason] = useState<FlushReason | ''>('');
   const [urineAppearance, setUrineAppearance] = useState<UrineAppearance | ''>('');
   const [flowAfterFlush, setFlowAfterFlush] = useState<FlowAfterFlush | ''>('');
@@ -119,6 +124,10 @@ export function FlushLogForm({ clientId, open, onOpenChange }: FlushLogFormProps
   const canSubmit = isSupportWorker ? trainingConfirmed : true;
 
   const handleSubmit = async () => {
+    const eventOccurredAt = new Date(
+      format(eventDate, 'yyyy-MM-dd') + 'T' + format(new Date(), 'HH:mm:ss')
+    ).toISOString();
+
     await addFlush.mutateAsync({
       flush_volume_ml: flushVolume ? parseInt(flushVolume, 10) : undefined,
       flush_solution: flushSolution,
@@ -131,12 +140,14 @@ export function FlushLogForm({ clientId, open, onOpenChange }: FlushLogFormProps
       person_response: personResponse || undefined,
       training_confirmed: trainingConfirmed,
       escalation_required: escalationRequired,
+      event_occurred_at: eventOccurredAt,
     });
 
     // Reset form
     setFlushVolume('');
     setReturnVolume('');
     setFlushSolution('saline');
+    setEventDate(new Date());
     setFlushReason('');
     setUrineAppearance('');
     setFlowAfterFlush('');
@@ -166,7 +177,35 @@ export function FlushLogForm({ clientId, open, onOpenChange }: FlushLogFormProps
             </AlertDescription>
           </Alert>
 
-          {/* RN Notice */}
+          {/* Date of Flush */}
+          <div className="space-y-2">
+            <Label>Date of Flush</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !eventDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {format(eventDate, 'dd/MM/yyyy')}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={eventDate}
+                  onSelect={(d) => d && setEventDate(d)}
+                  disabled={(date) => date > new Date()}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
           {isRNPerformer && (
             <Alert className="border-primary/30 bg-primary/5">
               <Shield className="h-4 w-4 text-primary" />
