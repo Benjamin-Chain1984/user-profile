@@ -527,24 +527,38 @@ function parseChangeIntervalToDays(interval: string | null | undefined): number 
  */
 function parseFlushFrequencyToHours(frequency: string | null | undefined, customInterval: string | null | undefined): number | null {
   if (!frequency) return null;
-  switch (frequency) {
-    case 'daily': return 24;
-    case 'twice_daily': return 12;
-    case 'custom': {
-      // Try to parse custom interval (e.g. "every 10 days", "every 3 days")
-      if (!customInterval) return null;
-      const match = customInterval.toLowerCase().match(/(\d+)\s*(day|hour|hr)/i);
-      if (match) {
-        const num = parseInt(match[1], 10);
-        const unit = match[2].toLowerCase();
-        if (unit.startsWith('day')) return num * 24;
-        if (unit.startsWith('hour') || unit === 'hr') return num;
-      }
-      return null;
+  
+  // Handle compound values like "prn, custom" — check if 'custom' is included
+  const normalizedFreq = frequency.toLowerCase();
+  
+  if (normalizedFreq === 'daily') return 24;
+  if (normalizedFreq === 'twice_daily') return 12;
+  
+  // If frequency contains 'custom', try to parse the custom interval
+  if (normalizedFreq.includes('custom') || normalizedFreq === 'custom') {
+    if (!customInterval) return null;
+    const ci = customInterval.toLowerCase().trim();
+    
+    // Handle single-word intervals
+    if (ci === 'weekly') return 7 * 24;
+    if (ci === 'daily') return 24;
+    if (ci === 'fortnightly') return 14 * 24;
+    
+    // Handle "every X days/hours" patterns
+    const match = ci.match(/(\d+)\s*(day|hour|hr|week|wk)/i);
+    if (match) {
+      const num = parseInt(match[1], 10);
+      const unit = match[2].toLowerCase();
+      if (unit.startsWith('day')) return num * 24;
+      if (unit.startsWith('hour') || unit === 'hr') return num;
+      if (unit.startsWith('week') || unit === 'wk') return num * 7 * 24;
     }
-    case 'prn': return null; // As needed, no schedule
-    default: return null;
+    return null;
   }
+  
+  if (normalizedFreq === 'prn' || normalizedFreq === 'as_needed') return null; // No schedule
+  
+  return null;
 }
 
 export function useCatheterStatus(clientId?: string): CatheterStatus & { loading: boolean } {
