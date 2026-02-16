@@ -41,6 +41,7 @@ export interface CatheterCarePlan {
   flush_solution_other: string | null;
   flush_volume_ml: number | null;
   flush_frequency: string | null;
+  flush_custom_interval: string | null;
   flush_reason: string | null;
   flush_performer: string | null;
   published_at: string | null;
