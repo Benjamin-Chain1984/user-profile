@@ -25,7 +25,7 @@ export function CatheterStatusCard({ clientId, onLogChange, onLogFlush }: Cathet
     status,
     daysUntilChange,
     isChangeOverdue,
-    hoursUntilFlush,
+    daysUntilFlush,
     isFlushOverdue,
     lastStomaCheck,
     stomaAlertActive,
@@ -146,9 +146,9 @@ export function CatheterStatusCard({ clientId, onLogChange, onLogFlush }: Cathet
                 <Droplets className="h-4 w-4" />
                 Next Flush
               </div>
-              {hoursUntilFlush !== null ? (
+              {daysUntilFlush !== null ? (
                 <div className={`text-2xl font-bold ${isFlushOverdue ? 'text-destructive' : ''}`}>
-                  {isFlushOverdue ? `${Math.abs(hoursUntilFlush)}h overdue` : `${hoursUntilFlush}h`}
+                  {isFlushOverdue ? `${Math.abs(daysUntilFlush)} days overdue` : `${daysUntilFlush} days`}
                 </div>
               ) : (
                 <div className="text-sm text-muted-foreground">No flushes logged</div>
