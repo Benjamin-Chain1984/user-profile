@@ -126,23 +126,18 @@ export function CatheterDashboard({ clientId }: CatheterDashboardProps) {
         clientId={clientId}
         onLogChange={() => setShowChangeForm(true)}
         onLogFlush={plan?.flush_prescribed ? () => setShowFlushForm(true) : undefined}
+        onLogBagChange={plan?.leg_bag_change_frequency || plan?.night_bag_change_frequency ? () => setShowBagForm(true) : undefined}
       />
 
       {/* Quick Actions - Dynamic based on care plan */}
-      <div className="flex flex-wrap gap-2">
-        {typeConfig?.enableStomaChecks && (
+      {typeConfig?.enableStomaChecks && (
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => setShowStomaForm(true)} className="gap-2">
             <Activity className="h-4 w-4" />
             Stoma Check
           </Button>
-        )}
-        {plan?.leg_bag_change_frequency || plan?.night_bag_change_frequency ? (
-          <Button variant="outline" onClick={() => setShowBagForm(true)} className="gap-2">
-            <Package className="h-4 w-4" />
-            Log Bag Change
-          </Button>
-        ) : null}
-      </div>
+        </div>
+      )}
 
 
       {/* Main Tabs */}

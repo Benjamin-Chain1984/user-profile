@@ -17,9 +17,10 @@ interface CatheterStatusCardProps {
   clientId?: string;
   onLogChange: () => void;
   onLogFlush?: () => void;
+  onLogBagChange?: () => void;
 }
 
-export function CatheterStatusCard({ clientId, onLogChange, onLogFlush }: CatheterStatusCardProps) {
+export function CatheterStatusCard({ clientId, onLogChange, onLogFlush, onLogBagChange }: CatheterStatusCardProps) {
   const { plan } = useCatheterCarePlan(clientId);
   const {
     status,
@@ -178,8 +179,8 @@ export function CatheterStatusCard({ clientId, onLogChange, onLogFlush }: Cathet
             </div>
           )}
 
-          {/* Bag Usage */}
-          {monthlyBagUsage > 0 && (
+          {/* Bag Usage - always show when bag tracking is available */}
+          {onLogBagChange && (
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <Package className="h-4 w-4" />
@@ -199,6 +200,12 @@ export function CatheterStatusCard({ clientId, onLogChange, onLogFlush }: Cathet
             <Button onClick={onLogFlush} className="w-full md:w-auto gap-2">
               <Droplets className="h-4 w-4" />
               Log Catheter Flush
+            </Button>
+          )}
+          {onLogBagChange && (
+            <Button onClick={onLogBagChange} className="w-full md:w-auto gap-2">
+              <Package className="h-4 w-4" />
+              Log Bag Change
             </Button>
           )}
         </div>
