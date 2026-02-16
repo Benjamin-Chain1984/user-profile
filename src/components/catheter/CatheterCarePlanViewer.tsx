@@ -413,6 +413,75 @@ export function CatheterCarePlanViewer({ clientId, onClose, onEdit }: CatheterCa
         </Card>
       )}
 
+      {/* Autonomic Dysreflexia Action Plan */}
+      {plan.enable_autonomic_dysreflexia && (
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <Shield className="h-5 w-5" />
+              ⚡ Autonomic Dysreflexia — Emergency Action Plan
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert className="border-destructive/30">
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+              <AlertTitle className="text-destructive font-bold">Medical Emergency</AlertTitle>
+              <AlertDescription>
+                Autonomic dysreflexia is a life-threatening condition. Act immediately if any of the following signs appear.
+              </AlertDescription>
+            </Alert>
+
+            <div>
+              <h4 className="font-semibold text-sm mb-2">Signs &amp; Symptoms</h4>
+              <div className="space-y-1.5">
+                {[
+                  'Sudden severe headache',
+                  'Significant rise in blood pressure',
+                  'Flushing or blotching above level of injury',
+                  'Sweating above level of injury',
+                  'Nasal congestion',
+                  'Goosebumps below level of injury',
+                  'Slow heart rate (bradycardia)',
+                  'Feeling of anxiety or "something is wrong"',
+                ].map(symptom => (
+                  <div key={symptom} className="flex items-start gap-2 text-sm">
+                    <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
+                    <span>{symptom}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-sm mb-2">Immediate Actions</h4>
+              <div className="space-y-1.5">
+                {[
+                  'Sit the person upright immediately',
+                  'Check catheter for blockage, kinks, or overfull bag — drain immediately',
+                  'Loosen any tight clothing or accessories',
+                  'Monitor blood pressure every 5 minutes',
+                  'If symptoms do not resolve within minutes — Call 000',
+                  'Do NOT lay the person flat',
+                ].map(action => (
+                  <div key={action} className="flex items-start gap-2 text-sm">
+                    <CheckCircle2 className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
+                    <span>{action}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <Alert className="border-destructive/30">
+              <Phone className="h-4 w-4 text-destructive" />
+              <AlertTitle className="text-destructive">Call 000 Immediately</AlertTitle>
+              <AlertDescription>
+                If blood pressure remains elevated or symptoms worsen, call 000 and inform paramedics of autonomic dysreflexia.
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Escalation Instructions */}
       <Card className="border-destructive/30 bg-destructive/5">
         <CardHeader>
