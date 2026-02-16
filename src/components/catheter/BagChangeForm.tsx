@@ -1,5 +1,5 @@
 /**
- * Bag Change Form - Log drainage bag changes
+ * Bag Change Form - Enhanced with condition, tubing, and stock tracking
  */
 
 import { useState } from 'react';
@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -20,12 +21,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useBagChanges, useCatheterConfig } from '@/hooks/useCatheter';
+import { useBagChanges, useCatheterBagConfig } from '@/hooks/useCatheter';
 import {
   BAG_TYPES,
   BAG_CHANGE_REASONS,
+  BAG_CONDITIONS,
   type BagType,
   type BagChangeReason,
+  type BagCondition,
 } from '@/types/catheter';
 
 interface BagChangeFormProps {
@@ -35,32 +38,41 @@ interface BagChangeFormProps {
 }
 
 export function BagChangeForm({ clientId, open, onOpenChange }: BagChangeFormProps) {
-  const { config } = useCatheterConfig(clientId);
+  const { configs } = useCatheterBagConfig(clientId);
   const { addChange } = useBagChanges(clientId);
 
-  const allowedBagTypes = config?.bag_types || [];
-  const filteredBagTypes = BAG_TYPES.filter(bt => allowedBagTypes.includes(bt.value));
+  // Only show bag types that are configured as active
+  const activeBagTypes = configs.filter(c => c.is_active).map(c => c.bag_type);
+  const filteredBagTypes = activeBagTypes.length > 0
+    ? BAG_TYPES.filter(bt => activeBagTypes.includes(bt.value))
+    : BAG_TYPES;
 
-  const [bagType, setBagType] = useState<BagType>(filteredBagTypes[0]?.value || 'night_bag');
+  const [bagType, setBagType] = useState<BagType>(filteredBagTypes[0]?.value || 'leg_bag');
   const [changeReason, setChangeReason] = useState<BagChangeReason>('routine');
+  const [condition, setCondition] = useState<BagCondition>('clear_urine');
+  const [tubingChanged, setTubingChanged] = useState(false);
   const [notes, setNotes] = useState('');
 
   const handleSubmit = async () => {
     await addChange.mutateAsync({
       bag_type: bagType,
       change_reason: changeReason,
+      condition,
+      tubing_changed: tubingChanged,
       notes: notes || undefined,
     });
 
     // Reset form
     setNotes('');
     setChangeReason('routine');
+    setCondition('clear_urine');
+    setTubingChanged(false);
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Log Bag Change</DialogTitle>
         </DialogHeader>
@@ -98,6 +110,35 @@ export function BagChangeForm({ clientId, open, onOpenChange }: BagChangeFormPro
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Condition of Removed Bag */}
+          <div className="space-y-2">
+            <Label>Condition of Removed Bag</Label>
+            <Select value={condition} onValueChange={(v) => setCondition(v as BagCondition)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select condition" />
+              </SelectTrigger>
+              <SelectContent>
+                {BAG_CONDITIONS.map((cond) => (
+                  <SelectItem key={cond.value} value={cond.value}>
+                    {cond.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Tubing Changed */}
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <Label htmlFor="tubing-changed" className="cursor-pointer">
+              Was tubing also changed?
+            </Label>
+            <Switch
+              id="tubing-changed"
+              checked={tubingChanged}
+              onCheckedChange={setTubingChanged}
+            />
           </div>
 
           {/* Notes */}

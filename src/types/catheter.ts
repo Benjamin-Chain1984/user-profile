@@ -4,9 +4,13 @@
 
 export type CatheterType = 'spc' | 'idc' | 'balloon' | 'intermittent' | 'urostomy' | 'condom';
 
-export type BagType = 'night_bag' | 'leg_bag' | 'flip_flow' | 'urostomy_bag' | 'condom_bag';
+export type BagType = 'night_bag' | 'leg_bag' | 'belly_bag' | 'flip_flow' | 'urostomy_bag' | 'condom_bag' | 'other';
 
 export type StomaCondition = 'healthy' | 'redness' | 'swelling' | 'pain' | 'leaking' | 'maceration' | 'granulation';
+
+export type BagCondition = 'clear_urine' | 'cloudy' | 'sediment' | 'blood_visible' | 'odour' | 'other';
+
+export type BagChangeFrequency = 'daily' | 'every_x_days' | 'prn';
 
 export type FlushSolution = 'saline' | 'sterile_water' | 'other';
 
@@ -24,7 +28,7 @@ export type PersonResponse = 'comfortable' | 'pain' | 'distressed';
 
 export type ChangeReason = 'routine' | 'blockage' | 'leakage' | 'infection' | 'malfunction' | 'scheduled' | 'other';
 
-export type BagChangeReason = 'routine' | 'leakage' | 'blockage' | 'odour' | 'other';
+export type BagChangeReason = 'routine' | 'soiled' | 'damaged' | 'leakage' | 'blockage' | 'infection_control' | 'other';
 
 export type AlertType = 'change_due' | 'change_overdue' | 'flush_due' | 'flush_overdue' | 'stoma_concern' | 'low_consumables' | 'autonomic_dysreflexia';
 
@@ -189,12 +193,29 @@ export interface BagChangeLog {
   event_occurred_at: string;
   bag_type: BagType;
   change_reason: BagChangeReason;
+  condition: BagCondition | null;
+  tubing_changed: boolean;
   notes: string | null;
   created_at: string;
   created_by: string | null;
   edited_at: string | null;
   edited_by: string | null;
   edit_reason: string | null;
+}
+
+export interface CatheterBagConfig {
+  id: string;
+  client_id: string | null;
+  bag_type: string;
+  stock_level: number;
+  low_stock_threshold: number;
+  change_frequency: BagChangeFrequency | null;
+  change_frequency_days: number | null;
+  is_active: boolean;
+  created_at: string;
+  created_by: string | null;
+  updated_at: string;
+  updated_by: string | null;
 }
 
 export interface CatheterAlert {
@@ -254,11 +275,13 @@ export const CATHETER_TYPES: { value: CatheterType; label: string; description: 
 ];
 
 export const BAG_TYPES: { value: BagType; label: string }[] = [
-  { value: 'night_bag', label: 'Night Bag' },
   { value: 'leg_bag', label: 'Leg Bag' },
+  { value: 'night_bag', label: 'Night Drainage Bag' },
+  { value: 'belly_bag', label: 'Belly Bag' },
   { value: 'flip_flow', label: 'Flip-Flow Valve' },
   { value: 'urostomy_bag', label: 'Urostomy Drainage Bag' },
   { value: 'condom_bag', label: 'Condom Catheter Drainage Bag' },
+  { value: 'other', label: 'Other' },
 ];
 
 export const STOMA_CONDITIONS: { value: StomaCondition; label: string }[] = [
@@ -282,11 +305,28 @@ export const CHANGE_REASONS: { value: ChangeReason; label: string }[] = [
 ];
 
 export const BAG_CHANGE_REASONS: { value: BagChangeReason; label: string }[] = [
-  { value: 'routine', label: 'Routine' },
+  { value: 'routine', label: 'Routine Change' },
+  { value: 'soiled', label: 'Soiled' },
+  { value: 'damaged', label: 'Damaged' },
   { value: 'leakage', label: 'Leakage' },
-  { value: 'blockage', label: 'Blockage' },
+  { value: 'blockage', label: 'Blocked' },
+  { value: 'infection_control', label: 'Infection Control' },
+  { value: 'other', label: 'Other' },
+];
+
+export const BAG_CONDITIONS: { value: BagCondition; label: string }[] = [
+  { value: 'clear_urine', label: 'Clear urine' },
+  { value: 'cloudy', label: 'Cloudy' },
+  { value: 'sediment', label: 'Sediment present' },
+  { value: 'blood_visible', label: 'Blood visible' },
   { value: 'odour', label: 'Odour' },
   { value: 'other', label: 'Other' },
+];
+
+export const BAG_CHANGE_FREQUENCY_OPTIONS: { value: BagChangeFrequency; label: string }[] = [
+  { value: 'daily', label: 'Daily' },
+  { value: 'every_x_days', label: 'Every X days' },
+  { value: 'prn', label: 'PRN — 2/3 full' },
 ];
 
 export const FLUSH_SOLUTIONS: { value: FlushSolution; label: string }[] = [

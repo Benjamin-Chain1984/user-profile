@@ -11,3 +11,4 @@ export { BagChangeForm } from './BagChangeForm';
 export { AutonomicDysreflexiaPanel } from './AutonomicDysreflexiaPanel';
 export { CatheterCarePlanViewer } from './CatheterCarePlanViewer';
 export { CatheterCarePlanEditor } from './CatheterCarePlanEditor';
+export { BagManagementSettings } from './BagManagementSettings';
