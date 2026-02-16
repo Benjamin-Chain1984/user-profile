@@ -1117,6 +1117,7 @@ export type Database = {
           created_by: string | null
           date_developed: string | null
           drainage_monitoring_checklist: Json | null
+          enable_autonomic_dysreflexia: boolean
           escalation_instructions: Json | null
           fluid_advice_checklist: Json | null
           full_system_change_protocol: string | null
@@ -1150,6 +1151,7 @@ export type Database = {
           created_by?: string | null
           date_developed?: string | null
           drainage_monitoring_checklist?: Json | null
+          enable_autonomic_dysreflexia?: boolean
           escalation_instructions?: Json | null
           fluid_advice_checklist?: Json | null
           full_system_change_protocol?: string | null
@@ -1183,6 +1185,7 @@ export type Database = {
           created_by?: string | null
           date_developed?: string | null
           drainage_monitoring_checklist?: Json | null
+          enable_autonomic_dysreflexia?: boolean
           escalation_instructions?: Json | null
           fluid_advice_checklist?: Json | null
           full_system_change_protocol?: string | null

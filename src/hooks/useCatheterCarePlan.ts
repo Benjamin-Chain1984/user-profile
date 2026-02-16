@@ -35,6 +35,7 @@ export interface CatheterCarePlan {
   no_urine_hours_threshold: number;
   escalation_instructions: EscalationInstruction[];
   additional_instructions: string | null;
+  enable_autonomic_dysreflexia: boolean;
   published_at: string | null;
   published_by: string | null;
   created_at: string;
