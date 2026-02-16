@@ -24,10 +24,16 @@ import type {
   BagChangeFrequency,
   FlushSolution,
   StomaCondition,
+  StomaFinding,
+  StomaPainLevel,
+  StomaDressingStatus,
+  StomaStatusLevel,
+  StomaEscalationType,
   ADSymptom,
   ADAction,
   CATHETER_TYPE_CONFIG,
 } from '@/types/catheter';
+import { STOMA_FINDINGS, STOMA_PAIN_LEVELS } from '@/types/catheter';
 import { differenceInDays, differenceInHours, parseISO, addDays, addHours, format } from 'date-fns';
 
 type HealthStatus = 'stable' | 'monitor' | 'action';
@@ -244,6 +250,29 @@ export function useFlushLogs(clientId?: string) {
   };
 }
 
+export function calculateStomaStatusLevel(
+  findings: StomaFinding[],
+  painLevel: StomaPainLevel,
+  hoursSinceLastCheck: number | null
+): StomaStatusLevel {
+  // Red triggers
+  const redFindings: StomaFinding[] = ['leakage_around_catheter', 'swelling', 'bleeding', 'pus_discharge', 'strong_odour', 'skin_breakdown'];
+  const hasRedFinding = findings.some(f => redFindings.includes(f));
+  const hasRedPain = painLevel === 'moderate_pain' || painLevel === 'severe_pain';
+
+  if (hasRedFinding || hasRedPain) return 'red';
+
+  // Amber triggers
+  const amberFindings: StomaFinding[] = ['mild_redness', 'slight_tenderness', 'minor_crusting', 'moisture_around_site'];
+  const hasAmberFinding = findings.some(f => amberFindings.includes(f));
+  const hasAmberPain = painLevel === 'mild_discomfort';
+  const missedCheck = hoursSinceLastCheck !== null && hoursSinceLastCheck > 24;
+
+  if (hasAmberFinding || hasAmberPain || missedCheck) return 'amber';
+
+  return 'green';
+}
+
 export function useStomaChecks(clientId?: string) {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -269,6 +298,10 @@ export function useStomaChecks(clientId?: string) {
   const addCheck = useMutation({
     mutationFn: async (entry: {
       stoma_condition: StomaCondition;
+      findings: StomaFinding[];
+      pain_level: StomaPainLevel;
+      dressing_status: StomaDressingStatus;
+      status_level: StomaStatusLevel;
       redness?: boolean;
       swelling?: boolean;
       pain?: boolean;
@@ -278,11 +311,17 @@ export function useStomaChecks(clientId?: string) {
       notes?: string;
       escalated_to_clinician?: boolean;
       escalation_notes?: string;
+      escalation_type?: StomaEscalationType;
+      action_taken?: string;
       event_occurred_at?: string;
     }) => {
       const { error } = await supabase.from('catheter_stoma_checks').insert({
         client_id: clientId || null,
         stoma_condition: entry.stoma_condition,
+        findings: entry.findings,
+        pain_level: entry.pain_level,
+        dressing_status: entry.dressing_status,
+        status_level: entry.status_level,
         redness: entry.redness || false,
         swelling: entry.swelling || false,
         pain: entry.pain || false,
@@ -292,6 +331,8 @@ export function useStomaChecks(clientId?: string) {
         notes: entry.notes || null,
         escalated_to_clinician: entry.escalated_to_clinician || false,
         escalation_notes: entry.escalation_notes || null,
+        escalation_type: entry.escalation_type || null,
+        action_taken: entry.action_taken || null,
         event_occurred_at: entry.event_occurred_at || new Date().toISOString(),
         created_by: user?.id,
       });
@@ -311,8 +352,26 @@ export function useStomaChecks(clientId?: string) {
   const hoursSinceLastCheck = lastCheck
     ? differenceInHours(new Date(), parseISO(lastCheck.event_occurred_at))
     : null;
-  const isOverdue = hoursSinceLastCheck !== null && hoursSinceLastCheck > 48;
-  const hasConcern = lastCheck && lastCheck.stoma_condition !== 'healthy';
+  const isOverdue = hoursSinceLastCheck !== null && hoursSinceLastCheck > 24;
+  const isOverdue48 = hoursSinceLastCheck !== null && hoursSinceLastCheck > 48;
+
+  // Calculate current status from last check + time gap
+  const lastFindings: StomaFinding[] = (lastCheck?.findings as StomaFinding[]) || [];
+  const lastPainLevel: StomaPainLevel = (lastCheck?.pain_level as StomaPainLevel) || 'none';
+  const currentStatus: StomaStatusLevel = lastCheck
+    ? calculateStomaStatusLevel(lastFindings, lastPainLevel, hoursSinceLastCheck)
+    : hoursSinceLastCheck === null
+      ? 'green' // No checks yet, no alert
+      : isOverdue48 ? 'red' : isOverdue ? 'amber' : 'green';
+
+  const hasConcern = currentStatus !== 'green';
+
+  // Status message
+  const statusMessage = currentStatus === 'red'
+    ? 'Concerning stoma findings. Escalate to Registered Nurse or GP immediately.'
+    : currentStatus === 'amber'
+      ? 'Monitor closely. Recheck within 24 hours. Escalate if symptoms worsen.'
+      : 'Site healthy';
 
   return {
     checks: checksQuery.data || [],
@@ -321,7 +380,10 @@ export function useStomaChecks(clientId?: string) {
     lastCheck,
     hoursSinceLastCheck,
     isOverdue,
+    isOverdue48,
     hasConcern,
+    currentStatus,
+    statusMessage,
     refresh: () => queryClient.invalidateQueries({ queryKey: ['stoma-checks', clientId] }),
   };
 }

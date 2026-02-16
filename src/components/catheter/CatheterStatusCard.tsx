@@ -208,7 +208,7 @@ function BagChangeTile({
 }
 
 /* ──────────────────────────────────────────────
- * 4. Stoma Check Tile
+ * 4. Stoma Check Tile (SPC only – traffic light)
  * ────────────────────────────────────────────── */
 function StomaCheckTile({
   clientId,
@@ -217,9 +217,19 @@ function StomaCheckTile({
   clientId?: string;
   onLog: () => void;
 }) {
-  const { lastCheck, hasConcern } = useStomaChecks(clientId);
+  const { lastCheck, hasConcern, currentStatus, statusMessage, hoursSinceLastCheck, isOverdue } = useStomaChecks(clientId);
 
-  const status: HealthStatus = hasConcern ? 'action' : 'stable';
+  const status: HealthStatus =
+    currentStatus === 'red' ? 'action' : currentStatus === 'amber' ? 'monitor' : 'stable';
+
+  const statusLabel =
+    currentStatus === 'red' ? 'Action Required' : currentStatus === 'amber' ? 'Monitor' : 'IDEAL';
+
+  const hoursAgo = hoursSinceLastCheck !== null
+    ? hoursSinceLastCheck < 1 ? 'Just now'
+    : hoursSinceLastCheck < 24 ? `${Math.round(hoursSinceLastCheck)}h ago`
+    : `${Math.round(hoursSinceLastCheck / 24)}d ago`
+    : null;
 
   return (
     <Card>
@@ -232,18 +242,24 @@ function StomaCheckTile({
           <StatusBadge status={status} size="sm" />
         </div>
 
-        {lastCheck ? (
-          <div className="space-y-1">
-            <div className={`text-lg font-semibold ${hasConcern ? 'text-warning' : ''}`}>
-              {lastCheck.stoma_condition === 'healthy' ? 'Healthy' : 'Concern Noted'}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {format(parseISO(lastCheck.event_occurred_at), 'dd MMM, HH:mm')}
-            </p>
+        <div className="space-y-1">
+          <div className={`text-lg font-semibold ${
+            currentStatus === 'red' ? 'text-destructive' :
+            currentStatus === 'amber' ? 'text-amber-600' : ''
+          }`}>
+            {statusLabel}
           </div>
-        ) : (
-          <div className="text-sm text-muted-foreground">No checks logged</div>
-        )}
+          <p className="text-xs text-muted-foreground">{statusMessage}</p>
+          {lastCheck && hoursAgo && (
+            <p className="text-xs text-muted-foreground">
+              Last checked: {hoursAgo}
+              {isOverdue && <span className="text-amber-600 font-medium"> (overdue)</span>}
+            </p>
+          )}
+          {!lastCheck && (
+            <p className="text-xs text-muted-foreground">No checks logged</p>
+          )}
+        </div>
 
         <Button onClick={onLog} variant="outline" className="w-full gap-2" size="sm">
           <Activity className="h-4 w-4" />
