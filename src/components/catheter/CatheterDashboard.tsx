@@ -144,10 +144,6 @@ export function CatheterDashboard({ clientId }: CatheterDashboardProps) {
         ) : null}
       </div>
 
-      {/* Autonomic Dysreflexia Action Plan */}
-      {plan?.enable_autonomic_dysreflexia && (
-        <AutonomicDysreflexiaPanel clientId={clientId} />
-      )}
 
       {/* Main Tabs */}
       <Tabs defaultValue="tracking" className="space-y-4">
