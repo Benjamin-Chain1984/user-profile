@@ -51,6 +51,37 @@ function formatDateTime(val: string | Date): string {
   return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
+const FLUSH_FREQ_LABELS: Record<string, string> = {
+  prn: 'PRN (As Needed)',
+  daily: 'Daily',
+  twice_daily: 'Twice Daily',
+  custom: 'Custom Interval',
+};
+
+const FLUSH_REASON_LABELS: Record<string, string> = {
+  low_output: 'Low output',
+  sediment: 'Sediment',
+  blockage_risk: 'Blockage risk',
+  urology_plan: 'As per urology plan',
+  other: 'Other',
+};
+
+function formatFlushFrequency(freq: string | null, customInterval?: string | null): string {
+  if (!freq) return 'Not specified';
+  const parts = freq.split(',').map(s => s.trim()).filter(Boolean);
+  const labels = parts.map(p => {
+    if (p === 'custom' && customInterval) return `Custom: ${customInterval}`;
+    return FLUSH_FREQ_LABELS[p] || p;
+  });
+  return labels.join(', ');
+}
+
+function formatFlushReasons(reason: string | null): string {
+  if (!reason) return 'Not specified';
+  const parts = reason.split(',').map(s => s.trim()).filter(Boolean);
+  return parts.map(p => FLUSH_REASON_LABELS[p] || p).join(', ');
+}
+
 interface CatheterCarePlanViewerProps {
   clientId?: string;
   onClose: () => void;
@@ -215,10 +246,11 @@ export function CatheterCarePlanViewer({ clientId, onClose, onEdit }: CatheterCa
     // Flush Procedure
     if (plan.flush_prescribed) {
       addSectionHeader('Catheter Flush Procedure');
+      addBullet('⚠️ Staff must be appropriately trained and delegated to perform this task.');
       addField('Solution', plan.flush_solution_type === 'other' ? (plan.flush_solution_other || 'Other') : (plan.flush_solution_type || 'Not specified'));
       if (plan.flush_volume_ml) addField('Prescribed Volume', `${plan.flush_volume_ml} mL`);
-      addField('Frequency', plan.flush_frequency || 'Not specified');
-      if (plan.flush_reason) addField('Reason', plan.flush_reason);
+      addField('Frequency', formatFlushFrequency(plan.flush_frequency, plan.flush_custom_interval));
+      if (plan.flush_reason) addField('Reason', formatFlushReasons(plan.flush_reason));
       addField('Performed By', plan.flush_performer === 'rn' ? 'Registered Nurse' : plan.flush_performer === 'support_worker' ? 'Support Worker (delegated)' : 'Not specified');
       if (plan.flush_performer === 'rn') {
         addBullet('Catheter flush to be completed by Registered Nurse in accordance with clinical scope of practice.');
@@ -446,11 +478,19 @@ export function CatheterCarePlanViewer({ clientId, onClose, onEdit }: CatheterCa
               </AlertDescription>
             </Alert>
 
+            {/* Training Flag */}
+            <Alert className="border-destructive/30 bg-destructive/5">
+              <Shield className="h-4 w-4 text-destructive" />
+              <AlertDescription className="text-destructive text-sm font-medium">
+                ⚠️ Staff must be appropriately trained and delegated to perform this task.
+              </AlertDescription>
+            </Alert>
+
             <div className="grid sm:grid-cols-2 gap-4 text-sm">
               <div><strong>Solution:</strong> {plan.flush_solution_type === 'other' ? plan.flush_solution_other || 'Other' : plan.flush_solution_type || 'Not specified'}</div>
               {plan.flush_volume_ml && <div><strong>Prescribed Volume:</strong> {plan.flush_volume_ml} mL</div>}
-              <div><strong>Frequency:</strong> {plan.flush_frequency === 'prn' ? 'PRN (As Needed)' : plan.flush_frequency === 'daily' ? 'Daily' : plan.flush_frequency === 'twice_daily' ? 'Twice Daily' : plan.flush_frequency || 'Not specified'}</div>
-              {plan.flush_reason && <div><strong>Reason:</strong> {plan.flush_reason === 'low_output' ? 'Low output' : plan.flush_reason === 'sediment' ? 'Sediment' : plan.flush_reason === 'blockage_risk' ? 'Blockage risk' : plan.flush_reason === 'urology_plan' ? 'As per urology plan' : plan.flush_reason}</div>}
+              <div><strong>Frequency:</strong> {formatFlushFrequency(plan.flush_frequency, plan.flush_custom_interval)}</div>
+              {plan.flush_reason && <div><strong>Reason:</strong> {formatFlushReasons(plan.flush_reason)}</div>}
               <div><strong>Performed By:</strong> {plan.flush_performer === 'rn' ? 'Registered Nurse' : plan.flush_performer === 'support_worker' ? 'Support Worker (delegated)' : 'Not specified'}</div>
             </div>
 
@@ -463,14 +503,75 @@ export function CatheterCarePlanViewer({ clientId, onClose, onEdit }: CatheterCa
               </Alert>
             )}
 
-            {plan.flush_performer === 'support_worker' && (
-              <Alert className="border-primary/30 bg-primary/5">
-                <CheckCircle2 className="h-4 w-4 text-primary" />
-                <AlertDescription className="text-sm">
-                  Support Worker must confirm training and delegation before performing flush. Procedural guide is available in the logging workflow.
-                </AlertDescription>
-              </Alert>
-            )}
+            {/* Procedural Steps - visible in plan for reference */}
+            {(() => {
+              const cathType = plan.catheter_type || '';
+              const isSuprapubic = cathType === 'suprapubic' || cathType === 'spc';
+              const steps = isSuprapubic ? [
+                'Perform hand hygiene.',
+                'Put on gloves.',
+                'Explain procedure.',
+                'Clamp tubing below access port.',
+                'Clean port with alcohol wipe.',
+                'Attach sterile saline syringe.',
+                'Slowly instil prescribed volume. Stop if resistance or pain.',
+                'Withdraw fluid gently if instructed.',
+                'Remove syringe.',
+                'Unclamp tubing.',
+                'Check drainage resumes.',
+                'Inspect insertion site for leakage/swelling.',
+                'Dispose of equipment safely.',
+                'Perform hand hygiene.',
+              ] : [
+                'Perform hand hygiene.',
+                'Put on gloves.',
+                'Explain procedure to the person.',
+                'Clamp drainage tubing below access port.',
+                'Clean access port with alcohol wipe.',
+                'Attach sterile saline syringe (as prescribed).',
+                'Slowly instil prescribed volume. Do NOT force.',
+                'Withdraw fluid gently if instructed in plan.',
+                'Remove syringe.',
+                'Unclamp tubing.',
+                'Ensure urine drains freely.',
+                'Dispose of equipment safely.',
+                'Perform hand hygiene.',
+              ];
+              const escalationPrompts = isSuprapubic
+                ? ['Swelling at site', 'Leakage around stoma', 'Pain', 'No drainage', 'Fever']
+                : ['Resistance felt', 'Pain occurs', 'No urine drains', 'Blood clots present', 'Person becomes unwell'];
+
+              return (
+                <div className="space-y-3">
+                  <h4 className="font-medium text-sm">
+                    {isSuprapubic ? 'Suprapubic' : 'Indwelling'} Catheter Flush Procedure
+                  </h4>
+                  <div className="border rounded-lg p-4 space-y-2 bg-muted/30">
+                    {steps.map((step, i) => (
+                      <div key={i} className="flex items-start gap-2 text-sm">
+                        <span className="font-mono text-xs bg-muted rounded px-1.5 py-0.5 flex-shrink-0 mt-0.5">{i + 1}</span>
+                        <span>{step}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Alert className="border-destructive/30 bg-destructive/5">
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                    <AlertTitle className="text-destructive text-sm">🚨 Stop and escalate if:</AlertTitle>
+                    <AlertDescription>
+                      <div className="space-y-1 mt-1">
+                        {escalationPrompts.map((prompt) => (
+                          <div key={prompt} className="flex items-center gap-2 text-sm">
+                            <AlertTriangle className="h-3 w-3 text-destructive flex-shrink-0" />
+                            <span>{prompt}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              );
+            })()}
           </CardContent>
         </Card>
       )}

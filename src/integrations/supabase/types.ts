@@ -1120,6 +1120,7 @@ export type Database = {
           enable_autonomic_dysreflexia: boolean
           escalation_instructions: Json | null
           fluid_advice_checklist: Json | null
+          flush_custom_interval: string | null
           flush_frequency: string | null
           flush_performer: string | null
           flush_prescribed: boolean
@@ -1161,6 +1162,7 @@ export type Database = {
           enable_autonomic_dysreflexia?: boolean
           escalation_instructions?: Json | null
           fluid_advice_checklist?: Json | null
+          flush_custom_interval?: string | null
           flush_frequency?: string | null
           flush_performer?: string | null
           flush_prescribed?: boolean
@@ -1202,6 +1204,7 @@ export type Database = {
           enable_autonomic_dysreflexia?: boolean
           escalation_instructions?: Json | null
           fluid_advice_checklist?: Json | null
+          flush_custom_interval?: string | null
           flush_frequency?: string | null
           flush_performer?: string | null
           flush_prescribed?: boolean

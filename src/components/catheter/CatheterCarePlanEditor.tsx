@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -84,8 +85,9 @@ export function CatheterCarePlanEditor({ clientId, onClose }: Props) {
   const [flushSolutionType, setFlushSolutionType] = useState('');
   const [flushSolutionOther, setFlushSolutionOther] = useState('');
   const [flushVolumeMl, setFlushVolumeMl] = useState('');
-  const [flushFrequency, setFlushFrequency] = useState('');
-  const [flushReason, setFlushReason] = useState('');
+  const [flushFrequency, setFlushFrequency] = useState<string[]>([]);
+  const [flushCustomInterval, setFlushCustomInterval] = useState('');
+  const [flushReason, setFlushReason] = useState<string[]>([]);
   const [flushPerformer, setFlushPerformer] = useState('');
 
   // Publishing
@@ -119,8 +121,9 @@ export function CatheterCarePlanEditor({ clientId, onClose }: Props) {
       setFlushSolutionType(plan.flush_solution_type || '');
       setFlushSolutionOther(plan.flush_solution_other || '');
       setFlushVolumeMl(plan.flush_volume_ml ? String(plan.flush_volume_ml) : '');
-      setFlushFrequency(plan.flush_frequency || '');
-      setFlushReason(plan.flush_reason || '');
+      setFlushFrequency(plan.flush_frequency ? plan.flush_frequency.split(',').map(s => s.trim()).filter(Boolean) : []);
+      setFlushCustomInterval(plan.flush_custom_interval || '');
+      setFlushReason(plan.flush_reason ? plan.flush_reason.split(',').map(s => s.trim()).filter(Boolean) : []);
       setFlushPerformer(plan.flush_performer || '');
     }
   }, [plan]);
@@ -159,8 +162,9 @@ export function CatheterCarePlanEditor({ clientId, onClose }: Props) {
       flush_solution_type: flushSolutionType || null,
       flush_solution_other: flushSolutionOther || null,
       flush_volume_ml: flushVolumeMl ? parseInt(flushVolumeMl, 10) : null,
-      flush_frequency: flushFrequency || null,
-      flush_reason: flushReason || null,
+      flush_frequency: flushFrequency.length > 0 ? flushFrequency.join(', ') : null,
+      flush_custom_interval: flushCustomInterval || null,
+      flush_reason: flushReason.length > 0 ? flushReason.join(', ') : null,
       flush_performer: flushPerformer || null,
       changeReason,
       changeSummary: changeSummary || 'Plan updated',
@@ -325,31 +329,162 @@ export function CatheterCarePlanEditor({ clientId, onClose }: Props) {
         </Card>
       </Collapsible>
 
-      {/* Bag Change Schedule */}
+      {/* Bag Change Schedule & Flush Procedure */}
       <Collapsible>
         <Card>
           <CollapsibleTrigger asChild>
             <CardHeader className="cursor-pointer hover:bg-muted/30">
               <CardTitle className="flex items-center gap-2">
                 <Package className="h-5 w-5" />
-                Bag Change Schedule
+                Bag Change Schedule & Flush Procedure
                 <ChevronDown className="h-4 w-4 ml-auto" />
               </CardTitle>
             </CardHeader>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>Leg Bag Change Frequency</Label>
-                <Input value={legBagFreq} onChange={e => setLegBagFreq(e.target.value)} disabled={!isAdmin} placeholder="e.g. Every 5-7 days" />
+            <CardContent className="space-y-6">
+              {/* Bag Change Schedule */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-sm">Bag Change Schedule</h4>
+                <div>
+                  <Label>Leg Bag Change Frequency</Label>
+                  <Input value={legBagFreq} onChange={e => setLegBagFreq(e.target.value)} disabled={!isAdmin} placeholder="e.g. Every 5-7 days" />
+                </div>
+                <div>
+                  <Label>Night Bag Change Frequency</Label>
+                  <Input value={nightBagFreq} onChange={e => setNightBagFreq(e.target.value)} disabled={!isAdmin} placeholder="e.g. Weekly" />
+                </div>
+                <div>
+                  <Label>Full System Change Protocol</Label>
+                  <Textarea value={fullSystemProtocol} onChange={e => setFullSystemProtocol(e.target.value)} disabled={!isAdmin} rows={2} placeholder="Describe full system change protocol if applicable..." />
+                </div>
               </div>
-              <div>
-                <Label>Night Bag Change Frequency</Label>
-                <Input value={nightBagFreq} onChange={e => setNightBagFreq(e.target.value)} disabled={!isAdmin} placeholder="e.g. Weekly" />
-              </div>
-              <div>
-                <Label>Full System Change Protocol</Label>
-                <Textarea value={fullSystemProtocol} onChange={e => setFullSystemProtocol(e.target.value)} disabled={!isAdmin} rows={2} placeholder="Describe full system change protocol if applicable..." />
+
+              {/* Flush Procedure */}
+              <div className="border-t pt-4 space-y-4">
+                <h4 className="font-medium text-sm flex items-center gap-2">
+                  <Droplets className="h-4 w-4" />
+                  Flush Procedure Management
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  Configure whether catheter flush is prescribed and who is responsible for performing the procedure.
+                </p>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Flush Prescribed?</Label>
+                    <p className="text-xs text-muted-foreground">Enable to configure flush procedure details</p>
+                  </div>
+                  <Switch checked={flushPrescribed} onCheckedChange={setFlushPrescribed} disabled={!isAdmin} />
+                </div>
+
+                {flushPrescribed && (
+                  <div className="space-y-4 border-t pt-4">
+                    <div className="space-y-2">
+                      <Label>Flush Solution Type</Label>
+                      <Select value={flushSolutionType} onValueChange={setFlushSolutionType} disabled={!isAdmin}>
+                        <SelectTrigger><SelectValue placeholder="Select solution" /></SelectTrigger>
+                        <SelectContent>
+                          {FLUSH_SOLUTIONS.map(s => (
+                            <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {flushSolutionType === 'other' && (
+                      <div className="space-y-2">
+                        <Label>Other Solution (specify)</Label>
+                        <Input value={flushSolutionOther} onChange={e => setFlushSolutionOther(e.target.value)} disabled={!isAdmin} placeholder="Specify solution type" />
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <Label>Flush Volume (mL)</Label>
+                      <Input type="number" value={flushVolumeMl} onChange={e => setFlushVolumeMl(e.target.value)} disabled={!isAdmin} placeholder="e.g. 30" min={0} className="w-32" />
+                    </div>
+
+                    {/* Flush Frequency - Multi-select */}
+                    <div className="space-y-2">
+                      <Label>Flush Frequency <span className="text-muted-foreground text-xs">(select all that apply)</span></Label>
+                      <div className="space-y-2">
+                        {FLUSH_FREQUENCIES.map(f => (
+                          <div key={f.value} className="flex items-center gap-2">
+                            <Checkbox
+                              checked={flushFrequency.includes(f.value)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setFlushFrequency(prev => [...prev, f.value]);
+                                } else {
+                                  setFlushFrequency(prev => prev.filter(v => v !== f.value));
+                                }
+                              }}
+                              disabled={!isAdmin}
+                            />
+                            <Label className="text-sm">{f.label}</Label>
+                          </div>
+                        ))}
+                      </div>
+                      {flushFrequency.includes('custom') && (
+                        <div className="ml-6 space-y-1">
+                          <Label className="text-sm">Custom Interval</Label>
+                          <Input
+                            value={flushCustomInterval}
+                            onChange={e => setFlushCustomInterval(e.target.value)}
+                            disabled={!isAdmin}
+                            placeholder="e.g. Every 10 days"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Reason for Flush - Multi-select */}
+                    <div className="space-y-2">
+                      <Label>Reason for Flush <span className="text-muted-foreground text-xs">(select all that apply)</span></Label>
+                      <div className="space-y-2">
+                        {FLUSH_REASONS.map(r => (
+                          <div key={r.value} className="flex items-center gap-2">
+                            <Checkbox
+                              checked={flushReason.includes(r.value)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setFlushReason(prev => [...prev, r.value]);
+                                } else {
+                                  setFlushReason(prev => prev.filter(v => v !== r.value));
+                                }
+                              }}
+                              disabled={!isAdmin}
+                            />
+                            <Label className="text-sm">{r.label}</Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Who Performs Flush */}
+                    <div className="space-y-2">
+                      <Label>Who Performs Flush?</Label>
+                      <Select value={flushPerformer} onValueChange={setFlushPerformer} disabled={!isAdmin}>
+                        <SelectTrigger><SelectValue placeholder="Select performer" /></SelectTrigger>
+                        <SelectContent>
+                          {FLUSH_PERFORMERS.map(p => (
+                            <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {flushPerformer === 'rn' && (
+                        <p className="text-xs text-muted-foreground border-l-2 border-primary/30 pl-2 mt-2">
+                          Procedural steps will <strong>not</strong> be displayed in the workflow. A static notice will appear in the plan.
+                        </p>
+                      )}
+                      {flushPerformer === 'support_worker' && (
+                        <p className="text-xs text-muted-foreground border-l-2 border-primary/30 pl-2 mt-2">
+                          A procedural guide and training confirmation will be shown before each flush log.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </CollapsibleContent>
@@ -385,116 +520,6 @@ export function CatheterCarePlanEditor({ clientId, onClose }: Props) {
                   <Label className="text-sm">{e.condition}</Label>
                 </div>
               ))}
-            </CardContent>
-          </CollapsibleContent>
-        </Card>
-      </Collapsible>
-
-      {/* Flush Procedure Management */}
-      <Collapsible>
-        <Card>
-          <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-muted/30">
-              <CardTitle className="flex items-center gap-2">
-                <Droplets className="h-5 w-5" />
-                Flush Procedure Management
-                <ChevronDown className="h-4 w-4 ml-auto" />
-              </CardTitle>
-            </CardHeader>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Configure whether catheter flush is prescribed and who is responsible for performing the procedure.
-              </p>
-
-              {/* Flush Prescribed Toggle */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Flush Prescribed?</Label>
-                  <p className="text-xs text-muted-foreground">Enable to configure flush procedure details</p>
-                </div>
-                <Switch checked={flushPrescribed} onCheckedChange={setFlushPrescribed} disabled={!isAdmin} />
-              </div>
-
-              {flushPrescribed && (
-                <div className="space-y-4 border-t pt-4">
-                  {/* Flush Solution Type */}
-                  <div className="space-y-2">
-                    <Label>Flush Solution Type</Label>
-                    <Select value={flushSolutionType} onValueChange={setFlushSolutionType} disabled={!isAdmin}>
-                      <SelectTrigger><SelectValue placeholder="Select solution" /></SelectTrigger>
-                      <SelectContent>
-                        {FLUSH_SOLUTIONS.map(s => (
-                          <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {flushSolutionType === 'other' && (
-                    <div className="space-y-2">
-                      <Label>Other Solution (specify)</Label>
-                      <Input value={flushSolutionOther} onChange={e => setFlushSolutionOther(e.target.value)} disabled={!isAdmin} placeholder="Specify solution type" />
-                    </div>
-                  )}
-
-                  {/* Flush Volume */}
-                  <div className="space-y-2">
-                    <Label>Flush Volume (mL)</Label>
-                    <Input type="number" value={flushVolumeMl} onChange={e => setFlushVolumeMl(e.target.value)} disabled={!isAdmin} placeholder="e.g. 30" min={0} className="w-32" />
-                  </div>
-
-                  {/* Flush Frequency */}
-                  <div className="space-y-2">
-                    <Label>Flush Frequency</Label>
-                    <Select value={flushFrequency} onValueChange={setFlushFrequency} disabled={!isAdmin}>
-                      <SelectTrigger><SelectValue placeholder="Select frequency" /></SelectTrigger>
-                      <SelectContent>
-                        {FLUSH_FREQUENCIES.map(f => (
-                          <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Reason for Flush */}
-                  <div className="space-y-2">
-                    <Label>Reason for Flush <span className="text-muted-foreground text-xs">optional</span></Label>
-                    <Select value={flushReason} onValueChange={setFlushReason} disabled={!isAdmin}>
-                      <SelectTrigger><SelectValue placeholder="Select reason" /></SelectTrigger>
-                      <SelectContent>
-                        {FLUSH_REASONS.map(r => (
-                          <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Who Performs Flush */}
-                  <div className="space-y-2">
-                    <Label>Who Performs Flush?</Label>
-                    <Select value={flushPerformer} onValueChange={setFlushPerformer} disabled={!isAdmin}>
-                      <SelectTrigger><SelectValue placeholder="Select performer" /></SelectTrigger>
-                      <SelectContent>
-                        {FLUSH_PERFORMERS.map(p => (
-                          <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {flushPerformer === 'rn' && (
-                      <p className="text-xs text-muted-foreground border-l-2 border-primary/30 pl-2 mt-2">
-                        Procedural steps will <strong>not</strong> be displayed in the workflow. A static notice will appear in the plan.
-                      </p>
-                    )}
-                    {flushPerformer === 'support_worker' && (
-                      <p className="text-xs text-muted-foreground border-l-2 border-primary/30 pl-2 mt-2">
-                        A procedural guide and training confirmation will be shown before each flush log.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
             </CardContent>
           </CollapsibleContent>
         </Card>
