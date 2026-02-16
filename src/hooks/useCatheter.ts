@@ -33,7 +33,7 @@ interface CatheterStatus {
   status: HealthStatus;
   daysUntilChange: number | null;
   isChangeOverdue: boolean;
-  hoursUntilFlush: number | null;
+  daysUntilFlush: number | null;
   isFlushOverdue: boolean;
   lastStomaCheck: StomaCheck | null;
   stomaAlertActive: boolean;
@@ -632,15 +632,15 @@ export function useCatheterStatus(clientId?: string): CatheterStatus & { loading
     : null;
   const flushFrequencyHours = planFlushHours ?? (config?.flush_frequency_hours || null);
 
-  // Calculate hours until next flush
-  let hoursUntilFlush: number | null = null;
+  // Calculate days until next flush
+  let daysUntilFlush: number | null = null;
   let isFlushOverdue = false;
 
   if (flushFrequencyHours && lastFlush) {
     const lastFlushTime = parseISO(lastFlush.event_occurred_at);
     const nextFlushTime = addHours(lastFlushTime, flushFrequencyHours);
-    hoursUntilFlush = differenceInHours(nextFlushTime, now);
-    isFlushOverdue = hoursUntilFlush < 0;
+    daysUntilFlush = differenceInDays(nextFlushTime, now);
+    isFlushOverdue = daysUntilFlush < 0;
   }
 
   // Determine overall status
@@ -649,7 +649,7 @@ export function useCatheterStatus(clientId?: string): CatheterStatus & { loading
   if (isChangeOverdue || isFlushOverdue || (hasConcern && lastStomaCheck)) {
     status = 'action';
   } else if ((daysUntilChange !== null && daysUntilChange <= 3) || 
-             (hoursUntilFlush !== null && hoursUntilFlush <= 6)) {
+             (daysUntilFlush !== null && daysUntilFlush <= 1)) {
     status = 'monitor';
   }
 
@@ -657,7 +657,7 @@ export function useCatheterStatus(clientId?: string): CatheterStatus & { loading
     status,
     daysUntilChange,
     isChangeOverdue,
-    hoursUntilFlush,
+    daysUntilFlush,
     isFlushOverdue,
     lastStomaCheck,
     stomaAlertActive: hasConcern || false,
