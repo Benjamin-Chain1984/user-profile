@@ -103,7 +103,7 @@ export function FlushLogForm({ clientId, open, onOpenChange }: FlushLogFormProps
   const [flushSolution, setFlushSolution] = useState<FlushSolution>('saline');
   const [eventDate, setEventDate] = useState<Date>(new Date());
   const [flushReason, setFlushReason] = useState<FlushReason | ''>('');
-  const [urineAppearance, setUrineAppearance] = useState<UrineAppearance | ''>('');
+  const [urineAppearances, setUrineAppearances] = useState<UrineAppearance[]>([]);
   const [flowAfterFlush, setFlowAfterFlush] = useState<FlowAfterFlush | ''>('');
   const [personResponse, setPersonResponse] = useState<PersonResponse | ''>('');
   const [outputDescription, setOutputDescription] = useState('');
@@ -135,7 +135,7 @@ export function FlushLogForm({ clientId, open, onOpenChange }: FlushLogFormProps
       notes: notes || undefined,
       return_volume_ml: returnVolume ? parseInt(returnVolume, 10) : undefined,
       flush_reason: flushReason || undefined,
-      urine_appearance: urineAppearance || undefined,
+      urine_appearance: urineAppearances.length > 0 ? urineAppearances.join(', ') : undefined,
       flow_after_flush: flowAfterFlush || undefined,
       person_response: personResponse || undefined,
       training_confirmed: trainingConfirmed,
@@ -149,7 +149,7 @@ export function FlushLogForm({ clientId, open, onOpenChange }: FlushLogFormProps
     setFlushSolution('saline');
     setEventDate(new Date());
     setFlushReason('');
-    setUrineAppearance('');
+    setUrineAppearances([]);
     setFlowAfterFlush('');
     setPersonResponse('');
     setOutputDescription('');
@@ -327,9 +327,13 @@ export function FlushLogForm({ clientId, open, onOpenChange }: FlushLogFormProps
                 <Button
                   key={opt.value}
                   type="button"
-                  variant={urineAppearance === opt.value ? 'default' : 'outline'}
+                  variant={urineAppearances.includes(opt.value) ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setUrineAppearance(opt.value)}
+                  onClick={() => setUrineAppearances(prev =>
+                    prev.includes(opt.value)
+                      ? prev.filter(v => v !== opt.value)
+                      : [...prev, opt.value]
+                  )}
                 >
                   {opt.label}
                 </Button>
