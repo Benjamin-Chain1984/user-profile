@@ -1,215 +1,309 @@
 /**
- * Catheter Status Card - Visual dashboard summary
- * Now pulls catheter type/size from the Digital Care Plan as single source of truth.
+ * Catheter Status Tiles - Four separate indicator tiles for the catheter dashboard.
+ * Pulls configuration from the Digital Care Plan as single source of truth.
  */
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Clock, Droplets, Activity, Package } from 'lucide-react';
-import { useCatheterStatus, useBagChanges } from '@/hooks/useCatheter';
+import { StatusBadge } from '@/components/ideal/StatusBadge';
+import { useCatheterStatus, useBagChanges, useStomaChecks } from '@/hooks/useCatheter';
 import { useCatheterCarePlan } from '@/hooks/useCatheterCarePlan';
-import { CATHETER_TYPES, CATHETER_TYPE_CONFIG, type CatheterType } from '@/types/catheter';
+import { CATHETER_TYPE_CONFIG, type CatheterType } from '@/types/catheter';
 import { format, parseISO } from 'date-fns';
+import type { HealthStatus } from '@/types/ideal';
 
+/* ──────────────────────────────────────────────
+ * 1. Catheter Change Tile
+ * ────────────────────────────────────────────── */
+function CatheterChangeTile({
+  daysUntilChange,
+  isChangeOverdue,
+  changeFrequencyDays,
+  changeInterval,
+  onLog,
+}: {
+  daysUntilChange: number | null;
+  isChangeOverdue: boolean;
+  changeFrequencyDays: number;
+  changeInterval?: string | null;
+  onLog: () => void;
+}) {
+  const changeProgress =
+    changeFrequencyDays > 0 && daysUntilChange !== null
+      ? Math.max(0, Math.min(100, ((changeFrequencyDays - Math.max(0, daysUntilChange)) / changeFrequencyDays) * 100))
+      : 0;
+
+  const status: HealthStatus = isChangeOverdue ? 'action' : daysUntilChange !== null && daysUntilChange <= 3 ? 'monitor' : 'stable';
+
+  return (
+    <Card>
+      <CardContent className="p-5 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Clock className="h-4 w-4 text-primary" />
+            Catheter Change
+          </div>
+          <StatusBadge status={status} size="sm" />
+        </div>
+
+        {daysUntilChange !== null ? (
+          <div className="space-y-2">
+            <div className={`text-2xl font-bold ${isChangeOverdue ? 'text-destructive' : ''}`}>
+              {isChangeOverdue ? `${Math.abs(daysUntilChange)} days overdue` : `${daysUntilChange} days`}
+            </div>
+            <Progress value={changeProgress} className="h-2" />
+            {changeInterval && (
+              <p className="text-xs text-muted-foreground">Interval: {changeInterval}</p>
+            )}
+          </div>
+        ) : (
+          <div className="text-sm text-muted-foreground">Not scheduled</div>
+        )}
+
+        <Button onClick={onLog} className="w-full gap-2" size="sm">
+          <Clock className="h-4 w-4" />
+          Log Catheter Change
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ──────────────────────────────────────────────
+ * 2. Catheter Flush Tile
+ * ────────────────────────────────────────────── */
+function CatheterFlushTile({
+  daysUntilFlush,
+  isFlushOverdue,
+  flushFrequencyLabel,
+  onLog,
+}: {
+  daysUntilFlush: number | null;
+  isFlushOverdue: boolean;
+  flushFrequencyLabel?: string;
+  onLog: () => void;
+}) {
+  const status: HealthStatus = isFlushOverdue ? 'action' : daysUntilFlush !== null && daysUntilFlush <= 1 ? 'monitor' : 'stable';
+
+  return (
+    <Card>
+      <CardContent className="p-5 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Droplets className="h-4 w-4 text-primary" />
+            Catheter Flush
+          </div>
+          <StatusBadge status={status} size="sm" />
+        </div>
+
+        {daysUntilFlush !== null ? (
+          <div className="space-y-1">
+            <div className={`text-2xl font-bold ${isFlushOverdue ? 'text-destructive' : ''}`}>
+              {isFlushOverdue ? `${Math.abs(daysUntilFlush)} days overdue` : `${daysUntilFlush} days`}
+            </div>
+            {flushFrequencyLabel && (
+              <p className="text-xs text-muted-foreground">Frequency: {flushFrequencyLabel}</p>
+            )}
+          </div>
+        ) : (
+          <div className="text-sm text-muted-foreground">No flushes logged</div>
+        )}
+
+        <Button onClick={onLog} className="w-full gap-2" size="sm">
+          <Droplets className="h-4 w-4" />
+          Log Catheter Flush
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ──────────────────────────────────────────────
+ * 3. Bag Change Tile
+ * ────────────────────────────────────────────── */
+function BagChangeTile({
+  monthlyBagUsage,
+  onLog,
+}: {
+  monthlyBagUsage: number;
+  onLog: () => void;
+}) {
+  return (
+    <Card>
+      <CardContent className="p-5 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Package className="h-4 w-4 text-primary" />
+            Bag Changes
+          </div>
+          <StatusBadge status="stable" size="sm" />
+        </div>
+
+        <div className="space-y-1">
+          <div className="text-2xl font-bold">{monthlyBagUsage}</div>
+          <p className="text-xs text-muted-foreground">This month</p>
+        </div>
+
+        <Button onClick={onLog} className="w-full gap-2" size="sm">
+          <Package className="h-4 w-4" />
+          Log Bag Change
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ──────────────────────────────────────────────
+ * 4. Stoma Check Tile
+ * ────────────────────────────────────────────── */
+function StomaCheckTile({
+  clientId,
+  onLog,
+}: {
+  clientId?: string;
+  onLog: () => void;
+}) {
+  const { lastCheck, hasConcern } = useStomaChecks(clientId);
+
+  const status: HealthStatus = hasConcern ? 'action' : 'stable';
+
+  return (
+    <Card>
+      <CardContent className="p-5 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Activity className="h-4 w-4 text-primary" />
+            Daily Stoma Check
+          </div>
+          <StatusBadge status={status} size="sm" />
+        </div>
+
+        {lastCheck ? (
+          <div className="space-y-1">
+            <div className={`text-lg font-semibold ${hasConcern ? 'text-warning' : ''}`}>
+              {lastCheck.stoma_condition === 'healthy' ? 'Healthy' : 'Concern Noted'}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {format(parseISO(lastCheck.event_occurred_at), 'dd MMM, HH:mm')}
+            </p>
+          </div>
+        ) : (
+          <div className="text-sm text-muted-foreground">No checks logged</div>
+        )}
+
+        <Button onClick={onLog} variant="outline" className="w-full gap-2" size="sm">
+          <Activity className="h-4 w-4" />
+          Log Stoma Check
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ──────────────────────────────────────────────
+ * Main Grid Component
+ * ────────────────────────────────────────────── */
 interface CatheterStatusCardProps {
   clientId?: string;
   onLogChange: () => void;
   onLogFlush?: () => void;
   onLogBagChange?: () => void;
+  onLogStomaCheck?: () => void;
 }
 
-export function CatheterStatusCard({ clientId, onLogChange, onLogFlush, onLogBagChange }: CatheterStatusCardProps) {
+export function CatheterStatusCard({
+  clientId,
+  onLogChange,
+  onLogFlush,
+  onLogBagChange,
+  onLogStomaCheck,
+}: CatheterStatusCardProps) {
   const { plan } = useCatheterCarePlan(clientId);
   const {
-    status,
     daysUntilChange,
     isChangeOverdue,
     daysUntilFlush,
     isFlushOverdue,
-    lastStomaCheck,
-    stomaAlertActive,
-    monthlyBagUsage,
     changeFrequencyDays,
+    monthlyBagUsage,
     loading,
   } = useCatheterStatus(clientId);
 
+  const planCatheterType = plan?.catheter_type as CatheterType | undefined;
+  const typeConfig = planCatheterType ? CATHETER_TYPE_CONFIG[planCatheterType] : null;
+
+  // Build flush frequency label
+  const flushFrequencyLabel = plan?.flush_prescribed
+    ? plan.flush_frequency === 'daily'
+      ? 'Daily'
+      : plan.flush_frequency === 'twice_daily'
+        ? 'Twice Daily'
+        : plan.flush_frequency === 'prn'
+          ? 'PRN (As Needed)'
+          : plan.flush_custom_interval || plan.flush_frequency || undefined
+    : undefined;
+
   if (loading) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-muted rounded w-1/3" />
-            <div className="h-8 bg-muted rounded w-1/2" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map(i => (
+          <Card key={i}>
+            <CardContent className="p-5">
+              <div className="animate-pulse space-y-3">
+                <div className="h-4 bg-muted rounded w-2/3" />
+                <div className="h-8 bg-muted rounded w-1/2" />
+                <div className="h-8 bg-muted rounded w-full" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     );
   }
 
-  // Pull catheter type/size from the Digital Care Plan
-  const planCatheterType = plan?.catheter_type as CatheterType | undefined;
-  const catheterTypeLabel = planCatheterType
-    ? CATHETER_TYPES.find(t => t.value === planCatheterType)?.label
-    : 'Not configured — update Care Plan';
-  const catheterSize = plan?.catheter_size_fr || null;
+  const showFlush = !!onLogFlush && plan?.flush_prescribed;
+  const showBag = !!onLogBagChange;
+  const showStoma = !!onLogStomaCheck && typeConfig?.enableStomaChecks;
 
-  const typeConfig = planCatheterType ? CATHETER_TYPE_CONFIG[planCatheterType] : null;
-
-  const statusColors = {
-    stable: 'bg-green-100 border-green-300 text-green-800',
-    monitor: 'bg-amber-100 border-amber-300 text-amber-800',
-    action: 'bg-red-100 border-red-300 text-red-800',
-  };
-
-  const statusLabels = {
-    stable: 'Up to Date',
-    monitor: 'Due Soon',
-    action: 'Action Required',
-  };
-
-  const statusIcons = {
-    stable: '🟢',
-    monitor: '🟡',
-    action: '🔴',
-  };
-
-  // Calculate change countdown progress using plan-derived frequency
-  const changeProgress = changeFrequencyDays && changeFrequencyDays > 0 && daysUntilChange !== null
-    ? Math.max(0, Math.min(100, ((changeFrequencyDays - Math.max(0, daysUntilChange)) / changeFrequencyDays) * 100))
-    : 0;
+  // Count visible tiles for responsive grid
+  const tileCount = 1 + (showFlush ? 1 : 0) + (showBag ? 1 : 0) + (showStoma ? 1 : 0);
+  const gridCols =
+    tileCount === 1
+      ? 'grid-cols-1'
+      : tileCount === 2
+        ? 'grid-cols-1 sm:grid-cols-2'
+        : tileCount === 3
+          ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+          : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4';
 
   return (
-    <Card className={`border-2 ${statusColors[status]}`}>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <span>{statusIcons[status]}</span>
-            Catheter Status
-          </CardTitle>
-          <Badge variant="outline" className={statusColors[status]}>
-            {statusLabels[status]}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Catheter Type - from Care Plan */}
-        <div className="text-sm text-muted-foreground">
-          <strong>Type:</strong> {catheterTypeLabel}
-          {catheterSize && ` • ${catheterSize}`}
-        </div>
+    <div className={`grid ${gridCols} gap-4`}>
+      <CatheterChangeTile
+        daysUntilChange={daysUntilChange}
+        isChangeOverdue={isChangeOverdue}
+        changeFrequencyDays={changeFrequencyDays}
+        changeInterval={plan?.change_interval}
+        onLog={onLogChange}
+      />
 
-        {/* Change Interval - from Care Plan */}
-        {plan?.change_interval && (
-          <div className="text-sm text-muted-foreground">
-            <strong>Change Interval:</strong> {plan.change_interval}
-          </div>
-        )}
+      {showFlush && onLogFlush && (
+        <CatheterFlushTile
+          daysUntilFlush={daysUntilFlush}
+          isFlushOverdue={isFlushOverdue}
+          flushFrequencyLabel={flushFrequencyLabel}
+          onLog={onLogFlush}
+        />
+      )}
 
-        {/* Flush Interval - from Care Plan */}
-        {plan?.flush_prescribed && plan?.flush_frequency && (
-          <div className="text-sm text-muted-foreground">
-            <strong>Flush Interval:</strong>{' '}
-            {plan.flush_frequency === 'daily' ? 'Daily' :
-             plan.flush_frequency === 'twice_daily' ? 'Twice Daily' :
-             plan.flush_frequency === 'prn' ? 'PRN (As Needed)' :
-             plan.flush_frequency.toLowerCase().includes('custom') && plan.flush_custom_interval
-               ? `${plan.flush_custom_interval}${plan.flush_frequency.toLowerCase().includes('prn') ? ' + PRN' : ''}`
-               : plan.flush_frequency}
-          </div>
-        )}
+      {showBag && onLogBagChange && (
+        <BagChangeTile monthlyBagUsage={monthlyBagUsage} onLog={onLogBagChange} />
+      )}
 
-        {/* Status Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Catheter Change Countdown */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <Clock className="h-4 w-4" />
-              Next Change
-            </div>
-            {daysUntilChange !== null ? (
-              <>
-                <div className={`text-2xl font-bold ${isChangeOverdue ? 'text-destructive' : ''}`}>
-                  {isChangeOverdue ? `${Math.abs(daysUntilChange)} days overdue` : `${daysUntilChange} days`}
-                </div>
-                <Progress value={changeProgress} className="h-2" />
-              </>
-            ) : (
-              <div className="text-sm text-muted-foreground">Not scheduled</div>
-            )}
-          </div>
-
-          {/* Flush Status - from Care Plan */}
-          {plan?.flush_prescribed && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <Droplets className="h-4 w-4" />
-                Next Flush
-              </div>
-              {daysUntilFlush !== null ? (
-                <div className={`text-2xl font-bold ${isFlushOverdue ? 'text-destructive' : ''}`}>
-                  {isFlushOverdue ? `${Math.abs(daysUntilFlush)} days overdue` : `${daysUntilFlush} days`}
-                </div>
-              ) : (
-                <div className="text-sm text-muted-foreground">No flushes logged</div>
-              )}
-            </div>
-          )}
-
-          {/* Stoma Status - from Care Plan catheter type */}
-          {typeConfig?.enableStomaChecks && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <Activity className="h-4 w-4" />
-                Stoma Check
-              </div>
-              {lastStomaCheck ? (
-                <>
-                  <div className={`text-lg font-semibold ${stomaAlertActive ? 'text-amber-600' : ''}`}>
-                    {lastStomaCheck.stoma_condition === 'healthy' ? 'Healthy' : 'Concern Noted'}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {format(parseISO(lastStomaCheck.event_occurred_at), 'dd MMM, HH:mm')}
-                  </div>
-                </>
-              ) : (
-                <div className="text-sm text-muted-foreground">No checks logged</div>
-              )}
-            </div>
-          )}
-
-          {/* Bag Usage - always show when bag tracking is available */}
-          {onLogBagChange && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <Package className="h-4 w-4" />
-                Bags This Month
-              </div>
-              <div className="text-2xl font-bold">{monthlyBagUsage}</div>
-            </div>
-          )}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={onLogChange} className="w-full md:w-auto">
-            Log Catheter Change
-          </Button>
-          {onLogFlush && (
-            <Button onClick={onLogFlush} className="w-full md:w-auto gap-2">
-              <Droplets className="h-4 w-4" />
-              Log Catheter Flush
-            </Button>
-          )}
-          {onLogBagChange && (
-            <Button onClick={onLogBagChange} className="w-full md:w-auto gap-2">
-              <Package className="h-4 w-4" />
-              Log Bag Change
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+      {showStoma && onLogStomaCheck && (
+        <StomaCheckTile clientId={clientId} onLog={onLogStomaCheck} />
+      )}
+    </div>
   );
 }
