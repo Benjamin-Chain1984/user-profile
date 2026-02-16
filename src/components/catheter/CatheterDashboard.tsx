@@ -25,7 +25,7 @@ import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { useProfile } from '@/contexts/ProfileContext';
 import { MonitoringPausedBanner } from '@/components/monitoring';
 import { RoleTabsTrigger } from '@/components/ui/role-tabs-trigger';
-import { CATHETER_TYPE_CONFIG } from '@/types/catheter';
+import { CATHETER_TYPE_CONFIG, normalizeCatheterType } from '@/types/catheter';
 
 interface CatheterDashboardProps {
   clientId?: string;
@@ -47,7 +47,7 @@ export function CatheterDashboard({ clientId }: CatheterDashboardProps) {
   const planStatus = useCatheterCarePlanStatus(plan);
   const { hasCurrentUserAcknowledged } = useCatheterCarePlanAcknowledgements(plan?.id, plan?.version);
 
-  const planCatheterType = plan?.catheter_type as import('@/types/catheter').CatheterType | undefined;
+  const planCatheterType = normalizeCatheterType(plan?.catheter_type);
   const typeConfig = planCatheterType ? CATHETER_TYPE_CONFIG[planCatheterType] : null;
 
   // Show plan editor (admin only)
