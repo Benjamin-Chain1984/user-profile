@@ -53,7 +53,9 @@ function CatheterChangeTile({
             <div className={`text-2xl font-bold ${isChangeOverdue ? 'text-destructive' : ''}`}>
               {isChangeOverdue ? `${Math.abs(daysUntilChange)} days overdue` : `${daysUntilChange} days`}
             </div>
-            <Progress value={changeProgress} className="h-2" />
+            {changeProgress > 0 && daysUntilChange !== null && daysUntilChange < 50 && (
+              <Progress value={changeProgress} className="h-2" />
+            )}
             {changeInterval && (
               <p className="text-xs text-muted-foreground">Interval: {changeInterval}</p>
             )}
