@@ -9,3 +9,5 @@ export { FlushLogForm } from './FlushLogForm';
 export { StomaCheckForm } from './StomaCheckForm';
 export { BagChangeForm } from './BagChangeForm';
 export { AutonomicDysreflexiaPanel } from './AutonomicDysreflexiaPanel';
+export { CatheterCarePlanViewer } from './CatheterCarePlanViewer';
+export { CatheterCarePlanEditor } from './CatheterCarePlanEditor';

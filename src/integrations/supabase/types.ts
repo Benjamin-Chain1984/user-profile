@@ -1031,6 +1031,189 @@ export type Database = {
           },
         ]
       }
+      catheter_care_plan_acknowledgements: {
+        Row: {
+          acknowledged_at: string
+          id: string
+          plan_id: string
+          plan_version: number
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string
+          id?: string
+          plan_id: string
+          plan_version: number
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string
+          id?: string
+          plan_id?: string
+          plan_version?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catheter_care_plan_acknowledgements_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "catheter_care_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catheter_care_plan_versions: {
+        Row: {
+          change_reason: string | null
+          change_summary: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          plan_id: string
+          snapshot: Json
+          version: number
+        }
+        Insert: {
+          change_reason?: string | null
+          change_summary?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          plan_id: string
+          snapshot: Json
+          version: number
+        }
+        Update: {
+          change_reason?: string | null
+          change_summary?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          plan_id?: string
+          snapshot?: Json
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catheter_care_plan_versions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "catheter_care_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catheter_care_plans: {
+        Row: {
+          additional_instructions: string | null
+          bag_management_checklist: Json | null
+          balloon_size_ml: string | null
+          catheter_size_fr: string | null
+          catheter_type: string | null
+          change_interval: string | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          date_developed: string | null
+          drainage_monitoring_checklist: Json | null
+          escalation_instructions: Json | null
+          fluid_advice_checklist: Json | null
+          full_system_change_protocol: string | null
+          hygiene_checklist: Json | null
+          id: string
+          insertion_date: string | null
+          last_reviewed_date: string | null
+          leg_bag_change_frequency: string | null
+          next_review_due: string | null
+          night_bag_change_frequency: string | null
+          no_urine_hours_threshold: number | null
+          plan_author: string | null
+          prescribing_clinician: string | null
+          published_at: string | null
+          published_by: string | null
+          responsible_clinician: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          additional_instructions?: string | null
+          bag_management_checklist?: Json | null
+          balloon_size_ml?: string | null
+          catheter_size_fr?: string | null
+          catheter_type?: string | null
+          change_interval?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_developed?: string | null
+          drainage_monitoring_checklist?: Json | null
+          escalation_instructions?: Json | null
+          fluid_advice_checklist?: Json | null
+          full_system_change_protocol?: string | null
+          hygiene_checklist?: Json | null
+          id?: string
+          insertion_date?: string | null
+          last_reviewed_date?: string | null
+          leg_bag_change_frequency?: string | null
+          next_review_due?: string | null
+          night_bag_change_frequency?: string | null
+          no_urine_hours_threshold?: number | null
+          plan_author?: string | null
+          prescribing_clinician?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          responsible_clinician?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          additional_instructions?: string | null
+          bag_management_checklist?: Json | null
+          balloon_size_ml?: string | null
+          catheter_size_fr?: string | null
+          catheter_type?: string | null
+          change_interval?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_developed?: string | null
+          drainage_monitoring_checklist?: Json | null
+          escalation_instructions?: Json | null
+          fluid_advice_checklist?: Json | null
+          full_system_change_protocol?: string | null
+          hygiene_checklist?: Json | null
+          id?: string
+          insertion_date?: string | null
+          last_reviewed_date?: string | null
+          leg_bag_change_frequency?: string | null
+          next_review_due?: string | null
+          night_bag_change_frequency?: string | null
+          no_urine_hours_threshold?: number | null
+          plan_author?: string | null
+          prescribing_clinician?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          responsible_clinician?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catheter_care_plans_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catheter_change_logs: {
         Row: {
           catheter_size: string | null
