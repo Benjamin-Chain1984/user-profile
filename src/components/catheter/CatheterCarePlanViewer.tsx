@@ -209,6 +209,8 @@ export function CatheterCarePlanViewer({ clientId, onClose, onEdit }: CatheterCa
     addField('Catheter Type', plan.catheter_type || 'Not specified');
     addField('Plan Version', `v${plan.version}`);
     addField('Author', plan.plan_author || 'Not specified');
+    if (plan.plan_author_phone) addField('Author Phone', plan.plan_author_phone);
+    if (plan.plan_author_email) addField('Author Email', plan.plan_author_email);
     addField('Prescribing Clinician', plan.prescribing_clinician || 'Not specified');
     addField('Next Review Due', formatDate(plan.next_review_due));
     addField('Generated', formatDateTime(new Date()));
@@ -393,6 +395,8 @@ export function CatheterCarePlanViewer({ clientId, onClose, onEdit }: CatheterCa
             <div><strong>Client:</strong> {profile?.fullName || 'Not specified'}</div>
             <div><strong>Date of Birth:</strong> {profile?.dateOfBirth ? formatDate(profile.dateOfBirth) : 'Not specified'}</div>
             <div><strong>Author:</strong> {plan.plan_author || 'Not specified'}</div>
+            <div><strong>Author Phone:</strong> {plan.plan_author_phone || 'Not specified'}</div>
+            <div><strong>Author Email:</strong> {plan.plan_author_email || 'Not specified'}</div>
             <div><strong>Prescribing Clinician:</strong> {plan.prescribing_clinician || 'Not specified'}</div>
             <div><strong>Date Developed:</strong> {formatDate(plan.date_developed)}</div>
             <div><strong>Last Reviewed:</strong> {formatDate(plan.last_reviewed_date)}</div>

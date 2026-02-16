@@ -15,6 +15,8 @@ export interface CatheterCarePlan {
   status: 'draft' | 'published';
   version: number;
   plan_author: string | null;
+  plan_author_phone: string | null;
+  plan_author_email: string | null;
   date_developed: string | null;
   last_reviewed_date: string | null;
   next_review_due: string | null;
@@ -118,9 +120,9 @@ export const DEFAULT_DRAINAGE_CHECKLIST: ChecklistItem[] = [
 ];
 
 export const DEFAULT_FLUID_ADVICE_CHECKLIST: ChecklistItem[] = [
-  { id: '1', label: 'Encourage hydration as per plan — refer to Hydration & Fluid Balance Module in IDEAL', enabled: true },
+  { id: '1', label: 'Encourage hydration — refer to Hydration & Fluid Balance Module in IDEAL for daily target (mL)', enabled: true },
   { id: '2', label: 'Fluid restriction in place (if applicable) — refer to Hydration & Fluid Balance Module for max allowance', enabled: false },
-  { id: '3', label: 'Monitor fluid target (mL) as set in Hydration & Fluid Balance Module', enabled: true },
+  { id: '3', label: 'Monitor fluid intake against daily target (mL) as set in Hydration & Fluid Balance Module', enabled: true },
 ];
 
 export const DEFAULT_ESCALATION_INSTRUCTIONS: EscalationInstruction[] = [

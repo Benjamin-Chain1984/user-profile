@@ -1138,6 +1138,8 @@ export type Database = {
           night_bag_change_frequency: string | null
           no_urine_hours_threshold: number | null
           plan_author: string | null
+          plan_author_email: string | null
+          plan_author_phone: string | null
           prescribing_clinician: string | null
           published_at: string | null
           published_by: string | null
@@ -1180,6 +1182,8 @@ export type Database = {
           night_bag_change_frequency?: string | null
           no_urine_hours_threshold?: number | null
           plan_author?: string | null
+          plan_author_email?: string | null
+          plan_author_phone?: string | null
           prescribing_clinician?: string | null
           published_at?: string | null
           published_by?: string | null
@@ -1222,6 +1226,8 @@ export type Database = {
           night_bag_change_frequency?: string | null
           no_urine_hours_threshold?: number | null
           plan_author?: string | null
+          plan_author_email?: string | null
+          plan_author_phone?: string | null
           prescribing_clinician?: string | null
           published_at?: string | null
           published_by?: string | null

@@ -48,6 +48,8 @@ export function CatheterCarePlanEditor({ clientId, onClose }: Props) {
 
   // Plan overview
   const [planAuthor, setPlanAuthor] = useState('');
+  const [planAuthorPhone, setPlanAuthorPhone] = useState('');
+  const [planAuthorEmail, setPlanAuthorEmail] = useState('');
   const [dateDeveloped, setDateDeveloped] = useState('');
   const [prescribingClinician, setPrescribingClinician] = useState('');
 
@@ -98,6 +100,8 @@ export function CatheterCarePlanEditor({ clientId, onClose }: Props) {
   useEffect(() => {
     if (plan) {
       setPlanAuthor(plan.plan_author || '');
+      setPlanAuthorPhone(plan.plan_author_phone || '');
+      setPlanAuthorEmail(plan.plan_author_email || '');
       setDateDeveloped(plan.date_developed || '');
       setPrescribingClinician(plan.prescribing_clinician || '');
       setCatheterType(plan.catheter_type || '');
@@ -139,6 +143,8 @@ export function CatheterCarePlanEditor({ clientId, onClose }: Props) {
   const handleSave = () => {
     savePlan({
       plan_author: planAuthor || null,
+      plan_author_phone: planAuthorPhone || null,
+      plan_author_email: planAuthorEmail || null,
       date_developed: dateDeveloped || null,
       prescribing_clinician: prescribingClinician || null,
       catheter_type: catheterType || null,
@@ -240,6 +246,16 @@ export function CatheterCarePlanEditor({ clientId, onClose }: Props) {
                 <div>
                   <Label>Date Developed</Label>
                   <Input type="date" value={dateDeveloped} onChange={e => setDateDeveloped(e.target.value)} disabled={!isAdmin} />
+                </div>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <Label>Author Contact Phone</Label>
+                  <Input value={planAuthorPhone} onChange={e => setPlanAuthorPhone(e.target.value)} disabled={!isAdmin} placeholder="e.g. 0412 345 678" />
+                </div>
+                <div>
+                  <Label>Author Contact Email</Label>
+                  <Input type="email" value={planAuthorEmail} onChange={e => setPlanAuthorEmail(e.target.value)} disabled={!isAdmin} placeholder="e.g. nurse@example.com" />
                 </div>
               </div>
               <div>
