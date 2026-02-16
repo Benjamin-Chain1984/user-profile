@@ -559,10 +559,10 @@ export function useCatheterStatus(clientId?: string): CatheterStatus & { loading
   const planQuery = useQuery({
     queryKey: ['catheterCarePlan-status', clientId],
     queryFn: async () => {
+      // Prefer published plan; fall back to draft
       let query = supabase
         .from('catheter_care_plans')
         .select('change_interval, flush_prescribed, flush_frequency, flush_custom_interval')
-        .in('status', ['draft', 'published'])
         .order('version', { ascending: false })
         .limit(1);
       if (clientId) {
@@ -570,9 +570,25 @@ export function useCatheterStatus(clientId?: string): CatheterStatus & { loading
       } else {
         query = query.is('client_id', null);
       }
-      const { data, error } = await query.maybeSingle();
-      if (error) throw error;
-      return data;
+
+      // Try published first
+      const { data: published } = await query.eq('status', 'published').maybeSingle();
+      if (published) return published;
+
+      // Fall back to draft
+      let draftQuery = supabase
+        .from('catheter_care_plans')
+        .select('change_interval, flush_prescribed, flush_frequency, flush_custom_interval')
+        .eq('status', 'draft')
+        .order('version', { ascending: false })
+        .limit(1);
+      if (clientId) {
+        draftQuery = draftQuery.eq('client_id', clientId);
+      } else {
+        draftQuery = draftQuery.is('client_id', null);
+      }
+      const { data: draft } = await draftQuery.maybeSingle();
+      return draft;
     },
   });
 
