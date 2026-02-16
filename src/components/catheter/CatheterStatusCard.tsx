@@ -6,11 +6,11 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Clock, Droplets, Activity, Package } from 'lucide-react';
+import { Clock, Droplets, Activity, Package, AlertCircle, CheckCircle, AlertTriangle } from 'lucide-react';
 import { StatusBadge } from '@/components/ideal/StatusBadge';
-import { useCatheterStatus, useBagChanges, useStomaChecks } from '@/hooks/useCatheter';
+import { useCatheterStatus, useBagChanges, useStomaChecks, useCatheterBagConfig } from '@/hooks/useCatheter';
 import { useCatheterCarePlan } from '@/hooks/useCatheterCarePlan';
-import { CATHETER_TYPE_CONFIG, type CatheterType } from '@/types/catheter';
+import { CATHETER_TYPE_CONFIG, BAG_TYPES, type CatheterType } from '@/types/catheter';
 import { format, parseISO } from 'date-fns';
 import type { HealthStatus } from '@/types/ideal';
 
@@ -121,15 +121,41 @@ function CatheterFlushTile({
 }
 
 /* ──────────────────────────────────────────────
- * 3. Bag Change Tile
+ * 3. Bag Change Tile (with stock overview)
  * ────────────────────────────────────────────── */
 function BagChangeTile({
+  clientId,
   monthlyBagUsage,
   onLog,
 }: {
+  clientId?: string;
   monthlyBagUsage: number;
   onLog: () => void;
 }) {
+  const { stockItems, hasLowStock } = useCatheterBagConfig(clientId);
+  const { lastBagChange } = useBagChanges(clientId);
+
+  const tileStatus: HealthStatus = hasLowStock ? 'monitor' : 'stable';
+
+  const getStockColor = (status: 'good' | 'medium' | 'low') => {
+    switch (status) {
+      case 'good': return 'text-green-600';
+      case 'medium': return 'text-amber-600';
+      case 'low': return 'text-destructive';
+    }
+  };
+
+  const getStockIcon = (status: 'good' | 'medium' | 'low') => {
+    switch (status) {
+      case 'good': return <CheckCircle className="h-3.5 w-3.5 text-green-600" />;
+      case 'medium': return <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />;
+      case 'low': return <AlertCircle className="h-3.5 w-3.5 text-destructive" />;
+    }
+  };
+
+  const getBagLabel = (bagType: string) =>
+    BAG_TYPES.find(bt => bt.value === bagType)?.label || bagType;
+
   return (
     <Card>
       <CardContent className="p-5 space-y-3">
@@ -138,12 +164,36 @@ function BagChangeTile({
             <Package className="h-4 w-4 text-primary" />
             Bag Changes
           </div>
-          <StatusBadge status="stable" size="sm" />
+          <StatusBadge status={tileStatus} size="sm" />
         </div>
 
-        <div className="space-y-1">
-          <div className="text-2xl font-bold">{monthlyBagUsage}</div>
-          <p className="text-xs text-muted-foreground">This month</p>
+        <div className="space-y-2">
+          <div>
+            <div className="text-2xl font-bold">{monthlyBagUsage}</div>
+            <p className="text-xs text-muted-foreground">Changes this month</p>
+          </div>
+
+          {lastBagChange && (
+            <p className="text-xs text-muted-foreground">
+              Last: {format(parseISO(lastBagChange.event_occurred_at), 'dd MMM, HH:mm')} — {getBagLabel(lastBagChange.bag_type)}
+            </p>
+          )}
+
+          {stockItems.length > 0 && (
+            <div className="space-y-1 pt-1 border-t">
+              {stockItems.map(item => (
+                <div key={item.bag_type} className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground truncate">{getBagLabel(item.bag_type)}</span>
+                  <div className="flex items-center gap-1.5">
+                    {getStockIcon(item.status)}
+                    <span className={`font-medium ${getStockColor(item.status)}`}>
+                      {item.stock_level}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <Button onClick={onLog} className="w-full gap-2" size="sm">
@@ -234,7 +284,6 @@ export function CatheterStatusCard({
   const planCatheterType = plan?.catheter_type as CatheterType | undefined;
   const typeConfig = planCatheterType ? CATHETER_TYPE_CONFIG[planCatheterType] : null;
 
-  // Build flush frequency label
   const flushFrequencyLabel = plan?.flush_prescribed
     ? plan.flush_frequency === 'daily'
       ? 'Daily'
@@ -267,7 +316,6 @@ export function CatheterStatusCard({
   const showBag = !!onLogBagChange;
   const showStoma = !!onLogStomaCheck && typeConfig?.enableStomaChecks;
 
-  // Count visible tiles for responsive grid
   const tileCount = 1 + (showFlush ? 1 : 0) + (showBag ? 1 : 0) + (showStoma ? 1 : 0);
   const gridCols =
     tileCount === 1
@@ -298,7 +346,7 @@ export function CatheterStatusCard({
       )}
 
       {showBag && onLogBagChange && (
-        <BagChangeTile monthlyBagUsage={monthlyBagUsage} onLog={onLogBagChange} />
+        <BagChangeTile clientId={clientId} monthlyBagUsage={monthlyBagUsage} onLog={onLogBagChange} />
       )}
 
       {showStoma && onLogStomaCheck && (

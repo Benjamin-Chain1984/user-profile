@@ -19,6 +19,7 @@ import {
   CHANGE_REASONS,
   BAG_TYPES,
   BAG_CHANGE_REASONS,
+  BAG_CONDITIONS,
   STOMA_CONDITIONS,
   CATHETER_TYPE_CONFIG,
 } from '@/types/catheter';
@@ -200,9 +201,19 @@ export function CatheterHistory({ clientId }: CatheterHistoryProps) {
                           {format(parseISO(change.event_occurred_at), 'dd MMM yyyy, HH:mm')}
                         </span>
                       </div>
-                      <Badge variant="outline">
-                        {getLabel(change.change_reason, BAG_CHANGE_REASONS)}
-                      </Badge>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant="outline">
+                          {getLabel(change.change_reason, BAG_CHANGE_REASONS)}
+                        </Badge>
+                        {change.condition && (
+                          <Badge variant="secondary">
+                            {getLabel(change.condition, BAG_CONDITIONS)}
+                          </Badge>
+                        )}
+                        {change.tubing_changed && (
+                          <Badge variant="secondary">Tubing changed</Badge>
+                        )}
+                      </div>
                       {change.notes && (
                         <p className="text-sm text-muted-foreground">{change.notes}</p>
                       )}

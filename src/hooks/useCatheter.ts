@@ -15,10 +15,13 @@ import type {
   CatheterAlert,
   ConsumablesUsage,
   AutonomicRiskLog,
+  CatheterBagConfig,
   CatheterType,
   BagType,
+  BagCondition,
   ChangeReason,
   BagChangeReason,
+  BagChangeFrequency,
   FlushSolution,
   StomaCondition,
   ADSymptom,
@@ -349,21 +352,58 @@ export function useBagChanges(clientId?: string) {
     mutationFn: async (entry: {
       bag_type: BagType;
       change_reason: BagChangeReason;
+      condition?: BagCondition;
+      tubing_changed?: boolean;
       notes?: string;
       event_occurred_at?: string;
     }) => {
+      // 1. Log the bag change
       const { error } = await supabase.from('catheter_bag_change_logs').insert({
         client_id: clientId || null,
         bag_type: entry.bag_type,
         change_reason: entry.change_reason,
+        condition: entry.condition || null,
+        tubing_changed: entry.tubing_changed || false,
         notes: entry.notes || null,
         event_occurred_at: entry.event_occurred_at || new Date().toISOString(),
         created_by: user?.id,
       });
       if (error) throw error;
+
+      // 2. Auto-decrement stock for this bag type
+      const { data: bagConfig } = await supabase
+        .from('catheter_bag_config')
+        .select('id, stock_level, low_stock_threshold, bag_type')
+        .eq('bag_type', entry.bag_type)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (bagConfig && bagConfig.stock_level > 0) {
+        const newStock = bagConfig.stock_level - 1;
+        await supabase
+          .from('catheter_bag_config')
+          .update({ stock_level: newStock, updated_by: user?.id })
+          .eq('id', bagConfig.id);
+
+        // 3. Check low stock threshold → create alert
+        if (newStock <= bagConfig.low_stock_threshold) {
+          const bagLabel = entry.bag_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          await supabase.from('catheter_alerts').insert({
+            client_id: clientId || null,
+            alert_type: 'low_consumables',
+            severity: 'amber',
+            message: `${bagLabel} stock running low (${newStock} remaining).`,
+            metadata: { bag_type: entry.bag_type, stock_level: newStock, threshold: bagConfig.low_stock_threshold },
+            created_by: user?.id,
+          });
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bag-changes', clientId] });
+      queryClient.invalidateQueries({ queryKey: ['catheter-bag-config', clientId] });
+      queryClient.invalidateQueries({ queryKey: ['catheter-alerts', clientId] });
+      queryClient.invalidateQueries({ queryKey: ['catheter-status', clientId] });
       toast({ title: 'Bag change logged', description: 'Entry recorded successfully.' });
     },
     onError: (error) => {
@@ -378,12 +418,132 @@ export function useBagChanges(clientId?: string) {
     parseISO(c.event_occurred_at) >= monthStart
   );
 
+  // Last bag change
+  const lastBagChange = changesQuery.data?.[0] || null;
+
   return {
     changes: changesQuery.data || [],
     loading: changesQuery.isLoading,
     addChange,
     monthlyUsage: monthlyChanges.length,
+    lastBagChange,
     refresh: () => queryClient.invalidateQueries({ queryKey: ['bag-changes', clientId] }),
+  };
+}
+
+// ── Catheter Bag Config (Stock Management) ──────────────────────
+
+export function useCatheterBagConfig(clientId?: string) {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const configQuery = useQuery({
+    queryKey: ['catheter-bag-config', clientId],
+    queryFn: async () => {
+      const query = supabase
+        .from('catheter_bag_config')
+        .select('*')
+        .eq('is_active', true)
+        .order('bag_type');
+      if (clientId) {
+        query.eq('client_id', clientId);
+      } else {
+        query.is('client_id', null);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data || []) as CatheterBagConfig[];
+    },
+  });
+
+  const upsertBagConfig = useMutation({
+    mutationFn: async (configs: {
+      bag_type: string;
+      stock_level: number;
+      low_stock_threshold: number;
+      change_frequency: BagChangeFrequency | null;
+      change_frequency_days: number | null;
+      is_active: boolean;
+    }[]) => {
+      for (const cfg of configs) {
+        const { data: existing } = await supabase
+          .from('catheter_bag_config')
+          .select('id')
+          .eq('client_id', clientId || '')
+          .eq('bag_type', cfg.bag_type)
+          .maybeSingle();
+
+        if (existing) {
+          const { error } = await supabase
+            .from('catheter_bag_config')
+            .update({
+              stock_level: cfg.stock_level,
+              low_stock_threshold: cfg.low_stock_threshold,
+              change_frequency: cfg.change_frequency,
+              change_frequency_days: cfg.change_frequency_days,
+              is_active: cfg.is_active,
+              updated_by: user?.id,
+            })
+            .eq('id', existing.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from('catheter_bag_config')
+            .insert({
+              client_id: clientId || null,
+              bag_type: cfg.bag_type,
+              stock_level: cfg.stock_level,
+              low_stock_threshold: cfg.low_stock_threshold,
+              change_frequency: cfg.change_frequency,
+              change_frequency_days: cfg.change_frequency_days,
+              is_active: cfg.is_active,
+              created_by: user?.id,
+            });
+          if (error) throw error;
+        }
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['catheter-bag-config', clientId] });
+      toast({ title: 'Bag configuration saved' });
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const updateStock = useMutation({
+    mutationFn: async ({ bagConfigId, newStock }: { bagConfigId: string; newStock: number }) => {
+      const { error } = await supabase
+        .from('catheter_bag_config')
+        .update({ stock_level: newStock, updated_by: user?.id })
+        .eq('id', bagConfigId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['catheter-bag-config', clientId] });
+    },
+  });
+
+  // Calculate stock statuses
+  const stockItems = (configQuery.data || []).map(cfg => {
+    const isLow = cfg.stock_level <= cfg.low_stock_threshold;
+    const isMedium = !isLow && cfg.stock_level <= cfg.low_stock_threshold * 2;
+    const status: 'good' | 'medium' | 'low' = isLow ? 'low' : isMedium ? 'medium' : 'good';
+    return { ...cfg, status };
+  });
+
+  const hasLowStock = stockItems.some(s => s.status === 'low');
+
+  return {
+    configs: configQuery.data || [],
+    stockItems,
+    hasLowStock,
+    loading: configQuery.isLoading,
+    upsertBagConfig,
+    updateStock,
+    refresh: () => queryClient.invalidateQueries({ queryKey: ['catheter-bag-config', clientId] }),
   };
 }
 

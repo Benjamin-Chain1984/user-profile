@@ -1,11 +1,9 @@
 /**
  * Catheter Config Settings - Admin configuration panel
- * Catheter configuration is now managed via the Digital Urinary Catheter Care Plan.
- * This settings panel retains only the notification alert recipients.
+ * Includes notification recipients and bag management settings.
  */
 
 import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
@@ -13,6 +11,7 @@ import { RestrictedSection } from '@/components/ui/restricted-section';
 import { useAuth } from '@/contexts/AuthContext';
 import { ModuleNotificationsCard, type ModuleNotificationSettings } from '@/components/module';
 import { useModuleAlertRecipients, useSetModuleAlertRecipients } from '@/hooks/useNotificationContacts';
+import { BagManagementSettings } from './BagManagementSettings';
 import type { AlertSeverity } from '@/types/notificationContacts';
 
 const MODULE_NAME = 'catheter';
@@ -83,6 +82,9 @@ export function CatheterConfigSettings({ clientId }: CatheterConfigSettingsProps
             are managed within the <strong>Digital Urinary Catheter Care Plan</strong> — the single source of truth for this module.
           </AlertDescription>
         </Alert>
+
+        {/* Bag Management Settings */}
+        <BagManagementSettings clientId={clientId} />
 
         {/* Notification Recipients */}
         <ModuleNotificationsCard

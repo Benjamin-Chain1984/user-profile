@@ -986,6 +986,7 @@ export type Database = {
           bag_type: string
           change_reason: string
           client_id: string | null
+          condition: string | null
           created_at: string
           created_by: string | null
           edit_reason: string | null
@@ -994,11 +995,13 @@ export type Database = {
           event_occurred_at: string
           id: string
           notes: string | null
+          tubing_changed: boolean
         }
         Insert: {
           bag_type: string
           change_reason: string
           client_id?: string | null
+          condition?: string | null
           created_at?: string
           created_by?: string | null
           edit_reason?: string | null
@@ -1007,11 +1010,13 @@ export type Database = {
           event_occurred_at?: string
           id?: string
           notes?: string | null
+          tubing_changed?: boolean
         }
         Update: {
           bag_type?: string
           change_reason?: string
           client_id?: string | null
+          condition?: string | null
           created_at?: string
           created_by?: string | null
           edit_reason?: string | null
@@ -1020,10 +1025,64 @@ export type Database = {
           event_occurred_at?: string
           id?: string
           notes?: string | null
+          tubing_changed?: boolean
         }
         Relationships: [
           {
             foreignKeyName: "catheter_bag_change_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catheter_bag_config: {
+        Row: {
+          bag_type: string
+          change_frequency: string | null
+          change_frequency_days: number | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          low_stock_threshold: number
+          stock_level: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          bag_type: string
+          change_frequency?: string | null
+          change_frequency_days?: number | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          low_stock_threshold?: number
+          stock_level?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          bag_type?: string
+          change_frequency?: string | null
+          change_frequency_days?: number | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          low_stock_threshold?: number
+          stock_level?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catheter_bag_config_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
@@ -1319,10 +1378,13 @@ export type Database = {
           created_at: string
           created_by: string | null
           enable_autonomic_dysreflexia_risk: boolean
+          enable_bag_tracking: boolean
           enable_flush_tracking: boolean
           enable_stoma_checks: boolean
           escalation_recipients: string[]
           flush_frequency_hours: number | null
+          frequent_change_threshold: number | null
+          frequent_change_window_hours: number | null
           id: string
           last_catheter_change: string | null
           next_catheter_change_due: string | null
@@ -1338,10 +1400,13 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           enable_autonomic_dysreflexia_risk?: boolean
+          enable_bag_tracking?: boolean
           enable_flush_tracking?: boolean
           enable_stoma_checks?: boolean
           escalation_recipients?: string[]
           flush_frequency_hours?: number | null
+          frequent_change_threshold?: number | null
+          frequent_change_window_hours?: number | null
           id?: string
           last_catheter_change?: string | null
           next_catheter_change_due?: string | null
@@ -1357,10 +1422,13 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           enable_autonomic_dysreflexia_risk?: boolean
+          enable_bag_tracking?: boolean
           enable_flush_tracking?: boolean
           enable_stoma_checks?: boolean
           escalation_recipients?: string[]
           flush_frequency_hours?: number | null
+          frequent_change_threshold?: number | null
+          frequent_change_window_hours?: number | null
           id?: string
           last_catheter_change?: string | null
           next_catheter_change_due?: string | null
