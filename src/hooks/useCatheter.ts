@@ -499,6 +499,53 @@ export function useAutonomicRiskLogs(clientId?: string) {
   };
 }
 
+/**
+ * Parse a change_interval string from the Digital Care Plan into days.
+ * Supports formats like "Every 4 weeks", "Every 28 days", "4 weeks", "28 days", etc.
+ * Falls back to config.change_frequency_days if unable to parse.
+ */
+function parseChangeIntervalToDays(interval: string | null | undefined): number | null {
+  if (!interval) return null;
+  const normalized = interval.toLowerCase().trim();
+  
+  // Try to extract number + unit
+  const match = normalized.match(/(\d+)\s*(week|wk|day|month)/i);
+  if (match) {
+    const num = parseInt(match[1], 10);
+    const unit = match[2].toLowerCase();
+    if (unit.startsWith('week') || unit === 'wk') return num * 7;
+    if (unit.startsWith('day')) return num;
+    if (unit.startsWith('month')) return num * 30;
+  }
+  
+  return null;
+}
+
+/**
+ * Parse a flush_frequency string from the Digital Care Plan into hours.
+ */
+function parseFlushFrequencyToHours(frequency: string | null | undefined, customInterval: string | null | undefined): number | null {
+  if (!frequency) return null;
+  switch (frequency) {
+    case 'daily': return 24;
+    case 'twice_daily': return 12;
+    case 'custom': {
+      // Try to parse custom interval (e.g. "every 10 days", "every 3 days")
+      if (!customInterval) return null;
+      const match = customInterval.toLowerCase().match(/(\d+)\s*(day|hour|hr)/i);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        const unit = match[2].toLowerCase();
+        if (unit.startsWith('day')) return num * 24;
+        if (unit.startsWith('hour') || unit === 'hr') return num;
+      }
+      return null;
+    }
+    case 'prn': return null; // As needed, no schedule
+    default: return null;
+  }
+}
+
 export function useCatheterStatus(clientId?: string): CatheterStatus & { loading: boolean } {
   const { config, loading: configLoading } = useCatheterConfig(clientId);
   const { changes, loading: changesLoading } = useCatheterChanges(clientId);
@@ -507,27 +554,60 @@ export function useCatheterStatus(clientId?: string): CatheterStatus & { loading
   const { alerts, loading: alertsLoading } = useCatheterAlerts(clientId);
   const { monthlyUsage } = useBagChanges(clientId);
 
+  // Import care plan as single source of truth
+  const planQuery = useQuery({
+    queryKey: ['catheterCarePlan-status', clientId],
+    queryFn: async () => {
+      let query = supabase
+        .from('catheter_care_plans')
+        .select('change_interval, flush_prescribed, flush_frequency, flush_custom_interval')
+        .in('status', ['draft', 'published'])
+        .order('version', { ascending: false })
+        .limit(1);
+      if (clientId) {
+        query = query.eq('client_id', clientId);
+      } else {
+        query = query.is('client_id', null);
+      }
+      const { data, error } = await query.maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const plan = planQuery.data;
+
   const now = new Date();
   const lastChange = changes[0] || null;
+
+  // Derive change frequency: Care Plan is source of truth, fall back to config
+  const planChangeDays = parseChangeIntervalToDays(plan?.change_interval);
+  const changeFrequencyDays = planChangeDays ?? (config?.change_frequency_days || 0);
 
   // Calculate days until next catheter change
   let daysUntilChange: number | null = null;
   let isChangeOverdue = false;
 
-  if (config && lastChange && config.change_frequency_days > 0) {
+  if (lastChange && changeFrequencyDays > 0) {
     const lastChangeDate = parseISO(lastChange.event_occurred_at);
-    const nextChangeDate = addDays(lastChangeDate, config.change_frequency_days);
+    const nextChangeDate = addDays(lastChangeDate, changeFrequencyDays);
     daysUntilChange = differenceInDays(nextChangeDate, now);
     isChangeOverdue = daysUntilChange < 0;
   }
+
+  // Derive flush frequency: Care Plan is source of truth, fall back to config
+  const planFlushHours = plan?.flush_prescribed
+    ? parseFlushFrequencyToHours(plan.flush_frequency, plan.flush_custom_interval)
+    : null;
+  const flushFrequencyHours = planFlushHours ?? (config?.flush_frequency_hours || null);
 
   // Calculate hours until next flush
   let hoursUntilFlush: number | null = null;
   let isFlushOverdue = false;
 
-  if (config?.enable_flush_tracking && config.flush_frequency_hours && lastFlush) {
+  if (flushFrequencyHours && lastFlush) {
     const lastFlushTime = parseISO(lastFlush.event_occurred_at);
-    const nextFlushTime = addHours(lastFlushTime, config.flush_frequency_hours);
+    const nextFlushTime = addHours(lastFlushTime, flushFrequencyHours);
     hoursUntilFlush = differenceInHours(nextFlushTime, now);
     isFlushOverdue = hoursUntilFlush < 0;
   }
@@ -552,6 +632,6 @@ export function useCatheterStatus(clientId?: string): CatheterStatus & { loading
     stomaAlertActive: hasConcern || false,
     activeAlerts: alerts,
     monthlyBagUsage: monthlyUsage,
-    loading: configLoading || changesLoading || flushLoading || stomaLoading || alertsLoading,
+    loading: configLoading || changesLoading || flushLoading || stomaLoading || alertsLoading || planQuery.isLoading,
   };
 }

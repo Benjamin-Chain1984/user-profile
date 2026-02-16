@@ -94,6 +94,12 @@ export function CatheterDashboard({ clientId }: CatheterDashboardProps) {
             <Plus className="h-4 w-4" />
             Log Catheter Change
           </Button>
+          {plan?.flush_prescribed && (
+            <Button onClick={() => setShowFlushForm(true)} className="gap-2" disabled={isMonitoringPaused}>
+              <Droplets className="h-4 w-4" />
+              Log Catheter Flush
+            </Button>
+          )}
         </div>
       </div>
 
