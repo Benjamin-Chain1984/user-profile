@@ -20,6 +20,7 @@ import {
   type ChecklistItem,
   type EscalationInstruction,
 } from '@/hooks/useCatheterCarePlan';
+import { useFluidBalance } from '@/hooks/useFluidBalance';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { useClientProfile } from '@/hooks/useClientProfile';
 import { supabase } from '@/integrations/supabase/client';
@@ -91,6 +92,7 @@ interface CatheterCarePlanViewerProps {
 export function CatheterCarePlanViewer({ clientId, onClose, onEdit }: CatheterCarePlanViewerProps) {
   const { plan, isLoading } = useCatheterCarePlan(clientId);
   const { profile } = useClientProfile(clientId);
+  const { config: fluidConfig } = useFluidBalance(clientId);
   const { acknowledgements, hasCurrentUserAcknowledged, acknowledge, isAcknowledging } = useCatheterCarePlanAcknowledgements(plan?.id, plan?.version);
   const { data: versions = [] } = useCatheterCarePlanVersions(plan?.id);
   const { isAdmin } = useRoleAccess();
@@ -235,6 +237,12 @@ export function CatheterCarePlanViewer({ clientId, onClose, onEdit }: CatheterCa
     renderChecklist('Bag Management', plan.bag_management_checklist);
     renderChecklist('Drainage Monitoring', plan.drainage_monitoring_checklist);
     renderChecklist('Fluid Advice', plan.fluid_advice_checklist);
+    if (fluidConfig) {
+      if (fluidConfig.target_daily_intake_ml) addField('Daily Fluid Target', `${fluidConfig.target_daily_intake_ml} mL`);
+      if (fluidConfig.fluid_restriction_enabled && fluidConfig.max_fluid_allowance_ml) {
+        addBullet(`⚠️ Fluid Restriction Enabled — Max Allowed: ${fluidConfig.max_fluid_allowance_ml} mL/day`);
+      }
+    }
 
     // Bag Change Schedule
     addSectionHeader('Bag Change Schedule');
@@ -439,6 +447,18 @@ export function CatheterCarePlanViewer({ clientId, onClose, onEdit }: CatheterCa
                     </div>
                   ))}
                 </div>
+                {section.title === 'Fluid Advice' && fluidConfig && (
+                  <div className="mt-3 p-3 rounded-lg bg-muted/50 space-y-1 text-sm">
+                    {fluidConfig.target_daily_intake_ml && (
+                      <div><strong>Daily Fluid Target:</strong> {fluidConfig.target_daily_intake_ml} mL</div>
+                    )}
+                    {fluidConfig.fluid_restriction_enabled && fluidConfig.max_fluid_allowance_ml && (
+                      <div className="text-destructive font-medium">
+                        ⚠️ Fluid Restriction Enabled — Max Allowed: {fluidConfig.max_fluid_allowance_ml} mL/day
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -522,6 +542,7 @@ export function CatheterCarePlanViewer({ clientId, onClose, onEdit }: CatheterCa
                 'Inspect insertion site for leakage/swelling.',
                 'Dispose of equipment safely.',
                 'Perform hand hygiene.',
+                'Log Catheter Flush in IDEAL.',
               ] : [
                 'Perform hand hygiene.',
                 'Put on gloves.',
@@ -536,7 +557,9 @@ export function CatheterCarePlanViewer({ clientId, onClose, onEdit }: CatheterCa
                 'Ensure urine drains freely.',
                 'Dispose of equipment safely.',
                 'Perform hand hygiene.',
+                'Log Catheter Flush in IDEAL.',
               ];
+
               const escalationPrompts = isSuprapubic
                 ? ['Swelling at site', 'Leakage around stoma', 'Pain', 'No drainage', 'Fever']
                 : ['Resistance felt', 'Pain occurs', 'No urine drains', 'Blood clots present', 'Person becomes unwell'];

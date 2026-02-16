@@ -96,7 +96,7 @@ export interface PlanStatusInfo {
 
 // Default checklist items
 export const DEFAULT_HYGIENE_CHECKLIST: ChecklistItem[] = [
-  { id: '1', label: 'Clean insertion site daily', enabled: true },
+  { id: '1', label: 'Clean insertion (stoma) site daily', enabled: true },
   { id: '2', label: 'Use prescribed cleansing product', enabled: true },
   { id: '3', label: 'Dry thoroughly', enabled: true },
   { id: '4', label: 'Check securement device', enabled: true },
@@ -118,8 +118,9 @@ export const DEFAULT_DRAINAGE_CHECKLIST: ChecklistItem[] = [
 ];
 
 export const DEFAULT_FLUID_ADVICE_CHECKLIST: ChecklistItem[] = [
-  { id: '1', label: 'Encourage hydration as per plan', enabled: true },
-  { id: '2', label: 'Fluid restriction in place (if applicable)', enabled: false },
+  { id: '1', label: 'Encourage hydration as per plan — refer to Hydration & Fluid Balance Module in IDEAL', enabled: true },
+  { id: '2', label: 'Fluid restriction in place (if applicable) — refer to Hydration & Fluid Balance Module for max allowance', enabled: false },
+  { id: '3', label: 'Monitor fluid target (mL) as set in Hydration & Fluid Balance Module', enabled: true },
 ];
 
 export const DEFAULT_ESCALATION_INSTRUCTIONS: EscalationInstruction[] = [
