@@ -7,7 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertTriangle, FileDown, Plus, Droplets, Activity, Package, Clock, TrendingUp, Settings, FileText, AlertCircle } from 'lucide-react';
+import { AlertTriangle, FileDown, Plus, Droplets, Package, Clock, TrendingUp, Settings, FileText, AlertCircle } from 'lucide-react';
 import { CatheterStatusCard } from './CatheterStatusCard';
 import { CatheterHistory } from './CatheterHistory';
 import { CatheterTrends } from './CatheterTrends';
@@ -127,17 +127,8 @@ export function CatheterDashboard({ clientId }: CatheterDashboardProps) {
         onLogChange={() => setShowChangeForm(true)}
         onLogFlush={plan?.flush_prescribed ? () => setShowFlushForm(true) : undefined}
         onLogBagChange={plan?.leg_bag_change_frequency || plan?.night_bag_change_frequency ? () => setShowBagForm(true) : undefined}
+        onLogStomaCheck={typeConfig?.enableStomaChecks ? () => setShowStomaForm(true) : undefined}
       />
-
-      {/* Quick Actions - Dynamic based on care plan */}
-      {typeConfig?.enableStomaChecks && (
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => setShowStomaForm(true)} className="gap-2">
-            <Activity className="h-4 w-4" />
-            Stoma Check
-          </Button>
-        </div>
-      )}
 
 
       {/* Main Tabs */}
