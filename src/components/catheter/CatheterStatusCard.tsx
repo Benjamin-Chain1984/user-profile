@@ -106,6 +106,18 @@ export function CatheterStatusCard({ clientId, onLogChange, onLogFlush }: Cathet
           </div>
         )}
 
+        {/* Flush Interval - from Care Plan */}
+        {plan?.flush_prescribed && plan?.flush_frequency && (
+          <div className="text-sm text-muted-foreground">
+            <strong>Flush Interval:</strong>{' '}
+            {plan.flush_frequency === 'daily' ? 'Daily' :
+             plan.flush_frequency === 'twice_daily' ? 'Twice Daily' :
+             plan.flush_frequency === 'prn' ? 'PRN (As Needed)' :
+             plan.flush_frequency === 'custom' && plan.flush_custom_interval ? plan.flush_custom_interval :
+             plan.flush_frequency}
+          </div>
+        )}
+
         {/* Status Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Catheter Change Countdown */}
