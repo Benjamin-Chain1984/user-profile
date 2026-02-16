@@ -10,7 +10,7 @@ import { Clock, Droplets, Activity, Package, AlertCircle, CheckCircle, AlertTria
 import { StatusBadge } from '@/components/ideal/StatusBadge';
 import { useCatheterStatus, useBagChanges, useStomaChecks, useCatheterBagConfig } from '@/hooks/useCatheter';
 import { useCatheterCarePlan } from '@/hooks/useCatheterCarePlan';
-import { CATHETER_TYPE_CONFIG, BAG_TYPES, type CatheterType } from '@/types/catheter';
+import { CATHETER_TYPE_CONFIG, BAG_TYPES, normalizeCatheterType } from '@/types/catheter';
 import { format, parseISO } from 'date-fns';
 import type { HealthStatus } from '@/types/ideal';
 
@@ -299,7 +299,7 @@ export function CatheterStatusCard({
     loading,
   } = useCatheterStatus(clientId);
 
-  const planCatheterType = plan?.catheter_type as CatheterType | undefined;
+  const planCatheterType = normalizeCatheterType(plan?.catheter_type);
   const typeConfig = planCatheterType ? CATHETER_TYPE_CONFIG[planCatheterType] : null;
 
   const flushFrequencyLabel = plan?.flush_prescribed

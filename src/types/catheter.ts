@@ -71,6 +71,22 @@ export interface CatheterTypeConfig {
   sizeLabel: string;
 }
 
+/** Map DB values (which may differ from CatheterType keys) to CatheterType */
+export function normalizeCatheterType(dbValue: string | null | undefined): CatheterType | undefined {
+  if (!dbValue) return undefined;
+  const map: Record<string, CatheterType> = {
+    spc: 'spc',
+    suprapubic: 'spc',
+    idc: 'idc',
+    indwelling_urethral: 'idc',
+    balloon: 'balloon',
+    intermittent: 'intermittent',
+    urostomy: 'urostomy',
+    condom: 'condom',
+  };
+  return map[dbValue] ?? undefined;
+}
+
 export const CATHETER_TYPE_CONFIG: Record<CatheterType, CatheterTypeConfig> = {
   spc: {
     enableStomaChecks: true,
