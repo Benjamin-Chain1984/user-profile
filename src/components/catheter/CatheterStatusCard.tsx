@@ -196,7 +196,7 @@ export function CatheterStatusCard({ clientId, onLogChange, onLogFlush }: Cathet
             Log Catheter Change
           </Button>
           {onLogFlush && (
-            <Button variant="outline" onClick={onLogFlush} className="w-full md:w-auto gap-2">
+            <Button onClick={onLogFlush} className="w-full md:w-auto gap-2">
               <Droplets className="h-4 w-4" />
               Log Catheter Flush
             </Button>
