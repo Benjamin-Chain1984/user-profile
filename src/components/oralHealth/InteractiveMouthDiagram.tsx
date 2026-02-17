@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import openMouthImg from '@/assets/open-mouth.png';
+const openMouthImg = '/open-mouth.png';
 import type { MouthAnnotation } from '@/types/oralHealth';
 
 interface Props {
