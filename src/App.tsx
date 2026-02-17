@@ -27,6 +27,7 @@ import HealthPreventionPage from "./pages/HealthPrevention";
 import SleepPage from "./pages/Sleep";
 import OralHealthPage from "./pages/OralHealth";
 import EpilepsyPage from "./pages/Epilepsy";
+import PressureAreaPage from "./pages/PressureArea";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -88,6 +89,7 @@ const App = () => (
                   <Route path="/module/sleep" element={<SleepPage />} />
                   <Route path="/module/oral-health" element={<OralHealthPage />} />
                   <Route path="/module/epilepsy" element={<EpilepsyPage />} />
+                  <Route path="/module/pressure-area" element={<PressureAreaPage />} />
                   <Route path="/module/:moduleId" element={<ModulePlaceholder />} />
 
                   {/* Admin */}

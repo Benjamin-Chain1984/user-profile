@@ -1,0 +1,157 @@
+/**
+ * Pressure Area Prevention Module Types
+ */
+
+export const SCHEDULE_TYPES = ['fixed', 'interval', 'mixed', 'as_required'] as const;
+export type ScheduleType = typeof SCHEDULE_TYPES[number];
+
+export const SCHEDULE_TYPE_LABELS: Record<ScheduleType, string> = {
+  fixed: 'Fixed Times',
+  interval: 'Interval-Based',
+  mixed: 'Mixed (Fixed + Interval)',
+  as_required: 'As Required',
+};
+
+export interface RotationPosition {
+  id: string;
+  name: string;
+  target_duration_minutes: number;
+  notes: string | null;
+  is_custom: boolean;
+}
+
+export const DEFAULT_POSITIONS = [
+  'Back (supine)',
+  'Left side (30° tilt)',
+  'Right side (30° tilt)',
+  'Chair upright (time-limited)',
+  'Wheelchair pressure relief (weight shift)',
+] as const;
+
+export const HIGH_RISK_AREAS = [
+  { id: 'sacrum_coccyx', label: 'Sacrum / Coccyx' },
+  { id: 'heels', label: 'Heels' },
+  { id: 'hips', label: 'Hips' },
+  { id: 'ischials', label: 'Ischials' },
+  { id: 'ankles', label: 'Ankles' },
+  { id: 'elbows', label: 'Elbows' },
+  { id: 'shoulder_blades', label: 'Shoulder Blades' },
+  { id: 'head_ears', label: 'Head / Ears' },
+  { id: 'spine', label: 'Spine' },
+  { id: 'knees_contractures', label: 'Knees / Contractures' },
+  { id: 'skin_folds', label: 'Skin Folds' },
+] as const;
+
+export const SKIN_FINDING_TYPES = [
+  { id: 'mild_redness', label: 'Mild Redness', severity: 'amber' as const },
+  { id: 'blanching_redness', label: 'Blanching Redness', severity: 'amber' as const },
+  { id: 'non_blanching_redness', label: 'Non-blanching Redness', severity: 'red' as const },
+  { id: 'blister', label: 'Blister', severity: 'red' as const },
+  { id: 'broken_skin', label: 'Broken Skin', severity: 'red' as const },
+  { id: 'pain', label: 'Increasing Pain', severity: 'red' as const },
+  { id: 'discharge', label: 'Discharge', severity: 'red' as const },
+] as const;
+
+export const RELIEF_ISSUES = [
+  'Refused',
+  'Pain/discomfort',
+  'Unsafe to move',
+  'Equipment unavailable',
+  'Other',
+] as const;
+
+export interface PressureReliefPlan {
+  id: string;
+  client_id: string | null;
+  status: 'draft' | 'published';
+  version: number;
+  plan_author: string | null;
+  plan_author_email: string | null;
+  plan_author_phone: string | null;
+  date_developed: string | null;
+  last_reviewed_date: string | null;
+  next_review_due: string | null;
+  schedule_type: ScheduleType;
+  day_schedule_start: string;
+  day_schedule_end: string;
+  night_schedule_start: string | null;
+  night_schedule_end: string | null;
+  interval_minutes: number;
+  rotation_sequence: RotationPosition[];
+  high_risk_areas: string[];
+  escalation_rules: Record<string, unknown>;
+  overdue_amber_minutes: number;
+  overdue_red_minutes: number;
+  additional_instructions: string | null;
+  published_at: string | null;
+  published_by: string | null;
+  created_at: string;
+  created_by: string | null;
+  updated_at: string;
+  updated_by: string | null;
+}
+
+export interface PressureReliefEvent {
+  id: string;
+  client_id: string | null;
+  position_completed: string;
+  position_recommended: string | null;
+  event_occurred_at: string;
+  issues: string[];
+  issue_details: string | null;
+  escalation_required: boolean;
+  escalation_contact: string | null;
+  escalation_advice: string | null;
+  notes: string | null;
+  created_at: string;
+  created_by: string | null;
+  edited_at: string | null;
+  edited_by: string | null;
+  edit_reason: string | null;
+}
+
+export interface SkinCheckSession {
+  id: string;
+  client_id: string | null;
+  overall_status: 'healthy' | 'amber' | 'red';
+  notes: string | null;
+  event_occurred_at: string;
+  created_at: string;
+  created_by: string | null;
+  edited_at: string | null;
+  edited_by: string | null;
+  edit_reason: string | null;
+}
+
+export interface SkinFindingMarker {
+  id: string;
+  session_id: string;
+  location: string;
+  finding_type: string;
+  severity: 'amber' | 'red';
+  x_percent: number | null;
+  y_percent: number | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface PressureAreaConfig {
+  id: string;
+  client_id: string | null;
+  enable_compliance_scoring: boolean;
+  skin_check_frequency_days: number;
+  escalation_recipients: string[];
+  created_at: string;
+  created_by: string | null;
+  updated_at: string;
+  updated_by: string | null;
+}
+
+export type PressureAreaStatus = 'ideal' | 'monitor' | 'action';
+
+export interface PressureAreaStatusInfo {
+  status: PressureAreaStatus;
+  message: string;
+  lastEntry: string;
+  compliancePercent?: number;
+}
