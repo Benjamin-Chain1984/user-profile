@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useOralHealthConfig } from '@/hooks/useOralHealth';
 import { ModuleNotificationsCard, type ModuleNotificationSettings } from '@/components/module';
-import { FREQUENCY_LABELS, ASSISTANCE_LABELS, type AssessmentFrequency, type AssistanceLevel } from '@/types/oralHealth';
+import { FREQUENCY_LABELS, type AssessmentFrequency } from '@/types/oralHealth';
 import { Settings, Save, HelpCircle } from 'lucide-react';
 
 interface Props {
@@ -25,7 +25,7 @@ export function OralHealthConfigSettings({ clientId }: Props) {
   const [enableCompliance, setEnableCompliance] = useState(false);
   const [frequency, setFrequency] = useState<AssessmentFrequency>('weekly');
   const [missedTasksAlert, setMissedTasksAlert] = useState(2);
-  const [assistanceLevel, setAssistanceLevel] = useState<AssistanceLevel>('supervision');
+  
   const [notifSettings, setNotifSettings] = useState<ModuleNotificationSettings>({
     enableNotifications: false,
     amberRecipientIds: [],
@@ -37,7 +37,7 @@ export function OralHealthConfigSettings({ clientId }: Props) {
       setEnableCompliance(config.enable_compliance_monitoring || false);
       setFrequency((config.assessment_frequency as AssessmentFrequency) || 'weekly');
       setMissedTasksAlert(config.consecutive_missed_tasks_alert || 2);
-      setAssistanceLevel((config.global_assistance_level as AssistanceLevel) || 'supervision');
+      
     }
   }, [config]);
 
@@ -46,7 +46,7 @@ export function OralHealthConfigSettings({ clientId }: Props) {
       enable_compliance_monitoring: enableCompliance,
       assessment_frequency: frequency,
       consecutive_missed_tasks_alert: missedTasksAlert,
-      global_assistance_level: assistanceLevel,
+      
     });
   };
 
@@ -73,17 +73,6 @@ export function OralHealthConfigSettings({ clientId }: Props) {
             </Select>
           </div>
 
-          <div>
-            <Label>Global Assistance Level</Label>
-            <Select value={assistanceLevel} onValueChange={(v) => setAssistanceLevel(v as AssistanceLevel)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {Object.entries(ASSISTANCE_LABELS).map(([k, v]) => (
-                  <SelectItem key={k} value={k}>{v}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
         </CardContent>
       </Card>
 
