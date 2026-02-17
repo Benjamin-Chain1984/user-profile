@@ -3682,6 +3682,7 @@ export type Database = {
       pressure_relief_events: {
         Row: {
           client_id: string | null
+          completed_by_name: string | null
           created_at: string
           created_by: string | null
           edit_reason: string | null
@@ -3700,6 +3701,7 @@ export type Database = {
         }
         Insert: {
           client_id?: string | null
+          completed_by_name?: string | null
           created_at?: string
           created_by?: string | null
           edit_reason?: string | null
@@ -3718,6 +3720,7 @@ export type Database = {
         }
         Update: {
           client_id?: string | null
+          completed_by_name?: string | null
           created_at?: string
           created_by?: string | null
           edit_reason?: string | null

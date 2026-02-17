@@ -103,6 +103,7 @@ export interface PressureReliefEvent {
   escalation_contact: string | null;
   escalation_advice: string | null;
   notes: string | null;
+  completed_by_name: string | null;
   created_at: string;
   created_by: string | null;
   edited_at: string | null;
