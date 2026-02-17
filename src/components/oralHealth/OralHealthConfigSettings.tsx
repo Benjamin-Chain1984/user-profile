@@ -25,7 +25,7 @@ export function OralHealthConfigSettings({ clientId }: Props) {
   const [enableCompliance, setEnableCompliance] = useState(false);
   const [frequency, setFrequency] = useState<AssessmentFrequency>('weekly');
   const [missedTasksAlert, setMissedTasksAlert] = useState(2);
-  
+  const [dysphagiaFlagged, setDysphagiaFlagged] = useState(false);
   const [notifSettings, setNotifSettings] = useState<ModuleNotificationSettings>({
     enableNotifications: false,
     amberRecipientIds: [],
@@ -37,7 +37,7 @@ export function OralHealthConfigSettings({ clientId }: Props) {
       setEnableCompliance(config.enable_compliance_monitoring || false);
       setFrequency((config.assessment_frequency as AssessmentFrequency) || 'weekly');
       setMissedTasksAlert(config.consecutive_missed_tasks_alert || 2);
-      
+      setDysphagiaFlagged((config as any).dysphagia_flagged || false);
     }
   }, [config]);
 
@@ -46,8 +46,8 @@ export function OralHealthConfigSettings({ clientId }: Props) {
       enable_compliance_monitoring: enableCompliance,
       assessment_frequency: frequency,
       consecutive_missed_tasks_alert: missedTasksAlert,
-      
-    });
+      dysphagia_flagged: dysphagiaFlagged,
+    } as any);
   };
 
   return (
@@ -73,6 +73,16 @@ export function OralHealthConfigSettings({ clientId }: Props) {
             </Select>
           </div>
 
+          {/* Dysphagia Question */}
+          <div className="flex items-center justify-between pt-2 border-t">
+            <div className="flex-1">
+              <Label className="text-sm font-medium">Does the person have dysphagia (difficulty swallowing)?</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                If yes, a clinical alert will be displayed on the Oral Health dashboard highlighting increased aspiration pneumonia risk.
+              </p>
+            </div>
+            <Switch checked={dysphagiaFlagged} onCheckedChange={setDysphagiaFlagged} />
+          </div>
         </CardContent>
       </Card>
 

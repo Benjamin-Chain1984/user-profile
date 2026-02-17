@@ -1,0 +1,1 @@
+ALTER TABLE public.oral_health_config ADD COLUMN dysphagia_flagged boolean NOT NULL DEFAULT false;

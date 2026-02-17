@@ -3134,6 +3134,7 @@ export type Database = {
           consecutive_missed_tasks_alert: number
           created_at: string
           created_by: string | null
+          dysphagia_flagged: boolean
           enable_compliance_monitoring: boolean
           escalation_recipients: string[]
           global_assistance_level: string
@@ -3147,6 +3148,7 @@ export type Database = {
           consecutive_missed_tasks_alert?: number
           created_at?: string
           created_by?: string | null
+          dysphagia_flagged?: boolean
           enable_compliance_monitoring?: boolean
           escalation_recipients?: string[]
           global_assistance_level?: string
@@ -3160,6 +3162,7 @@ export type Database = {
           consecutive_missed_tasks_alert?: number
           created_at?: string
           created_by?: string | null
+          dysphagia_flagged?: boolean
           enable_compliance_monitoring?: boolean
           escalation_recipients?: string[]
           global_assistance_level?: string
