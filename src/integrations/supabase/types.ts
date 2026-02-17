@@ -3516,6 +3516,411 @@ export type Database = {
         }
         Relationships: []
       }
+      pressure_area_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          resolved_at: string | null
+          resolved_by: string | null
+          resolved_reason: string | null
+          severity: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_reason?: string | null
+          severity?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_reason?: string | null
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pressure_area_alerts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pressure_area_config: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          enable_compliance_scoring: boolean | null
+          escalation_recipients: string[] | null
+          id: string
+          skin_check_frequency_days: number | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          enable_compliance_scoring?: boolean | null
+          escalation_recipients?: string[] | null
+          id?: string
+          skin_check_frequency_days?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          enable_compliance_scoring?: boolean | null
+          escalation_recipients?: string[] | null
+          id?: string
+          skin_check_frequency_days?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pressure_area_config_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pressure_area_escalation_records: {
+        Row: {
+          advice_received: string | null
+          alert_id: string | null
+          client_id: string | null
+          contact_role: string | null
+          contact_time: string
+          contacted_person: string
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          escalation_reason: string
+          id: string
+        }
+        Insert: {
+          advice_received?: string | null
+          alert_id?: string | null
+          client_id?: string | null
+          contact_role?: string | null
+          contact_time?: string
+          contacted_person: string
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          escalation_reason: string
+          id?: string
+        }
+        Update: {
+          advice_received?: string | null
+          alert_id?: string | null
+          client_id?: string | null
+          contact_role?: string | null
+          contact_time?: string
+          contacted_person?: string
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          escalation_reason?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pressure_area_escalation_records_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "pressure_area_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pressure_area_escalation_records_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pressure_relief_events: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          escalation_advice: string | null
+          escalation_contact: string | null
+          escalation_required: boolean | null
+          event_occurred_at: string
+          id: string
+          issue_details: string | null
+          issues: string[] | null
+          notes: string | null
+          position_completed: string
+          position_recommended: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          escalation_advice?: string | null
+          escalation_contact?: string | null
+          escalation_required?: boolean | null
+          event_occurred_at?: string
+          id?: string
+          issue_details?: string | null
+          issues?: string[] | null
+          notes?: string | null
+          position_completed: string
+          position_recommended?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          escalation_advice?: string | null
+          escalation_contact?: string | null
+          escalation_required?: boolean | null
+          event_occurred_at?: string
+          id?: string
+          issue_details?: string | null
+          issues?: string[] | null
+          notes?: string | null
+          position_completed?: string
+          position_recommended?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pressure_relief_events_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pressure_relief_plan_acknowledgements: {
+        Row: {
+          acknowledged_at: string
+          id: string
+          notes: string | null
+          plan_id: string
+          plan_version: number
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string
+          id?: string
+          notes?: string | null
+          plan_id: string
+          plan_version: number
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string
+          id?: string
+          notes?: string | null
+          plan_id?: string
+          plan_version?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pressure_relief_plan_acknowledgements_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "pressure_relief_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pressure_relief_plan_versions: {
+        Row: {
+          change_reason: string | null
+          change_summary: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          plan_id: string
+          snapshot: Json
+          version: number
+        }
+        Insert: {
+          change_reason?: string | null
+          change_summary?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          plan_id: string
+          snapshot: Json
+          version: number
+        }
+        Update: {
+          change_reason?: string | null
+          change_summary?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          plan_id?: string
+          snapshot?: Json
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pressure_relief_plan_versions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "pressure_relief_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pressure_relief_plans: {
+        Row: {
+          additional_instructions: string | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          date_developed: string | null
+          day_schedule_end: string | null
+          day_schedule_start: string | null
+          escalation_rules: Json | null
+          high_risk_areas: string[] | null
+          id: string
+          interval_minutes: number | null
+          last_reviewed_date: string | null
+          next_review_due: string | null
+          night_schedule_end: string | null
+          night_schedule_start: string | null
+          overdue_amber_minutes: number | null
+          overdue_red_minutes: number | null
+          plan_author: string | null
+          plan_author_email: string | null
+          plan_author_phone: string | null
+          published_at: string | null
+          published_by: string | null
+          rotation_sequence: Json | null
+          schedule_type: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          additional_instructions?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_developed?: string | null
+          day_schedule_end?: string | null
+          day_schedule_start?: string | null
+          escalation_rules?: Json | null
+          high_risk_areas?: string[] | null
+          id?: string
+          interval_minutes?: number | null
+          last_reviewed_date?: string | null
+          next_review_due?: string | null
+          night_schedule_end?: string | null
+          night_schedule_start?: string | null
+          overdue_amber_minutes?: number | null
+          overdue_red_minutes?: number | null
+          plan_author?: string | null
+          plan_author_email?: string | null
+          plan_author_phone?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          rotation_sequence?: Json | null
+          schedule_type?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          additional_instructions?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_developed?: string | null
+          day_schedule_end?: string | null
+          day_schedule_start?: string | null
+          escalation_rules?: Json | null
+          high_risk_areas?: string[] | null
+          id?: string
+          interval_minutes?: number | null
+          last_reviewed_date?: string | null
+          next_review_due?: string | null
+          night_schedule_end?: string | null
+          night_schedule_start?: string | null
+          overdue_amber_minutes?: number | null
+          overdue_red_minutes?: number | null
+          plan_author?: string | null
+          plan_author_email?: string | null
+          plan_author_phone?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          rotation_sequence?: Json | null
+          schedule_type?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pressure_relief_plans_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_monitoring_status: {
         Row: {
           client_id: string
@@ -3792,6 +4197,97 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      skin_check_sessions: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          event_occurred_at: string
+          id: string
+          notes: string | null
+          overall_status: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          id?: string
+          notes?: string | null
+          overall_status?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          id?: string
+          notes?: string | null
+          overall_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "skin_check_sessions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      skin_finding_markers: {
+        Row: {
+          created_at: string
+          finding_type: string
+          id: string
+          location: string
+          notes: string | null
+          session_id: string
+          severity: string
+          x_percent: number | null
+          y_percent: number | null
+        }
+        Insert: {
+          created_at?: string
+          finding_type: string
+          id?: string
+          location: string
+          notes?: string | null
+          session_id: string
+          severity?: string
+          x_percent?: number | null
+          y_percent?: number | null
+        }
+        Update: {
+          created_at?: string
+          finding_type?: string
+          id?: string
+          location?: string
+          notes?: string | null
+          session_id?: string
+          severity?: string
+          x_percent?: number | null
+          y_percent?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "skin_finding_markers_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "skin_check_sessions"
             referencedColumns: ["id"]
           },
         ]
