@@ -86,7 +86,7 @@ export function ModuleGrid() {
       return hasVitals;
     }
     return true;
-  });
+  }).sort((a, b) => a.name.localeCompare(b.name));
 
   const handleModuleClick = (moduleId: string) => {
     navigate(`/module/${moduleId}`);
