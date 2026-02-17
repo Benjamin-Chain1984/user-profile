@@ -993,6 +993,20 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Re-fetch profile-dependent statuses when profile loads from DB
+  // This fixes the race condition where status fetches run before the real profile is loaded
+  useEffect(() => {
+    if (profile?.id && profile.id !== '1') {
+      fetchHealthPreventionStatus();
+      fetchBowelCareStatus();
+      fetchLatestPainAssessment();
+      fetchWeightStatus();
+      fetchFluidStatus();
+      fetchSleepStatus();
+      fetchOralHealthStatus();
+    }
+  }, [profile?.id, profile?.dateOfBirth]);
+
   // Enable ALL vitals by default
   const [healthMonitoringConfig, setHealthMonitoringConfig] = useState<HealthMonitoringConfig>({
     bloodPressureEnabled: true,
