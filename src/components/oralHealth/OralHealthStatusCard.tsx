@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Smile, AlertTriangle, AlertCircle, CheckCircle, CalendarClock } from 'lucide-react';
 import { useOralHealthAssessments, useOralHealthTaskLogs, useOralHealthConfig } from '@/hooks/useOralHealth';
 import { calculateOralHealthStatus } from '@/utils/oralHealthStatusCalculator';
-import { parseISO, addDays, addMonths, differenceInDays, differenceInHours, format } from 'date-fns';
+import { parseISO, addDays, addMonths, differenceInCalendarDays, differenceInHours, format, startOfDay } from 'date-fns';
 import type { AssessmentFrequency } from '@/types/oralHealth';
 
 interface Props {
@@ -28,12 +28,12 @@ function getNextDueDate(lastDate: string, frequency: AssessmentFrequency): Date 
 }
 
 function formatCountdown(dueDate: Date): { text: string; isOverdue: boolean; isDueToday: boolean } {
-  const now = new Date();
-  const daysLeft = differenceInDays(dueDate, now);
-  const hoursLeft = differenceInHours(dueDate, now);
+  const today = startOfDay(new Date());
+  const dueDateStart = startOfDay(dueDate);
+  const daysLeft = differenceInCalendarDays(dueDateStart, today);
 
   if (daysLeft < 0) return { text: `${Math.abs(daysLeft)} day${Math.abs(daysLeft) !== 1 ? 's' : ''} overdue`, isOverdue: true, isDueToday: false };
-  if (daysLeft === 0) return { text: hoursLeft <= 0 ? 'Due now' : `Due today (${hoursLeft}h remaining)`, isOverdue: false, isDueToday: true };
+  if (daysLeft === 0) return { text: 'Due today', isOverdue: false, isDueToday: true };
   if (daysLeft === 1) return { text: 'Due tomorrow', isOverdue: false, isDueToday: false };
   return { text: `Due in ${daysLeft} days`, isOverdue: false, isDueToday: false };
 }
