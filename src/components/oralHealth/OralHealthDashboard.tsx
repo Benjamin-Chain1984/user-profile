@@ -109,6 +109,23 @@ export function OralHealthDashboard({ clientId }: OralHealthDashboardProps) {
         </CardContent>
       </Card>
 
+      {/* Dysphagia Alert */}
+      {(config as any)?.dysphagia_flagged && (
+        <Card className="border-destructive/40 bg-destructive/5">
+          <CardContent className="py-4">
+            <div className="flex gap-3">
+              <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-destructive">Dysphagia Identified</p>
+                <p className="text-sm text-foreground mt-1">
+                  This person has dysphagia (difficulty swallowing). Oral health care is especially important to manage the higher risk of <strong>aspiration pneumonia</strong>. Ensure thorough oral hygiene and follow the care plan closely.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Status Card */}
       <OralHealthStatusCard clientId={clientId} />
 
