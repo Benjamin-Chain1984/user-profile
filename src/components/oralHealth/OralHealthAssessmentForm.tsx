@@ -95,14 +95,16 @@ export function OralHealthAssessmentForm({ clientId, open, onOpenChange }: Props
       action_notes: actionNotes || null,
       escalation_contact: escalationContact || null,
       mouth_annotations: annotations.filter(a => a.issue_type && a.location),
+    }, {
+      onSuccess: () => {
+        onOpenChange(false);
+        setRatings({});
+        setActionTaken('');
+        setActionNotes('');
+        setEscalationContact('');
+        setAnnotations([]);
+      },
     });
-    onOpenChange(false);
-    // Reset
-    setRatings({});
-    setActionTaken('');
-    setActionNotes('');
-    setEscalationContact('');
-    setAnnotations([]);
   };
 
   const requiredAction = overallStatus === 'unhealthy'
