@@ -35,9 +35,11 @@ export function PressureReliefLogForm({ clientId, open, onOpenChange }: Props) {
   const [selectedIssues, setSelectedIssues] = useState<string[]>([]);
   const [issueDetails, setIssueDetails] = useState('');
   const [notes, setNotes] = useState('');
+  const [completedByName, setCompletedByName] = useState('');
   const [showEscalation, setShowEscalation] = useState(false);
   const [escalationContact, setEscalationContact] = useState('');
   const [escalationAdvice, setEscalationAdvice] = useState('');
+
 
   const toggleIssue = (issue: string) => {
     setSelectedIssues(prev => {
@@ -48,6 +50,7 @@ export function PressureReliefLogForm({ clientId, open, onOpenChange }: Props) {
   };
 
   const handleSubmit = () => {
+    if (!completedByName.trim()) return;
     logEvent({
       position_completed: positionCompleted || recommendedPosition || 'Not specified',
       position_recommended: recommendedPosition || null,
@@ -58,12 +61,14 @@ export function PressureReliefLogForm({ clientId, open, onOpenChange }: Props) {
       escalation_contact: escalationContact || null,
       escalation_advice: escalationAdvice || null,
       notes: notes || null,
+      completed_by_name: completedByName.trim(),
     });
     // Reset
     setPositionCompleted(recommendedPosition);
     setSelectedIssues([]);
     setIssueDetails('');
     setNotes('');
+    setCompletedByName('');
     setShowEscalation(false);
     setEscalationContact('');
     setEscalationAdvice('');
@@ -79,7 +84,12 @@ export function PressureReliefLogForm({ clientId, open, onOpenChange }: Props) {
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Position */}
+          {/* Completed by */}
+          <div>
+            <Label>Your Name (person completing) *</Label>
+            <Input value={completedByName} onChange={e => setCompletedByName(e.target.value)} placeholder="Enter your full name" />
+          </div>
+
           <div>
             <Label>Position Completed</Label>
             {positions.length > 0 ? (
@@ -149,7 +159,7 @@ export function PressureReliefLogForm({ clientId, open, onOpenChange }: Props) {
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={isLogging || !positionCompleted}>
+          <Button onClick={handleSubmit} disabled={isLogging || !positionCompleted || !completedByName.trim()}>
             {isLogging ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
             Log Completed
           </Button>
