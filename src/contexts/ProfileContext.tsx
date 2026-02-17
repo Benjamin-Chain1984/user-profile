@@ -25,6 +25,15 @@ import { calculateSleepStatus } from '@/utils/sleepStatusCalculator';
 import type { SleepEntry, SleepConfig } from '@/types/sleep';
 import { calculateOralHealthStatus } from '@/utils/oralHealthStatusCalculator';
 import type { OralHealthAssessment, OralHealthTaskLog, OralHealthConfig } from '@/types/oralHealth';
+import { calculateHealthMonitoringStatus } from '@/utils/vitalSignStatusCalculator';
+import type { VitalSignEntry, VitalSignAlert } from '@/types/healthMonitoring';
+
+// Health Monitoring alert data type
+type HealthMonitoringAlertData = {
+  status: 'stable' | 'monitor' | 'action';
+  message: string;
+  timestamp: string;
+};
 
 interface ProfileContextType {
   profile: IndividualProfile | null;
@@ -43,6 +52,7 @@ interface ProfileContextType {
   refreshHealthPreventionStatus: () => void;
   refreshSleepStatus: () => void;
   refreshOralHealthStatus: () => void;
+  refreshHealthMonitoringStatus: () => void;
    // Monitoring pause state
    monitoringStatus: MonitoringStatus | null;
    isMonitoringPaused: boolean;
@@ -137,7 +147,8 @@ function generateAlertsFromModules(
   fluidData?: FluidAlertData,
   healthPreventionData?: HealthPreventionAlertData,
   sleepData?: SleepAlertData,
-  oralHealthData?: OralHealthAlertData
+  oralHealthData?: OralHealthAlertData,
+  healthMonitoringData?: HealthMonitoringAlertData
 ): Alert[] {
   return modules
     .filter((m) => m.enabled && (m.status === 'monitor' || m.status === 'action'))
@@ -223,6 +234,18 @@ function generateAlertsFromModules(
           message: oralHealthData.message,
           status: m.status === 'action' ? 'red' as const : 'amber' as const,
           timestamp: oralHealthData.timestamp,
+        };
+      }
+
+      // Special handling for health monitoring module with real data
+      if (m.id === 'health-monitoring' && healthMonitoringData) {
+        return {
+          id: m.id,
+          moduleId: m.id,
+          moduleName: 'Health Monitoring',
+          message: healthMonitoringData.message,
+          status: m.status === 'action' ? 'red' as const : 'amber' as const,
+          timestamp: healthMonitoringData.timestamp,
         };
       }
       
@@ -319,18 +342,16 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   // Oral Health state
   const [latestOralHealthData, setLatestOralHealthData] = useState<OralHealthAlertData | null>(null);
 
+  // Health Monitoring state
+  const [latestHealthMonitoringData, setLatestHealthMonitoringData] = useState<HealthMonitoringAlertData | null>(null);
+
   // Enable ALL modules by default for master project development
   const [enabledModules, setEnabledModules] = useState<HealthModule[]>(
     HEALTH_MODULES.map((m) => ({
       ...m,
       enabled: true, // All modules ON by default
-      status: m.id === 'health-monitoring' ? 'action' : 
-              m.id === 'fluid-balance' ? 'monitor' : 'stable',
-      lastEntry: m.id === 'weight' ? 'Logged 2 days ago' : 
-                 m.id === 'oral-health' ? 'Up to date' :
-                 m.id === 'fluid-balance' ? '1,200ml today' :
-                 m.id === 'health-monitoring' ? 'Review required' : 
-                 'Not yet logged',
+      status: 'stable',
+      lastEntry: 'Not yet logged',
     }))
   );
 
@@ -826,6 +847,60 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Fetch health monitoring status using centralized calculator
+  const fetchHealthMonitoringStatus = async () => {
+    try {
+      // Fetch latest vital sign entries
+      const { data: entries, error } = await supabase
+        .from('vital_sign_entries')
+        .select('*')
+        .order('event_occurred_at', { ascending: false })
+        .limit(50);
+
+      if (error) {
+        console.error('Error fetching vital sign entries:', error);
+        return;
+      }
+
+      // Fetch active alerts
+      const { data: alertsData } = await supabase
+        .from('vital_sign_alerts')
+        .select('*')
+        .is('resolved_at', null)
+        .order('created_at', { ascending: false });
+
+      const typedEntries = (entries || []) as unknown as VitalSignEntry[];
+      const typedAlerts = (alertsData || []) as unknown as VitalSignAlert[];
+
+      const statusResult = calculateHealthMonitoringStatus(typedEntries, typedAlerts);
+
+      // Map vital status to module status
+      const moduleStatus = statusResult.status === 'ideal' ? 'stable' 
+        : statusResult.status === 'amber' ? 'monitor' : 'action';
+
+      const hmData: HealthMonitoringAlertData = {
+        status: moduleStatus,
+        message: statusResult.message,
+        timestamp: typedEntries[0]?.event_occurred_at || new Date().toISOString(),
+      };
+
+      setLatestHealthMonitoringData(hmData);
+
+      const latestEntry = typedEntries[0];
+      const timeAgo = latestEntry 
+        ? formatDistanceToNow(new Date(latestEntry.event_occurred_at), { addSuffix: true })
+        : 'Never';
+
+      setEnabledModules(prev => prev.map(m =>
+        m.id === 'health-monitoring'
+          ? { ...m, status: moduleStatus, lastEntry: `${statusResult.message} • ${timeAgo}` }
+          : m
+      ));
+    } catch (err) {
+      console.error('Error in fetchHealthMonitoringStatus:', err);
+    }
+  };
+
   // Fetch data on mount and set up realtime subscriptions
   useEffect(() => {
     fetchProfileFromDb();
@@ -836,6 +911,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     fetchHealthPreventionStatus();
     fetchSleepStatus();
     fetchOralHealthStatus();
+    fetchHealthMonitoringStatus();
 
     // Subscribe to realtime updates for pain assessments
     const painChannel = supabase
@@ -980,6 +1056,22 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       )
       .subscribe();
 
+    // Subscribe to realtime updates for vital sign entries
+    const vitalSignChannel = supabase
+      .channel('vital-sign-alerts')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'vital_sign_entries',
+        },
+        () => {
+          fetchHealthMonitoringStatus();
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(painChannel);
       supabase.removeChannel(bowelChannel);
@@ -990,6 +1082,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       supabase.removeChannel(vaccinationChannel);
       supabase.removeChannel(sleepChannel);
       supabase.removeChannel(oralHealthChannel);
+      supabase.removeChannel(vitalSignChannel);
     };
   }, []);
 
@@ -1004,6 +1097,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       fetchFluidStatus();
       fetchSleepStatus();
       fetchOralHealthStatus();
+      fetchHealthMonitoringStatus();
     }
   }, [profile?.id, profile?.dateOfBirth]);
 
@@ -1055,7 +1149,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     latestFluidData || undefined,
     latestHealthPreventionData || undefined,
     latestSleepData || undefined,
-    latestOralHealthData || undefined
+    latestOralHealthData || undefined,
+    latestHealthMonitoringData || undefined
   );
   const hasRedAlert = !isMonitoringPaused && activeEnabledModules.some((m) => m.status === 'action');
   const hasAmberAlert = !isMonitoringPaused && activeEnabledModules.some((m) => m.status === 'monitor');
@@ -1096,6 +1191,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         refreshHealthPreventionStatus: fetchHealthPreventionStatus,
         refreshSleepStatus: fetchSleepStatus,
         refreshOralHealthStatus: fetchOralHealthStatus,
+        refreshHealthMonitoringStatus: fetchHealthMonitoringStatus,
          monitoringStatus,
          isMonitoringPaused,
          pauseMonitoring,
