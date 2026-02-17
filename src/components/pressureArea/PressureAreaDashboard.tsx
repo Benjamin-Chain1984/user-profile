@@ -22,8 +22,8 @@ import { PressureAreaTrends } from './PressureAreaTrends';
 import { PressureAreaConfigSettings } from './PressureAreaConfigSettings';
 import { PressureAreaExportReports } from './PressureAreaExportReports';
 import {
-  Settings, BarChart3, Clock, AlertCircle, FileDown, RotateCcw,
-  FileText, AlertTriangle, Eye,
+  Settings, BarChart3, Clock, AlertCircle, FileDown,
+  FileText, AlertTriangle,
 } from 'lucide-react';
 
 interface Props {
@@ -83,12 +83,6 @@ export function PressureAreaDashboard({ clientId }: Props) {
           <Button variant="outline" onClick={() => setShowExport(true)}>
             <FileDown className="h-4 w-4 mr-2" /> Export
           </Button>
-          <Button variant="outline" onClick={() => setShowSkinCheck(true)} disabled={isMonitoringPaused}>
-            <Eye className="h-4 w-4 mr-2" /> Skin Check
-          </Button>
-          <Button onClick={() => setShowLogForm(true)} disabled={isMonitoringPaused}>
-            <RotateCcw className="h-4 w-4 mr-2" /> Log Pressure Relief
-          </Button>
         </div>
       </div>
 
@@ -115,8 +109,13 @@ export function PressureAreaDashboard({ clientId }: Props) {
       </Card>
 
 
-      {/* Status Card */}
-      <PressureAreaStatusCard clientId={clientId} />
+      {/* Status Tiles */}
+      <PressureAreaStatusCard
+        clientId={clientId}
+        onLogPressureRelief={() => setShowLogForm(true)}
+        onLogSkinCheck={() => setShowSkinCheck(true)}
+        disabled={isMonitoringPaused}
+      />
 
       {/* Tabs */}
       <Tabs defaultValue="tracking" className="space-y-4">
