@@ -76,6 +76,10 @@ export function PressureAreaDashboard({ clientId }: Props) {
           <p className="text-muted-foreground">Pressure relief scheduling, skin checks & compliance</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setShowPlanViewer(true)}>
+            <FileText className="h-4 w-4 mr-2" />
+            Digital Pressure Area Relief Plan
+          </Button>
           <Button variant="outline" onClick={() => setShowExport(true)}>
             <FileDown className="h-4 w-4 mr-2" /> Export
           </Button>
@@ -110,29 +114,6 @@ export function PressureAreaDashboard({ clientId }: Props) {
         </CardContent>
       </Card>
 
-      {/* Plan Button */}
-      <Card className="cursor-pointer hover:border-primary/50 transition-colors" onClick={() => setShowPlanViewer(true)}>
-        <CardContent className="py-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <FileText className={`h-6 w-6 ${planBadgeColor}`} />
-              <div>
-                <p className="font-semibold">Digital Pressure Area Relief Plan</p>
-                <p className="text-sm text-muted-foreground">View the prescribed repositioning / pressure relief schedule</p>
-              </div>
-            </div>
-            <div>
-              {!plan || plan.status === 'draft' ? (
-                <span className="text-sm text-muted-foreground">Not published</span>
-              ) : hasCurrentUserAcknowledged ? (
-                <span className="text-sm text-green-600">✓ Acknowledged</span>
-              ) : (
-                <span className="text-sm text-amber-600">⚠ Acknowledge required</span>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Status Card */}
       <PressureAreaStatusCard clientId={clientId} />
