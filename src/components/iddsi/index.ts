@@ -1,0 +1,1 @@
+export { IddsiDashboard } from './IddsiDashboard';
