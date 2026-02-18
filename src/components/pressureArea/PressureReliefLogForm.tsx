@@ -1,9 +1,10 @@
 /**
  * Pressure Relief Log Form - Fast UX for logging repositioning
+ * Staff identity is auto-stamped from authenticated session.
  */
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,8 +16,9 @@ import {
 } from '@/components/ui/dialog';
 import { usePressureReliefEvents } from '@/hooks/usePressureArea';
 import { usePressureReliefPlan } from '@/hooks/usePressureReliefPlan';
+import { useCurrentStaff } from '@/hooks/useCurrentStaff';
 import { RELIEF_ISSUES, type RotationPosition } from '@/types/pressureArea';
-import { Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertTriangle, User } from 'lucide-react';
 
 interface Props {
   clientId?: string;
@@ -27,6 +29,7 @@ interface Props {
 export function PressureReliefLogForm({ clientId, open, onOpenChange }: Props) {
   const { logEvent, isLogging } = usePressureReliefEvents(clientId);
   const { plan } = usePressureReliefPlan(clientId);
+  const { staffName } = useCurrentStaff();
 
   const positions = (plan?.rotation_sequence || []) as RotationPosition[];
   const recommendedPosition = positions.length > 0 ? positions[0].name : '';
@@ -35,11 +38,9 @@ export function PressureReliefLogForm({ clientId, open, onOpenChange }: Props) {
   const [selectedIssues, setSelectedIssues] = useState<string[]>([]);
   const [issueDetails, setIssueDetails] = useState('');
   const [notes, setNotes] = useState('');
-  const [completedByName, setCompletedByName] = useState('');
   const [showEscalation, setShowEscalation] = useState(false);
   const [escalationContact, setEscalationContact] = useState('');
   const [escalationAdvice, setEscalationAdvice] = useState('');
-
 
   const toggleIssue = (issue: string) => {
     setSelectedIssues(prev => {
@@ -50,7 +51,6 @@ export function PressureReliefLogForm({ clientId, open, onOpenChange }: Props) {
   };
 
   const handleSubmit = () => {
-    if (!completedByName.trim()) return;
     logEvent({
       position_completed: positionCompleted || recommendedPosition || 'Not specified',
       position_recommended: recommendedPosition || null,
@@ -61,14 +61,13 @@ export function PressureReliefLogForm({ clientId, open, onOpenChange }: Props) {
       escalation_contact: escalationContact || null,
       escalation_advice: escalationAdvice || null,
       notes: notes || null,
-      completed_by_name: completedByName.trim(),
+      completed_by_name: staffName,
     });
     // Reset
     setPositionCompleted(recommendedPosition);
     setSelectedIssues([]);
     setIssueDetails('');
     setNotes('');
-    setCompletedByName('');
     setShowEscalation(false);
     setEscalationContact('');
     setEscalationAdvice('');
@@ -84,10 +83,11 @@ export function PressureReliefLogForm({ clientId, open, onOpenChange }: Props) {
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Completed by */}
-          <div>
-            <Label>Your Name (person completing) *</Label>
-            <Input value={completedByName} onChange={e => setCompletedByName(e.target.value)} placeholder="Enter your full name" />
+          {/* Auto-stamped staff identity */}
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border">
+            <User className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Logged by:</span>
+            <span className="text-sm font-medium">{staffName}</span>
           </div>
 
           <div>
@@ -159,7 +159,7 @@ export function PressureReliefLogForm({ clientId, open, onOpenChange }: Props) {
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={isLogging || !positionCompleted || !completedByName.trim()}>
+          <Button onClick={handleSubmit} disabled={isLogging || !positionCompleted}>
             {isLogging ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
             Log Completed
           </Button>

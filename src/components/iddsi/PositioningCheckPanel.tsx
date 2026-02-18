@@ -1,5 +1,6 @@
 /**
  * Positioning Check Panel - Inclinometer using device gyroscope
+ * Staff identity is auto-stamped from authenticated session.
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -9,7 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { usePositioningChecks } from '@/hooks/useIddsi';
-import { ArrowLeft, CheckCircle2, AlertTriangle, AlertCircle } from 'lucide-react';
+import { useCurrentStaff } from '@/hooks/useCurrentStaff';
+import { ArrowLeft, CheckCircle2, AlertTriangle, AlertCircle, User } from 'lucide-react';
 
 interface Props {
   clientId?: string;
@@ -24,10 +26,10 @@ function getAngleStatus(angle: number): 'green' | 'amber' | 'red' {
 
 export function PositioningCheckPanel({ clientId, onClose }: Props) {
   const { logCheck } = usePositioningChecks(clientId);
+  const { staffName } = useCurrentStaff();
   const [angle, setAngle] = useState<number>(90);
   const [gyroSupported, setGyroSupported] = useState(true);
   const [manualAngle, setManualAngle] = useState('90');
-  const [staffName, setStaffName] = useState('');
   const [checklist, setChecklist] = useState({
     personUpright: false,
     hipsAtBack: false,
@@ -43,7 +45,6 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
     listenerRef.current = true;
 
     const handleOrientation = (event: DeviceOrientationEvent) => {
-      // Beta gives front-to-back tilt in degrees (-180 to 180)
       if (event.beta !== null) {
         const tilt = Math.round(Math.abs(event.beta));
         setAngle(Math.min(180, Math.max(0, tilt)));
@@ -51,7 +52,6 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
     };
 
     if ('DeviceOrientationEvent' in window) {
-      // iOS 13+ requires permission
       const requestPermission = (DeviceOrientationEvent as any).requestPermission;
       if (typeof requestPermission === 'function') {
         requestPermission().then((state: string) => {
@@ -63,10 +63,6 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
         }).catch(() => setGyroSupported(false));
       } else {
         window.addEventListener('deviceorientation', handleOrientation);
-        // Check if we get data within 2 seconds
-        setTimeout(() => {
-          // If angle hasn't changed from initial, likely no gyro
-        }, 2000);
       }
     } else {
       setGyroSupported(false);
@@ -82,7 +78,6 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
   const allChecked = Object.values(checklist).every(Boolean);
 
   const handleConfirm = async () => {
-    if (!staffName.trim()) return;
     setSaving(true);
     const ok = await logCheck({
       angle_degrees: currentAngle,
@@ -91,7 +86,7 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
       feet_supported: checklist.feetSupported,
       head_midline: checklist.headMidline,
       status,
-      completed_by_name: staffName.trim(),
+      completed_by_name: staffName,
     });
     setSaving(false);
     if (ok) {
@@ -215,21 +210,17 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
         </CardContent>
       </Card>
 
-      {/* Staff Name */}
-      <div>
-        <Label htmlFor="pos-staff">Your Name *</Label>
-        <Input
-          id="pos-staff"
-          value={staffName}
-          onChange={e => setStaffName(e.target.value)}
-          placeholder="Enter your name"
-        />
+      {/* Auto-stamped staff identity */}
+      <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border">
+        <User className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">Logged by:</span>
+        <span className="text-sm font-medium">{staffName}</span>
       </div>
 
       {/* Confirm */}
       <Button
         onClick={handleConfirm}
-        disabled={!allChecked || !staffName.trim() || saving}
+        disabled={!allChecked || saving}
         className="w-full"
         size="lg"
       >

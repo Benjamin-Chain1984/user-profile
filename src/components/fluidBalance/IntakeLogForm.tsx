@@ -9,8 +9,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Droplets, Plus } from 'lucide-react';
+import { Droplets, Plus, User } from 'lucide-react';
 import { FLUID_TYPES } from '@/types/fluidBalance';
+import { useCurrentStaff } from '@/hooks/useCurrentStaff';
+import { OnBehalfSelector, type OnBehalfData, isOnBehalfActive } from '@/components/shared/OnBehalfSelector';
 
 const intakeSchema = z.object({
   fluid_type: z.string().min(1, 'Select a fluid type'),
@@ -50,20 +52,24 @@ export const IntakeLogForm: React.FC<IntakeLogFormProps> = ({
   currentTotal = 0,
   maxAllowance
 }) => {
+  const { staffName } = useCurrentStaff();
   const form = useForm<IntakeFormValues>({
     resolver: zodResolver(intakeSchema),
     defaultValues: {
       fluid_type: '',
       amount_ml: 0,
-      // IMPORTANT: datetime-local expects *local* time, not UTC.
-      // Using toISOString() here causes entries to be logged into the wrong day for many timezones.
       event_occurred_at: toDateTimeLocalValue(new Date()),
       is_self_reported: false,
       notes: ''
     }
   });
   
-  const [showOnBehalf, setShowOnBehalf] = React.useState(false);
+  const [onBehalfData, setOnBehalfData] = React.useState<OnBehalfData>({
+    onBehalfUserId: null,
+    onBehalfName: null,
+    onBehalfRole: null,
+    onBehalfReason: null,
+  });
   const currentAmount = form.watch('amount_ml');
   
   const handleQuickAdd = (amount: number) => {
@@ -71,9 +77,13 @@ export const IntakeLogForm: React.FC<IntakeLogFormProps> = ({
   };
   
   const handleSubmit = async (data: IntakeFormValues) => {
+    const active = isOnBehalfActive(onBehalfData);
     await onSubmit({
       ...data,
-      event_occurred_at: new Date(data.event_occurred_at).toISOString()
+      event_occurred_at: new Date(data.event_occurred_at).toISOString(),
+      recorded_on_behalf_of_name: active ? onBehalfData.onBehalfName || undefined : undefined,
+      recorded_on_behalf_of_role: active ? onBehalfData.onBehalfRole || undefined : undefined,
+      recorded_on_behalf_of_reason: active ? onBehalfData.onBehalfReason || undefined : undefined,
     });
     form.reset({
       fluid_type: '',
@@ -82,7 +92,7 @@ export const IntakeLogForm: React.FC<IntakeLogFormProps> = ({
       is_self_reported: false,
       notes: ''
     });
-    setShowOnBehalf(false);
+    setOnBehalfData({ onBehalfUserId: null, onBehalfName: null, onBehalfRole: null, onBehalfReason: null });
   };
   
   const wouldExceedLimit = isRestricted && maxAllowance && (currentTotal + currentAmount) > maxAllowance;
@@ -192,55 +202,16 @@ export const IntakeLogForm: React.FC<IntakeLogFormProps> = ({
               )}
             />
             
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div>
-                <p className="text-sm font-medium">Log on Behalf</p>
-                <p className="text-xs text-muted-foreground">Recording for another staff member</p>
-              </div>
-              <Switch checked={showOnBehalf} onCheckedChange={setShowOnBehalf} />
+            {/* Auto-stamped staff identity */}
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border">
+              <User className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Logged by:</span>
+              <span className="text-sm font-medium">{staffName}</span>
             </div>
-            
-            {showOnBehalf && (
-              <div className="space-y-3 p-3 bg-muted rounded-lg">
-                <FormField
-                  control={form.control}
-                  name="recorded_on_behalf_of_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Staff Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Enter staff member's name" />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="recorded_on_behalf_of_role"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Role</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="e.g., Support Worker" />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="recorded_on_behalf_of_reason"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Reason</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} placeholder="Why are you logging on their behalf?" />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
-            
+
+            {/* On behalf selector */}
+            <OnBehalfSelector value={onBehalfData} onChange={setOnBehalfData} />
+
             <FormField
               control={form.control}
               name="notes"
