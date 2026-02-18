@@ -1,7 +1,7 @@
 /**
- * Positioning Check Panel - Informational inclinometer guide
- * Normalized safe range display with danger zones above and below.
- * This is an informational tool only — no data is logged.
+ * Positioning Check Panel - Binary Safe/Unsafe inclinometer
+ * Full 0–180° range. Safety = proximity to 90° (upright).
+ * No amber. No clamping.
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -39,7 +39,7 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
 
     const handleOrientation = (event: DeviceOrientationEvent) => {
       if (event.beta !== null) {
-        // beta: -180 to 180, we use absolute value capped 0–180
+        // Full 0–180 range, no clamping
         const tilt = Math.round(Math.abs(event.beta));
         setRawAngle(Math.min(180, Math.max(0, tilt)));
       }
@@ -69,20 +69,23 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
 
   const currentAngle = gyroSupported ? rawAngle : Number(manualAngle) || 0;
 
-  // Safe zone logic: safe between lower–upper, danger outside
-  const getStatus = (angle: number) => {
-    if (angle >= safeLower && angle <= safeUpper) return 'green' as const;
-    return 'red' as const;
+  // Binary safety: within safe range = green, outside = red
+  const isSafe = currentAngle >= safeLower && currentAngle <= safeUpper;
+  const status = isSafe ? 'green' : 'red';
+
+  // Position descriptor
+  const getPositionLabel = (angle: number) => {
+    if (angle >= safeLower && angle <= safeUpper) return 'Upright';
+    if (angle < 90) return 'Reclined Back';
+    return 'Leaning Forward';
   };
 
-  const status = getStatus(currentAngle);
+  const getStatusLabel = () => {
+    if (isSafe) return `SAFE – Within Safe Range (${safeLower}°–${safeUpper}°)`;
+    return 'UNSAFE – Adjust Position';
+  };
+
   const allChecked = Object.values(checklist).every(Boolean);
-
-  const getLabel = (angle: number) => {
-    if (angle < safeLower) return 'Unsafe – Too Reclined';
-    if (angle > safeUpper) return 'Unsafe – Leaning Too Far Forward';
-    return 'Safe Upright Position';
-  };
 
   const statusConfig = {
     green: {
@@ -101,7 +104,6 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
 
   const currentStatus = statusConfig[status];
   const StatusIcon = currentStatus.icon;
-  const label = getLabel(currentAngle);
 
   const checklistItems = [
     { key: 'personUpright' as const, label: 'Person upright' },
@@ -110,6 +112,8 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
     { key: 'headMidline' as const, label: 'Head midline' },
     { key: 'remainUpright' as const, label: 'Remain upright 30 mins post meal' },
   ];
+
+  const canConfirm = isSafe && allChecked;
 
   return (
     <div className="space-y-6">
@@ -143,7 +147,7 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
             ) : (
               <div className="space-y-2 w-full">
                 <p className="text-sm text-muted-foreground text-center">
-                  Gyroscope not available. Enter angle manually:
+                  Gyroscope not available. Enter angle manually (0–180°):
                 </p>
                 <Input
                   type="number"
@@ -162,33 +166,36 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
                 <p className={`text-5xl font-bold ${currentStatus.textClass}`}>
                   {currentAngle}°
                 </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {getPositionLabel(currentAngle)}
+                </p>
               </div>
             </div>
 
             {/* Status */}
             <div className="flex items-center gap-2">
               <StatusIcon className={`h-5 w-5 ${currentStatus.iconClass}`} />
-              <span className={`font-medium ${currentStatus.textClass}`}>{label}</span>
+              <span className={`font-medium ${currentStatus.textClass}`}>{isSafe ? '🟢' : '🔴'} {getStatusLabel()}</span>
             </div>
 
             {/* Reference info */}
             <div className="text-center space-y-1">
               <p className="text-xs text-muted-foreground">
-                Safe zone: {safeLower}°–{safeUpper}° · Target: 90°
+                0° = Flat · 90° = Upright · 180° = Flat opposite
               </p>
             </div>
 
             {/* Zone legend */}
             <div className="flex gap-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-destructive" /> &lt;{safeLower}°</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-success" /> {safeLower}°–{safeUpper}°</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-destructive" /> &gt;{safeUpper}°</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-destructive" /> &lt;{safeLower}° Unsafe</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-success" /> {safeLower}°–{safeUpper}° Safe</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-destructive" /> &gt;{safeUpper}° Unsafe</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Checklist with tick icons */}
+      {/* Checklist */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Positioning Checklist</CardTitle>
@@ -211,17 +218,25 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
             </button>
           ))}
 
-          {allChecked && status === 'green' && (
+          {/* Confirm Safe Position button */}
+          {allChecked && isSafe && (
             <div className="flex items-center gap-2 p-3 rounded-lg bg-success/10 border border-success/20 mt-2">
               <CheckCircle2 className="h-4 w-4 text-success" />
-              <span className="text-sm font-medium text-success">All positioning checks confirmed – Safe Position</span>
+              <span className="text-sm font-medium text-success">✔ Confirm Safe Position – All checks passed</span>
             </div>
           )}
 
-          {allChecked && status === 'red' && (
+          {allChecked && !isSafe && (
             <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 mt-2">
               <AlertCircle className="h-4 w-4 text-destructive" />
-              <span className="text-sm font-medium text-destructive">Checklist confirmed – Adjust angle into {safeLower}°–{safeUpper}° safe zone</span>
+              <span className="text-sm font-medium text-destructive">Position must be adjusted before continuing.</span>
+            </div>
+          )}
+
+          {!allChecked && !isSafe && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 mt-2">
+              <AlertCircle className="h-4 w-4 text-destructive" />
+              <span className="text-sm font-medium text-destructive">Position must be adjusted before continuing.</span>
             </div>
           )}
         </CardContent>
