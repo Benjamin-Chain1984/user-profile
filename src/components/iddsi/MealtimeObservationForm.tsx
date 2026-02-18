@@ -1,17 +1,18 @@
 /**
  * Mealtime Observation Form
+ * Staff identity is auto-stamped from authenticated session.
  */
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { useMealtimeObservations } from '@/hooks/useIddsi';
+import { useCurrentStaff } from '@/hooks/useCurrentStaff';
 import { calculateObservationSeverity } from '@/types/iddsi';
-import { AlertCircle, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle2, User } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -56,7 +57,7 @@ function ToggleOption({
 
 export function MealtimeObservationForm({ clientId, open, onOpenChange }: Props) {
   const { logObservation } = useMealtimeObservations(clientId);
-  const [staffName, setStaffName] = useState('');
+  const { staffName } = useCurrentStaff();
   const [coughing, setCoughing] = useState<CoughingOption>('none');
   const [wetVoice, setWetVoice] = useState(false);
   const [throatClearing, setThroatClearing] = useState(false);
@@ -77,7 +78,6 @@ export function MealtimeObservationForm({ clientId, open, onOpenChange }: Props)
   });
 
   const reset = () => {
-    setStaffName('');
     setCoughing('none');
     setWetVoice(false);
     setThroatClearing(false);
@@ -89,7 +89,6 @@ export function MealtimeObservationForm({ clientId, open, onOpenChange }: Props)
   };
 
   const handleSubmit = async () => {
-    if (!staffName.trim()) return;
     setSaving(true);
     const ok = await logObservation({
       coughing,
@@ -101,7 +100,7 @@ export function MealtimeObservationForm({ clientId, open, onOpenChange }: Props)
       refusal,
       severity,
       notes: notes.trim(),
-      completed_by_name: staffName.trim(),
+      completed_by_name: staffName,
     });
     setSaving(false);
     if (ok) {
@@ -118,15 +117,11 @@ export function MealtimeObservationForm({ clientId, open, onOpenChange }: Props)
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Staff Name */}
-          <div>
-            <Label htmlFor="obs-staff">Your Name *</Label>
-            <Input
-              id="obs-staff"
-              value={staffName}
-              onChange={e => setStaffName(e.target.value)}
-              placeholder="Enter your name"
-            />
+          {/* Auto-stamped staff identity */}
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border">
+            <User className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Logged by:</span>
+            <span className="text-sm font-medium">{staffName}</span>
           </div>
 
           {/* Coughing */}
@@ -224,7 +219,7 @@ export function MealtimeObservationForm({ clientId, open, onOpenChange }: Props)
 
           <Button
             onClick={handleSubmit}
-            disabled={!staffName.trim() || saving}
+            disabled={saving}
             className="w-full"
             size="lg"
           >

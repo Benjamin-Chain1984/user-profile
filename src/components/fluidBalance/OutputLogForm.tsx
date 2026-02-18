@@ -9,9 +9,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { TrendingDown, Plus } from 'lucide-react';
+import { TrendingDown, Plus, User } from 'lucide-react';
 import { OUTPUT_TYPES, URINE_COLOUR_SCALE } from '@/types/fluidBalance';
 import { cn } from '@/lib/utils';
+import { useCurrentStaff } from '@/hooks/useCurrentStaff';
+import { OnBehalfSelector, type OnBehalfData, isOnBehalfActive } from '@/components/shared/OnBehalfSelector';
 
 const outputSchema = z.object({
   output_type: z.string().min(1, 'Select an output type'),
@@ -44,15 +46,22 @@ export const OutputLogForm: React.FC<OutputLogFormProps> = ({ onSubmit }) => {
     }
   });
   
-  const [showOnBehalf, setShowOnBehalf] = React.useState(false);
+  const { staffName } = useCurrentStaff();
+  const [onBehalfData, setOnBehalfData] = React.useState<OnBehalfData>({
+    onBehalfUserId: null, onBehalfName: null, onBehalfRole: null, onBehalfReason: null,
+  });
   const outputType = form.watch('output_type');
   const isUnmeasured = form.watch('is_unmeasured');
   
   const handleSubmit = async (data: OutputFormValues) => {
+    const active = isOnBehalfActive(onBehalfData);
     await onSubmit({
       ...data,
       event_occurred_at: new Date(data.event_occurred_at).toISOString(),
-      amount_ml: data.is_unmeasured ? null : data.amount_ml
+      amount_ml: data.is_unmeasured ? null : data.amount_ml,
+      recorded_on_behalf_of_name: active ? onBehalfData.onBehalfName || undefined : undefined,
+      recorded_on_behalf_of_role: active ? onBehalfData.onBehalfRole || undefined : undefined,
+      recorded_on_behalf_of_reason: active ? onBehalfData.onBehalfReason || undefined : undefined,
     } as OutputFormValues);
     form.reset({
       output_type: '',
@@ -62,7 +71,7 @@ export const OutputLogForm: React.FC<OutputLogFormProps> = ({ onSubmit }) => {
       event_occurred_at: new Date().toISOString().slice(0, 16),
       notes: ''
     });
-    setShowOnBehalf(false);
+    setOnBehalfData({ onBehalfUserId: null, onBehalfName: null, onBehalfRole: null, onBehalfReason: null });
   };
   
   return (
@@ -192,54 +201,15 @@ export const OutputLogForm: React.FC<OutputLogFormProps> = ({ onSubmit }) => {
               )}
             />
             
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div>
-                <p className="text-sm font-medium">Log on Behalf</p>
-                <p className="text-xs text-muted-foreground">Recording for another staff member</p>
-              </div>
-              <Switch checked={showOnBehalf} onCheckedChange={setShowOnBehalf} />
+            {/* Auto-stamped staff identity */}
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border">
+              <User className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Logged by:</span>
+              <span className="text-sm font-medium">{staffName}</span>
             </div>
-            
-            {showOnBehalf && (
-              <div className="space-y-3 p-3 bg-muted rounded-lg">
-                <FormField
-                  control={form.control}
-                  name="recorded_on_behalf_of_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Staff Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Enter staff member's name" />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="recorded_on_behalf_of_role"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Role</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="e.g., Support Worker" />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="recorded_on_behalf_of_reason"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Reason</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} placeholder="Why are you logging on their behalf?" />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
+
+            {/* On behalf selector */}
+            <OnBehalfSelector value={onBehalfData} onChange={setOnBehalfData} />
             
             <FormField
               control={form.control}
