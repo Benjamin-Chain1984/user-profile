@@ -76,8 +76,8 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
   // Position descriptor
   const getPositionLabel = (angle: number) => {
     if (angle >= safeLower && angle <= safeUpper) return 'Upright';
-    if (angle < 90) return 'Reclined Back';
-    return 'Leaning Forward';
+    if (angle < 90) return 'Leaning Forward';
+    return 'Reclined Back';
   };
 
   const getStatusLabel = () => {
