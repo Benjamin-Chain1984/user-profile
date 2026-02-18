@@ -71,7 +71,7 @@ function LevelCard({
     <Card>
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-3">
-          <img src={info.image} alt={info.name} className="h-40 w-40 object-contain" />
+          <img src={info.image} alt={info.name} className="h-56 w-56 object-contain" />
           <div>
             <span className="text-primary">{levelType === 'food' ? '🍽' : '🥤'} </span>
             {info.name}

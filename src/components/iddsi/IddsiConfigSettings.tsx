@@ -88,7 +88,7 @@ export function IddsiConfigSettings({ clientId }: Props) {
                         : 'border-border hover:border-primary/30'
                     }`}
                   >
-                    <img src={info.image} alt={info.name} className="h-16 w-16 object-contain flex-shrink-0" />
+                    <img src={info.image} alt={info.name} className="h-24 w-24 object-contain flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm">{info.name}</p>
                       <p className="text-xs text-muted-foreground truncate">{info.description}</p>
@@ -123,7 +123,7 @@ export function IddsiConfigSettings({ clientId }: Props) {
                         : 'border-border hover:border-primary/30'
                     }`}
                   >
-                    <img src={info.image} alt={info.name} className="h-16 w-16 object-contain flex-shrink-0" />
+                    <img src={info.image} alt={info.name} className="h-24 w-24 object-contain flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm">{info.name}</p>
                       <p className="text-xs text-muted-foreground truncate">{info.description}</p>
