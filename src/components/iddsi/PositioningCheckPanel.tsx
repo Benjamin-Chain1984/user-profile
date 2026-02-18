@@ -1,6 +1,6 @@
 /**
  * Positioning Check Panel - Informational inclinometer guide
- * Normalized 0–90° safe range with three-zone traffic-light display.
+ * Normalized safe range display with danger zones above and below.
  * This is an informational tool only — no data is logged.
  */
 
@@ -8,7 +8,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, CheckCircle2, AlertCircle, AlertTriangle, Info, Circle } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, AlertCircle, Info, Circle } from 'lucide-react';
 import { useIddsiConfig } from '@/hooks/useIddsi';
 
 interface Props {
@@ -18,8 +18,8 @@ interface Props {
 
 export function PositioningCheckPanel({ clientId, onClose }: Props) {
   const { config } = useIddsiConfig(clientId);
-  const minSafeAngle = config?.minSafeAngle ?? 70;
-  const targetSafeAngle = config?.targetSafeAngle ?? 80;
+  const safeLower = config?.minSafeAngle ?? 80;
+  const safeUpper = config?.targetSafeAngle ?? 100;
 
   const [rawAngle, setRawAngle] = useState<number>(90);
   const [gyroSupported, setGyroSupported] = useState(true);
@@ -39,6 +39,7 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
 
     const handleOrientation = (event: DeviceOrientationEvent) => {
       if (event.beta !== null) {
+        // beta: -180 to 180, we use absolute value capped 0–180
         const tilt = Math.round(Math.abs(event.beta));
         setRawAngle(Math.min(180, Math.max(0, tilt)));
       }
@@ -66,39 +67,32 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
     };
   }, []);
 
-  // Normalize angle: 0° = flat, 90° = upright, cap at 90°
-  const rawValue = gyroSupported ? rawAngle : Number(manualAngle) || 0;
-  const normalizedAngle = rawValue > 90 ? 180 - rawValue : rawValue;
-  const cappedAngle = Math.min(90, Math.max(0, normalizedAngle));
+  const currentAngle = gyroSupported ? rawAngle : Number(manualAngle) || 0;
 
-  // Three-zone logic
+  // Safe zone logic: safe between lower–upper, danger outside
   const getStatus = (angle: number) => {
-    if (angle >= targetSafeAngle) return 'green' as const;
-    if (angle >= minSafeAngle) return 'amber' as const;
+    if (angle >= safeLower && angle <= safeUpper) return 'green' as const;
     return 'red' as const;
   };
 
-  const status = getStatus(cappedAngle);
+  const status = getStatus(currentAngle);
   const allChecked = Object.values(checklist).every(Boolean);
+
+  const getLabel = (angle: number) => {
+    if (angle < safeLower) return 'Unsafe – Too Reclined';
+    if (angle > safeUpper) return 'Unsafe – Leaning Too Far Forward';
+    return 'Safe Upright Position';
+  };
 
   const statusConfig = {
     green: {
       icon: CheckCircle2,
-      label: 'Safe Upright Position',
       borderClass: 'border-success bg-success/10',
       textClass: 'text-success',
       iconClass: 'text-success',
     },
-    amber: {
-      icon: AlertTriangle,
-      label: 'Borderline – Adjust Upright',
-      borderClass: 'border-amber-500 bg-amber-50',
-      textClass: 'text-amber-600',
-      iconClass: 'text-amber-500',
-    },
     red: {
       icon: AlertCircle,
-      label: 'Unsafe – Too Reclined',
       borderClass: 'border-destructive bg-destructive/10',
       textClass: 'text-destructive',
       iconClass: 'text-destructive',
@@ -107,6 +101,7 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
 
   const currentStatus = statusConfig[status];
   const StatusIcon = currentStatus.icon;
+  const label = getLabel(currentAngle);
 
   const checklistItems = [
     { key: 'personUpright' as const, label: 'Person upright' },
@@ -148,12 +143,12 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
             ) : (
               <div className="space-y-2 w-full">
                 <p className="text-sm text-muted-foreground text-center">
-                  Gyroscope not available. Enter angle manually (0–90°):
+                  Gyroscope not available. Enter angle manually:
                 </p>
                 <Input
                   type="number"
                   min={0}
-                  max={90}
+                  max={180}
                   value={manualAngle}
                   onChange={e => setManualAngle(e.target.value)}
                   className="text-center text-2xl font-bold h-14"
@@ -165,7 +160,7 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
             <div className={`flex items-center justify-center w-40 h-40 rounded-full border-4 ${currentStatus.borderClass}`}>
               <div className="text-center">
                 <p className={`text-5xl font-bold ${currentStatus.textClass}`}>
-                  {cappedAngle}°
+                  {currentAngle}°
                 </p>
               </div>
             </div>
@@ -173,21 +168,21 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
             {/* Status */}
             <div className="flex items-center gap-2">
               <StatusIcon className={`h-5 w-5 ${currentStatus.iconClass}`} />
-              <span className={`font-medium ${currentStatus.textClass}`}>{currentStatus.label}</span>
+              <span className={`font-medium ${currentStatus.textClass}`}>{label}</span>
             </div>
 
             {/* Reference info */}
             <div className="text-center space-y-1">
               <p className="text-xs text-muted-foreground">
-                Minimum required: {minSafeAngle}° · Target: 90°
+                Safe zone: {safeLower}°–{safeUpper}° · Target: 90°
               </p>
             </div>
 
             {/* Zone legend */}
             <div className="flex gap-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-destructive" /> &lt;{minSafeAngle}°</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-amber-500" /> {minSafeAngle}–{targetSafeAngle - 1}°</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-success" /> ≥{targetSafeAngle}°</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-destructive" /> &lt;{safeLower}°</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-success" /> {safeLower}°–{safeUpper}°</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-destructive" /> &gt;{safeUpper}°</span>
             </div>
           </div>
         </CardContent>
@@ -223,10 +218,10 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
             </div>
           )}
 
-          {allChecked && status === 'amber' && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 mt-2">
-              <AlertTriangle className="h-4 w-4 text-amber-600" />
-              <span className="text-sm font-medium text-amber-600">Checklist confirmed – Adjust angle to ≥{targetSafeAngle}° for safe position</span>
+          {allChecked && status === 'red' && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 mt-2">
+              <AlertCircle className="h-4 w-4 text-destructive" />
+              <span className="text-sm font-medium text-destructive">Checklist confirmed – Adjust angle into {safeLower}°–{safeUpper}° safe zone</span>
             </div>
           )}
         </CardContent>
