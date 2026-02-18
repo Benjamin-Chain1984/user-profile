@@ -12,7 +12,7 @@ import { Slider } from '@/components/ui/slider';
 import { useMealtimeObservations } from '@/hooks/useIddsi';
 import { useCurrentStaff } from '@/hooks/useCurrentStaff';
 import { calculateObservationSeverity } from '@/types/iddsi';
-import { AlertCircle, AlertTriangle, CheckCircle2, User } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle2, User, Phone, FileText } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -198,24 +198,75 @@ export function MealtimeObservationForm({ clientId, open, onOpenChange }: Props)
                 ) : (
                   <CheckCircle2 className="h-5 w-5 text-success" />
                 )}
-                <div>
-                  <p className={`text-sm font-medium ${
-                    severity === 'red' ? 'text-destructive' :
-                    severity === 'amber' ? 'text-amber-700' : 'text-success'
-                  }`}>
-                    {severity === 'red' ? 'RED – Action Needed' :
-                     severity === 'amber' ? 'Amber – Attention Required' :
-                     'IDEAL – No Concerns'}
-                  </p>
-                  {severity === 'red' && (
-                    <p className="text-xs text-destructive mt-1">
-                      Stop meal. Keep upright. Follow choking protocol. Seek medical advice.
-                    </p>
-                  )}
-                </div>
+                <p className={`text-sm font-medium ${
+                  severity === 'red' ? 'text-destructive' :
+                  severity === 'amber' ? 'text-amber-700' : 'text-success'
+                }`}>
+                  {severity === 'red' ? 'RED – Action Needed' :
+                   severity === 'amber' ? 'Amber – Attention Required' :
+                   'IDEAL – No Concerns'}
+                </p>
               </div>
             </CardContent>
           </Card>
+
+          {/* Escalation Instructions - shown when concerns detected */}
+          {(severity === 'red' || severity === 'amber') && (
+            <div className="space-y-3">
+              <Card className="border-destructive bg-destructive/5">
+                <CardContent className="py-4 space-y-3">
+                  <p className="text-sm font-semibold text-destructive">
+                    ⚠️ Swallowing Concerns Detected – Follow These Steps:
+                  </p>
+                  {severity === 'red' && (
+                    <ul className="space-y-1 text-sm text-destructive">
+                      <li>• Choking or gagging</li>
+                      <li>• Repeated coughing during meals</li>
+                      <li>• Wet or gurgly voice after swallowing</li>
+                      <li>• Food or fluid coming out of the nose</li>
+                      <li>• Difficulty breathing during or after eating</li>
+                      <li>• Colour changes (blue lips/face)</li>
+                    </ul>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="py-4 space-y-3">
+                  <p className="text-sm font-semibold">Immediate Actions:</p>
+                  <ol className="space-y-2 text-sm text-muted-foreground">
+                    <li className="flex gap-2">
+                      <span className="font-bold text-foreground">1.</span>
+                      <strong>Stop the meal immediately</strong>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="font-bold text-foreground">2.</span>
+                      Keep the person upright
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="font-bold text-foreground">3.</span>
+                      If choking — follow choking protocol
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="font-bold text-foreground">4.</span>
+                      Call 000 if the person is in distress
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="font-bold text-foreground">5.</span>
+                      Notify Team Leader and document the event
+                    </li>
+                  </ol>
+                </CardContent>
+              </Card>
+
+              <Button variant="destructive" size="lg" className="w-full" asChild>
+                <a href="tel:000">
+                  <Phone className="h-4 w-4 mr-2" />
+                  Call 000
+                </a>
+              </Button>
+            </div>
+          )}
 
           <Button
             onClick={handleSubmit}
