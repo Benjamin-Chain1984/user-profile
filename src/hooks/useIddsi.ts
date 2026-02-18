@@ -39,8 +39,8 @@ export function useIddsiConfig(clientId?: string) {
         enableNotifications: (data as any).enable_notifications ?? false,
         amberRecipientIds: (data as any).amber_recipient_ids ?? [],
         redRecipientIds: (data as any).red_recipient_ids ?? [],
-        minSafeAngle: (data as any).min_safe_angle ?? 70,
-        targetSafeAngle: (data as any).target_safe_angle ?? 80,
+        minSafeAngle: (data as any).min_safe_angle ?? 80,
+        targetSafeAngle: (data as any).target_safe_angle ?? 100,
       });
     } else {
       setConfig(null);
