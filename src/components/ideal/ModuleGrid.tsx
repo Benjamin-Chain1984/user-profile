@@ -207,20 +207,11 @@ export function ModuleGrid() {
   return (
     <div className="flex flex-col gap-2 sm:gap-3">
       {activeModules.map((module) => (
-        module.id === 'iddsi' ? (
-          <IddsiModuleRow
-            key={module.id}
-            module={module}
-            onClick={() => handleModuleClick(module.id)}
-            clientId={profile?.id}
-          />
-        ) : (
-          <ModuleRow 
-            key={module.id} 
-            module={module} 
-            onClick={() => handleModuleClick(module.id)}
-          />
-        )
+        <ModuleRow 
+          key={module.id} 
+          module={module} 
+          onClick={() => handleModuleClick(module.id)}
+        />
       ))}
     </div>
   );
