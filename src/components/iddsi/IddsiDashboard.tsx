@@ -94,16 +94,16 @@ export function IddsiDashboard({ clientId }: IddsiDashboardProps) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {config.foodLevel !== null && (
             <Card>
-              <CardContent className="py-5 flex flex-col items-center gap-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Prescribed Food Level</p>
+              <CardContent className="py-6 flex flex-col items-center gap-4">
+                <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Prescribed Food Level</p>
                 <img
                   src={config.foodLevel === 7 && config.foodLevelVariant === 'easy_to_chew'
                     ? '/food-level-7etc.png'
                     : `/food-level-${config.foodLevel}.png`}
                   alt={`Food Level ${config.foodLevel}`}
-                  className="h-28 w-28 object-contain"
+                  className="h-44 w-44 object-contain"
                 />
-                <p className="font-semibold text-base text-foreground">
+                <p className="font-semibold text-lg text-foreground">
                   Level {config.foodLevel}
                   {config.foodLevel === 7 && config.foodLevelVariant === 'easy_to_chew' && ' – Easy to Chew'}
                 </p>
@@ -112,14 +112,14 @@ export function IddsiDashboard({ clientId }: IddsiDashboardProps) {
           )}
           {config.drinkLevel !== null && (
             <Card>
-              <CardContent className="py-5 flex flex-col items-center gap-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Prescribed Drink Level</p>
+              <CardContent className="py-6 flex flex-col items-center gap-4">
+                <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Prescribed Drink Level</p>
                 <img
                   src={`/drink-level-${config.drinkLevel}.png`}
                   alt={`Drink Level ${config.drinkLevel}`}
-                  className="h-28 w-28 object-contain"
+                  className="h-44 w-44 object-contain"
                 />
-                <p className="font-semibold text-base text-foreground">
+                <p className="font-semibold text-lg text-foreground">
                   Level {config.drinkLevel}
                 </p>
               </CardContent>
