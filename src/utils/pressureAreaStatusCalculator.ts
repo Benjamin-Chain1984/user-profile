@@ -54,7 +54,6 @@ export function calculatePressureAreaStatus(input: StatusInput): PressureAreaSta
     if (latestEvent) {
       const minutesSince = differenceInHours(new Date(), new Date(latestEvent.event_occurred_at)) * 60;
       const overdueRed = plan.overdue_red_minutes + plan.interval_minutes;
-      const overdueAmber = plan.overdue_amber_minutes + plan.interval_minutes;
 
       if (minutesSince >= overdueRed) {
         return {
@@ -63,10 +62,10 @@ export function calculatePressureAreaStatus(input: StatusInput): PressureAreaSta
           lastEntry: `${latestEvent.position_completed} • ${formatDistanceToNow(new Date(latestEvent.event_occurred_at), { addSuffix: true })}`,
         };
       }
-      if (minutesSince >= overdueAmber) {
+      if (minutesSince >= plan.interval_minutes) {
         return {
           status: 'monitor',
-          message: `Repositioning due soon – last completed ${formatDistanceToNow(new Date(latestEvent.event_occurred_at), { addSuffix: true })}`,
+          message: `Repositioning late – last completed ${formatDistanceToNow(new Date(latestEvent.event_occurred_at), { addSuffix: true })}`,
           lastEntry: `${latestEvent.position_completed} • ${formatDistanceToNow(new Date(latestEvent.event_occurred_at), { addSuffix: true })}`,
         };
       }
