@@ -126,14 +126,14 @@ function PressureReliefTile({
     if (latestEvent) {
       const minsSince = differenceInMinutes(now, new Date(latestEvent.event_occurred_at));
       const overdueRed = (plan?.overdue_red_minutes || 0) + intervalMinutes;
-      const overdueAmber = (plan?.overdue_amber_minutes || 0) + intervalMinutes;
 
       if (minsSince >= overdueRed) {
         status = 'action';
         statusLabel = 'Overdue';
-      } else if (minsSince >= overdueAmber) {
+      } else if (minsSince >= intervalMinutes) {
+        // Position is late — flag amber immediately once past due
         status = 'monitor';
-        statusLabel = 'Due soon';
+        statusLabel = 'Late';
       }
     } else {
       status = 'monitor';
