@@ -1,18 +1,22 @@
 /**
- * IDDSI Config Settings - Admin configuration for food/drink levels
+ * IDDSI Config Settings - Admin configuration for food/drink levels,
+ * observation scheduling, and notification recipients.
  */
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { useIddsiConfig } from '@/hooks/useIddsi';
 import { FOOD_LEVELS, DRINK_LEVELS, getFoodLevelKey } from '@/types/iddsi';
 import { format, addYears } from 'date-fns';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, ClipboardList, Bell } from 'lucide-react';
 import { RestrictedSection } from '@/components/ui/restricted-section';
+import { ModuleNotificationsCard } from '@/components/module/ModuleNotificationsCard';
+import type { ModuleNotificationSettings } from '@/components/module/ModuleNotificationsCard';
 
 interface Props {
   clientId?: string;
@@ -29,6 +33,12 @@ const FOOD_OPTIONS = [
 
 const DRINK_OPTIONS = [4, 3, 2, 1, 0];
 
+const FREQUENCY_OPTIONS = [
+  { value: 'daily', label: 'Daily', description: 'Observation expected every day' },
+  { value: 'weekly', label: 'Weekly', description: 'Observation expected once per week' },
+  { value: 'monthly', label: 'Monthly', description: 'Observation expected once per month' },
+];
+
 export function IddsiConfigSettings({ clientId }: Props) {
   const { config, saveConfig, loading } = useIddsiConfig(clientId);
 
@@ -36,6 +46,13 @@ export function IddsiConfigSettings({ clientId }: Props) {
   const [selectedDrink, setSelectedDrink] = useState<number | null>(null);
   const [reviewDate, setReviewDate] = useState('');
   const [instructions, setInstructions] = useState('');
+  const [enableObservations, setEnableObservations] = useState(false);
+  const [observationFrequency, setObservationFrequency] = useState<string>('daily');
+  const [notificationSettings, setNotificationSettings] = useState<ModuleNotificationSettings>({
+    enableNotifications: false,
+    amberRecipientIds: [],
+    redRecipientIds: [],
+  });
 
   useEffect(() => {
     if (config) {
@@ -45,6 +62,13 @@ export function IddsiConfigSettings({ clientId }: Props) {
       setSelectedDrink(config.drinkLevel);
       setReviewDate(config.lastReviewDate || '');
       setInstructions(config.additionalInstructions || '');
+      setEnableObservations(config.enableObservations);
+      setObservationFrequency(config.observationFrequency);
+      setNotificationSettings({
+        enableNotifications: config.enableNotifications,
+        amberRecipientIds: config.amberRecipientIds,
+        redRecipientIds: config.redRecipientIds,
+      });
     }
   }, [config]);
 
@@ -60,6 +84,11 @@ export function IddsiConfigSettings({ clientId }: Props) {
       last_review_date: reviewDateStr,
       next_review_due: nextReview,
       additional_instructions: instructions || null,
+      enable_observations: enableObservations,
+      observation_frequency: observationFrequency,
+      enable_notifications: notificationSettings.enableNotifications,
+      amber_recipient_ids: notificationSettings.amberRecipientIds,
+      red_recipient_ids: notificationSettings.redRecipientIds,
     });
   };
 
@@ -169,6 +198,73 @@ export function IddsiConfigSettings({ clientId }: Props) {
             </div>
           </CardContent>
         </Card>
+
+        {/* Mealtime Observation Scheduling */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <ClipboardList className="h-5 w-5" />
+              Mealtime Observations
+            </CardTitle>
+            <CardDescription>
+              Enable scheduled mealtime observations and set the expected frequency.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div>
+                <Label className="text-base">Enable Mealtime Observations</Label>
+                <p className="text-sm text-muted-foreground">
+                  Track mealtime observations on a schedule
+                </p>
+              </div>
+              <Switch
+                checked={enableObservations}
+                onCheckedChange={setEnableObservations}
+              />
+            </div>
+
+            {enableObservations && (
+              <div className="space-y-3">
+                <Label>Observation Frequency</Label>
+                <div className="grid gap-2">
+                  {FREQUENCY_OPTIONS.map(opt => {
+                    const isSelected = observationFrequency === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        onClick={() => setObservationFrequency(opt.value)}
+                        className={`flex items-center justify-between p-3 rounded-lg border transition-all text-left ${
+                          isSelected
+                            ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                            : 'border-border hover:border-primary/30'
+                        }`}
+                      >
+                        <div>
+                          <p className="font-medium text-sm">{opt.label}</p>
+                          <p className="text-xs text-muted-foreground">{opt.description}</p>
+                        </div>
+                        {isSelected && <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  If an observation is late or missed, the module will escalate to Amber. If signs are noted during an observation, the module escalates to Red.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Notification Recipients */}
+        <ModuleNotificationsCard
+          moduleName="iddsi"
+          moduleDisplayName="IDDSI & Safe Swallowing"
+          settings={notificationSettings}
+          onSettingsChange={setNotificationSettings}
+          clientId={clientId}
+        />
 
         <Button onClick={handleSave} className="w-full" size="lg">
           Save IDDSI Configuration

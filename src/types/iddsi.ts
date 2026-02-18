@@ -13,6 +13,11 @@ export interface IddsiConfig {
   lastReviewDate: string | null;
   nextReviewDue: string | null;
   additionalInstructions: string | null;
+  enableObservations: boolean;
+  observationFrequency: 'daily' | 'weekly' | 'monthly';
+  enableNotifications: boolean;
+  amberRecipientIds: string[];
+  redRecipientIds: string[];
 }
 
 export interface MealtimeObservation {

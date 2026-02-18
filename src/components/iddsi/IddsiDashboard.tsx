@@ -145,12 +145,12 @@ export function IddsiDashboard({ clientId }: IddsiDashboardProps) {
         <button
           onClick={() => setShowPositioning(true)}
           className="flex flex-col items-center justify-center gap-3 p-6 bg-card rounded-xl border border-border hover:border-primary/30 hover:shadow-md transition-all active:scale-[0.98] min-h-[120px]"
-          disabled={isMonitoringPaused}
         >
           <div className="p-3 rounded-lg bg-primary/10">
             <Armchair className="h-6 w-6 text-primary" />
           </div>
           <span className="text-sm font-medium text-center">Check Positioning</span>
+          <span className="text-[10px] text-muted-foreground">(Guide only)</span>
         </button>
 
         <button

@@ -2805,49 +2805,64 @@ export type Database = {
       iddsi_config: {
         Row: {
           additional_instructions: string | null
+          amber_recipient_ids: string[]
           client_id: string | null
           created_at: string
           created_by: string | null
           drink_level: number | null
           drink_level_set_at: string | null
+          enable_notifications: boolean
+          enable_observations: boolean
           food_level: number | null
           food_level_set_at: string | null
           food_level_variant: string | null
           id: string
           last_review_date: string | null
           next_review_due: string | null
+          observation_frequency: string
+          red_recipient_ids: string[]
           updated_at: string
           updated_by: string | null
         }
         Insert: {
           additional_instructions?: string | null
+          amber_recipient_ids?: string[]
           client_id?: string | null
           created_at?: string
           created_by?: string | null
           drink_level?: number | null
           drink_level_set_at?: string | null
+          enable_notifications?: boolean
+          enable_observations?: boolean
           food_level?: number | null
           food_level_set_at?: string | null
           food_level_variant?: string | null
           id?: string
           last_review_date?: string | null
           next_review_due?: string | null
+          observation_frequency?: string
+          red_recipient_ids?: string[]
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
           additional_instructions?: string | null
+          amber_recipient_ids?: string[]
           client_id?: string | null
           created_at?: string
           created_by?: string | null
           drink_level?: number | null
           drink_level_set_at?: string | null
+          enable_notifications?: boolean
+          enable_observations?: boolean
           food_level?: number | null
           food_level_set_at?: string | null
           food_level_variant?: string | null
           id?: string
           last_review_date?: string | null
           next_review_due?: string | null
+          observation_frequency?: string
+          red_recipient_ids?: string[]
           updated_at?: string
           updated_by?: string | null
         }
