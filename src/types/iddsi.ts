@@ -119,7 +119,7 @@ export const FOOD_LEVELS: Record<string, LevelInfo> = {
       'Finger Test: Press between thumb and finger – it should squash easily',
     ],
     equipment: ['Fork', 'Chopsticks or ruler'],
-    videoUrl: 'https://www.youtube.com/embed/BcYuDst-t14',
+    videoUrl: 'https://www.youtube.com/embed/9NcRqUhR0Ks',
     videoTitle: 'IDDSI Fork Pressure, Chopstick, and Finger Tests – Level 6',
   },
   '5': {
@@ -137,7 +137,7 @@ export const FOOD_LEVELS: Record<string, LevelInfo> = {
       'Finger Test: Squashes easily between fingers',
     ],
     equipment: ['Fork', 'Spoon', 'Chopsticks or ruler'],
-    videoUrl: 'https://www.youtube.com/embed/KjYJkI8Dm_A',
+    videoUrl: 'https://www.youtube.com/embed/BcYuDst-t14',
     videoTitle: 'Fork Pressure, Fork Drip, Spoon Tilt, Chopstick, and Finger Tests – Level 5',
   },
   '4': {
