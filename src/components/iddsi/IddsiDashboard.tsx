@@ -91,43 +91,41 @@ export function IddsiDashboard({ clientId }: IddsiDashboardProps) {
 
       {/* Current Level Summary */}
       {config && (config.foodLevel !== null || config.drinkLevel !== null) && (
-        <Card>
-          <CardContent className="py-4">
-            <div className="flex flex-wrap items-center gap-6">
-              {config.foodLevel !== null && (
-                <div className="flex items-center gap-3">
-                  <img
-                    src={config.foodLevel === 7 && config.foodLevelVariant === 'easy_to_chew'
-                      ? '/food-level-7etc.png'
-                      : `/food-level-${config.foodLevel}.png`}
-                    alt={`Food Level ${config.foodLevel}`}
-                    className="h-32 w-32 object-contain"
-                  />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Food Level</p>
-                    <p className="font-semibold text-sm">
-                      Level {config.foodLevel}
-                      {config.foodLevel === 7 && config.foodLevelVariant === 'easy_to_chew' && ' Easy to Chew'}
-                    </p>
-                  </div>
-                </div>
-              )}
-              {config.drinkLevel !== null && (
-                <div className="flex items-center gap-3">
-                  <img
-                    src={`/drink-level-${config.drinkLevel}.png`}
-                    alt={`Drink Level ${config.drinkLevel}`}
-                    className="h-32 w-32 object-contain"
-                  />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Drink Level</p>
-                    <p className="font-semibold text-sm">Level {config.drinkLevel}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {config.foodLevel !== null && (
+            <Card>
+              <CardContent className="py-5 flex flex-col items-center gap-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Prescribed Food Level</p>
+                <img
+                  src={config.foodLevel === 7 && config.foodLevelVariant === 'easy_to_chew'
+                    ? '/food-level-7etc.png'
+                    : `/food-level-${config.foodLevel}.png`}
+                  alt={`Food Level ${config.foodLevel}`}
+                  className="h-28 w-28 object-contain"
+                />
+                <p className="font-semibold text-base text-foreground">
+                  Level {config.foodLevel}
+                  {config.foodLevel === 7 && config.foodLevelVariant === 'easy_to_chew' && ' – Easy to Chew'}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+          {config.drinkLevel !== null && (
+            <Card>
+              <CardContent className="py-5 flex flex-col items-center gap-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Prescribed Drink Level</p>
+                <img
+                  src={`/drink-level-${config.drinkLevel}.png`}
+                  alt={`Drink Level ${config.drinkLevel}`}
+                  className="h-28 w-28 object-contain"
+                />
+                <p className="font-semibold text-base text-foreground">
+                  Level {config.drinkLevel}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
 
       {/* Quick Action Tiles */}
