@@ -6,21 +6,11 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { useIddsiConfig, useVideoViews } from '@/hooks/useIddsi';
+import { useIddsiConfig } from '@/hooks/useIddsi';
 import { FOOD_LEVELS, DRINK_LEVELS, getFoodLevelKey, LevelInfo } from '@/types/iddsi';
 import {
-  ArrowLeft, ChevronDown, Play, CheckCircle2, FlaskConical, Video, AlertCircle,
+  ArrowLeft, ChevronDown, Play, FlaskConical, AlertCircle,
 } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
 
 interface Props {
   clientId?: string;
@@ -39,32 +29,11 @@ function LevelCard({
   clientId?: string;
 }) {
   const [testOpen, setTestOpen] = useState(false);
-  const [videoConfirmed, setVideoConfirmed] = useState(false);
-  const [showNudge, setShowNudge] = useState(false);
-  const [staffName, setStaffName] = useState('');
-  const { logView, hasViewed } = useVideoViews(clientId);
-
-  const handleWatchClick = () => {
-    if (!hasViewed(levelType, levelValue)) {
-      setShowNudge(true);
-    } else {
-      openVideo();
-    }
-  };
 
   const openVideo = () => {
-    setShowNudge(false);
-    if (info.videoUrl && staffName.trim()) {
-      logView(levelType, levelValue, staffName.trim(), false);
+    if (info.videoUrl) {
       window.open(info.videoUrl.replace('/embed/', '/watch?v='), '_blank');
     }
-  };
-
-  const skipVideo = () => {
-    if (staffName.trim()) {
-      logView(levelType, levelValue, staffName.trim(), true);
-    }
-    setShowNudge(false);
   };
 
   return (
@@ -129,67 +98,15 @@ function LevelCard({
 
         {/* Video Section */}
         {info.videoUrl && (
-          <div className="space-y-2">
-            <div>
-              <Label htmlFor={`staff-${levelType}-${levelValue}`} className="text-xs">Your Name (for compliance log)</Label>
-              <Input
-                id={`staff-${levelType}-${levelValue}`}
-                value={staffName}
-                onChange={e => setStaffName(e.target.value)}
-                placeholder="Enter your name"
-                className="mt-1"
-              />
-            </div>
-
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={handleWatchClick}
-              disabled={!staffName.trim()}
-            >
-              <Play className="h-4 w-4 mr-2" />
-              Watch Official Testing Video
-            </Button>
-
-            {hasViewed(levelType, levelValue) && (
-              <div className="flex items-center gap-2 text-xs text-success">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                You have reviewed this testing method
-              </div>
-            )}
-
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id={`confirm-${levelType}-${levelValue}`}
-                checked={videoConfirmed}
-                onCheckedChange={c => setVideoConfirmed(!!c)}
-              />
-              <label htmlFor={`confirm-${levelType}-${levelValue}`} className="text-xs text-muted-foreground cursor-pointer">
-                Confirm I have reviewed this testing method
-              </label>
-            </div>
-          </div>
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={openVideo}
+          >
+            <Play className="h-4 w-4 mr-2" />
+            Watch Official Testing Video
+          </Button>
         )}
-
-        {/* Nudge Dialog */}
-        <Dialog open={showNudge} onOpenChange={setShowNudge}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Video className="h-5 w-5" />
-                Review Testing Video
-              </DialogTitle>
-            </DialogHeader>
-            <p className="text-sm text-muted-foreground">
-              You have not previously reviewed the official IDDSI testing video for this level.
-              Would you like to watch it now?
-            </p>
-            <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={skipVideo}>Skip</Button>
-              <Button onClick={openVideo}>Watch Now</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </CardContent>
     </Card>
   );
