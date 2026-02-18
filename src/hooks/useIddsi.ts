@@ -40,6 +40,7 @@ export function useIddsiConfig(clientId?: string) {
         amberRecipientIds: (data as any).amber_recipient_ids ?? [],
         redRecipientIds: (data as any).red_recipient_ids ?? [],
         minSafeAngle: (data as any).min_safe_angle ?? 70,
+        targetSafeAngle: (data as any).target_safe_angle ?? 80,
       });
     } else {
       setConfig(null);
@@ -62,6 +63,7 @@ export function useIddsiConfig(clientId?: string) {
     amber_recipient_ids: string[];
     red_recipient_ids: string[];
     min_safe_angle: number;
+    target_safe_angle: number;
   }>) => {
     if (!cId) return;
     const { data: user } = await supabase.auth.getUser();

@@ -19,6 +19,7 @@ export interface IddsiConfig {
   amberRecipientIds: string[];
   redRecipientIds: string[];
   minSafeAngle: number;
+  targetSafeAngle: number;
 }
 
 export interface MealtimeObservation {

@@ -55,6 +55,7 @@ export function IddsiConfigSettings({ clientId }: Props) {
     redRecipientIds: [],
   });
   const [minSafeAngle, setMinSafeAngle] = useState(70);
+  const [targetSafeAngle, setTargetSafeAngle] = useState(80);
 
   useEffect(() => {
     if (config) {
@@ -72,6 +73,7 @@ export function IddsiConfigSettings({ clientId }: Props) {
         redRecipientIds: config.redRecipientIds,
       });
       setMinSafeAngle(config.minSafeAngle);
+      setTargetSafeAngle(config.targetSafeAngle);
     }
   }, [config]);
 
@@ -93,6 +95,7 @@ export function IddsiConfigSettings({ clientId }: Props) {
       amber_recipient_ids: notificationSettings.amberRecipientIds,
       red_recipient_ids: notificationSettings.redRecipientIds,
       min_safe_angle: minSafeAngle,
+      target_safe_angle: targetSafeAngle,
     });
   };
 
@@ -269,18 +272,22 @@ export function IddsiConfigSettings({ clientId }: Props) {
               Positioning Check
             </CardTitle>
             <CardDescription>
-              Set the minimum safe upright angle for the positioning check tool. Below this angle the check will flag red.
+              Configure safe upright angle thresholds for the positioning check tool.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
+            {/* Minimum Safe Angle */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label>Minimum Safe Angle</Label>
-                <span className="text-2xl font-bold text-primary">{minSafeAngle}°</span>
+                <Label>Minimum Safe Angle (Red below)</Label>
+                <span className="text-2xl font-bold text-destructive">{minSafeAngle}°</span>
               </div>
               <Slider
                 value={[minSafeAngle]}
-                onValueChange={v => setMinSafeAngle(v[0])}
+                onValueChange={v => {
+                  setMinSafeAngle(v[0]);
+                  if (v[0] > targetSafeAngle) setTargetSafeAngle(v[0]);
+                }}
                 min={45}
                 max={90}
                 step={5}
@@ -291,8 +298,41 @@ export function IddsiConfigSettings({ clientId }: Props) {
                 <span>90°</span>
               </div>
               <p className="text-xs text-muted-foreground">
-                Default: 70°. Angles at or above this value show as Ideal (green). Below shows as Not Safe (red).
+                Default: 70°. Below this angle the tool flags 🔴 Unsafe.
               </p>
+            </div>
+
+            {/* Target Safe Angle */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Target Safe Angle (Green at or above)</Label>
+                <span className="text-2xl font-bold text-success">{targetSafeAngle}°</span>
+              </div>
+              <Slider
+                value={[targetSafeAngle]}
+                onValueChange={v => {
+                  setTargetSafeAngle(v[0]);
+                  if (v[0] < minSafeAngle) setMinSafeAngle(v[0]);
+                }}
+                min={45}
+                max={90}
+                step={5}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>45°</span>
+                <span>90°</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Default: 80°. At or above this angle the tool flags 🟢 Safe. Between minimum and target shows 🟡 Borderline.
+              </p>
+            </div>
+
+            {/* Zone preview */}
+            <div className="flex gap-3 text-xs text-muted-foreground p-3 bg-muted/30 rounded-lg">
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-destructive" /> &lt;{minSafeAngle}°</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-amber-500" /> {minSafeAngle}–{targetSafeAngle - 1}°</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-success" /> ≥{targetSafeAngle}°</span>
             </div>
           </CardContent>
         </Card>
