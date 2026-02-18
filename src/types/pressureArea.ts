@@ -20,6 +20,41 @@ export interface RotationPosition {
   is_custom: boolean;
 }
 
+export const DAYS_OF_WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
+export type DayOfWeek = typeof DAYS_OF_WEEK[number];
+export const DAY_LABELS: Record<DayOfWeek, string> = {
+  monday: 'Mon', tuesday: 'Tue', wednesday: 'Wed', thursday: 'Thu',
+  friday: 'Fri', saturday: 'Sat', sunday: 'Sun',
+};
+export type WeeklyRotationSequence = Record<DayOfWeek, RotationPosition[]>;
+
+export function emptyWeeklySequence(): WeeklyRotationSequence {
+  return { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: [] };
+}
+
+/** Normalise legacy flat array OR weekly map into a weekly map */
+export function normalizeRotationSequence(raw: unknown): WeeklyRotationSequence {
+  if (!raw) return emptyWeeklySequence();
+  if (Array.isArray(raw)) {
+    // Legacy: same positions every day
+    const week = emptyWeeklySequence();
+    DAYS_OF_WEEK.forEach(d => week[d] = raw);
+    return week;
+  }
+  // Already weekly
+  const obj = raw as Record<string, RotationPosition[]>;
+  const week = emptyWeeklySequence();
+  DAYS_OF_WEEK.forEach(d => { week[d] = obj[d] || []; });
+  return week;
+}
+
+/** Get positions for a specific day (defaults to today) */
+export function getPositionsForDay(seq: WeeklyRotationSequence, day?: DayOfWeek): RotationPosition[] {
+  const jsDay = new Date().getDay(); // 0=Sun
+  const d = day || DAYS_OF_WEEK[jsDay === 0 ? 6 : jsDay - 1];
+  return seq[d] || [];
+}
+
 export const DEFAULT_POSITIONS = [
   'Back (supine)',
   'Left side (30° tilt)',
@@ -77,7 +112,7 @@ export interface PressureReliefPlan {
   night_schedule_start: string | null;
   night_schedule_end: string | null;
   interval_minutes: number;
-  rotation_sequence: RotationPosition[];
+  rotation_sequence: WeeklyRotationSequence;
   high_risk_areas: string[];
   escalation_rules: Record<string, unknown>;
   overdue_amber_minutes: number;

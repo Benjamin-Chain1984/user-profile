@@ -21,7 +21,7 @@ import { useClientProfile } from '@/hooks/useClientProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ProfileAvatar } from '@/components/ideal/ProfileAvatar';
-import { SCHEDULE_TYPE_LABELS, HIGH_RISK_AREAS, type ScheduleType, type RotationPosition } from '@/types/pressureArea';
+import { SCHEDULE_TYPE_LABELS, HIGH_RISK_AREAS, DAYS_OF_WEEK, DAY_LABELS, type ScheduleType, type RotationPosition, type DayOfWeek, getPositionsForDay } from '@/types/pressureArea';
 import jsPDF from 'jspdf';
 import {
   FileText, Printer, CheckCircle2, AlertTriangle, Loader2, History,
@@ -182,8 +182,14 @@ export function PressureReliefPlanViewer({ clientId, onClose, onEdit }: Props) {
     if (plan.night_schedule_start) addField('Night', `${plan.night_schedule_start} – ${plan.night_schedule_end || ''}`);
 
     addSectionHeader('Rotation Sequence');
-    (plan.rotation_sequence || []).forEach((pos: RotationPosition, idx: number) => {
-      addBullet(`${idx + 1}. ${pos.name} — ${pos.target_duration_minutes}min${pos.notes ? ` (${pos.notes})` : ''}`);
+    DAYS_OF_WEEK.forEach(day => {
+      const positions = plan.rotation_sequence ? getPositionsForDay(plan.rotation_sequence, day) : [];
+      if (positions.length > 0) {
+        addBullet(`${DAY_LABELS[day]}:`);
+        positions.forEach((pos: RotationPosition, idx: number) => {
+          addBullet(`  ${idx + 1}. ${pos.name} — ${pos.target_duration_minutes}min${pos.notes ? ` (${pos.notes})` : ''}`);
+        });
+      }
     });
 
     addSectionHeader('High-Risk Areas');
@@ -303,22 +309,32 @@ export function PressureReliefPlanViewer({ clientId, onClose, onEdit }: Props) {
       {/* Rotation Sequence */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><ClipboardList className="h-5 w-5" /> Rotation Sequence</CardTitle>
+          <CardTitle className="flex items-center gap-2"><ClipboardList className="h-5 w-5" /> Weekly Rotation Schedule</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {(plan.rotation_sequence || []).length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">No rotation sequence configured.</p>
-          ) : (
-            (plan.rotation_sequence || []).map((pos: RotationPosition, idx: number) => (
-              <div key={pos.id || idx} className="p-3 bg-muted/50 rounded-lg border-l-4 border-primary/30">
-                <div className="flex items-center gap-2 mb-1">
-                  <Badge variant="outline" className="text-xs">{idx + 1}</Badge>
-                  <span className="font-medium">{pos.name}</span>
-                  <Badge variant="secondary" className="text-xs">{pos.target_duration_minutes} min</Badge>
+        <CardContent className="space-y-4">
+          {DAYS_OF_WEEK.map(day => {
+            const positions = plan.rotation_sequence ? getPositionsForDay(plan.rotation_sequence, day) : [];
+            if (positions.length === 0) return null;
+            return (
+              <div key={day}>
+                <p className="text-sm font-semibold mb-2 text-primary">{DAY_LABELS[day]}</p>
+                <div className="space-y-2">
+                  {positions.map((pos: RotationPosition, idx: number) => (
+                    <div key={pos.id || idx} className="p-3 bg-muted/50 rounded-lg border-l-4 border-primary/30">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant="outline" className="text-xs">{idx + 1}</Badge>
+                        <span className="font-medium">{pos.name}</span>
+                        <Badge variant="secondary" className="text-xs">{pos.target_duration_minutes} min</Badge>
+                      </div>
+                      {pos.notes && <p className="text-sm text-muted-foreground ml-8">{pos.notes}</p>}
+                    </div>
+                  ))}
                 </div>
-                {pos.notes && <p className="text-sm text-muted-foreground ml-8">{pos.notes}</p>}
               </div>
-            ))
+            );
+          })}
+          {DAYS_OF_WEEK.every(day => (plan.rotation_sequence ? getPositionsForDay(plan.rotation_sequence, day) : []).length === 0) && (
+            <p className="text-sm text-muted-foreground text-center py-4">No rotation sequence configured.</p>
           )}
         </CardContent>
       </Card>

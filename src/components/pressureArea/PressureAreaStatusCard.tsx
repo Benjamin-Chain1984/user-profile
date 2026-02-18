@@ -13,6 +13,7 @@ import { RotateCcw, Eye, CheckCircle2, Clock, Timer } from 'lucide-react';
 import { differenceInMinutes, differenceInDays, formatDistanceToNow, addMinutes } from 'date-fns';
 import type { HealthStatus } from '@/types/ideal';
 import type { RotationPosition } from '@/types/pressureArea';
+import { getPositionsForDay } from '@/types/pressureArea';
 
 interface Props {
   clientId?: string;
@@ -56,7 +57,7 @@ function PressureReliefTile({
   }, []);
 
   const latestEvent = events[0];
-  const positions = (plan?.rotation_sequence || []) as RotationPosition[];
+  const positions = plan?.rotation_sequence ? getPositionsForDay(plan.rotation_sequence) : [] as RotationPosition[];
   const intervalMinutes = plan?.interval_minutes || 0;
   const hasPlan = plan?.status === 'published' && plan.schedule_type !== 'as_required' && intervalMinutes > 0;
 

@@ -1,6 +1,6 @@
 /**
  * Pressure Relief Plan Editor - Admin-only editing + versioning
- * Mirrors OralHealthPlanEditor pattern
+ * Supports weekly rotation sequences with day-of-week tabs
  */
 
 import { useState, useEffect } from 'react';
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -18,10 +19,11 @@ import {
 } from '@/components/ui/dialog';
 import { usePressureReliefPlan } from '@/hooks/usePressureReliefPlan';
 import {
-  SCHEDULE_TYPE_LABELS, DEFAULT_POSITIONS, HIGH_RISK_AREAS,
-  type ScheduleType, type RotationPosition,
+  SCHEDULE_TYPE_LABELS, DEFAULT_POSITIONS, HIGH_RISK_AREAS, DAYS_OF_WEEK, DAY_LABELS,
+  type ScheduleType, type RotationPosition, type DayOfWeek, type WeeklyRotationSequence,
+  emptyWeeklySequence, normalizeRotationSequence,
 } from '@/types/pressureArea';
-import { Save, ArrowLeft, Send, Loader2, Plus, Trash2, Clock } from 'lucide-react';
+import { Save, ArrowLeft, Send, Loader2, Plus, Trash2, Clock, Copy } from 'lucide-react';
 
 interface Props {
   clientId?: string;
@@ -41,7 +43,8 @@ export function PressureReliefPlanEditor({ clientId, onClose }: Props) {
   const [nightStart, setNightStart] = useState('');
   const [nightEnd, setNightEnd] = useState('');
   const [intervalMinutes, setIntervalMinutes] = useState(120);
-  const [rotationSequence, setRotationSequence] = useState<RotationPosition[]>([]);
+  const [weeklySequence, setWeeklySequence] = useState<WeeklyRotationSequence>(emptyWeeklySequence());
+  const [activeDay, setActiveDay] = useState<DayOfWeek>('monday');
   const [highRiskAreas, setHighRiskAreas] = useState<string[]>(['sacrum_coccyx', 'heels', 'hips']);
   const [overdueAmber, setOverdueAmber] = useState(30);
   const [overdueRed, setOverdueRed] = useState(60);
@@ -64,7 +67,7 @@ export function PressureReliefPlanEditor({ clientId, onClose }: Props) {
       setNightStart(plan.night_schedule_start || '');
       setNightEnd(plan.night_schedule_end || '');
       setIntervalMinutes(plan.interval_minutes || 120);
-      setRotationSequence(plan.rotation_sequence || []);
+      setWeeklySequence(plan.rotation_sequence || emptyWeeklySequence());
       setHighRiskAreas(plan.high_risk_areas || ['sacrum_coccyx', 'heels', 'hips']);
       setOverdueAmber(plan.overdue_amber_minutes || 30);
       setOverdueRed(plan.overdue_red_minutes || 60);
@@ -72,8 +75,14 @@ export function PressureReliefPlanEditor({ clientId, onClose }: Props) {
     }
   }, [plan]);
 
+  const currentDayPositions = weeklySequence[activeDay] || [];
+
+  const setDayPositions = (positions: RotationPosition[]) => {
+    setWeeklySequence(prev => ({ ...prev, [activeDay]: positions }));
+  };
+
   const addPosition = (name: string, isCustom = false) => {
-    setRotationSequence(prev => [...prev, {
+    setDayPositions([...currentDayPositions, {
       id: crypto.randomUUID(),
       name,
       target_duration_minutes: intervalMinutes,
@@ -83,11 +92,23 @@ export function PressureReliefPlanEditor({ clientId, onClose }: Props) {
   };
 
   const removePosition = (id: string) => {
-    setRotationSequence(prev => prev.filter(p => p.id !== id));
+    setDayPositions(currentDayPositions.filter(p => p.id !== id));
   };
 
   const updatePosition = (id: string, field: string, value: any) => {
-    setRotationSequence(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
+    setDayPositions(currentDayPositions.map(p => p.id === id ? { ...p, [field]: value } : p));
+  };
+
+  const copyToAllDays = () => {
+    const copied = JSON.parse(JSON.stringify(currentDayPositions));
+    const next = { ...weeklySequence };
+    DAYS_OF_WEEK.forEach(d => {
+      // Give new IDs so each day has independent entries
+      next[d] = copied.map((p: RotationPosition) => ({ ...p, id: crypto.randomUUID() }));
+    });
+    // Keep current day's original IDs
+    next[activeDay] = currentDayPositions;
+    setWeeklySequence(next);
   };
 
   const toggleHighRisk = (area: string) => {
@@ -106,7 +127,7 @@ export function PressureReliefPlanEditor({ clientId, onClose }: Props) {
       night_schedule_start: nightStart || null,
       night_schedule_end: nightEnd || null,
       interval_minutes: intervalMinutes,
-      rotation_sequence: rotationSequence,
+      rotation_sequence: weeklySequence,
       high_risk_areas: highRiskAreas,
       overdue_amber_minutes: overdueAmber,
       overdue_red_minutes: overdueRed,
@@ -213,76 +234,109 @@ export function PressureReliefPlanEditor({ clientId, onClose }: Props) {
         </CardContent>
       </Card>
 
-      {/* Rotation Sequence */}
+      {/* Rotation Sequence with Day Tabs */}
       <Card>
-        <CardHeader><CardTitle className="text-lg">Rotation Sequence</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          {scheduleType !== 'as_required' && rotationSequence.length > 0 && (
-            <div className="p-3 rounded-lg bg-muted/50 border text-sm text-muted-foreground flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Times are auto-calculated from day start ({dayStart}) using each position's duration.
-            </div>
-          )}
-          {rotationSequence.map((pos, idx) => {
-            // Calculate scheduled time for this position
-            let scheduledTime = '';
-            if (scheduleType !== 'as_required' && dayStart) {
-              const [startH, startM] = dayStart.split(':').map(Number);
-              let cumulativeMinutes = 0;
-              for (let i = 0; i < idx; i++) {
-                cumulativeMinutes += rotationSequence[i].target_duration_minutes || intervalMinutes;
-              }
-              const totalMinutes = startH * 60 + startM + cumulativeMinutes;
-              const h = Math.floor(totalMinutes / 60) % 24;
-              const m = totalMinutes % 60;
-              scheduledTime = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-            }
-
-            return (
-              <div key={pos.id} className="flex gap-2 items-start border rounded-lg p-3">
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">{idx + 1}</Badge>
-                    <span className="font-medium text-sm">{pos.name}</span>
-                    {scheduledTime && (
-                      <Badge className="text-xs bg-primary/10 text-primary border-primary/20">
-                        <Clock className="h-3 w-3 mr-1" />
-                        {scheduledTime}
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="grid sm:grid-cols-2 gap-2">
-                    <div>
-                      <Label className="text-xs">Duration (min)</Label>
-                      <Input type="number" value={pos.target_duration_minutes} onChange={e => updatePosition(pos.id, 'target_duration_minutes', Number(e.target.value))} min={15} className="h-8" />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Notes/Restrictions</Label>
-                      <Input value={pos.notes || ''} onChange={e => updatePosition(pos.id, 'notes', e.target.value || null)} placeholder="e.g. Avoid if pain" className="h-8" />
-                    </div>
-                  </div>
-                </div>
-                <Button variant="ghost" size="icon" onClick={() => removePosition(pos.id)} className="text-destructive">
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            );
-          })}
-
-          <div className="flex flex-wrap gap-2">
-            {DEFAULT_POSITIONS.map(name => (
-              <Button key={name} variant="outline" size="sm" onClick={() => addPosition(name)}>
-                <Plus className="h-3 w-3 mr-1" />{name}
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">Weekly Rotation Schedule</CardTitle>
+            {currentDayPositions.length > 0 && (
+              <Button variant="outline" size="sm" onClick={copyToAllDays} className="gap-1">
+                <Copy className="h-3 w-3" />
+                Copy {DAY_LABELS[activeDay]} to all days
               </Button>
-            ))}
+            )}
           </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Tabs value={activeDay} onValueChange={v => setActiveDay(v as DayOfWeek)}>
+            <TabsList className="grid grid-cols-7 w-full">
+              {DAYS_OF_WEEK.map(day => (
+                <TabsTrigger key={day} value={day} className="text-xs px-1 relative">
+                  {DAY_LABELS[day]}
+                  {weeklySequence[day]?.length > 0 && (
+                    <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary" />
+                  )}
+                </TabsTrigger>
+              ))}
+            </TabsList>
 
-          <div className="flex gap-2">
-            <Input value={customPositionName} onChange={e => setCustomPositionName(e.target.value)} placeholder="Custom position name" className="flex-1" />
-            <Button variant="outline" size="sm" disabled={!customPositionName.trim()} onClick={() => { addPosition(customPositionName.trim(), true); setCustomPositionName(''); }}>
-              <Plus className="h-4 w-4 mr-1" /> Add Custom
-            </Button>
-          </div>
+            {DAYS_OF_WEEK.map(day => (
+              <TabsContent key={day} value={day} className="space-y-4 mt-4">
+                {scheduleType !== 'as_required' && weeklySequence[day]?.length > 0 && (
+                  <div className="p-3 rounded-lg bg-muted/50 border text-sm text-muted-foreground flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Times auto-calculated from {dayStart} using each position's duration.
+                  </div>
+                )}
+
+                {(weeklySequence[day] || []).length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No positions configured for {DAY_LABELS[day]}. Add positions below or copy from another day.
+                  </p>
+                )}
+
+                {(weeklySequence[day] || []).map((pos, idx) => {
+                  let scheduledTime = '';
+                  if (scheduleType !== 'as_required' && dayStart) {
+                    const [startH, startM] = dayStart.split(':').map(Number);
+                    let cumulativeMinutes = 0;
+                    for (let i = 0; i < idx; i++) {
+                      cumulativeMinutes += weeklySequence[day][i].target_duration_minutes || intervalMinutes;
+                    }
+                    const totalMinutes = startH * 60 + startM + cumulativeMinutes;
+                    const h = Math.floor(totalMinutes / 60) % 24;
+                    const m = totalMinutes % 60;
+                    scheduledTime = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+                  }
+
+                  return (
+                    <div key={pos.id} className="flex gap-2 items-start border rounded-lg p-3">
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">{idx + 1}</Badge>
+                          <span className="font-medium text-sm">{pos.name}</span>
+                          {scheduledTime && (
+                            <Badge className="text-xs bg-primary/10 text-primary border-primary/20">
+                              <Clock className="h-3 w-3 mr-1" />
+                              {scheduledTime}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="grid sm:grid-cols-2 gap-2">
+                          <div>
+                            <Label className="text-xs">Duration (min)</Label>
+                            <Input type="number" value={pos.target_duration_minutes} onChange={e => updatePosition(pos.id, 'target_duration_minutes', Number(e.target.value))} min={15} className="h-8" />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Notes/Restrictions</Label>
+                            <Input value={pos.notes || ''} onChange={e => updatePosition(pos.id, 'notes', e.target.value || null)} placeholder="e.g. Avoid if pain" className="h-8" />
+                          </div>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="icon" onClick={() => removePosition(pos.id)} className="text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  );
+                })}
+
+                <div className="flex flex-wrap gap-2">
+                  {DEFAULT_POSITIONS.map(name => (
+                    <Button key={name} variant="outline" size="sm" onClick={() => addPosition(name)}>
+                      <Plus className="h-3 w-3 mr-1" />{name}
+                    </Button>
+                  ))}
+                </div>
+
+                <div className="flex gap-2">
+                  <Input value={customPositionName} onChange={e => setCustomPositionName(e.target.value)} placeholder="Custom position name" className="flex-1" />
+                  <Button variant="outline" size="sm" disabled={!customPositionName.trim()} onClick={() => { addPosition(customPositionName.trim(), true); setCustomPositionName(''); }}>
+                    <Plus className="h-4 w-4 mr-1" /> Add Custom
+                  </Button>
+                </div>
+              </TabsContent>
+            ))}
+          </Tabs>
         </CardContent>
       </Card>
 

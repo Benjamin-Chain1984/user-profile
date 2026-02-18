@@ -8,7 +8,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { addMonths, differenceInDays } from 'date-fns';
-import type { PressureReliefPlan, RotationPosition } from '@/types/pressureArea';
+import type { PressureReliefPlan, RotationPosition, WeeklyRotationSequence } from '@/types/pressureArea';
+import { normalizeRotationSequence } from '@/types/pressureArea';
 
 export interface PressureReliefPlanVersion {
   id: string;
@@ -64,7 +65,7 @@ export function usePressureReliefPlan(clientId?: string) {
       if (!data) return null;
       return {
         ...data,
-        rotation_sequence: (data.rotation_sequence as unknown as RotationPosition[]) || [],
+        rotation_sequence: normalizeRotationSequence(data.rotation_sequence),
         high_risk_areas: data.high_risk_areas || [],
         escalation_rules: (data.escalation_rules as Record<string, unknown>) || {},
       } as PressureReliefPlan;
