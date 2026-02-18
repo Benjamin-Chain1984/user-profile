@@ -10,10 +10,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
 import { useIddsiConfig } from '@/hooks/useIddsi';
 import { FOOD_LEVELS, DRINK_LEVELS, getFoodLevelKey } from '@/types/iddsi';
 import { format, addYears } from 'date-fns';
-import { CheckCircle2, ClipboardList, Bell } from 'lucide-react';
+import { CheckCircle2, ClipboardList, Bell, Smartphone } from 'lucide-react';
 import { RestrictedSection } from '@/components/ui/restricted-section';
 import { ModuleNotificationsCard } from '@/components/module/ModuleNotificationsCard';
 import type { ModuleNotificationSettings } from '@/components/module/ModuleNotificationsCard';
@@ -53,6 +54,7 @@ export function IddsiConfigSettings({ clientId }: Props) {
     amberRecipientIds: [],
     redRecipientIds: [],
   });
+  const [minSafeAngle, setMinSafeAngle] = useState(70);
 
   useEffect(() => {
     if (config) {
@@ -69,6 +71,7 @@ export function IddsiConfigSettings({ clientId }: Props) {
         amberRecipientIds: config.amberRecipientIds,
         redRecipientIds: config.redRecipientIds,
       });
+      setMinSafeAngle(config.minSafeAngle);
     }
   }, [config]);
 
@@ -89,6 +92,7 @@ export function IddsiConfigSettings({ clientId }: Props) {
       enable_notifications: notificationSettings.enableNotifications,
       amber_recipient_ids: notificationSettings.amberRecipientIds,
       red_recipient_ids: notificationSettings.redRecipientIds,
+      min_safe_angle: minSafeAngle,
     });
   };
 
@@ -254,6 +258,42 @@ export function IddsiConfigSettings({ clientId }: Props) {
                 </p>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Positioning Check Angle */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Smartphone className="h-5 w-5" />
+              Positioning Check
+            </CardTitle>
+            <CardDescription>
+              Set the minimum safe upright angle for the positioning check tool. Below this angle the check will flag red.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Minimum Safe Angle</Label>
+                <span className="text-2xl font-bold text-primary">{minSafeAngle}°</span>
+              </div>
+              <Slider
+                value={[minSafeAngle]}
+                onValueChange={v => setMinSafeAngle(v[0])}
+                min={45}
+                max={90}
+                step={5}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>45°</span>
+                <span>90°</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Default: 70°. Angles at or above this value show as Ideal (green). Below shows as Not Safe (red).
+              </p>
+            </div>
           </CardContent>
         </Card>
 

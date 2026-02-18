@@ -7,21 +7,18 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, CheckCircle2, AlertTriangle, AlertCircle, Info } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, AlertCircle, Info, Circle } from 'lucide-react';
+import { useIddsiConfig } from '@/hooks/useIddsi';
 
 interface Props {
   clientId?: string;
   onClose: () => void;
 }
 
-function getAngleStatus(angle: number): 'green' | 'amber' | 'red' {
-  if (angle >= 80) return 'green';
-  if (angle >= 70) return 'amber';
-  return 'red';
-}
-
 export function PositioningCheckPanel({ clientId, onClose }: Props) {
+  const { config } = useIddsiConfig(clientId);
+  const minSafeAngle = config?.minSafeAngle ?? 70;
+
   const [angle, setAngle] = useState<number>(90);
   const [gyroSupported, setGyroSupported] = useState(true);
   const [manualAngle, setManualAngle] = useState('90');
@@ -67,8 +64,15 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
   }, []);
 
   const currentAngle = gyroSupported ? angle : Number(manualAngle) || 0;
-  const status = getAngleStatus(currentAngle);
+  const isIdeal = currentAngle >= minSafeAngle;
   const allChecked = Object.values(checklist).every(Boolean);
+
+  const checklistItems = [
+    { key: 'personUpright' as const, label: 'Person upright' },
+    { key: 'hipsAtBack' as const, label: 'Hips at back of chair' },
+    { key: 'feetSupported' as const, label: 'Feet supported' },
+    { key: 'headMidline' as const, label: 'Head midline' },
+  ];
 
   return (
     <div className="space-y-6">
@@ -117,15 +121,11 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
 
             {/* Large angle display */}
             <div className={`flex items-center justify-center w-40 h-40 rounded-full border-4 ${
-              status === 'green' ? 'border-success bg-success/10' :
-              status === 'amber' ? 'border-amber-500 bg-amber-50' :
-              'border-destructive bg-destructive/10'
+              isIdeal ? 'border-success bg-success/10' : 'border-destructive bg-destructive/10'
             }`}>
               <div className="text-center">
                 <p className={`text-5xl font-bold ${
-                  status === 'green' ? 'text-success' :
-                  status === 'amber' ? 'text-amber-600' :
-                  'text-destructive'
+                  isIdeal ? 'text-success' : 'text-destructive'
                 }`}>
                   {currentAngle}°
                 </p>
@@ -134,56 +134,49 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
 
             {/* Status */}
             <div className="flex items-center gap-2">
-              {status === 'green' ? (
+              {isIdeal ? (
                 <>
                   <CheckCircle2 className="h-5 w-5 text-success" />
-                  <span className="font-medium text-success">Safe Position (≥80°)</span>
-                </>
-              ) : status === 'amber' ? (
-                <>
-                  <AlertTriangle className="h-5 w-5 text-amber-600" />
-                  <span className="font-medium text-amber-600">Adjust Position (70–79°)</span>
+                  <span className="font-medium text-success">Ideal Position (≥{minSafeAngle}°)</span>
                 </>
               ) : (
                 <>
                   <AlertCircle className="h-5 w-5 text-destructive" />
-                  <span className="font-medium text-destructive">Unsafe Position (&lt;70°)</span>
+                  <span className="font-medium text-destructive">Not Safe (&lt;{minSafeAngle}°)</span>
                 </>
               )}
             </div>
 
             {/* Zone legend */}
             <div className="flex gap-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-destructive" /> &lt;70°</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-amber-500" /> 70–79°</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-success" /> ≥80°</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-destructive" /> &lt;{minSafeAngle}°</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-success" /> ≥{minSafeAngle}°</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Checklist */}
+      {/* Checklist with tick icons */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Positioning Checklist</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {[
-            { key: 'personUpright' as const, label: 'Person upright' },
-            { key: 'hipsAtBack' as const, label: 'Hips at back of chair' },
-            { key: 'feetSupported' as const, label: 'Feet supported' },
-            { key: 'headMidline' as const, label: 'Head midline' },
-          ].map(item => (
-            <div key={item.key} className="flex items-center gap-3">
-              <Checkbox
-                id={item.key}
-                checked={checklist[item.key]}
-                onCheckedChange={c => setChecklist(prev => ({ ...prev, [item.key]: !!c }))}
-              />
-              <label htmlFor={item.key} className="text-sm font-medium cursor-pointer">
+          {checklistItems.map(item => (
+            <button
+              key={item.key}
+              onClick={() => setChecklist(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+              className="flex items-center gap-3 w-full text-left p-2 rounded-lg hover:bg-muted/50 transition-colors"
+            >
+              {checklist[item.key] ? (
+                <CheckCircle2 className="h-6 w-6 text-success flex-shrink-0" />
+              ) : (
+                <Circle className="h-6 w-6 text-muted-foreground/40 flex-shrink-0" />
+              )}
+              <span className={`text-sm font-medium ${checklist[item.key] ? 'text-foreground' : 'text-muted-foreground'}`}>
                 {item.label}
-              </label>
-            </div>
+              </span>
+            </button>
           ))}
 
           {allChecked && (

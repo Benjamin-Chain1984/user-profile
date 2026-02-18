@@ -39,6 +39,7 @@ export function useIddsiConfig(clientId?: string) {
         enableNotifications: (data as any).enable_notifications ?? false,
         amberRecipientIds: (data as any).amber_recipient_ids ?? [],
         redRecipientIds: (data as any).red_recipient_ids ?? [],
+        minSafeAngle: (data as any).min_safe_angle ?? 70,
       });
     } else {
       setConfig(null);
@@ -60,6 +61,7 @@ export function useIddsiConfig(clientId?: string) {
     enable_notifications: boolean;
     amber_recipient_ids: string[];
     red_recipient_ids: string[];
+    min_safe_angle: number;
   }>) => {
     if (!cId) return;
     const { data: user } = await supabase.auth.getUser();
