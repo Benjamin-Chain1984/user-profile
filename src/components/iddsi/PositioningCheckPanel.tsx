@@ -18,8 +18,8 @@ interface Props {
 
 export function PositioningCheckPanel({ clientId, onClose }: Props) {
   const { config } = useIddsiConfig(clientId);
-  const safeLower = config?.minSafeAngle ?? 80;
-  const safeUpper = config?.targetSafeAngle ?? 100;
+  const safeThreshold = config?.minSafeAngle ?? 80;
+  const amberThreshold = 70;
 
   const [rawAngle, setRawAngle] = useState<number>(90);
   const [gyroSupported, setGyroSupported] = useState(true);
@@ -39,9 +39,9 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
 
     const handleOrientation = (event: DeviceOrientationEvent) => {
       if (event.beta !== null) {
-        // beta: -180 to 180, we use absolute value capped 0–180
+        // beta: -180 to 180, clamp to 0–90 (0 = flat, 90 = upright)
         const tilt = Math.round(Math.abs(event.beta));
-        setRawAngle(Math.min(180, Math.max(0, tilt)));
+        setRawAngle(Math.min(90, Math.max(0, tilt)));
       }
     };
 
@@ -69,9 +69,10 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
 
   const currentAngle = gyroSupported ? rawAngle : Number(manualAngle) || 0;
 
-  // Safe zone logic: safe between lower–upper, danger outside
+  // 0° = flat (unsafe), 90° = upright (safe)
   const getStatus = (angle: number) => {
-    if (angle >= safeLower && angle <= safeUpper) return 'green' as const;
+    if (angle >= safeThreshold) return 'green' as const;
+    if (angle >= amberThreshold) return 'amber' as const;
     return 'red' as const;
   };
 
@@ -79,9 +80,9 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
   const allChecked = Object.values(checklist).every(Boolean);
 
   const getLabel = (angle: number) => {
-    if (angle < safeLower) return 'Unsafe – Too Reclined';
-    if (angle > safeUpper) return 'Unsafe – Leaning Too Far Forward';
-    return 'Safe Upright Position';
+    if (angle >= safeThreshold) return 'Safe Upright Position';
+    if (angle >= amberThreshold) return 'Borderline – Adjust Upright';
+    return 'Unsafe – Too Reclined';
   };
 
   const statusConfig = {
@@ -90,6 +91,12 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
       borderClass: 'border-success bg-success/10',
       textClass: 'text-success',
       iconClass: 'text-success',
+    },
+    amber: {
+      icon: AlertCircle,
+      borderClass: 'border-amber-500 bg-amber-50',
+      textClass: 'text-amber-600',
+      iconClass: 'text-amber-500',
     },
     red: {
       icon: AlertCircle,
@@ -174,15 +181,15 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
             {/* Reference info */}
             <div className="text-center space-y-1">
               <p className="text-xs text-muted-foreground">
-                Safe zone: {safeLower}°–{safeUpper}° · Target: 90°
+                Minimum required: {amberThreshold}° · Target: 90°
               </p>
             </div>
 
             {/* Zone legend */}
             <div className="flex gap-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-destructive" /> &lt;{safeLower}°</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-success" /> {safeLower}°–{safeUpper}°</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-destructive" /> &gt;{safeUpper}°</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-destructive" /> &lt;{amberThreshold}°</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-amber-500" /> {amberThreshold}°–{safeThreshold}°</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-success" /> ≥{safeThreshold}°</span>
             </div>
           </div>
         </CardContent>
@@ -218,10 +225,17 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
             </div>
           )}
 
+          {allChecked && status === 'amber' && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 mt-2">
+              <AlertCircle className="h-4 w-4 text-amber-500" />
+              <span className="text-sm font-medium text-amber-600">Checklist confirmed – Adjust upright to ≥{safeThreshold}°</span>
+            </div>
+          )}
+
           {allChecked && status === 'red' && (
             <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 mt-2">
               <AlertCircle className="h-4 w-4 text-destructive" />
-              <span className="text-sm font-medium text-destructive">Checklist confirmed – Adjust angle into {safeLower}°–{safeUpper}° safe zone</span>
+              <span className="text-sm font-medium text-destructive">Checklist confirmed – Too reclined, raise to ≥{safeThreshold}°</span>
             </div>
           )}
         </CardContent>
