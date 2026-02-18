@@ -101,7 +101,7 @@ export function IddsiDashboard({ clientId }: IddsiDashboardProps) {
                       ? '/food-level-7etc.png'
                       : `/food-level-${config.foodLevel}.png`}
                     alt={`Food Level ${config.foodLevel}`}
-                    className="h-12 w-12 object-contain"
+                    className="h-20 w-20 object-contain"
                   />
                   <div>
                     <p className="text-xs text-muted-foreground">Food Level</p>
@@ -117,7 +117,7 @@ export function IddsiDashboard({ clientId }: IddsiDashboardProps) {
                   <img
                     src={`/drink-level-${config.drinkLevel}.png`}
                     alt={`Drink Level ${config.drinkLevel}`}
-                    className="h-12 w-12 object-contain"
+                    className="h-20 w-20 object-contain"
                   />
                   <div>
                     <p className="text-xs text-muted-foreground">Drink Level</p>
