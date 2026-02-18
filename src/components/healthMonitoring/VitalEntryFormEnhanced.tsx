@@ -128,7 +128,7 @@ export function VitalEntryFormEnhanced({
   });
 
   const watchedValues = form.watch();
-  const calculatedStatuses = calculateEntryStatuses(watchedValues);
+  const calculatedStatuses = calculateEntryStatuses(watchedValues, criteriaMap);
 
   // Check if any altered criteria is active
   const hasAlteredCriteria = Object.values(criteriaMap).some(c => c?.is_active);

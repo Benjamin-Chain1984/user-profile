@@ -8,9 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Clock, ChevronRight, User, Thermometer, Heart, Wind, Activity, Edit } from 'lucide-react';
-import { useVitalSignEntries } from '@/hooks/useHealthMonitoring';
+import { useVitalSignEntries, useAlteredCriteria } from '@/hooks/useHealthMonitoring';
 import { VITAL_THRESHOLDS } from '@/types/healthMonitoring';
-import { getStatusColor, getStatusLabel } from '@/utils/vitalSignStatusCalculator';
+import { getStatusColor, getStatusLabel, calculateVitalStatus, calculateBpStatus, calculateOverallStatus } from '@/utils/vitalSignStatusCalculator';
 import { format, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -20,6 +20,16 @@ interface HealthMonitoringHistoryProps {
 
 export function HealthMonitoringHistory({ clientId }: HealthMonitoringHistoryProps) {
   const { entries, isLoading } = useVitalSignEntries(clientId, 20);
+  const { criteriaMap } = useAlteredCriteria(clientId);
+
+  // Helper to get active criteria for a vital type
+  const getActiveCriteria = (vitalType: string) => {
+    const criteria = criteriaMap[vitalType as keyof typeof criteriaMap];
+    if (criteria?.is_active && criteria?.confirmed_by_medical_professional) {
+      return criteria;
+    }
+    return null;
+  };
 
   if (isLoading) {
     return (
@@ -57,21 +67,43 @@ export function HealthMonitoringHistory({ clientId }: HealthMonitoringHistoryPro
             </p>
           ) : (
             <div className="space-y-3">
-              {entries.map((entry) => (
+              {entries.map((entry) => {
+                // Recalculate statuses using altered criteria (priority) or defaults
+                const tempStatus = entry.temperature_celsius != null
+                  ? calculateVitalStatus(entry.temperature_celsius, 'temperature', getActiveCriteria('temperature'))
+                  : null;
+                const bpStatus = calculateBpStatus(
+                  entry.bp_systolic ?? null,
+                  entry.bp_diastolic ?? null,
+                  getActiveCriteria('bp_systolic'),
+                  getActiveCriteria('bp_diastolic')
+                );
+                const o2Status = entry.oxygen_saturation != null
+                  ? calculateVitalStatus(entry.oxygen_saturation, 'oxygen', getActiveCriteria('oxygen'))
+                  : null;
+                const hrStatus = entry.heart_rate != null
+                  ? calculateVitalStatus(entry.heart_rate, 'heart_rate', getActiveCriteria('heart_rate'))
+                  : null;
+                const rrStatus = entry.respiratory_rate != null
+                  ? calculateVitalStatus(entry.respiratory_rate, 'respiratory', getActiveCriteria('respiratory'))
+                  : null;
+                const overallStatus = calculateOverallStatus([tempStatus, bpStatus, o2Status, hrStatus, rrStatus]);
+
+                return (
                 <div
                   key={entry.id}
                   className={cn(
                     'p-3 rounded-lg border-l-4 bg-card border',
-                    entry.overall_status === 'red' && 'border-l-red-500',
-                    entry.overall_status === 'amber' && 'border-l-amber-500',
-                    entry.overall_status === 'ideal' && 'border-l-green-500',
+                    overallStatus === 'red' && 'border-l-red-500',
+                    overallStatus === 'amber' && 'border-l-amber-500',
+                    overallStatus === 'ideal' && 'border-l-green-500',
                   )}
                 >
                   {/* Header */}
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <Badge className={cn('text-xs', getStatusColor(entry.overall_status))}>
-                        {getStatusLabel(entry.overall_status)}
+                      <Badge className={cn('text-xs', getStatusColor(overallStatus))}>
+                        {getStatusLabel(overallStatus)}
                       </Badge>
                       {entry.edited_at && (
                         <Badge variant="outline" className="text-xs gap-1">
@@ -92,8 +124,8 @@ export function HealthMonitoringHistory({ clientId }: HealthMonitoringHistoryPro
                         <Thermometer className="h-3 w-3 text-muted-foreground" />
                         <span className={cn(
                           'font-mono',
-                          entry.temperature_status === 'red' && 'text-red-600 font-medium',
-                          entry.temperature_status === 'amber' && 'text-amber-600 font-medium',
+                          tempStatus === 'red' && 'text-red-600 font-medium',
+                          tempStatus === 'amber' && 'text-amber-600 font-medium',
                         )}>
                           {entry.temperature_celsius}°C
                         </span>
@@ -104,8 +136,8 @@ export function HealthMonitoringHistory({ clientId }: HealthMonitoringHistoryPro
                         <Heart className="h-3 w-3 text-muted-foreground" />
                         <span className={cn(
                           'font-mono',
-                          entry.bp_status === 'red' && 'text-red-600 font-medium',
-                          entry.bp_status === 'amber' && 'text-amber-600 font-medium',
+                          bpStatus === 'red' && 'text-red-600 font-medium',
+                          bpStatus === 'amber' && 'text-amber-600 font-medium',
                         )}>
                           {entry.bp_systolic}/{entry.bp_diastolic}
                         </span>
@@ -116,8 +148,8 @@ export function HealthMonitoringHistory({ clientId }: HealthMonitoringHistoryPro
                         <Wind className="h-3 w-3 text-muted-foreground" />
                         <span className={cn(
                           'font-mono',
-                          entry.oxygen_status === 'red' && 'text-red-600 font-medium',
-                          entry.oxygen_status === 'amber' && 'text-amber-600 font-medium',
+                          o2Status === 'red' && 'text-red-600 font-medium',
+                          o2Status === 'amber' && 'text-amber-600 font-medium',
                         )}>
                           {entry.oxygen_saturation}%
                         </span>
@@ -128,8 +160,8 @@ export function HealthMonitoringHistory({ clientId }: HealthMonitoringHistoryPro
                         <Activity className="h-3 w-3 text-muted-foreground" />
                         <span className={cn(
                           'font-mono',
-                          entry.heart_rate_status === 'red' && 'text-red-600 font-medium',
-                          entry.heart_rate_status === 'amber' && 'text-amber-600 font-medium',
+                          hrStatus === 'red' && 'text-red-600 font-medium',
+                          hrStatus === 'amber' && 'text-amber-600 font-medium',
                         )}>
                           {entry.heart_rate} bpm
                         </span>
@@ -140,8 +172,8 @@ export function HealthMonitoringHistory({ clientId }: HealthMonitoringHistoryPro
                         <Wind className="h-3 w-3 text-muted-foreground" />
                         <span className={cn(
                           'font-mono',
-                          entry.respiratory_status === 'red' && 'text-red-600 font-medium',
-                          entry.respiratory_status === 'amber' && 'text-amber-600 font-medium',
+                          rrStatus === 'red' && 'text-red-600 font-medium',
+                          rrStatus === 'amber' && 'text-amber-600 font-medium',
                         )}>
                           {entry.respiratory_rate}/min
                         </span>
@@ -180,7 +212,8 @@ export function HealthMonitoringHistory({ clientId }: HealthMonitoringHistoryPro
                     {format(new Date(entry.event_occurred_at), 'PPpp')}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </ScrollArea>
