@@ -78,43 +78,36 @@ function PressureReliefTile({
       };
     }
 
-    // Calculate the schedule slots going forward from the last event
-    const baseTime = latestEvent
-      ? new Date(latestEvent.event_occurred_at)
-      : new Date(now.getFullYear(), now.getMonth(), now.getDate(), 6, 0); // default 6am start
+    // Build absolute schedule from plan's day_schedule_start + rotation sequence
+    const dayStartStr = plan?.day_schedule_start || '06:00';
+    const [startH, startM] = dayStartStr.split(':').map(Number);
+    const todayBase = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startH, startM);
 
-    // Figure out which position index we're on based on last completed
-    let lastPositionIdx = 0;
-    if (latestEvent) {
-      const idx = positions.findIndex(p => p.name === latestEvent.position_completed);
-      if (idx >= 0) lastPositionIdx = idx;
-    }
-
-    // Generate next N upcoming slots (up to 5)
-    const slots: { position: string; dueAt: Date; completed: boolean; completedBy?: string }[] = [];
     const todayEvents = events.filter(e => {
       const d = new Date(e.event_occurred_at);
       return d.toDateString() === now.toDateString();
     });
 
-    for (let i = 1; i <= Math.min(5, positions.length * 2); i++) {
-      const posIdx = (lastPositionIdx + i) % positions.length;
-      const dueAt = addMinutes(baseTime, intervalMinutes * i);
-      // Check if this slot is already completed (position matches an event near that time)
+    // Generate scheduled slots from the plan's rotation sequence for today
+    const slots: { position: string; dueAt: Date; completed: boolean; completedBy?: string }[] = [];
+    let cumulativeMinutes = 0;
+    for (let i = 0; i < positions.length; i++) {
+      const dueAt = addMinutes(todayBase, cumulativeMinutes);
       const matchingEvent = todayEvents.find(e => {
         const eventTime = new Date(e.event_occurred_at);
-        return e.position_completed === positions[posIdx].name
+        return e.position_completed === positions[i].name
           && Math.abs(differenceInMinutes(eventTime, dueAt)) < intervalMinutes / 2;
       });
       slots.push({
-        position: positions[posIdx].name,
+        position: positions[i].name,
         dueAt,
         completed: !!matchingEvent,
         completedBy: matchingEvent?.completed_by_name || undefined,
       });
+      cumulativeMinutes += positions[i].target_duration_minutes || intervalMinutes;
     }
 
-    // Filter to only show upcoming (not past, unless just barely past) — show max 4
+    // Show slots from now onwards (plus recently past ones), max 4
     const relevantSlots = slots
       .filter(s => s.dueAt > addMinutes(now, -intervalMinutes) || s.completed)
       .slice(0, 4);
