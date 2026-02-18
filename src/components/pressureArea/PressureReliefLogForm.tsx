@@ -17,7 +17,7 @@ import {
 import { usePressureReliefEvents } from '@/hooks/usePressureArea';
 import { usePressureReliefPlan } from '@/hooks/usePressureReliefPlan';
 import { useCurrentStaff } from '@/hooks/useCurrentStaff';
-import { RELIEF_ISSUES, type RotationPosition } from '@/types/pressureArea';
+import { RELIEF_ISSUES, type RotationPosition, getPositionsForDay } from '@/types/pressureArea';
 import { Loader2, CheckCircle2, AlertTriangle, User } from 'lucide-react';
 
 interface Props {
@@ -31,7 +31,7 @@ export function PressureReliefLogForm({ clientId, open, onOpenChange }: Props) {
   const { plan } = usePressureReliefPlan(clientId);
   const { staffName } = useCurrentStaff();
 
-  const positions = (plan?.rotation_sequence || []) as RotationPosition[];
+  const positions = plan?.rotation_sequence ? getPositionsForDay(plan.rotation_sequence) : [] as RotationPosition[];
   const recommendedPosition = positions.length > 0 ? positions[0].name : '';
 
   const [positionCompleted, setPositionCompleted] = useState(recommendedPosition);
