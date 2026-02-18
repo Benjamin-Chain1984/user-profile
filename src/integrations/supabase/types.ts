@@ -2746,6 +2746,121 @@ export type Database = {
           },
         ]
       }
+      iddsi_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          resolved_at: string | null
+          resolved_by: string | null
+          resolved_reason: string | null
+          severity: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_reason?: string | null
+          severity?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_reason?: string | null
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "iddsi_alerts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      iddsi_config: {
+        Row: {
+          additional_instructions: string | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          drink_level: number | null
+          drink_level_set_at: string | null
+          food_level: number | null
+          food_level_set_at: string | null
+          food_level_variant: string | null
+          id: string
+          last_review_date: string | null
+          next_review_due: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          additional_instructions?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          drink_level?: number | null
+          drink_level_set_at?: string | null
+          food_level?: number | null
+          food_level_set_at?: string | null
+          food_level_variant?: string | null
+          id?: string
+          last_review_date?: string | null
+          next_review_due?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          additional_instructions?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          drink_level?: number | null
+          drink_level_set_at?: string | null
+          food_level?: number | null
+          food_level_set_at?: string | null
+          food_level_variant?: string | null
+          id?: string
+          last_review_date?: string | null
+          next_review_due?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "iddsi_config_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount_cents: number
@@ -2811,6 +2926,77 @@ export type Database = {
             columns: ["subscription_id"]
             isOneToOne: false
             referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mealtime_observations: {
+        Row: {
+          client_id: string | null
+          completed_by_name: string
+          coughing: string
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          event_occurred_at: string
+          fatigue: boolean
+          id: string
+          meal_completion_pct: number | null
+          notes: string | null
+          pocketing: boolean
+          refusal: boolean
+          severity: string
+          throat_clearing: boolean
+          wet_voice: boolean
+        }
+        Insert: {
+          client_id?: string | null
+          completed_by_name: string
+          coughing?: string
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          fatigue?: boolean
+          id?: string
+          meal_completion_pct?: number | null
+          notes?: string | null
+          pocketing?: boolean
+          refusal?: boolean
+          severity?: string
+          throat_clearing?: boolean
+          wet_voice?: boolean
+        }
+        Update: {
+          client_id?: string | null
+          completed_by_name?: string
+          coughing?: string
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          fatigue?: boolean
+          id?: string
+          meal_completion_pct?: number | null
+          notes?: string | null
+          pocketing?: boolean
+          refusal?: boolean
+          severity?: string
+          throat_clearing?: boolean
+          wet_voice?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mealtime_observations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
@@ -3515,6 +3701,71 @@ export type Database = {
           verified?: boolean
         }
         Relationships: []
+      }
+      positioning_checks: {
+        Row: {
+          angle_degrees: number
+          client_id: string | null
+          completed_by_name: string
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          event_occurred_at: string
+          feet_supported: boolean
+          head_midline: boolean
+          hips_at_back: boolean
+          id: string
+          notes: string | null
+          person_upright: boolean
+          status: string
+        }
+        Insert: {
+          angle_degrees: number
+          client_id?: string | null
+          completed_by_name: string
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          feet_supported?: boolean
+          head_midline?: boolean
+          hips_at_back?: boolean
+          id?: string
+          notes?: string | null
+          person_upright?: boolean
+          status?: string
+        }
+        Update: {
+          angle_degrees?: number
+          client_id?: string | null
+          completed_by_name?: string
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          feet_supported?: boolean
+          head_midline?: boolean
+          hips_at_back?: boolean
+          id?: string
+          notes?: string | null
+          person_upright?: boolean
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "positioning_checks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pressure_area_alerts: {
         Row: {
@@ -4547,6 +4798,47 @@ export type Database = {
             foreignKeyName: "subscriptions_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      swallowing_video_views: {
+        Row: {
+          client_id: string | null
+          id: string
+          level_type: string
+          level_value: number
+          skipped: boolean
+          staff_name: string
+          staff_user_id: string | null
+          viewed_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          id?: string
+          level_type: string
+          level_value: number
+          skipped?: boolean
+          staff_name: string
+          staff_user_id?: string | null
+          viewed_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          id?: string
+          level_type?: string
+          level_value?: number
+          skipped?: boolean
+          staff_name?: string
+          staff_user_id?: string | null
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "swallowing_video_views_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
