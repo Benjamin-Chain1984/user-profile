@@ -2822,6 +2822,7 @@ export type Database = {
           next_review_due: string | null
           observation_frequency: string
           red_recipient_ids: string[]
+          target_safe_angle: number | null
           updated_at: string
           updated_by: string | null
         }
@@ -2844,6 +2845,7 @@ export type Database = {
           next_review_due?: string | null
           observation_frequency?: string
           red_recipient_ids?: string[]
+          target_safe_angle?: number | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -2866,6 +2868,7 @@ export type Database = {
           next_review_due?: string | null
           observation_frequency?: string
           red_recipient_ids?: string[]
+          target_safe_angle?: number | null
           updated_at?: string
           updated_by?: string | null
         }
