@@ -34,6 +34,11 @@ export function useIddsiConfig(clientId?: string) {
         lastReviewDate: data.last_review_date,
         nextReviewDue: data.next_review_due,
         additionalInstructions: data.additional_instructions,
+        enableObservations: (data as any).enable_observations ?? false,
+        observationFrequency: (data as any).observation_frequency ?? 'daily',
+        enableNotifications: (data as any).enable_notifications ?? false,
+        amberRecipientIds: (data as any).amber_recipient_ids ?? [],
+        redRecipientIds: (data as any).red_recipient_ids ?? [],
       });
     } else {
       setConfig(null);
@@ -50,6 +55,11 @@ export function useIddsiConfig(clientId?: string) {
     last_review_date: string | null;
     next_review_due: string | null;
     additional_instructions: string | null;
+    enable_observations: boolean;
+    observation_frequency: string;
+    enable_notifications: boolean;
+    amber_recipient_ids: string[];
+    red_recipient_ids: string[];
   }>) => {
     if (!cId) return;
     const { data: user } = await supabase.auth.getUser();

@@ -1,17 +1,14 @@
 /**
- * Positioning Check Panel - Inclinometer using device gyroscope
- * Staff identity is auto-stamped from authenticated session.
+ * Positioning Check Panel - Informational inclinometer guide
+ * This is an informational tool only — no data is logged.
  */
 
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { usePositioningChecks } from '@/hooks/useIddsi';
-import { useCurrentStaff } from '@/hooks/useCurrentStaff';
-import { ArrowLeft, CheckCircle2, AlertTriangle, AlertCircle, User } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, AlertTriangle, AlertCircle, Info } from 'lucide-react';
 
 interface Props {
   clientId?: string;
@@ -25,8 +22,6 @@ function getAngleStatus(angle: number): 'green' | 'amber' | 'red' {
 }
 
 export function PositioningCheckPanel({ clientId, onClose }: Props) {
-  const { logCheck } = usePositioningChecks(clientId);
-  const { staffName } = useCurrentStaff();
   const [angle, setAngle] = useState<number>(90);
   const [gyroSupported, setGyroSupported] = useState(true);
   const [manualAngle, setManualAngle] = useState('90');
@@ -36,8 +31,6 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
     feetSupported: false,
     headMidline: false,
   });
-  const [saving, setSaving] = useState(false);
-  const [confirmed, setConfirmed] = useState(false);
   const listenerRef = useRef(false);
 
   useEffect(() => {
@@ -77,33 +70,6 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
   const status = getAngleStatus(currentAngle);
   const allChecked = Object.values(checklist).every(Boolean);
 
-  const handleConfirm = async () => {
-    setSaving(true);
-    const ok = await logCheck({
-      angle_degrees: currentAngle,
-      person_upright: checklist.personUpright,
-      hips_at_back: checklist.hipsAtBack,
-      feet_supported: checklist.feetSupported,
-      head_midline: checklist.headMidline,
-      status,
-      completed_by_name: staffName,
-    });
-    setSaving(false);
-    if (ok) {
-      setConfirmed(true);
-      setTimeout(() => onClose(), 1500);
-    }
-  };
-
-  if (confirmed) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 space-y-4">
-        <CheckCircle2 className="h-16 w-16 text-success" />
-        <p className="text-lg font-semibold">Position Confirmed & Logged</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -112,6 +78,18 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
         </Button>
         <h2 className="text-xl font-bold">Check Positioning</h2>
       </div>
+
+      {/* Informational banner */}
+      <Card className="border-blue-200 bg-blue-50/50">
+        <CardContent className="py-3">
+          <div className="flex gap-3">
+            <Info className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-blue-800">
+              This is an informational guide to help staff check positioning before meals. No data is recorded.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Inclinometer */}
       <Card>
@@ -207,24 +185,18 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
               </label>
             </div>
           ))}
+
+          {allChecked && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-success/10 border border-success/20 mt-2">
+              <CheckCircle2 className="h-4 w-4 text-success" />
+              <span className="text-sm font-medium text-success">All positioning checks confirmed</span>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Auto-stamped staff identity */}
-      <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border">
-        <User className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm text-muted-foreground">Logged by:</span>
-        <span className="text-sm font-medium">{staffName}</span>
-      </div>
-
-      {/* Confirm */}
-      <Button
-        onClick={handleConfirm}
-        disabled={!allChecked || saving}
-        className="w-full"
-        size="lg"
-      >
-        {saving ? 'Saving...' : '✔ Confirm Safe Position'}
+      <Button onClick={onClose} variant="outline" className="w-full" size="lg">
+        Done
       </Button>
     </div>
   );

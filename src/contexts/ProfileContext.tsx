@@ -806,6 +806,13 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     try {
       if (!profile?.id || profile.id === '1') return;
 
+      // Fetch config for observation scheduling
+      const { data: iddsiConfig } = await supabase
+        .from('iddsi_config')
+        .select('enable_observations, observation_frequency')
+        .eq('client_id', profile.id)
+        .maybeSingle();
+
       const { data: observations } = await supabase
         .from('mealtime_observations')
         .select('severity, event_occurred_at')
@@ -814,6 +821,35 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         .limit(10);
 
       const latestObs = observations?.[0];
+
+      // Check for late/missed observations when scheduling is enabled
+      const observationsEnabled = (iddsiConfig as any)?.enable_observations ?? false;
+      const frequency = (iddsiConfig as any)?.observation_frequency ?? 'daily';
+
+      if (observationsEnabled && latestObs) {
+        const lastObsTime = new Date(latestObs.event_occurred_at);
+        const now = new Date();
+        const hoursSinceObs = differenceInHours(now, lastObsTime);
+        const daysSinceObs = differenceInDays(now, lastObsTime);
+
+        // Check if observation is late based on frequency
+        let isLate = false;
+        if (frequency === 'daily' && hoursSinceObs >= 24) isLate = true;
+        else if (frequency === 'weekly' && daysSinceObs >= 7) isLate = true;
+        else if (frequency === 'monthly' && daysSinceObs >= 30) isLate = true;
+
+        if (isLate) {
+          const timeAgo = formatDistanceToNow(lastObsTime, { addSuffix: true });
+          setLatestIddsiData({ status: 'monitor', message: `Mealtime observation overdue – last observed ${timeAgo}.`, timestamp: latestObs.event_occurred_at });
+          updateModuleStatus('iddsi', 'monitor', `Observation overdue – last ${timeAgo}`);
+          return;
+        }
+      } else if (observationsEnabled && !latestObs) {
+        updateModuleStatus('iddsi', 'monitor', 'Observation overdue – not yet logged');
+        setLatestIddsiData({ status: 'monitor', message: 'Mealtime observation overdue – not yet logged.', timestamp: new Date().toISOString() });
+        return;
+      }
+
       if (!latestObs) {
         updateModuleStatus('iddsi', 'stable', 'Not yet logged');
         return;
