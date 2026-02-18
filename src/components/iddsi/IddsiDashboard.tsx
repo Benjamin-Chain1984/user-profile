@@ -2,12 +2,12 @@
  * IDDSI & Safe Swallowing Dashboard
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useIddsiConfig, useMealtimeObservations, usePositioningChecks } from '@/hooks/useIddsi';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, addDays, addHours, addWeeks, addMonths, differenceInSeconds, isPast } from 'date-fns';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { useProfile } from '@/contexts/ProfileContext';
 import { RoleTabsTrigger } from '@/components/ui/role-tabs-trigger';
@@ -42,6 +42,47 @@ export function IddsiDashboard({ clientId }: IddsiDashboardProps) {
   // Latest observation for status indicator
   const lastObs = observations.length > 0 ? observations[0] : null;
   const lastSeverity = lastObs?.severity || 'green';
+
+  // Calculate next observation due time based on frequency
+  const nextDueAt = useMemo(() => {
+    if (!lastObs || !config?.enableObservations) return null;
+    const lastTime = new Date(lastObs.eventOccurredAt || lastObs.createdAt);
+    const freq = config.observationFrequency;
+    if (freq === 'daily') return addDays(lastTime, 1);
+    if (freq === 'weekly') return addWeeks(lastTime, 1);
+    if (freq === 'monthly') return addMonths(lastTime, 1);
+    return addDays(lastTime, 1);
+  }, [lastObs, config?.enableObservations, config?.observationFrequency]);
+
+  // Live countdown state
+  const [countdown, setCountdown] = useState('');
+  const [isOverdue, setIsOverdue] = useState(false);
+
+  useEffect(() => {
+    if (!nextDueAt) { setCountdown(''); setIsOverdue(false); return; }
+
+    const tick = () => {
+      const now = new Date();
+      if (isPast(nextDueAt)) {
+        setIsOverdue(true);
+        const overdueSecs = differenceInSeconds(now, nextDueAt);
+        const h = Math.floor(overdueSecs / 3600);
+        const m = Math.floor((overdueSecs % 3600) / 60);
+        setCountdown(h > 0 ? `${h}h ${m}m overdue` : `${m}m overdue`);
+      } else {
+        setIsOverdue(false);
+        const secs = differenceInSeconds(nextDueAt, now);
+        const h = Math.floor(secs / 3600);
+        const m = Math.floor((secs % 3600) / 60);
+        const s = secs % 60;
+        setCountdown(h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`);
+      }
+    };
+
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [nextDueAt]);
 
   if (showLevelDisplay) {
     return <IddsiLevelDisplay clientId={clientId} onClose={() => setShowLevelDisplay(false)} />;
@@ -157,6 +198,15 @@ export function IddsiDashboard({ clientId }: IddsiDashboardProps) {
                     ? `Last observation ${formatDistanceToNow(new Date(lastObs.eventOccurredAt || lastObs.createdAt), { addSuffix: true })}`
                     : 'No observations recorded yet'}
                 </p>
+                {config?.enableObservations && countdown && (
+                  <p className={`text-xs font-medium mt-1 ${isOverdue ? 'text-destructive' : 'text-muted-foreground'}`}>
+                    {isOverdue ? (
+                      <><Clock className="h-3 w-3 inline mr-1" />⚠ {countdown}</>
+                    ) : (
+                      <><Clock className="h-3 w-3 inline mr-1" />Next due in {countdown}</>
+                    )}
+                  </p>
+                )}
               </div>
             </div>
             <Button
