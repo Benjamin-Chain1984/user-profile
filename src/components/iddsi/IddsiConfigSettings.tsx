@@ -264,75 +264,98 @@ export function IddsiConfigSettings({ clientId }: Props) {
           </CardContent>
         </Card>
 
-        {/* Positioning Check Angle */}
+        {/* Positioning Check – Safe Zone */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Smartphone className="h-5 w-5" />
-              Positioning Check
+              Positioning Safe Zone
             </CardTitle>
             <CardDescription>
-              Configure the safe upright zone. Angles outside this range flag as unsafe (danger zone).
+              Define the safe upright angle range. Angles outside this zone flag as unsafe.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Lower bound */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>Safe Zone Lower Bound</Label>
-                <span className="text-2xl font-bold text-destructive">{minSafeAngle}°</span>
+          <CardContent className="space-y-5">
+            {/* Visual range bar */}
+            <div className="relative h-10 rounded-lg overflow-hidden flex">
+              {/* Left danger zone */}
+              <div
+                className="bg-destructive/20 flex items-center justify-center text-xs font-medium text-destructive"
+                style={{ width: `${((minSafeAngle - 60) / 60) * 100}%` }}
+              >
+                {minSafeAngle > 70 && '🔴'}
               </div>
-              <Slider
-                value={[minSafeAngle]}
-                onValueChange={v => {
-                  setMinSafeAngle(v[0]);
-                  if (v[0] > targetSafeAngle) setTargetSafeAngle(v[0]);
-                }}
-                min={60}
-                max={100}
-                step={5}
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>60°</span>
-                <span>100°</span>
+              {/* Safe zone */}
+              <div
+                className="bg-success/20 flex items-center justify-center text-xs font-semibold text-success border-x-2 border-success/40"
+                style={{ width: `${((targetSafeAngle - minSafeAngle) / 60) * 100}%` }}
+              >
+                🟢 Safe
               </div>
-              <p className="text-xs text-muted-foreground">
-                Default: 80°. Below this angle → 🔴 Unsafe (too reclined).
-              </p>
+              {/* Right danger zone */}
+              <div
+                className="bg-destructive/20 flex items-center justify-center text-xs font-medium text-destructive flex-1"
+              >
+                {targetSafeAngle < 110 && '🔴'}
+              </div>
+            </div>
+            <div className="flex justify-between text-[10px] text-muted-foreground px-1">
+              <span>60°</span>
+              <span>90° (upright)</span>
+              <span>120°</span>
             </div>
 
-            {/* Upper bound */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>Safe Zone Upper Bound</Label>
-                <span className="text-2xl font-bold text-success">{targetSafeAngle}°</span>
+            {/* Editable bounds */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2 p-4 rounded-lg border border-destructive/20 bg-destructive/5">
+                <Label className="text-xs text-destructive font-semibold uppercase tracking-wide">Lower Bound</Label>
+                <div className="flex items-baseline gap-1">
+                  <Input
+                    type="number"
+                    min={60}
+                    max={targetSafeAngle - 5}
+                    step={5}
+                    value={minSafeAngle}
+                    onChange={e => {
+                      const v = Number(e.target.value);
+                      if (v >= 60 && v < targetSafeAngle) setMinSafeAngle(v);
+                    }}
+                    className="text-2xl font-bold h-12 w-20 text-center border-destructive/30"
+                  />
+                  <span className="text-lg text-muted-foreground">°</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">Below → too reclined</p>
               </div>
-              <Slider
-                value={[targetSafeAngle]}
-                onValueChange={v => {
-                  setTargetSafeAngle(v[0]);
-                  if (v[0] < minSafeAngle) setMinSafeAngle(v[0]);
-                }}
-                min={80}
-                max={120}
-                step={5}
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>80°</span>
-                <span>120°</span>
+
+              <div className="space-y-2 p-4 rounded-lg border border-success/20 bg-success/5">
+                <Label className="text-xs text-success font-semibold uppercase tracking-wide">Upper Bound</Label>
+                <div className="flex items-baseline gap-1">
+                  <Input
+                    type="number"
+                    min={minSafeAngle + 5}
+                    max={120}
+                    step={5}
+                    value={targetSafeAngle}
+                    onChange={e => {
+                      const v = Number(e.target.value);
+                      if (v <= 120 && v > minSafeAngle) setTargetSafeAngle(v);
+                    }}
+                    className="text-2xl font-bold h-12 w-20 text-center border-success/30"
+                  />
+                  <span className="text-lg text-muted-foreground">°</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">Above → too far forward</p>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Default: 100°. Above this angle → 🔴 Unsafe (leaning too far forward).
-              </p>
             </div>
 
-            {/* Zone preview */}
-            <div className="flex gap-3 text-xs text-muted-foreground p-3 bg-muted/30 rounded-lg">
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-destructive" /> &lt;{minSafeAngle}°</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-success" /> {minSafeAngle}°–{targetSafeAngle}°</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-destructive" /> &gt;{targetSafeAngle}°</span>
+            {/* Summary */}
+            <div className="p-3 rounded-lg bg-muted/40 text-center">
+              <p className="text-sm font-medium">
+                Safe zone: <span className="text-success font-bold">{minSafeAngle}°</span> – <span className="text-success font-bold">{targetSafeAngle}°</span>
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Target: 90° upright · Accommodates natural movement during meals
+              </p>
             </div>
           </CardContent>
         </Card>
