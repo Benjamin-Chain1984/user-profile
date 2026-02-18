@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useIddsiConfig, useMealtimeObservations, usePositioningChecks } from '@/hooks/useIddsi';
+import { formatDistanceToNow } from 'date-fns';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { useProfile } from '@/contexts/ProfileContext';
 import { RoleTabsTrigger } from '@/components/ui/role-tabs-trigger';
@@ -15,7 +16,7 @@ import { IddsiLevelDisplay } from './IddsiLevelDisplay';
 import { MealtimeObservationForm } from './MealtimeObservationForm';
 import { PositioningCheckPanel } from './PositioningCheckPanel';
 import { SafeSwallowingStrategies } from './SafeSwallowingStrategies';
-import { EscalateSwallowingDialog } from './EscalateSwallowingDialog';
+
 import { IddsiHistory } from './IddsiHistory';
 import { IddsiConfigSettings } from './IddsiConfigSettings';
 import {
@@ -29,14 +30,18 @@ interface IddsiDashboardProps {
 
 export function IddsiDashboard({ clientId }: IddsiDashboardProps) {
   const { config, loading: configLoading } = useIddsiConfig(clientId);
+  const { observations } = useMealtimeObservations(clientId);
   const { isAdmin } = useRoleAccess();
   const { isMonitoringPaused, monitoringStatus } = useProfile();
 
   const [showLevelDisplay, setShowLevelDisplay] = useState(false);
   const [showPositioning, setShowPositioning] = useState(false);
   const [showStrategies, setShowStrategies] = useState(false);
-  const [showEscalate, setShowEscalate] = useState(false);
   const [showObservation, setShowObservation] = useState(false);
+
+  // Latest observation for status indicator
+  const lastObs = observations.length > 0 ? observations[0] : null;
+  const lastSeverity = lastObs?.severity || 'green';
 
   if (showLevelDisplay) {
     return <IddsiLevelDisplay clientId={clientId} onClose={() => setShowLevelDisplay(false)} />;
@@ -53,18 +58,12 @@ export function IddsiDashboard({ clientId }: IddsiDashboardProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
+      <div>
           <h2 className="text-2xl font-bold">IDDSI & Safe Swallowing</h2>
           <p className="text-muted-foreground">
             Food and fluid texture management & swallowing monitoring
           </p>
         </div>
-        <Button onClick={() => setShowObservation(true)} disabled={isMonitoringPaused}>
-          <Plus className="h-4 w-4 mr-2" />
-          Log Mealtime Observation
-        </Button>
-      </div>
 
       {/* Monitoring Paused Banner */}
       {isMonitoringPaused && monitoringStatus && (
@@ -128,47 +127,80 @@ export function IddsiDashboard({ clientId }: IddsiDashboardProps) {
         </div>
       )}
 
+      {/* Mealtime Observation Status */}
+      <Card className={`border ${
+        lastSeverity === 'red' ? 'border-destructive bg-destructive/5' :
+        lastSeverity === 'amber' ? 'border-amber-300 bg-amber-50/50' :
+        'border-success/50 bg-success/5'
+      }`}>
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {lastSeverity === 'red' ? (
+                <AlertCircle className="h-6 w-6 text-destructive" />
+              ) : lastSeverity === 'amber' ? (
+                <AlertTriangle className="h-6 w-6 text-amber-600" />
+              ) : (
+                <Eye className="h-6 w-6 text-success" />
+              )}
+              <div>
+                <p className={`text-sm font-semibold ${
+                  lastSeverity === 'red' ? 'text-destructive' :
+                  lastSeverity === 'amber' ? 'text-amber-700' : 'text-success'
+                }`}>
+                  {lastSeverity === 'red' ? 'RED – Action Needed' :
+                   lastSeverity === 'amber' ? 'Amber – Attention Required' :
+                   'IDEAL – No Concerns'}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {lastObs
+                    ? `Last observation ${formatDistanceToNow(new Date(lastObs.eventOccurredAt || lastObs.createdAt), { addSuffix: true })}`
+                    : 'No observations recorded yet'}
+                </p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => setShowObservation(true)}
+              disabled={isMonitoringPaused}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Log
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Quick Action Tiles */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <button
           onClick={() => setShowLevelDisplay(true)}
-          className="flex flex-col items-center justify-center gap-3 p-6 bg-card rounded-xl border border-border hover:border-primary/30 hover:shadow-md transition-all active:scale-[0.98] min-h-[120px]"
+          className="flex flex-col items-center justify-center gap-3 p-5 bg-card rounded-xl border border-border hover:border-primary/30 hover:shadow-md transition-all active:scale-[0.98] min-h-[110px]"
         >
           <div className="p-3 rounded-lg bg-primary/10">
-            <Eye className="h-6 w-6 text-primary" />
+            <Eye className="h-5 w-5 text-primary" />
           </div>
-          <span className="text-sm font-medium text-center">View IDDSI Level & Testing</span>
+          <span className="text-xs font-medium text-center">IDDSI Levels</span>
         </button>
 
         <button
           onClick={() => setShowPositioning(true)}
-          className="flex flex-col items-center justify-center gap-3 p-6 bg-card rounded-xl border border-border hover:border-primary/30 hover:shadow-md transition-all active:scale-[0.98] min-h-[120px]"
+          className="flex flex-col items-center justify-center gap-3 p-5 bg-card rounded-xl border border-border hover:border-primary/30 hover:shadow-md transition-all active:scale-[0.98] min-h-[110px]"
         >
           <div className="p-3 rounded-lg bg-primary/10">
-            <Armchair className="h-6 w-6 text-primary" />
+            <Armchair className="h-5 w-5 text-primary" />
           </div>
-          <span className="text-sm font-medium text-center">Check Positioning</span>
-          <span className="text-[10px] text-muted-foreground">(Guide only)</span>
+          <span className="text-xs font-medium text-center">Positioning</span>
         </button>
 
         <button
           onClick={() => setShowStrategies(true)}
-          className="flex flex-col items-center justify-center gap-3 p-6 bg-card rounded-xl border border-border hover:border-primary/30 hover:shadow-md transition-all active:scale-[0.98] min-h-[120px]"
+          className="flex flex-col items-center justify-center gap-3 p-5 bg-card rounded-xl border border-border hover:border-primary/30 hover:shadow-md transition-all active:scale-[0.98] min-h-[110px]"
         >
           <div className="p-3 rounded-lg bg-primary/10">
-            <Brain className="h-6 w-6 text-primary" />
+            <Brain className="h-5 w-5 text-primary" />
           </div>
-          <span className="text-sm font-medium text-center">Safe Swallowing Strategies</span>
-        </button>
-
-        <button
-          onClick={() => setShowEscalate(true)}
-          className="flex flex-col items-center justify-center gap-3 p-6 bg-card rounded-xl border border-destructive/30 hover:border-destructive hover:shadow-md transition-all active:scale-[0.98] min-h-[120px]"
-        >
-          <div className="p-3 rounded-lg bg-destructive/10">
-            <AlertTriangle className="h-6 w-6 text-destructive" />
-          </div>
-          <span className="text-sm font-medium text-center text-destructive">Escalate Swallowing Concerns</span>
+          <span className="text-xs font-medium text-center">Strategies</span>
         </button>
       </div>
 
@@ -237,10 +269,6 @@ export function IddsiDashboard({ clientId }: IddsiDashboardProps) {
         clientId={clientId}
         open={showObservation}
         onOpenChange={setShowObservation}
-      />
-      <EscalateSwallowingDialog
-        open={showEscalate}
-        onOpenChange={setShowEscalate}
       />
     </div>
   );
