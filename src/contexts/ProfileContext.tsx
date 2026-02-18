@@ -11,7 +11,7 @@ import {
 } from '@/types/ideal';
 import { supabase } from '@/integrations/supabase/client';
 import { calculateSeverity, getSeverityLabel, PainSeverity } from '@/types/painAssessment';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, differenceInHours, differenceInDays, parseISO, addDays, addHours } from 'date-fns';
 import { BRISTOL_TYPES } from '@/types/bowelCare';
 import { calculateBowelCareStatus, type CalculatedBowelStatus } from '@/utils/bowelCareStatusCalculator';
 import { calculateWeightBmiStatus } from '@/utils/weightBmiCalculator';
@@ -25,15 +25,22 @@ import { calculateSleepStatus } from '@/utils/sleepStatusCalculator';
 import type { SleepEntry, SleepConfig } from '@/types/sleep';
 import { calculateOralHealthStatus } from '@/utils/oralHealthStatusCalculator';
 import type { OralHealthAssessment, OralHealthTaskLog, OralHealthConfig } from '@/types/oralHealth';
-import { calculateHealthMonitoringStatus } from '@/utils/vitalSignStatusCalculator';
-import type { VitalSignEntry, VitalSignAlert } from '@/types/healthMonitoring';
+import { calculateHealthMonitoringStatus, calculateEntryStatuses } from '@/utils/vitalSignStatusCalculator';
+import type { VitalSignEntry, VitalSignAlert, VitalType, AlteredCriteria } from '@/types/healthMonitoring';
+import { calculateEpilepsyStatus } from '@/utils/epilepsyStatusCalculator';
+import type { SeizureEvent, EpilepsyConfig, EpilepsyAlert } from '@/types/epilepsy';
+import { calculatePressureAreaStatus } from '@/utils/pressureAreaStatusCalculator';
+import type { PressureReliefEvent, SkinCheckSession, PressureReliefPlan } from '@/types/pressureArea';
 
-// Health Monitoring alert data type
-type HealthMonitoringAlertData = {
+// ── Generic alert data type ────────────────────────────────────
+type ModuleAlertData = {
   status: 'stable' | 'monitor' | 'action';
   message: string;
   timestamp: string;
 };
+
+// Health Prevention extends with dueCount
+type HealthPreventionAlertData = ModuleAlertData & { dueCount: number };
 
 interface ProfileContextType {
   profile: IndividualProfile | null;
@@ -53,17 +60,22 @@ interface ProfileContextType {
   refreshSleepStatus: () => void;
   refreshOralHealthStatus: () => void;
   refreshHealthMonitoringStatus: () => void;
-   // Monitoring pause state
-   monitoringStatus: MonitoringStatus | null;
-   isMonitoringPaused: boolean;
-   pauseMonitoring: (data: {
-     reason: PauseReason;
-     notes?: string;
-     pauseStartDatetime: string;
-     pauseEndType: PauseEndType;
-     pauseEndDatetime?: string;
-   }) => Promise<boolean>;
-   resumeMonitoring: () => Promise<boolean>;
+  refreshEpilepsyStatus: () => void;
+  refreshContinenceStatus: () => void;
+  refreshCatheterStatus: () => void;
+  refreshPressureAreaStatus: () => void;
+  refreshIddsiStatus: () => void;
+  // Monitoring pause state
+  monitoringStatus: MonitoringStatus | null;
+  isMonitoringPaused: boolean;
+  pauseMonitoring: (data: {
+    reason: PauseReason;
+    notes?: string;
+    pauseStartDatetime: string;
+    pauseEndType: PauseEndType;
+    pauseEndDatetime?: string;
+  }) => Promise<boolean>;
+  resumeMonitoring: () => Promise<boolean>;
 }
 
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
@@ -88,68 +100,30 @@ function getPainAlertMessage(severity: PainSeverity, score: number): string {
   }
 }
 
-// Bowel care status types
-type BowelAlertData = {
-  status: 'stable' | 'monitor' | 'action';
-  message: string;
-  timestamp: string;
-  daysSinceLastBm: number | null;
-};
-
-// Bowel care alert message MUST come from the centralized bowel status calculator.
-// Do not re-derive messaging here (avoids drift between dashboard and module).
-function getBowelAlertMessage(data: BowelAlertData): string {
-  return data.message;
-}
-
-// Weight alert data type
-type WeightAlertData = {
-  status: 'stable' | 'monitor' | 'action';
-  message: string;
-  timestamp: string;
-};
-
-// Fluid alert data type
-type FluidAlertData = {
-  status: 'stable' | 'monitor' | 'action';
-  message: string;
-  timestamp: string;
-};
-
-// Health Prevention alert data type
-type HealthPreventionAlertData = {
-  status: 'stable' | 'monitor' | 'action';
-  message: string;
-  timestamp: string;
-  dueCount: number;
-};
-
-// Sleep alert data type
-type SleepAlertData = {
-  status: 'stable' | 'monitor' | 'action';
-  message: string;
-  timestamp: string;
-};
-
-// Oral Health alert data type
-type OralHealthAlertData = {
-  status: 'stable' | 'monitor' | 'action';
-  message: string;
-  timestamp: string;
-};
+// ── Module ID → alert data map ────────────────────────────────
+type ModuleAlertMap = Record<string, ModuleAlertData | undefined>;
 
 // Generate alerts dynamically from module statuses
 function generateAlertsFromModules(
   modules: HealthModule[], 
-  painData?: { severity: PainSeverity; score: number; timestamp: string },
-  bowelData?: BowelAlertData,
-  weightData?: WeightAlertData,
-  fluidData?: FluidAlertData,
-  healthPreventionData?: HealthPreventionAlertData,
-  sleepData?: SleepAlertData,
-  oralHealthData?: OralHealthAlertData,
-  healthMonitoringData?: HealthMonitoringAlertData
+  painData: { severity: PainSeverity; score: number; timestamp: string } | undefined,
+  alertMap: ModuleAlertMap,
 ): Alert[] {
+  const moduleNameOverrides: Record<string, string> = {
+    'constipation': 'Bowel Care',
+    'weight': 'Weight & BMI',
+    'fluid-balance': 'Fluid Balance',
+    'health-prevention': 'Health Prevention',
+    'sleep': 'Sleep Chart',
+    'oral-health': 'Oral Health',
+    'health-monitoring': 'Health Monitoring',
+    'epilepsy': 'Epilepsy & Seizures',
+    'continence': 'Continence Management',
+    'catheter': 'Urinary Catheter',
+    'pressure-area': 'Pressure Area Prevention',
+    'iddsi': 'IDDSI & Safe Swallowing',
+  };
+
   return modules
     .filter((m) => m.enabled && (m.status === 'monitor' || m.status === 'action'))
     .map((m) => {
@@ -165,94 +139,23 @@ function generateAlertsFromModules(
         };
       }
       
-      // Special handling for constipation/bowel care module with real data
-      if (m.id === 'constipation' && bowelData) {
+      // Use alert map for all other modules
+      const data = alertMap[m.id];
+      if (data) {
         return {
           id: m.id,
           moduleId: m.id,
-          moduleName: 'Bowel Care',
-          message: getBowelAlertMessage(bowelData),
+          moduleName: moduleNameOverrides[m.id] || m.name,
+          message: data.message,
           status: m.status === 'action' ? 'red' as const : 'amber' as const,
-          timestamp: bowelData.timestamp,
-        };
-      }
-      
-      // Special handling for weight module with real data
-      if (m.id === 'weight' && weightData) {
-        return {
-          id: m.id,
-          moduleId: m.id,
-          moduleName: 'Weight & BMI',
-          message: weightData.message,
-          status: m.status === 'action' ? 'red' as const : 'amber' as const,
-          timestamp: weightData.timestamp,
-        };
-      }
-      
-      // Special handling for fluid balance module with real data
-      if (m.id === 'fluid-balance' && fluidData) {
-        return {
-          id: m.id,
-          moduleId: m.id,
-          moduleName: 'Fluid Balance',
-          message: fluidData.message,
-          status: m.status === 'action' ? 'red' as const : 'amber' as const,
-          timestamp: fluidData.timestamp,
-        };
-      }
-      
-      // Special handling for health prevention module with real data
-      if (m.id === 'health-prevention' && healthPreventionData) {
-        return {
-          id: m.id,
-          moduleId: m.id,
-          moduleName: 'Health Prevention',
-          message: healthPreventionData.message,
-          status: m.status === 'action' ? 'red' as const : 'amber' as const,
-          timestamp: healthPreventionData.timestamp,
-        };
-      }
-
-      // Special handling for sleep module with real data
-      if (m.id === 'sleep' && sleepData) {
-        return {
-          id: m.id,
-          moduleId: m.id,
-          moduleName: 'Sleep Chart',
-          message: sleepData.message,
-          status: m.status === 'action' ? 'red' as const : 'amber' as const,
-          timestamp: sleepData.timestamp,
-        };
-      }
-
-      // Special handling for oral health module with real data
-      if (m.id === 'oral-health' && oralHealthData) {
-        return {
-          id: m.id,
-          moduleId: m.id,
-          moduleName: 'Oral Health',
-          message: oralHealthData.message,
-          status: m.status === 'action' ? 'red' as const : 'amber' as const,
-          timestamp: oralHealthData.timestamp,
-        };
-      }
-
-      // Special handling for health monitoring module with real data
-      if (m.id === 'health-monitoring' && healthMonitoringData) {
-        return {
-          id: m.id,
-          moduleId: m.id,
-          moduleName: 'Health Monitoring',
-          message: healthMonitoringData.message,
-          status: m.status === 'action' ? 'red' as const : 'amber' as const,
-          timestamp: healthMonitoringData.timestamp,
+          timestamp: data.timestamp,
         };
       }
       
       return {
         id: m.id,
         moduleId: m.id,
-        moduleName: m.name,
+        moduleName: moduleNameOverrides[m.id] || m.name,
         message: m.status === 'action' 
           ? 'Immediate action required' 
           : 'Requires follow-up',
@@ -276,13 +179,13 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     createdBy: 'System',
   });
 
-   // Monitoring status hook - use profile.id when available
-   const {
-     status: monitoringStatus,
-     isPaused: isMonitoringPaused,
-     pauseMonitoring,
-     resumeMonitoring,
-   } = useMonitoringStatus(profile?.id ?? null);
+  // Monitoring status hook
+  const {
+    status: monitoringStatus,
+    isPaused: isMonitoringPaused,
+    pauseMonitoring,
+    resumeMonitoring,
+  } = useMonitoringStatus(profile?.id ?? null);
 
   // Fetch profile from database
   const fetchProfileFromDb = async () => {
@@ -299,7 +202,6 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       }
 
       if (data) {
-        // Map database fields to frontend format
         setProfile({
           id: data.id,
           fullName: (data as any).full_name || data.preferred_name || '',
@@ -321,41 +223,44 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Pain assessment state
+  // ── Module alert data state ──────────────────────────────────
   const [latestPainData, setLatestPainData] = useState<{ severity: PainSeverity; score: number; timestamp: string } | null>(null);
-  
-  // Bowel care state
-  const [latestBowelData, setLatestBowelData] = useState<BowelAlertData | null>(null);
-  
-  // Weight state
-  const [latestWeightData, setLatestWeightData] = useState<WeightAlertData | null>(null);
-  
-  // Fluid state
-  const [latestFluidData, setLatestFluidData] = useState<FluidAlertData | null>(null);
-  
-  // Health Prevention state
+  const [latestBowelData, setLatestBowelData] = useState<ModuleAlertData | null>(null);
+  const [latestWeightData, setLatestWeightData] = useState<ModuleAlertData | null>(null);
+  const [latestFluidData, setLatestFluidData] = useState<ModuleAlertData | null>(null);
   const [latestHealthPreventionData, setLatestHealthPreventionData] = useState<HealthPreventionAlertData | null>(null);
-
-  // Sleep state
-  const [latestSleepData, setLatestSleepData] = useState<SleepAlertData | null>(null);
-
-  // Oral Health state
-  const [latestOralHealthData, setLatestOralHealthData] = useState<OralHealthAlertData | null>(null);
-
-  // Health Monitoring state
-  const [latestHealthMonitoringData, setLatestHealthMonitoringData] = useState<HealthMonitoringAlertData | null>(null);
+  const [latestSleepData, setLatestSleepData] = useState<ModuleAlertData | null>(null);
+  const [latestOralHealthData, setLatestOralHealthData] = useState<ModuleAlertData | null>(null);
+  const [latestHealthMonitoringData, setLatestHealthMonitoringData] = useState<ModuleAlertData | null>(null);
+  const [latestEpilepsyData, setLatestEpilepsyData] = useState<ModuleAlertData | null>(null);
+  const [latestContinenceData, setLatestContinenceData] = useState<ModuleAlertData | null>(null);
+  const [latestCatheterData, setLatestCatheterData] = useState<ModuleAlertData | null>(null);
+  const [latestPressureAreaData, setLatestPressureAreaData] = useState<ModuleAlertData | null>(null);
+  const [latestIddsiData, setLatestIddsiData] = useState<ModuleAlertData | null>(null);
 
   // Enable ALL modules by default for master project development
   const [enabledModules, setEnabledModules] = useState<HealthModule[]>(
     HEALTH_MODULES.map((m) => ({
       ...m,
-      enabled: true, // All modules ON by default
+      enabled: true,
       status: 'stable',
       lastEntry: 'Not yet logged',
     }))
   );
 
-  // Fetch latest pain assessment and update module status
+  // ── Helper to update a single module's status ────────────────
+  const updateModuleStatus = (moduleId: string, status: 'stable' | 'monitor' | 'action', lastEntry: string) => {
+    setEnabledModules(prev => prev.map(m =>
+      m.id === moduleId ? { ...m, status, lastEntry } : m
+    ));
+  };
+
+  // ══════════════════════════════════════════════════════════════
+  // FETCH FUNCTIONS - Each module fetches data & calculates status
+  // using centralized calculators. The Home Page reads results only.
+  // ══════════════════════════════════════════════════════════════
+
+  // ── Pain Assessment ──────────────────────────────────────────
   const fetchLatestPainAssessment = async () => {
     try {
       const { data, error } = await supabase
@@ -365,66 +270,34 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         .limit(1)
         .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching pain assessment:', error);
-        return;
-      }
+      if (error) { console.error('Error fetching pain assessment:', error); return; }
 
       if (data) {
         const severity = data.severity as PainSeverity;
         const status = painSeverityToStatus(severity);
         const timeAgo = formatDistanceToNow(new Date(data.created_at), { addSuffix: true });
         
-        setLatestPainData({
-          severity,
-          score: data.total_score,
-          timestamp: data.created_at,
-        });
-
-        // Update pain-check module with real status
-        setEnabledModules(prev => prev.map(m => 
-          m.id === 'pain-check' 
-            ? { 
-                ...m, 
-                status, 
-                lastEntry: `Score ${data.total_score}/18 • ${getSeverityLabel(severity)} • ${timeAgo}`
-              }
-            : m
-        ));
+        setLatestPainData({ severity, score: data.total_score, timestamp: data.created_at });
+        updateModuleStatus('pain-check', status, `Score ${data.total_score}/18 • ${getSeverityLabel(severity)} • ${timeAgo}`);
       }
-    } catch (err) {
-      console.error('Error in fetchLatestPainAssessment:', err);
-    }
+    } catch (err) { console.error('Error in fetchLatestPainAssessment:', err); }
   };
 
-  // Fetch bowel care data and compute status using centralized calculator
+  // ── Bowel Care ───────────────────────────────────────────────
   const fetchBowelCareStatus = async () => {
     try {
-      // Fetch config
-      const { data: configData } = await supabase
-        .from('bowel_care_config')
-        .select('*')
-        .limit(1)
-        .maybeSingle();
-
-      // Fetch recent bowel logs - order by event_occurred_at for clinical accuracy
+      const { data: configData } = await supabase.from('bowel_care_config').select('*').limit(1).maybeSingle();
       const { data: logs, error } = await supabase
         .from('bowel_log_entries')
         .select('*')
         .order('event_occurred_at', { ascending: false })
         .limit(50);
 
-      if (error) {
-        console.error('Error fetching bowel logs:', error);
-        return;
-      }
+      if (error) { console.error('Error fetching bowel logs:', error); return; }
 
-      // Use the centralized status calculator - single source of truth
       const calculated = calculateBowelCareStatus(
         (logs || []).map(l => ({
-          id: l.id,
-          bristol_type: l.bristol_type,
-          entry_time: l.entry_time,
+          id: l.id, bristol_type: l.bristol_type, entry_time: l.entry_time,
           event_occurred_at: l.event_occurred_at,
           indicators: l.indicators as Record<string, unknown> | undefined,
         })),
@@ -437,329 +310,117 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         []
       );
 
-      const bowelData: BowelAlertData = {
-        status: calculated.status === 'ideal' ? 'stable' : calculated.status,
-        message: calculated.message,
-        timestamp: calculated.lastEventTimestamp || new Date().toISOString(),
-        daysSinceLastBm: calculated.daysSinceLastBm,
-      };
-
-      setLatestBowelData(bowelData);
-
-      // Update constipation module with real status
-      const lastLog = logs?.[0];
-      const timeAgo = lastLog 
-        ? formatDistanceToNow(new Date(lastLog.event_occurred_at || lastLog.entry_time), { addSuffix: true })
-        : 'Never';
-      const bristolInfo = calculated.lastBristolType !== null
-        ? BRISTOL_TYPES.find(b => b.type === calculated.lastBristolType)
-        : null;
-      const bristolLabel = bristolInfo?.name || '';
-
-      // Map status for module (ideal -> stable for HealthModule type)
       const moduleStatus = calculated.status === 'ideal' ? 'stable' : calculated.status;
+      setLatestBowelData({ status: moduleStatus, message: calculated.message, timestamp: calculated.lastEventTimestamp || new Date().toISOString() });
 
-      setEnabledModules(prev => prev.map(m => 
-        m.id === 'constipation' 
-          ? { 
-              ...m, 
-              status: moduleStatus, 
-              lastEntry: bristolLabel 
-                ? `${bristolLabel} • ${timeAgo}` 
-                : `Last logged ${timeAgo}`
-            }
-          : m
-      ));
-    } catch (err) {
-      console.error('Error in fetchBowelCareStatus:', err);
-    }
+      const lastLog = logs?.[0];
+      const timeAgo = lastLog ? formatDistanceToNow(new Date(lastLog.event_occurred_at || lastLog.entry_time), { addSuffix: true }) : 'Never';
+      const bristolInfo = calculated.lastBristolType !== null ? BRISTOL_TYPES.find(b => b.type === calculated.lastBristolType) : null;
+      updateModuleStatus('constipation', moduleStatus, bristolInfo?.name ? `${bristolInfo.name} • ${timeAgo}` : `Last logged ${timeAgo}`);
+    } catch (err) { console.error('Error in fetchBowelCareStatus:', err); }
   };
 
-  // Fetch weight status and update module
+  // ── Weight & BMI ─────────────────────────────────────────────
   const fetchWeightStatus = async () => {
     try {
-      // Fetch config
-      const { data: configData } = await supabase
-        .from('weight_bmi_config')
-        .select('*')
-        .maybeSingle();
+      const { data: configData } = await supabase.from('weight_bmi_config').select('*').maybeSingle();
+      const { data: entries, error } = await supabase.from('weight_entries').select('*').order('event_occurred_at', { ascending: false }).limit(50);
+      if (error) { console.error('Error fetching weight entries:', error); return; }
 
-      // Fetch recent weight entries
-      const { data: entries, error } = await supabase
-        .from('weight_entries')
-        .select('*')
-        .order('event_occurred_at', { ascending: false })
-        .limit(50);
+      const { data: alertsData } = await supabase.from('weight_bmi_alerts').select('*').order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching weight entries:', error);
-        return;
-      }
-
-      // Fetch alerts
-      const { data: alertsData } = await supabase
-        .from('weight_bmi_alerts')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      // Calculate status using centralized calculator
       const typedEntries = (entries || []) as unknown as WeightEntry[];
       const typedConfig = configData as unknown as WeightBmiConfig | null;
       const typedAlerts = (alertsData || []) as unknown as WeightBmiAlert[];
-
       const statusInfo = calculateWeightBmiStatus(typedEntries, typedConfig, typedAlerts);
 
-      const weightData: WeightAlertData = {
-        status: statusInfo.status,
-        message: statusInfo.message,
-        timestamp: statusInfo.lastRecordedDate || new Date().toISOString(),
-      };
+      setLatestWeightData({ status: statusInfo.status, message: statusInfo.message, timestamp: statusInfo.lastRecordedDate || new Date().toISOString() });
 
-      setLatestWeightData(weightData);
-
-      // Update weight module with real status
       const latestEntry = typedEntries[0];
-      const timeAgo = latestEntry 
-        ? formatDistanceToNow(new Date(latestEntry.event_occurred_at), { addSuffix: true })
-        : 'Never';
-      const bmiInfo = latestEntry?.bmi_value 
-        ? `BMI ${latestEntry.bmi_value.toFixed(1)}`
-        : '';
-
-      setEnabledModules(prev => prev.map(m => 
-        m.id === 'weight' 
-          ? { 
-              ...m, 
-              status: statusInfo.status, 
-              lastEntry: latestEntry 
-                ? `${latestEntry.weight_kg}kg ${bmiInfo ? `• ${bmiInfo}` : ''} • ${timeAgo}` 
-                : 'Not yet logged'
-            }
-          : m
-      ));
-    } catch (err) {
-      console.error('Error in fetchWeightStatus:', err);
-    }
+      const timeAgo = latestEntry ? formatDistanceToNow(new Date(latestEntry.event_occurred_at), { addSuffix: true }) : 'Never';
+      const bmiInfo = latestEntry?.bmi_value ? `BMI ${latestEntry.bmi_value.toFixed(1)}` : '';
+      updateModuleStatus('weight', statusInfo.status, latestEntry ? `${latestEntry.weight_kg}kg ${bmiInfo ? `• ${bmiInfo}` : ''} • ${timeAgo}` : 'Not yet logged');
+    } catch (err) { console.error('Error in fetchWeightStatus:', err); }
   };
 
-  // Fetch fluid balance status
+  // ── Fluid Balance ────────────────────────────────────────────
   const fetchFluidStatus = async () => {
     try {
-      // Fetch config
-      const { data: configData } = await supabase
-        .from('fluid_config')
-        .select('*')
-        .maybeSingle();
-
-      // Fetch today's intake entries
+      const { data: configData } = await supabase.from('fluid_config').select('*').maybeSingle();
       const today = new Date().toISOString().split('T')[0];
-      const { data: intakeData, error } = await supabase
-        .from('fluid_intake_entries')
-        .select('*')
-        .gte('event_occurred_at', today)
-        .order('event_occurred_at', { ascending: false });
+      const { data: intakeData, error } = await supabase.from('fluid_intake_entries').select('*').gte('event_occurred_at', today).order('event_occurred_at', { ascending: false });
+      if (error) { console.error('Error fetching fluid intake:', error); return; }
 
-      if (error) {
-        console.error('Error fetching fluid intake:', error);
-        return;
-      }
-
-      // Fetch output if enabled
       let outputData: FluidOutputEntry[] = [];
       if (configData?.enable_output_logging) {
-        const { data: outputs } = await supabase
-          .from('fluid_output_entries')
-          .select('*')
-          .gte('event_occurred_at', today);
+        const { data: outputs } = await supabase.from('fluid_output_entries').select('*').gte('event_occurred_at', today);
         outputData = (outputs || []) as unknown as FluidOutputEntry[];
       }
 
       const typedConfig = configData as unknown as FluidConfig | null;
       const typedIntake = (intakeData || []) as unknown as FluidIntakeEntry[];
-
-      const { status, message, percentOfTarget } = calculateFluidStatus(
-        typedIntake,
-        outputData,
-        typedConfig
-      );
-
-      // Map fluid status to module status
+      const { status, message, percentOfTarget } = calculateFluidStatus(typedIntake, outputData, typedConfig);
       const moduleStatus = status === 'ideal' ? 'stable' : status === 'amber' ? 'monitor' : 'action';
 
-      const fluidData: FluidAlertData = {
-        status: moduleStatus,
-        message,
-        timestamp: new Date().toISOString(),
-      };
-
-      setLatestFluidData(fluidData);
-
-      // Calculate today's total
+      setLatestFluidData({ status: moduleStatus, message, timestamp: new Date().toISOString() });
       const todayTotal = typedIntake.reduce((sum, e) => sum + e.amount_ml, 0);
-
-      setEnabledModules(prev => prev.map(m => 
-        m.id === 'fluid-balance' 
-          ? { 
-              ...m, 
-              status: moduleStatus, 
-              lastEntry: `${todayTotal}ml today (${percentOfTarget}%)`
-            }
-          : m
-      ));
-    } catch (err) {
-      console.error('Error in fetchFluidStatus:', err);
-    }
+      updateModuleStatus('fluid-balance', moduleStatus, `${todayTotal}ml today (${percentOfTarget}%)`);
+    } catch (err) { console.error('Error in fetchFluidStatus:', err); }
   };
 
-  // Fetch health prevention status
+  // ── Health Prevention ────────────────────────────────────────
   const fetchHealthPreventionStatus = async () => {
     try {
       if (!profile?.id || !profile?.dateOfBirth) return;
-
       const sex = (profile as { sex?: string })?.sex;
 
-      // Fetch config
-      const { data: configData } = await supabase
-        .from('health_prevention_config')
-        .select('*')
-        .eq('client_id', profile.id)
-        .maybeSingle();
-
-      // If disabled, set to stable
+      const { data: configData } = await supabase.from('health_prevention_config').select('*').eq('client_id', profile.id).maybeSingle();
       if (configData && !configData.enable_cancer_screening && !configData.enable_vaccination_reminders) {
-        setLatestHealthPreventionData({
-          status: 'stable',
-          message: 'Health prevention features disabled',
-          timestamp: new Date().toISOString(),
-          dueCount: 0,
-        });
-        setEnabledModules(prev => prev.map(m => 
-          m.id === 'health-prevention' 
-            ? { ...m, status: 'stable', lastEntry: 'Features disabled' }
-            : m
-        ));
+        setLatestHealthPreventionData({ status: 'stable', message: 'Health prevention features disabled', timestamp: new Date().toISOString(), dueCount: 0 });
+        updateModuleStatus('health-prevention', 'stable', 'Features disabled');
         return;
       }
 
-      // Fetch screening records
-      const { data: screenings } = await supabase
-        .from('cancer_screening_records')
-        .select('*')
-        .eq('client_id', profile.id)
-        .order('created_at', { ascending: false });
+      const { data: screenings } = await supabase.from('cancer_screening_records').select('*').eq('client_id', profile.id).order('created_at', { ascending: false });
+      const { data: vaccinations } = await supabase.from('vaccination_records').select('*').eq('client_id', profile.id).order('created_at', { ascending: false });
+      const { data: assessments } = await supabase.from('annual_health_assessment_records').select('*').eq('client_id', profile.id).order('date_completed', { ascending: false });
 
-      // Fetch vaccination records
-      const { data: vaccinations } = await supabase
-        .from('vaccination_records')
-        .select('*')
-        .eq('client_id', profile.id)
-        .order('created_at', { ascending: false });
-
-      // Map DB rows to typed records
       const typedScreenings: CancerScreeningRecord[] = (screenings || []).map((r: any) => ({
-        id: r.id,
-        clientId: r.client_id,
-        screeningType: r.screening_type,
-        status: r.status,
-        dateCompleted: r.date_completed,
-        location: r.location,
-        outcomeKnown: r.outcome_known,
-        deferredReason: r.deferred_reason,
-        notes: r.notes,
-        nextDueDate: r.next_due_date,
-        createdAt: r.created_at,
-        createdBy: r.created_by,
-        editedAt: r.edited_at,
-        editedBy: r.edited_by,
-        editReason: r.edit_reason,
+        id: r.id, clientId: r.client_id, screeningType: r.screening_type, status: r.status,
+        dateCompleted: r.date_completed, location: r.location, outcomeKnown: r.outcome_known,
+        deferredReason: r.deferred_reason, notes: r.notes, nextDueDate: r.next_due_date,
+        createdAt: r.created_at, createdBy: r.created_by, editedAt: r.edited_at, editedBy: r.edited_by, editReason: r.edit_reason,
       })) as CancerScreeningRecord[];
 
       const typedVaccinations: VaccinationRecord[] = (vaccinations || []).map((r: any) => ({
-        id: r.id,
-        clientId: r.client_id,
-        vaccinationType: r.vaccination_type,
-        status: r.status,
-        dateGiven: r.date_given,
-        givenBy: r.given_by,
-        vaccineBrand: r.vaccine_brand,
-        notes: r.notes,
-        nextDueDate: r.next_due_date,
-        createdAt: r.created_at,
-        createdBy: r.created_by,
-        editedAt: r.edited_at,
-        editedBy: r.edited_by,
-        editReason: r.edit_reason,
+        id: r.id, clientId: r.client_id, vaccinationType: r.vaccination_type, status: r.status,
+        dateGiven: r.date_given, givenBy: r.given_by, vaccineBrand: r.vaccine_brand, notes: r.notes,
+        nextDueDate: r.next_due_date, createdAt: r.created_at, createdBy: r.created_by,
+        editedAt: r.edited_at, editedBy: r.edited_by, editReason: r.edit_reason,
       })) as VaccinationRecord[];
 
-      // Fetch annual health assessment records
-      const { data: assessments } = await supabase
-        .from('annual_health_assessment_records')
-        .select('*')
-        .eq('client_id', profile.id)
-        .order('date_completed', { ascending: false });
-
       const typedAssessments: HealthAssessmentRecord[] = (assessments || []).map((r: any) => ({
-        id: r.id,
-        clientId: r.client_id,
-        dateCompleted: r.date_completed,
-        completedBy: r.completed_by,
-        location: r.location,
-        notes: r.notes,
-        nextDueDate: r.next_due_date,
-        createdAt: r.created_at,
-        createdBy: r.created_by,
+        id: r.id, clientId: r.client_id, dateCompleted: r.date_completed, completedBy: r.completed_by,
+        location: r.location, notes: r.notes, nextDueDate: r.next_due_date, createdAt: r.created_at, createdBy: r.created_by,
       })) as HealthAssessmentRecord[];
 
       const summary = calculateHealthPreventionSummary({
         profile: { dateOfBirth: profile.dateOfBirth, sex },
-        config: {
-          enableCancerScreening: configData?.enable_cancer_screening ?? true,
-          enableVaccinationReminders: configData?.enable_vaccination_reminders ?? true,
-        },
-        screeningRecords: typedScreenings,
-        vaccinationRecords: typedVaccinations,
-        assessmentRecords: typedAssessments,
+        config: { enableCancerScreening: configData?.enable_cancer_screening ?? true, enableVaccinationReminders: configData?.enable_vaccination_reminders ?? true },
+        screeningRecords: typedScreenings, vaccinationRecords: typedVaccinations, assessmentRecords: typedAssessments,
       });
 
-      setLatestHealthPreventionData({
-        status: summary.status,
-        message: summary.message,
-        timestamp: summary.timestamp,
-        dueCount: summary.dueCount,
-      });
-
-      setEnabledModules(prev => prev.map(m => 
-        m.id === 'health-prevention' 
-          ? { 
-              ...m, 
-              status: summary.status,
-              lastEntry: summary.lastEntry,
-            }
-          : m
-      ));
-    } catch (err) {
-      console.error('Error in fetchHealthPreventionStatus:', err);
-    }
+      setLatestHealthPreventionData({ status: summary.status, message: summary.message, timestamp: summary.timestamp, dueCount: summary.dueCount });
+      updateModuleStatus('health-prevention', summary.status, summary.lastEntry);
+    } catch (err) { console.error('Error in fetchHealthPreventionStatus:', err); }
   };
 
-  // Fetch sleep status
+  // ── Sleep ────────────────────────────────────────────────────
   const fetchSleepStatus = async () => {
     try {
-      const { data: configData } = await supabase
-        .from('sleep_config')
-        .select('*')
-        .maybeSingle();
-
-      const { data: entries, error } = await supabase
-        .from('sleep_entries')
-        .select('*')
-        .order('event_occurred_at', { ascending: false })
-        .limit(50);
-
-      if (error) {
-        console.error('Error fetching sleep entries:', error);
-        return;
-      }
+      const { data: configData } = await supabase.from('sleep_config').select('*').maybeSingle();
+      const { data: entries, error } = await supabase.from('sleep_entries').select('*').order('event_occurred_at', { ascending: false }).limit(50);
+      if (error) { console.error('Error fetching sleep entries:', error); return; }
 
       const typedEntries = (entries || []) as unknown as SleepEntry[];
       const sleepStatusResult = calculateSleepStatus({
@@ -775,133 +436,421 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       });
 
       const moduleStatus = sleepStatusResult.status === 'ideal' ? 'stable' : sleepStatusResult.status;
-      const sleepData: SleepAlertData = {
-        status: moduleStatus,
-        message: sleepStatusResult.message,
-        timestamp: typedEntries[0]?.event_occurred_at || new Date().toISOString(),
-      };
-
-      setLatestSleepData(sleepData);
-
-      setEnabledModules(prev => prev.map(m =>
-        m.id === 'sleep'
-          ? { ...m, status: moduleStatus, lastEntry: sleepStatusResult.lastEntry }
-          : m
-      ));
-    } catch (err) {
-      console.error('Error in fetchSleepStatus:', err);
-    }
+      setLatestSleepData({ status: moduleStatus, message: sleepStatusResult.message, timestamp: typedEntries[0]?.event_occurred_at || new Date().toISOString() });
+      updateModuleStatus('sleep', moduleStatus, sleepStatusResult.lastEntry);
+    } catch (err) { console.error('Error in fetchSleepStatus:', err); }
   };
 
-  // Fetch oral health status
+  // ── Oral Health ──────────────────────────────────────────────
   const fetchOralHealthStatus = async () => {
     try {
-      const { data: configData } = await supabase
-        .from('oral_health_config')
-        .select('*')
-        .maybeSingle();
+      const { data: configData } = await supabase.from('oral_health_config').select('*').maybeSingle();
+      const { data: assessmentData } = await supabase.from('oral_health_assessments').select('*').order('created_at', { ascending: false }).limit(10);
+      const { data: taskLogData } = await supabase.from('oral_health_task_logs').select('*').order('log_date', { ascending: false }).limit(50);
 
-      const { data: assessmentData } = await supabase
-        .from('oral_health_assessments')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      const { data: taskLogData } = await supabase
-        .from('oral_health_task_logs')
-        .select('*')
-        .order('log_date', { ascending: false })
-        .limit(50);
-
-      const typedAssessments = (assessmentData || []).map((d: any) => ({
-        ...d,
-        mouth_annotations: (d.mouth_annotations || []),
-      })) as OralHealthAssessment[];
+      const typedAssessments = (assessmentData || []).map((d: any) => ({ ...d, mouth_annotations: (d.mouth_annotations || []) })) as OralHealthAssessment[];
       const typedLogs = (taskLogData || []) as OralHealthTaskLog[];
 
       const statusResult = calculateOralHealthStatus({
-        assessments: typedAssessments,
-        taskLogs: typedLogs,
-        config: {
-          assessment_frequency: configData?.assessment_frequency ?? 'weekly',
-          enable_compliance_monitoring: configData?.enable_compliance_monitoring ?? false,
-        } as Partial<OralHealthConfig>,
+        assessments: typedAssessments, taskLogs: typedLogs,
+        config: { assessment_frequency: configData?.assessment_frequency ?? 'weekly', enable_compliance_monitoring: configData?.enable_compliance_monitoring ?? false } as Partial<OralHealthConfig>,
       });
 
       const moduleStatus = statusResult.status === 'ideal' ? 'stable' : statusResult.status;
-      const ohData: OralHealthAlertData = {
-        status: moduleStatus,
-        message: statusResult.message,
-        timestamp: typedAssessments[0]?.created_at || new Date().toISOString(),
-      };
-
-      setLatestOralHealthData(ohData);
-
-      setEnabledModules(prev => prev.map(m =>
-        m.id === 'oral-health'
-          ? { ...m, status: moduleStatus, lastEntry: statusResult.lastEntry }
-          : m
-      ));
-    } catch (err) {
-      console.error('Error in fetchOralHealthStatus:', err);
-    }
+      setLatestOralHealthData({ status: moduleStatus, message: statusResult.message, timestamp: typedAssessments[0]?.created_at || new Date().toISOString() });
+      updateModuleStatus('oral-health', moduleStatus, statusResult.lastEntry);
+    } catch (err) { console.error('Error in fetchOralHealthStatus:', err); }
   };
 
-  // Fetch health monitoring status using centralized calculator
+  // ── Health Monitoring (with altered criteria) ────────────────
   const fetchHealthMonitoringStatus = async () => {
     try {
-      // Fetch latest vital sign entries
       const { data: entries, error } = await supabase
         .from('vital_sign_entries')
         .select('*')
         .order('event_occurred_at', { ascending: false })
         .limit(50);
 
-      if (error) {
-        console.error('Error fetching vital sign entries:', error);
-        return;
-      }
+      if (error) { console.error('Error fetching vital sign entries:', error); return; }
 
-      // Fetch active alerts
       const { data: alertsData } = await supabase
         .from('vital_sign_alerts')
         .select('*')
         .is('resolved_at', null)
         .order('created_at', { ascending: false });
 
+      // Fetch altered criteria for recalculation
+      const { data: alteredCriteriaData } = await supabase
+        .from('vital_sign_altered_criteria')
+        .select('*')
+        .eq('is_active', true)
+        .eq('confirmed_by_medical_professional', true);
+
       const typedEntries = (entries || []) as unknown as VitalSignEntry[];
       const typedAlerts = (alertsData || []) as unknown as VitalSignAlert[];
 
-      const statusResult = calculateHealthMonitoringStatus(typedEntries, typedAlerts);
-
-      // Map vital status to module status
-      const moduleStatus = statusResult.status === 'ideal' ? 'stable' 
-        : statusResult.status === 'amber' ? 'monitor' : 'action';
-
-      const hmData: HealthMonitoringAlertData = {
-        status: moduleStatus,
-        message: statusResult.message,
-        timestamp: typedEntries[0]?.event_occurred_at || new Date().toISOString(),
+      // Build criteria map from altered criteria
+      const criteriaMap: Record<VitalType, AlteredCriteria | null> = {
+        temperature: null, bp_systolic: null, bp_diastolic: null,
+        oxygen: null, heart_rate: null, respiratory: null,
       };
+      if (alteredCriteriaData) {
+        for (const ac of alteredCriteriaData) {
+          const vt = ac.vital_type as VitalType;
+          if (vt in criteriaMap) {
+            criteriaMap[vt] = ac as unknown as AlteredCriteria;
+          }
+        }
+      }
 
-      setLatestHealthMonitoringData(hmData);
+      // Recalculate the latest entry's statuses using altered criteria
+      if (typedEntries.length > 0) {
+        const latest = typedEntries[0];
+        const recalculated = calculateEntryStatuses(latest, criteriaMap);
 
-      const latestEntry = typedEntries[0];
-      const timeAgo = latestEntry 
-        ? formatDistanceToNow(new Date(latestEntry.event_occurred_at), { addSuffix: true })
-        : 'Never';
+        // Override the stored statuses with recalculated ones
+        const overriddenLatest = {
+          ...latest,
+          temperature_status: recalculated.temperature_status,
+          bp_status: recalculated.bp_status,
+          oxygen_status: recalculated.oxygen_status,
+          heart_rate_status: recalculated.heart_rate_status,
+          respiratory_status: recalculated.respiratory_status,
+          overall_status: recalculated.overall_status,
+        };
 
-      setEnabledModules(prev => prev.map(m =>
-        m.id === 'health-monitoring'
-          ? { ...m, status: moduleStatus, lastEntry: `${statusResult.message} • ${timeAgo}` }
-          : m
-      ));
-    } catch (err) {
-      console.error('Error in fetchHealthMonitoringStatus:', err);
-    }
+        // Use overridden entry for status calculation
+        const statusResult = calculateHealthMonitoringStatus([overriddenLatest, ...typedEntries.slice(1)], typedAlerts);
+
+        const moduleStatus = statusResult.status === 'ideal' ? 'stable'
+          : statusResult.status === 'amber' ? 'monitor' : 'action';
+
+        setLatestHealthMonitoringData({ status: moduleStatus, message: statusResult.message, timestamp: typedEntries[0]?.event_occurred_at || new Date().toISOString() });
+        const timeAgo = formatDistanceToNow(new Date(typedEntries[0].event_occurred_at), { addSuffix: true });
+        updateModuleStatus('health-monitoring', moduleStatus, `${statusResult.message} • ${timeAgo}`);
+      } else {
+        const statusResult = calculateHealthMonitoringStatus([], typedAlerts);
+        const moduleStatus = statusResult.status === 'ideal' ? 'stable'
+          : statusResult.status === 'amber' ? 'monitor' : 'action';
+        setLatestHealthMonitoringData({ status: moduleStatus, message: statusResult.message, timestamp: new Date().toISOString() });
+        updateModuleStatus('health-monitoring', moduleStatus, 'Not yet logged');
+      }
+    } catch (err) { console.error('Error in fetchHealthMonitoringStatus:', err); }
   };
 
-  // Fetch data on mount and set up realtime subscriptions
+  // ── Epilepsy & Seizures ──────────────────────────────────────
+  const fetchEpilepsyStatus = async () => {
+    try {
+      const { data: configData } = await supabase.from('epilepsy_config').select('*').limit(1).maybeSingle();
+      const { data: events, error } = await supabase
+        .from('seizure_events')
+        .select('*')
+        .order('event_occurred_at', { ascending: false })
+        .limit(100);
+      if (error) { console.error('Error fetching seizure events:', error); return; }
+
+      const { data: alertsData } = await supabase
+        .from('epilepsy_alerts')
+        .select('*')
+        .is('resolved_at', null)
+        .order('created_at', { ascending: false });
+
+      const typedEvents = (events || []) as unknown as SeizureEvent[];
+      const typedAlerts = (alertsData || []) as unknown as EpilepsyAlert[];
+
+      const statusResult = calculateEpilepsyStatus({
+        events: typedEvents,
+        config: (configData as unknown as Partial<EpilepsyConfig>) || null,
+        alerts: typedAlerts,
+      });
+
+      const moduleStatus = statusResult.status === 'ideal' ? 'stable' : statusResult.status;
+      setLatestEpilepsyData({ status: moduleStatus, message: statusResult.message, timestamp: statusResult.lastSeizureDate || new Date().toISOString() });
+
+      const timeAgo = typedEvents[0] ? formatDistanceToNow(new Date(typedEvents[0].event_occurred_at), { addSuffix: true }) : 'Never';
+      updateModuleStatus('epilepsy', moduleStatus, typedEvents.length > 0 ? `${statusResult.message} • ${timeAgo}` : 'No seizures recorded');
+    } catch (err) { console.error('Error in fetchEpilepsyStatus:', err); }
+  };
+
+  // ── Continence Management ────────────────────────────────────
+  const fetchContinenceStatus = async () => {
+    try {
+      const { data: configData } = await supabase.from('continence_config').select('*').limit(1).maybeSingle();
+      
+      // Latest pad change
+      const { data: padChanges } = await supabase
+        .from('continence_pad_changes')
+        .select('*')
+        .order('event_occurred_at', { ascending: false })
+        .limit(10);
+
+      // Recent skin checks
+      const { data: skinChecks } = await supabase
+        .from('continence_skin_checks')
+        .select('*')
+        .order('event_occurred_at', { ascending: false })
+        .limit(10);
+
+      // Latest UTI test
+      const { data: utiTests } = await supabase
+        .from('continence_uti_tests')
+        .select('*')
+        .order('test_date', { ascending: false })
+        .limit(1);
+
+      // Latest consumables check
+      const { data: consumables } = await supabase
+        .from('continence_consumables_checks')
+        .select('*')
+        .order('check_date', { ascending: false })
+        .limit(1);
+
+      const now = new Date();
+      const lastPad = padChanges?.[0];
+      const lastSkin = skinChecks?.[0];
+      const lastUti = utiTests?.[0];
+      const lastConsumable = consumables?.[0];
+
+      // Determine status using same logic as useContinenceStatus
+      let status: 'stable' | 'monitor' | 'action' = 'stable';
+      let message = 'All continence indicators within normal range.';
+
+      // Red conditions
+      const hasPositiveUTI = lastUti?.test_result === 'positive';
+      const hasSkinIssue = lastSkin && ['broken_skin', 'fungal_signs'].includes(lastSkin.skin_condition) &&
+        differenceInHours(now, parseISO(lastSkin.event_occurred_at)) <= 48;
+
+      // Overdue check
+      let isOverdue = false;
+      let overdueMinutes = 0;
+      if (configData && lastPad) {
+        const lastChangeTime = parseISO(lastPad.event_occurred_at);
+        if (configData.schedule_type === 'hourly' && configData.interval_hours) {
+          const nextChange = new Date(lastChangeTime.getTime() + configData.interval_hours * 60 * 60 * 1000);
+          const diffMs = nextChange.getTime() - now.getTime();
+          const mins = Math.round(diffMs / 60000);
+          isOverdue = mins < 0;
+          overdueMinutes = isOverdue ? Math.abs(mins) : 0;
+        }
+      }
+
+      const hasLowStock = lastConsumable ? [
+        lastConsumable.continence_pads_level,
+        lastConsumable.barrier_creams_level,
+        lastConsumable.gloves_wipes_level,
+        lastConsumable.cleansing_products_level,
+        lastConsumable.disposable_sheets_level,
+      ].includes('low') : false;
+
+      const skinCheckOverdue = lastSkin ? differenceInHours(now, parseISO(lastSkin.event_occurred_at)) > 48 : false;
+
+      if (hasPositiveUTI || hasSkinIssue || overdueMinutes > 120) {
+        status = 'action';
+        if (hasPositiveUTI) message = 'Positive UTI test – escalation required.';
+        else if (hasSkinIssue) message = 'Skin integrity concern – immediate review needed.';
+        else message = `Pad change critically overdue (${Math.round(overdueMinutes / 60)}h).`;
+      } else if (skinCheckOverdue || hasLowStock || isOverdue) {
+        status = 'monitor';
+        if (skinCheckOverdue) message = 'Skin check overdue – review required.';
+        else if (hasLowStock) message = 'Continence supplies running low.';
+        else message = 'Pad change overdue – attend when possible.';
+      }
+
+      setLatestContinenceData({ status, message, timestamp: lastPad?.event_occurred_at || new Date().toISOString() });
+      const timeAgo = lastPad ? formatDistanceToNow(new Date(lastPad.event_occurred_at), { addSuffix: true }) : 'Never';
+      updateModuleStatus('continence', status, lastPad ? `Last change ${timeAgo}` : 'Not yet logged');
+    } catch (err) { console.error('Error in fetchContinenceStatus:', err); }
+  };
+
+  // ── Urinary Catheter ─────────────────────────────────────────
+  const fetchCatheterStatus = async () => {
+    try {
+      const { data: configData } = await supabase.from('catheter_config').select('*').limit(1).maybeSingle();
+
+      // Fetch care plan as source of truth
+      const { data: planData } = await supabase
+        .from('catheter_care_plans')
+        .select('change_interval, flush_prescribed, flush_frequency, flush_custom_interval')
+        .eq('status', 'published')
+        .order('version', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const { data: changes } = await supabase
+        .from('catheter_change_logs')
+        .select('*')
+        .order('event_occurred_at', { ascending: false })
+        .limit(10);
+
+      const { data: flushLogs } = await supabase
+        .from('catheter_flush_logs')
+        .select('*')
+        .order('event_occurred_at', { ascending: false })
+        .limit(5);
+
+      const { data: stomaChecks } = await supabase
+        .from('catheter_stoma_checks')
+        .select('*')
+        .order('event_occurred_at', { ascending: false })
+        .limit(5);
+
+      const { data: alerts } = await supabase
+        .from('catheter_alerts')
+        .select('*')
+        .is('resolved_at', null);
+
+      const now = new Date();
+      const lastChange = changes?.[0];
+      const lastFlush = flushLogs?.[0];
+      const lastStoma = stomaChecks?.[0];
+
+      // Parse change interval from care plan
+      let changeFrequencyDays = configData?.change_frequency_days || 0;
+      if (planData?.change_interval) {
+        const match = planData.change_interval.toLowerCase().match(/(\d+)\s*(week|wk|day|month)/i);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          const unit = match[2].toLowerCase();
+          if (unit.startsWith('week') || unit === 'wk') changeFrequencyDays = num * 7;
+          else if (unit.startsWith('day')) changeFrequencyDays = num;
+          else if (unit.startsWith('month')) changeFrequencyDays = num * 30;
+        }
+      }
+
+      let isChangeOverdue = false;
+      let daysUntilChange: number | null = null;
+      if (lastChange && changeFrequencyDays > 0) {
+        const nextChange = addDays(parseISO(lastChange.event_occurred_at), changeFrequencyDays);
+        daysUntilChange = differenceInDays(nextChange, now);
+        isChangeOverdue = daysUntilChange < 0;
+      }
+
+      // Parse flush frequency
+      let flushFrequencyHours: number | null = null;
+      if (planData?.flush_prescribed) {
+        const freq = planData.flush_frequency?.toLowerCase();
+        if (freq === 'daily') flushFrequencyHours = 24;
+        else if (freq === 'twice_daily') flushFrequencyHours = 12;
+      }
+      if (!flushFrequencyHours && configData?.flush_frequency_hours) {
+        flushFrequencyHours = configData.flush_frequency_hours;
+      }
+
+      let isFlushOverdue = false;
+      if (flushFrequencyHours && lastFlush) {
+        const nextFlush = addHours(parseISO(lastFlush.event_occurred_at), flushFrequencyHours);
+        isFlushOverdue = differenceInDays(nextFlush, now) < 0;
+      }
+
+      // Stoma concern
+      const hasConcern = lastStoma && (lastStoma.status_level === 'red' || lastStoma.status_level === 'amber');
+
+      let status: 'stable' | 'monitor' | 'action' = 'stable';
+      let message = 'Catheter management on track.';
+
+      if (isChangeOverdue || isFlushOverdue || (lastStoma?.status_level === 'red')) {
+        status = 'action';
+        if (isChangeOverdue) message = `Catheter change overdue by ${Math.abs(daysUntilChange!)} days.`;
+        else if (isFlushOverdue) message = 'Catheter flush overdue – action required.';
+        else message = 'Stoma site concern – escalate to clinician.';
+      } else if ((daysUntilChange !== null && daysUntilChange <= 3) || lastStoma?.status_level === 'amber') {
+        status = 'monitor';
+        if (daysUntilChange !== null && daysUntilChange <= 3) message = `Catheter change due in ${daysUntilChange} day(s).`;
+        else message = 'Stoma site requires monitoring.';
+      }
+
+      setLatestCatheterData({ status, message, timestamp: lastChange?.event_occurred_at || new Date().toISOString() });
+      const timeAgo = lastChange ? formatDistanceToNow(new Date(lastChange.event_occurred_at), { addSuffix: true }) : 'Never';
+      updateModuleStatus('catheter', status, lastChange ? `Last change ${timeAgo}` : 'Not yet logged');
+    } catch (err) { console.error('Error in fetchCatheterStatus:', err); }
+  };
+
+  // ── Pressure Area Prevention ─────────────────────────────────
+  const fetchPressureAreaStatus = async () => {
+    try {
+      const { data: configData } = await supabase.from('pressure_area_config').select('*').limit(1).maybeSingle();
+      const { data: events } = await supabase.from('pressure_relief_events').select('*').order('event_occurred_at', { ascending: false }).limit(50);
+      const { data: skinChecks } = await supabase.from('skin_check_sessions').select('*').order('event_occurred_at', { ascending: false }).limit(10);
+
+      // Fetch published plan
+      const { data: planData } = await supabase
+        .from('pressure_relief_plans')
+        .select('*')
+        .eq('status', 'published')
+        .order('version', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const typedEvents = (events || []) as unknown as PressureReliefEvent[];
+      const typedSkinChecks = (skinChecks || []) as unknown as SkinCheckSession[];
+
+      const statusResult = calculatePressureAreaStatus({
+        plan: planData as unknown as PressureReliefPlan | null,
+        events: typedEvents,
+        skinChecks: typedSkinChecks,
+        config: configData ? {
+          skin_check_frequency_days: configData.skin_check_frequency_days ?? 7,
+          enable_compliance_scoring: configData.enable_compliance_scoring ?? false,
+        } : null,
+        planAcknowledged: true, // Simplified - full check happens in module
+      });
+
+      const moduleStatus = statusResult.status === 'ideal' ? 'stable' : statusResult.status;
+      setLatestPressureAreaData({ status: moduleStatus, message: statusResult.message, timestamp: typedEvents[0]?.event_occurred_at || new Date().toISOString() });
+      updateModuleStatus('pressure-area', moduleStatus, statusResult.lastEntry || 'Not yet logged');
+    } catch (err) { console.error('Error in fetchPressureAreaStatus:', err); }
+  };
+
+  // ── IDDSI & Safe Swallowing ──────────────────────────────────
+  const fetchIddsiStatus = async () => {
+    try {
+      if (!profile?.id || profile.id === '1') return;
+
+      const { data: observations } = await supabase
+        .from('mealtime_observations')
+        .select('severity, event_occurred_at')
+        .eq('client_id', profile.id)
+        .order('event_occurred_at', { ascending: false })
+        .limit(10);
+
+      const latestObs = observations?.[0];
+      if (!latestObs) {
+        updateModuleStatus('iddsi', 'stable', 'Not yet logged');
+        return;
+      }
+
+      // Severity from observation: green / amber / red
+      const severity = latestObs.severity?.toLowerCase();
+      let status: 'stable' | 'monitor' | 'action' = 'stable';
+      let message = 'Safe swallowing within normal range.';
+
+      if (severity === 'red') {
+        status = 'action';
+        message = 'Swallowing concern detected – escalate to Speech Pathologist.';
+      } else if (severity === 'amber') {
+        status = 'monitor';
+        message = 'Mild swallowing signs observed – monitor closely.';
+      }
+
+      // Multi-observation escalation: 2+ consecutive amber → red
+      if (status === 'monitor' && observations && observations.length >= 2) {
+        const recentTwo = observations.slice(0, 2);
+        if (recentTwo.every(o => o.severity?.toLowerCase() === 'amber')) {
+          status = 'action';
+          message = 'Consecutive amber observations – escalate to Speech Pathologist.';
+        }
+      }
+
+      setLatestIddsiData({ status, message, timestamp: latestObs.event_occurred_at });
+      const timeAgo = formatDistanceToNow(new Date(latestObs.event_occurred_at), { addSuffix: true });
+      updateModuleStatus('iddsi', status, `Last observation ${timeAgo}`);
+    } catch (err) { console.error('Error in fetchIddsiStatus:', err); }
+  };
+
+  // ══════════════════════════════════════════════════════════════
+  // LIFECYCLE: Fetch on mount + realtime subscriptions
+  // ══════════════════════════════════════════════════════════════
+
   useEffect(() => {
     fetchProfileFromDb();
     fetchLatestPainAssessment();
@@ -912,164 +861,76 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     fetchSleepStatus();
     fetchOralHealthStatus();
     fetchHealthMonitoringStatus();
+    fetchEpilepsyStatus();
+    fetchContinenceStatus();
+    fetchCatheterStatus();
+    fetchPressureAreaStatus();
+    fetchIddsiStatus();
 
-    // Subscribe to realtime updates for pain assessments
-    const painChannel = supabase
-      .channel('pain-alerts')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'abbey_pain_assessments',
-        },
-        () => {
-          fetchLatestPainAssessment();
-        }
-      )
+    // ── Realtime Subscriptions ────────────────────────────────
+    const painChannel = supabase.channel('pain-alerts')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'abbey_pain_assessments' }, () => fetchLatestPainAssessment())
       .subscribe();
 
-    // Subscribe to realtime updates for bowel logs
-    const bowelChannel = supabase
-      .channel('bowel-alerts')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'bowel_log_entries',
-        },
-        () => {
-          fetchBowelCareStatus();
-        }
-      )
+    const bowelChannel = supabase.channel('bowel-alerts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bowel_log_entries' }, () => fetchBowelCareStatus())
       .subscribe();
 
-    // Subscribe to realtime updates for weight entries
-    const weightChannel = supabase
-      .channel('weight-alerts')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'weight_entries',
-        },
-        () => {
-          fetchWeightStatus();
-        }
-      )
+    const weightChannel = supabase.channel('weight-alerts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'weight_entries' }, () => fetchWeightStatus())
       .subscribe();
 
-    // Subscribe to realtime updates for fluid intake
-    const fluidChannel = supabase
-      .channel('fluid-alerts')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'fluid_intake_entries',
-        },
-        () => {
-          fetchFluidStatus();
-        }
-      )
+    const fluidChannel = supabase.channel('fluid-alerts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'fluid_intake_entries' }, () => fetchFluidStatus())
       .subscribe();
 
-    // Subscribe to realtime updates for profile/client changes
-    const profileChannel = supabase
-      .channel('profile-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'clients',
-        },
-        () => {
-          fetchProfileFromDb();
-        }
-      )
+    const profileChannel = supabase.channel('profile-updates')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'clients' }, () => fetchProfileFromDb())
       .subscribe();
 
-    // Subscribe to realtime updates for health prevention tables
-    const screeningChannel = supabase
-      .channel('screening-alerts')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'cancer_screening_records',
-        },
-        () => {
-          fetchHealthPreventionStatus();
-        }
-      )
+    const screeningChannel = supabase.channel('screening-alerts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cancer_screening_records' }, () => fetchHealthPreventionStatus())
       .subscribe();
 
-    const vaccinationChannel = supabase
-      .channel('vaccination-alerts')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'vaccination_records',
-        },
-        () => {
-          fetchHealthPreventionStatus();
-        }
-      )
+    const vaccinationChannel = supabase.channel('vaccination-alerts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'vaccination_records' }, () => fetchHealthPreventionStatus())
       .subscribe();
 
-    // Subscribe to realtime updates for sleep entries
-    const sleepChannel = supabase
-      .channel('sleep-alerts')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'sleep_entries',
-        },
-        () => {
-          fetchSleepStatus();
-        }
-      )
+    const sleepChannel = supabase.channel('sleep-alerts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sleep_entries' }, () => fetchSleepStatus())
       .subscribe();
 
-    // Subscribe to realtime updates for oral health assessments
-    const oralHealthChannel = supabase
-      .channel('oral-health-alerts')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'oral_health_assessments',
-        },
-        () => {
-          fetchOralHealthStatus();
-        }
-      )
+    const oralHealthChannel = supabase.channel('oral-health-alerts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'oral_health_assessments' }, () => fetchOralHealthStatus())
       .subscribe();
 
-    // Subscribe to realtime updates for vital sign entries
-    const vitalSignChannel = supabase
-      .channel('vital-sign-alerts')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'vital_sign_entries',
-        },
-        () => {
-          fetchHealthMonitoringStatus();
-        }
-      )
+    const vitalSignChannel = supabase.channel('vital-sign-alerts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'vital_sign_entries' }, () => fetchHealthMonitoringStatus())
+      .subscribe();
+
+    // New module subscriptions
+    const seizureChannel = supabase.channel('seizure-alerts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'seizure_events' }, () => fetchEpilepsyStatus())
+      .subscribe();
+
+    const padChannel = supabase.channel('pad-alerts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'continence_pad_changes' }, () => fetchContinenceStatus())
+      .subscribe();
+
+    const catheterChangeChannel = supabase.channel('catheter-change-alerts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'catheter_change_logs' }, () => fetchCatheterStatus())
+      .subscribe();
+
+    const pressureChannel = supabase.channel('pressure-alerts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pressure_relief_events' }, () => fetchPressureAreaStatus())
+      .subscribe();
+
+    const skinCheckChannel = supabase.channel('skin-check-alerts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'skin_check_sessions' }, () => fetchPressureAreaStatus())
+      .subscribe();
+
+    const mealtimeChannel = supabase.channel('mealtime-alerts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'mealtime_observations' }, () => fetchIddsiStatus())
       .subscribe();
 
     return () => {
@@ -1083,11 +944,16 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       supabase.removeChannel(sleepChannel);
       supabase.removeChannel(oralHealthChannel);
       supabase.removeChannel(vitalSignChannel);
+      supabase.removeChannel(seizureChannel);
+      supabase.removeChannel(padChannel);
+      supabase.removeChannel(catheterChangeChannel);
+      supabase.removeChannel(pressureChannel);
+      supabase.removeChannel(skinCheckChannel);
+      supabase.removeChannel(mealtimeChannel);
     };
   }, []);
 
   // Re-fetch profile-dependent statuses when profile loads from DB
-  // This fixes the race condition where status fetches run before the real profile is loaded
   useEffect(() => {
     if (profile?.id && profile.id !== '1') {
       fetchHealthPreventionStatus();
@@ -1098,6 +964,11 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       fetchSleepStatus();
       fetchOralHealthStatus();
       fetchHealthMonitoringStatus();
+      fetchEpilepsyStatus();
+      fetchContinenceStatus();
+      fetchCatheterStatus();
+      fetchPressureAreaStatus();
+      fetchIddsiStatus();
     }
   }, [profile?.id, profile?.dateOfBirth]);
 
@@ -1139,19 +1010,36 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     return m.enabled;
   });
 
+  // ── Build alert map from all module data ────────────────────
+  const alertMap: ModuleAlertMap = {
+    'constipation': latestBowelData || undefined,
+    'weight': latestWeightData || undefined,
+    'fluid-balance': latestFluidData || undefined,
+    'health-prevention': latestHealthPreventionData || undefined,
+    'sleep': latestSleepData || undefined,
+    'oral-health': latestOralHealthData || undefined,
+    'health-monitoring': latestHealthMonitoringData || undefined,
+    'epilepsy': latestEpilepsyData || undefined,
+    'continence': latestContinenceData || undefined,
+    'catheter': latestCatheterData || undefined,
+    'pressure-area': latestPressureAreaData || undefined,
+    'iddsi': latestIddsiData || undefined,
+  };
+
   // Calculate global alert state dynamically from module statuses
   // When monitoring is paused, suppress all alerts
   const activeAlerts = isMonitoringPaused ? [] : generateAlertsFromModules(
     activeEnabledModules, 
     latestPainData || undefined,
-    latestBowelData || undefined,
-    latestWeightData || undefined,
-    latestFluidData || undefined,
-    latestHealthPreventionData || undefined,
-    latestSleepData || undefined,
-    latestOralHealthData || undefined,
-    latestHealthMonitoringData || undefined
+    alertMap,
   );
+
+  // Sort alerts: RED first, then AMBER, within same severity by most recent timestamp
+  activeAlerts.sort((a, b) => {
+    if (a.status !== b.status) return a.status === 'red' ? -1 : 1;
+    return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+  });
+
   const hasRedAlert = !isMonitoringPaused && activeEnabledModules.some((m) => m.status === 'action');
   const hasAmberAlert = !isMonitoringPaused && activeEnabledModules.some((m) => m.status === 'monitor');
   
@@ -1192,10 +1080,15 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         refreshSleepStatus: fetchSleepStatus,
         refreshOralHealthStatus: fetchOralHealthStatus,
         refreshHealthMonitoringStatus: fetchHealthMonitoringStatus,
-         monitoringStatus,
-         isMonitoringPaused,
-         pauseMonitoring,
-         resumeMonitoring,
+        refreshEpilepsyStatus: fetchEpilepsyStatus,
+        refreshContinenceStatus: fetchContinenceStatus,
+        refreshCatheterStatus: fetchCatheterStatus,
+        refreshPressureAreaStatus: fetchPressureAreaStatus,
+        refreshIddsiStatus: fetchIddsiStatus,
+        monitoringStatus,
+        isMonitoringPaused,
+        pauseMonitoring,
+        resumeMonitoring,
       }}
     >
       {children}
