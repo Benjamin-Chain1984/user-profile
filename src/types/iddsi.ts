@@ -18,6 +18,7 @@ export interface IddsiConfig {
   enableNotifications: boolean;
   amberRecipientIds: string[];
   redRecipientIds: string[];
+  minSafeAngle: number;
 }
 
 export interface MealtimeObservation {

@@ -2818,6 +2818,7 @@ export type Database = {
           food_level_variant: string | null
           id: string
           last_review_date: string | null
+          min_safe_angle: number | null
           next_review_due: string | null
           observation_frequency: string
           red_recipient_ids: string[]
@@ -2839,6 +2840,7 @@ export type Database = {
           food_level_variant?: string | null
           id?: string
           last_review_date?: string | null
+          min_safe_angle?: number | null
           next_review_due?: string | null
           observation_frequency?: string
           red_recipient_ids?: string[]
@@ -2860,6 +2862,7 @@ export type Database = {
           food_level_variant?: string | null
           id?: string
           last_review_date?: string | null
+          min_safe_angle?: number | null
           next_review_due?: string | null
           observation_frequency?: string
           red_recipient_ids?: string[]
