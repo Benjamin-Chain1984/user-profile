@@ -119,7 +119,7 @@ export const FOOD_LEVELS: Record<string, LevelInfo> = {
       'Finger Test: Press between thumb and finger – it should squash easily',
     ],
     equipment: ['Fork', 'Chopsticks or ruler'],
-    videoUrl: 'https://www.youtube.com/embed/9NcRqUhR0Ks',
+    videoUrl: 'https://www.youtube.com/embed/1wfODug5BmQ',
     videoTitle: 'IDDSI Fork Pressure, Chopstick, and Finger Tests – Level 6',
   },
   '5': {
