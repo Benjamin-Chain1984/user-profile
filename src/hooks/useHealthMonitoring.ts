@@ -127,12 +127,15 @@ export function useVitalSignEntries(clientId?: string, limit = 50) {
     },
   });
 
+  // Fetch altered criteria for status calculations
+  const { criteriaMap } = useAlteredCriteria(clientId);
+
   const addEntry = useMutation({
     mutationFn: async (entry: Partial<VitalSignEntry>) => {
       if (!user?.id) throw new Error('Not authenticated');
 
-      // Calculate statuses before saving
-      const statuses = calculateEntryStatuses(entry);
+      // Calculate statuses using altered criteria if configured
+      const statuses = calculateEntryStatuses(entry, criteriaMap);
 
       const { data, error } = await supabase
         .from('vital_sign_entries')
@@ -174,7 +177,7 @@ export function useVitalSignEntries(clientId?: string, limit = 50) {
     mutationFn: async ({ id, editReason, ...updates }: Partial<VitalSignEntry> & { id: string; editReason: string }) => {
       if (!user?.id) throw new Error('Not authenticated');
 
-      const statuses = calculateEntryStatuses(updates);
+      const statuses = calculateEntryStatuses(updates, criteriaMap);
 
       const { data, error } = await supabase
         .from('vital_sign_entries')
@@ -445,8 +448,15 @@ export function useAlteredCriteria(clientId?: string) {
 export function useHealthMonitoringStatus(clientId?: string): HealthMonitoringStatusInfo {
   const { entries } = useVitalSignEntries(clientId, 10);
   const { alerts } = useVitalSignAlerts(clientId);
+  const { criteriaMap } = useAlteredCriteria(clientId);
 
-  const statusInfo = calculateHealthMonitoringStatus(entries, alerts);
+  // Recalculate latest entry statuses using altered criteria before passing to status calculator
+  const recalculatedEntries = entries.map(entry => {
+    const statuses = calculateEntryStatuses(entry, criteriaMap);
+    return { ...entry, ...statuses };
+  });
+
+  const statusInfo = calculateHealthMonitoringStatus(recalculatedEntries, alerts);
 
   return {
     ...statusInfo,
