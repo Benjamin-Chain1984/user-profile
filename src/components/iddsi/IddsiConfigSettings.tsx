@@ -276,34 +276,114 @@ export function IddsiConfigSettings({ clientId }: Props) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
-            {/* Visual range bar */}
-            <div className="relative h-10 rounded-lg overflow-hidden flex">
-              {/* Left danger zone */}
-              <div
-                className="bg-destructive/20 flex items-center justify-center text-xs font-medium text-destructive"
-                style={{ width: `${((minSafeAngle - 60) / 60) * 100}%` }}
-              >
-                {minSafeAngle > 70 && '🔴'}
-              </div>
-              {/* Safe zone */}
-              <div
-                className="bg-success/20 flex items-center justify-center text-xs font-semibold text-success border-x-2 border-success/40"
-                style={{ width: `${((targetSafeAngle - minSafeAngle) / 60) * 100}%` }}
-              >
-                🟢 Safe
-              </div>
-              {/* Right danger zone */}
-              <div
-                className="bg-destructive/20 flex items-center justify-center text-xs font-medium text-destructive flex-1"
-              >
-                {targetSafeAngle < 110 && '🔴'}
-              </div>
-            </div>
-            <div className="flex justify-between text-[10px] text-muted-foreground px-1">
-              <span>60°</span>
-              <span>90° (upright)</span>
-              <span>120°</span>
-            </div>
+            {/* Protractor SVG */}
+            {(() => {
+              const cx = 150, cy = 160, r = 120;
+              const rangeMin = 60, rangeMax = 120;
+              // Map angle value to position on a semicircle arc
+              // 60° → left (SVG angle 180°), 90° → top (SVG angle 270°/−90°), 120° → right (SVG angle 0°)
+              const angleToPos = (deg: number) => {
+                // Normalize: 60→0, 120→1
+                const t = (deg - rangeMin) / (rangeMax - rangeMin);
+                // Map to SVG angle: 180° (left) to 0° (right), going counter-clockwise through top
+                const svgAngle = Math.PI - t * Math.PI;
+                return { x: cx + r * Math.cos(svgAngle), y: cy - r * Math.sin(svgAngle) };
+              };
+              const arcPath = (startDeg: number, endDeg: number) => {
+                const s = angleToPos(startDeg);
+                const e = angleToPos(endDeg);
+                const angleSweep = ((endDeg - startDeg) / (rangeMax - rangeMin)) * 180;
+                const largeArc = angleSweep > 180 ? 1 : 0;
+                // Sweep direction: clockwise (1) because we go left→top→right
+                return `M ${s.x} ${s.y} A ${r} ${r} 0 ${largeArc} 1 ${e.x} ${e.y}`;
+              };
+              // Tick marks
+              const ticks = [];
+              for (let d = rangeMin; d <= rangeMax; d += 5) {
+                const isMajor = d % 10 === 0;
+                const inner = isMajor ? r - 14 : r - 8;
+                const outer = r + 2;
+                const t = (d - rangeMin) / (rangeMax - rangeMin);
+                const svgAngle = Math.PI - t * Math.PI;
+                ticks.push({
+                  x1: cx + inner * Math.cos(svgAngle), y1: cy - inner * Math.sin(svgAngle),
+                  x2: cx + outer * Math.cos(svgAngle), y2: cy - outer * Math.sin(svgAngle),
+                  label: d, isMajor,
+                  lx: cx + (r + 16) * Math.cos(svgAngle), ly: cy - (r + 16) * Math.sin(svgAngle),
+                });
+              }
+              const lo = Math.max(rangeMin, Math.min(rangeMax, minSafeAngle));
+              const hi = Math.max(rangeMin, Math.min(rangeMax, targetSafeAngle));
+
+              return (
+                <div className="flex justify-center">
+                  <svg viewBox="0 0 300 185" className="w-full max-w-sm">
+                    {/* Background arc (thin) */}
+                    <path d={arcPath(rangeMin, rangeMax)} fill="none" stroke="hsl(var(--muted))" strokeWidth="6" opacity="0.4" />
+
+                    {/* Danger arc – left (too reclined) */}
+                    <path d={arcPath(rangeMin, lo)} fill="none" stroke="hsl(var(--destructive))" strokeWidth="20" strokeLinecap="butt" opacity="0.25" />
+                    {/* Safe arc */}
+                    <path d={arcPath(lo, hi)} fill="none" stroke="hsl(var(--success))" strokeWidth="20" strokeLinecap="butt" opacity="0.35" />
+                    {/* Danger arc – right (too far forward) */}
+                    <path d={arcPath(hi, rangeMax)} fill="none" stroke="hsl(var(--destructive))" strokeWidth="20" strokeLinecap="butt" opacity="0.25" />
+
+                    {/* Tick marks */}
+                    {ticks.map(t => (
+                      <g key={t.label}>
+                        <line x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}
+                          stroke="hsl(var(--foreground))"
+                          strokeWidth={t.isMajor ? 1.2 : 0.6}
+                          opacity={t.isMajor ? 0.5 : 0.25}
+                        />
+                        {t.isMajor && (
+                          <text x={t.lx} y={t.ly} textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="hsl(var(--muted-foreground))" fontWeight="500">
+                            {t.label}°
+                          </text>
+                        )}
+                      </g>
+                    ))}
+
+                    {/* 90° upright label */}
+                    <text x={cx} y={cy - r - 22} textAnchor="middle" fontSize="9" fill="hsl(var(--foreground))" fontWeight="600">
+                      90° upright
+                    </text>
+                    <line x1={cx} y1={cy - r - 4} x2={cx} y2={cy - r + 12} stroke="hsl(var(--foreground))" strokeWidth="1.5" opacity="0.6" />
+
+                    {/* Lower bound dot */}
+                    {(() => {
+                      const p = angleToPos(lo);
+                      return <circle cx={p.x} cy={p.y} r="6" fill="hsl(var(--destructive))" stroke="white" strokeWidth="2" />;
+                    })()}
+                    {/* Upper bound dot */}
+                    {(() => {
+                      const p = angleToPos(hi);
+                      return <circle cx={p.x} cy={p.y} r="6" fill="hsl(var(--success))" stroke="white" strokeWidth="2" />;
+                    })()}
+
+                    {/* Center info */}
+                    <text x={cx} y={cy - 30} textAnchor="middle" fontSize="18" fontWeight="700" fill="hsl(var(--success))">
+                      {lo}°–{hi}°
+                    </text>
+                    <text x={cx} y={cy - 14} textAnchor="middle" fontSize="9" fill="hsl(var(--muted-foreground))">
+                      Safe Zone
+                    </text>
+
+                    {/* Left label */}
+                    <text x={30} y={cy + 10} textAnchor="middle" fontSize="7" fill="hsl(var(--destructive))" fontWeight="600">
+                      Too Reclined
+                    </text>
+                    {/* Right label */}
+                    <text x={270} y={cy + 10} textAnchor="middle" fontSize="7" fill="hsl(var(--destructive))" fontWeight="600">
+                      Too Forward
+                    </text>
+
+                    {/* Base line */}
+                    <line x1={cx - r - 5} y1={cy} x2={cx + r + 5} y2={cy} stroke="hsl(var(--border))" strokeWidth="1" />
+                  </svg>
+                </div>
+              );
+            })()}
 
             {/* Editable bounds */}
             <div className="grid grid-cols-2 gap-4">
