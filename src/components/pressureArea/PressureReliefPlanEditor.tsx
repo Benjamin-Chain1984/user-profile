@@ -21,7 +21,7 @@ import {
   SCHEDULE_TYPE_LABELS, DEFAULT_POSITIONS, HIGH_RISK_AREAS,
   type ScheduleType, type RotationPosition,
 } from '@/types/pressureArea';
-import { Save, ArrowLeft, Send, Loader2, Plus, Trash2 } from 'lucide-react';
+import { Save, ArrowLeft, Send, Loader2, Plus, Trash2, Clock } from 'lucide-react';
 
 interface Props {
   clientId?: string;
@@ -217,29 +217,57 @@ export function PressureReliefPlanEditor({ clientId, onClose }: Props) {
       <Card>
         <CardHeader><CardTitle className="text-lg">Rotation Sequence</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          {rotationSequence.map((pos, idx) => (
-            <div key={pos.id} className="flex gap-2 items-start border rounded-lg p-3">
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs">{idx + 1}</Badge>
-                  <span className="font-medium text-sm">{pos.name}</span>
-                </div>
-                <div className="grid sm:grid-cols-2 gap-2">
-                  <div>
-                    <Label className="text-xs">Duration (min)</Label>
-                    <Input type="number" value={pos.target_duration_minutes} onChange={e => updatePosition(pos.id, 'target_duration_minutes', Number(e.target.value))} min={15} className="h-8" />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Notes/Restrictions</Label>
-                    <Input value={pos.notes || ''} onChange={e => updatePosition(pos.id, 'notes', e.target.value || null)} placeholder="e.g. Avoid if pain" className="h-8" />
-                  </div>
-                </div>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => removePosition(pos.id)} className="text-destructive">
-                <Trash2 className="h-4 w-4" />
-              </Button>
+          {scheduleType !== 'as_required' && rotationSequence.length > 0 && (
+            <div className="p-3 rounded-lg bg-muted/50 border text-sm text-muted-foreground flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Times are auto-calculated from day start ({dayStart}) using each position's duration.
             </div>
-          ))}
+          )}
+          {rotationSequence.map((pos, idx) => {
+            // Calculate scheduled time for this position
+            let scheduledTime = '';
+            if (scheduleType !== 'as_required' && dayStart) {
+              const [startH, startM] = dayStart.split(':').map(Number);
+              let cumulativeMinutes = 0;
+              for (let i = 0; i < idx; i++) {
+                cumulativeMinutes += rotationSequence[i].target_duration_minutes || intervalMinutes;
+              }
+              const totalMinutes = startH * 60 + startM + cumulativeMinutes;
+              const h = Math.floor(totalMinutes / 60) % 24;
+              const m = totalMinutes % 60;
+              scheduledTime = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+            }
+
+            return (
+              <div key={pos.id} className="flex gap-2 items-start border rounded-lg p-3">
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">{idx + 1}</Badge>
+                    <span className="font-medium text-sm">{pos.name}</span>
+                    {scheduledTime && (
+                      <Badge className="text-xs bg-primary/10 text-primary border-primary/20">
+                        <Clock className="h-3 w-3 mr-1" />
+                        {scheduledTime}
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Duration (min)</Label>
+                      <Input type="number" value={pos.target_duration_minutes} onChange={e => updatePosition(pos.id, 'target_duration_minutes', Number(e.target.value))} min={15} className="h-8" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Notes/Restrictions</Label>
+                      <Input value={pos.notes || ''} onChange={e => updatePosition(pos.id, 'notes', e.target.value || null)} placeholder="e.g. Avoid if pain" className="h-8" />
+                    </div>
+                  </div>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => removePosition(pos.id)} className="text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            );
+          })}
 
           <div className="flex flex-wrap gap-2">
             {DEFAULT_POSITIONS.map(name => (
