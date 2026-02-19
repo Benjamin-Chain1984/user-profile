@@ -14,6 +14,7 @@ import {
   useConsumablesChecks,
   useUTITests,
 } from '@/hooks/useContinence';
+import { useProfile } from '@/contexts/ProfileContext';
 import {
   Clock,
   Timer,
@@ -22,6 +23,7 @@ import {
   Package,
   TestTube,
   Repeat,
+  Droplets,
 } from 'lucide-react';
 import {
   differenceInMinutes,
@@ -766,6 +768,49 @@ function UTITestTile({
 }
 
 /* ──────────────────────────────────────────────
+ * 5. Fluid Balance Tile (read-only)
+ * ────────────────────────────────────────────── */
+function FluidBalanceTile({ clientId }: { clientId?: string }) {
+  const { getModuleStatus } = useProfile();
+  const fluidModule = getModuleStatus('fluid-balance');
+
+  const status: HealthStatus = fluidModule?.status || 'stable';
+  const message = fluidModule?.lastEntry || 'No data available';
+
+  return (
+    <Card>
+      <CardContent className="p-5 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Droplets className="h-4 w-4 text-primary" />
+            Fluid Balance
+          </div>
+          <StatusBadge status={status} size="sm" />
+        </div>
+
+        <div className="space-y-1">
+          <div
+            className={`text-lg font-semibold ${
+              status === 'action'
+                ? 'text-destructive'
+                : status === 'monitor'
+                ? 'text-amber-600'
+                : ''
+            }`}
+          >
+            {message}
+          </div>
+        </div>
+
+        <p className="text-xs text-muted-foreground italic">
+          Refer to Fluid Balance Module to update data.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ──────────────────────────────────────────────
  * Main Grid
  * ────────────────────────────────────────────── */
 export function ContinenceStatusTiles({
@@ -803,6 +848,9 @@ export function ContinenceStatusTiles({
           onLog={onLogUTI}
           disabled={disabled}
         />
+      )}
+      {config?.enable_hydration_link && (
+        <FluidBalanceTile clientId={clientId} />
       )}
     </div>
   );
