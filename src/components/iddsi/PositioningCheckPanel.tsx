@@ -41,7 +41,7 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
       if (event.beta !== null) {
         // Full 0–180 range, no clamping
         const tilt = Math.round(Math.abs(event.beta));
-        setRawAngle(Math.min(180, Math.max(0, tilt)));
+        setRawAngle(Math.min(190, Math.max(0, tilt)));
       }
     };
 
@@ -76,8 +76,8 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
   // Position descriptor
   const getPositionLabel = (angle: number) => {
     if (angle >= safeLower && angle <= safeUpper) return 'Upright';
-    if (angle < 90) return 'Leaning Forward';
-    return 'Reclined Back';
+    if (angle < safeLower) return 'Too Forward';
+    return 'Too Reclined';
   };
 
   const getStatusLabel = () => {
@@ -147,12 +147,12 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
             ) : (
               <div className="space-y-2 w-full">
                 <p className="text-sm text-muted-foreground text-center">
-                  Gyroscope not available. Enter angle manually (0–180°):
+                  Gyroscope not available. Enter angle manually (0–190°):
                 </p>
                 <Input
                   type="number"
                   min={0}
-                  max={180}
+                  max={190}
                   value={manualAngle}
                   onChange={e => setManualAngle(e.target.value)}
                   className="text-center text-2xl font-bold h-14"
@@ -181,15 +181,15 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
             {/* Reference info */}
             <div className="text-center space-y-1">
               <p className="text-xs text-muted-foreground">
-                0° = Flat · 90° = Upright · 180° = Flat opposite
+                0° = Too Forward · 90° = Upright · 190° = Too Reclined
               </p>
             </div>
 
             {/* Zone legend */}
             <div className="flex gap-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-destructive" /> &lt;{safeLower}° Unsafe</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-destructive" /> &lt;{safeLower}° Too Forward</span>
               <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-success" /> {safeLower}°–{safeUpper}° Safe</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-destructive" /> &gt;{safeUpper}° Unsafe</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-destructive" /> &gt;{safeUpper}° Too Reclined</span>
             </div>
           </div>
         </CardContent>
