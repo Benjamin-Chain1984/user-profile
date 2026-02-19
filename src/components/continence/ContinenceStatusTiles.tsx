@@ -495,6 +495,25 @@ function SuppliesTile({
 }) {
   const { lastCheck, hasLowStock } = useConsumablesChecks(clientId);
 
+  // Categorize items by level
+  const lowItems: string[] = [];
+  const mediumItems: string[] = [];
+  if (lastCheck) {
+    const items: { key: keyof typeof lastCheck; label: string }[] = [
+      { key: 'continence_pads_level', label: 'Pads' },
+      { key: 'barrier_creams_level', label: 'Cream' },
+      { key: 'gloves_wipes_level', label: 'Gloves/Wipes' },
+      { key: 'cleansing_products_level', label: 'Cleansing' },
+      { key: 'disposable_sheets_level', label: 'Sheets' },
+    ];
+    for (const item of items) {
+      if (lastCheck[item.key] === 'low') lowItems.push(item.label);
+      else if (lastCheck[item.key] === 'medium') mediumItems.push(item.label);
+    }
+  }
+
+  const hasMediumStock = mediumItems.length > 0;
+
   let status: HealthStatus = 'stable';
   let statusLabel = 'Stocked';
 
@@ -504,16 +523,9 @@ function SuppliesTile({
   } else if (hasLowStock) {
     status = 'action';
     statusLabel = 'Low stock';
-  }
-
-  // Count low items
-  const lowItems: string[] = [];
-  if (lastCheck) {
-    if (lastCheck.continence_pads_level === 'low') lowItems.push('Pads');
-    if (lastCheck.barrier_creams_level === 'low') lowItems.push('Cream');
-    if (lastCheck.gloves_wipes_level === 'low') lowItems.push('Gloves/Wipes');
-    if (lastCheck.cleansing_products_level === 'low') lowItems.push('Cleansing');
-    if (lastCheck.disposable_sheets_level === 'low') lowItems.push('Sheets');
+  } else if (hasMediumStock) {
+    status = 'monitor';
+    statusLabel = 'Monitor stock';
   }
 
   const lastTime = lastCheck
@@ -546,6 +558,11 @@ function SuppliesTile({
           {lowItems.length > 0 && (
             <p className="text-xs text-destructive">
               Low: {lowItems.join(', ')}
+            </p>
+          )}
+          {mediumItems.length > 0 && (
+            <p className="text-xs text-amber-600">
+              Medium: {mediumItems.join(', ')}
             </p>
           )}
           {lastTime && (
