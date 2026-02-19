@@ -54,8 +54,8 @@ export function IddsiConfigSettings({ clientId }: Props) {
     amberRecipientIds: [],
     redRecipientIds: [],
   });
-  const [minSafeAngle, setMinSafeAngle] = useState(80);
-  const [targetSafeAngle, setTargetSafeAngle] = useState(100);
+  const [minSafeAngle, setMinSafeAngle] = useState(70);
+  const [targetSafeAngle, setTargetSafeAngle] = useState(90);
 
   useEffect(() => {
     if (config) {
@@ -283,9 +283,9 @@ export function IddsiConfigSettings({ clientId }: Props) {
             {/* Protractor SVG */}
             {(() => {
               const cx = 150, cy = 160, r = 120;
-              const rangeMin = 0, rangeMax = 190;
+              const rangeMin = 0, rangeMax = 90;
               // Map angle value to position on a semicircle arc
-              // 0° (too forward) → left, 90° → top (upright), 190° (too reclined) → right
+              // 0° (lying flat) → left, 90° (upright) → right
               const angleToPos = (deg: number) => {
                 const t = (deg - rangeMin) / (rangeMax - rangeMin);
                 const svgAngle = Math.PI - t * Math.PI;
@@ -301,7 +301,7 @@ export function IddsiConfigSettings({ clientId }: Props) {
               // Tick marks every 10°
               const ticks = [];
               for (let d = rangeMin; d <= rangeMax; d += 10) {
-                const isMajor = d % 30 === 0 || d === 0 || d === 190;
+                const isMajor = d % 30 === 0 || d === 0 || d === 90;
                 const inner = isMajor ? r - 14 : r - 8;
                 const outer = r + 2;
                 const t = (d - rangeMin) / (rangeMax - rangeMin);
@@ -347,7 +347,7 @@ export function IddsiConfigSettings({ clientId }: Props) {
 
                     {/* 90° upright label */}
                     <text x={angleToPos(90).x} y={cy - r - 22} textAnchor="middle" fontSize="9" fill="hsl(var(--foreground))" fontWeight="600">
-                      90° upright
+                      90° Upright
                     </text>
                     <line x1={angleToPos(90).x} y1={cy - r - 4} x2={angleToPos(90).x} y2={cy - r + 12} stroke="hsl(var(--foreground))" strokeWidth="1.5" opacity="0.6" />
 
@@ -372,11 +372,11 @@ export function IddsiConfigSettings({ clientId }: Props) {
 
                     {/* Left label */}
                     <text x={30} y={cy + 10} textAnchor="middle" fontSize="7" fill="hsl(var(--destructive))" fontWeight="600">
-                      Too Forward
+                      0° Lying Flat
                     </text>
                     {/* Right label */}
-                    <text x={270} y={cy + 10} textAnchor="middle" fontSize="7" fill="hsl(var(--destructive))" fontWeight="600">
-                      Too Reclined
+                    <text x={270} y={cy + 10} textAnchor="middle" fontSize="7" fill="hsl(var(--foreground))" fontWeight="600">
+                      90° Upright
                     </text>
 
                     {/* Base line */}
@@ -405,7 +405,7 @@ export function IddsiConfigSettings({ clientId }: Props) {
                   />
                   <span className="text-lg text-muted-foreground">°</span>
                 </div>
-                <p className="text-[11px] text-muted-foreground">Below → too far forward</p>
+                <p className="text-[11px] text-muted-foreground">Below → too reclined</p>
               </div>
 
               <div className="space-y-2 p-4 rounded-lg border border-success/20 bg-success/5">
@@ -414,18 +414,18 @@ export function IddsiConfigSettings({ clientId }: Props) {
                   <Input
                     type="number"
                     min={minSafeAngle + 5}
-                    max={190}
+                    max={90}
                     step={5}
                     value={targetSafeAngle}
                     onChange={e => {
                       const v = Number(e.target.value);
-                      if (v <= 190 && v > minSafeAngle) setTargetSafeAngle(v);
+                      if (v <= 90 && v > minSafeAngle) setTargetSafeAngle(v);
                     }}
                     className="text-2xl font-bold h-12 w-20 text-center border-success/30"
                   />
                   <span className="text-lg text-muted-foreground">°</span>
                 </div>
-                <p className="text-[11px] text-muted-foreground">Above → too reclined</p>
+                <p className="text-[11px] text-muted-foreground">Target upright position</p>
               </div>
             </div>
 
@@ -435,7 +435,7 @@ export function IddsiConfigSettings({ clientId }: Props) {
                 Safe zone: <span className="text-success font-bold">{minSafeAngle}°</span> – <span className="text-success font-bold">{targetSafeAngle}°</span>
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Target: 90° upright · Accommodates natural movement during meals
+                0° = lying flat · 90° = fully upright
               </p>
             </div>
           </CardContent>
