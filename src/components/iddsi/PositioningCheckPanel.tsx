@@ -252,7 +252,7 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
                     </text>
 
                     {/* Wheelchair silhouette at center */}
-                    <g transform={`translate(${cx}, ${cy - 8})`} opacity="0.15">
+                    <g transform={`translate(${cx}, ${cy - 8}) scale(1.6)`} opacity="0.15">
                       {/* Head */}
                       <circle cx="0" cy="-52" r="8" fill="hsl(var(--foreground))" />
                       {/* Body/torso */}
