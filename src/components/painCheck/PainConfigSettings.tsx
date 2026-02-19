@@ -1,18 +1,17 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { usePainConfig } from '@/hooks/usePainConfig';
-import { ASSESSMENT_TRIGGER_LABELS, AssessmentTrigger } from '@/types/painAssessment';
+import { AssessmentFrequency, ASSESSMENT_FREQUENCY_OPTIONS } from '@/types/painAssessment';
 import { ModuleNotificationsCard, type ModuleNotificationSettings } from '@/components/module';
 import { useModuleAlertRecipients, useSetModuleAlertRecipients } from '@/hooks/useNotificationContacts';
 import type { AlertSeverity } from '@/types/notificationContacts';
-import { Settings, Clock, Save, AlertTriangle, ClipboardList, Brain } from 'lucide-react';
+import { Settings, Clock, Save, AlertTriangle, ClipboardList, Brain, CalendarClock, Bell } from 'lucide-react';
 
 interface PainConfigSettingsProps {
   clientId?: string;
@@ -55,8 +54,12 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
   // Use local settings if user has made changes, otherwise use computed from DB
   const activeNotificationSettings = localNotificationSettings ?? notificationSettings;
 
-  const [triggers, setTriggers] = useState<AssessmentTrigger[]>(effectiveConfig.assessment_triggers);
-  const [customTrigger, setCustomTrigger] = useState(effectiveConfig.custom_trigger_text || '');
+  // Extract frequency and situational from triggers array
+  const initialFrequency = (effectiveConfig.assessment_triggers.find(t => ['daily', 'weekly', 'fortnightly'].includes(t)) || 'daily') as AssessmentFrequency;
+  const initialSituational = effectiveConfig.assessment_triggers.includes('staff_concern');
+  
+  const [frequency, setFrequency] = useState<AssessmentFrequency>(initialFrequency);
+  const [situationalEnabled, setSituationalEnabled] = useState(initialSituational);
   const [mildHours, setMildHours] = useState(effectiveConfig.mild_reassess_hours);
   const [moderateHours, setModerateHours] = useState(effectiveConfig.moderate_reassess_hours);
   const [severeHours, setSevereHours] = useState(effectiveConfig.severe_reassess_hours);
@@ -65,22 +68,15 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
 
   useEffect(() => {
     if (config) {
-      setTriggers(config.assessment_triggers);
-      setCustomTrigger(config.custom_trigger_text || '');
+      const freq = (config.assessment_triggers.find(t => ['daily', 'weekly', 'fortnightly'].includes(t)) || 'daily') as AssessmentFrequency;
+      setFrequency(freq);
+      setSituationalEnabled(config.assessment_triggers.includes('staff_concern'));
       setMildHours(config.mild_reassess_hours);
       setModerateHours(config.moderate_reassess_hours);
       setSevereHours(config.severe_reassess_hours);
       setEnabledTools(config.enabled_tools || ['abbey', 'painad']);
     }
   }, [config]);
-
-  const handleTriggerToggle = (trigger: AssessmentTrigger) => {
-    setTriggers(prev => 
-      prev.includes(trigger) 
-        ? prev.filter(t => t !== trigger)
-        : [...prev, trigger]
-    );
-  };
 
   const handleNotificationSettingsChange = (settings: ModuleNotificationSettings) => {
     setLocalNotificationSettings(settings);
@@ -101,9 +97,12 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
 
   const handleSave = async () => {
     setSaving(true);
+    const triggers = [frequency as string];
+    if (situationalEnabled) triggers.push('staff_concern');
+    
     const success = await saveConfig({
       assessment_triggers: triggers,
-      custom_trigger_text: triggers.includes('other') ? customTrigger : null,
+      custom_trigger_text: null,
       mild_reassess_hours: mildHours,
       moderate_reassess_hours: moderateHours,
       severe_reassess_hours: severeHours,
@@ -113,7 +112,6 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
       enabled_tools: enabledTools,
       default_tool: enabledTools[0] || 'abbey',
     } as any);
-    // Also save notification recipients
     handleSaveNotifications();
     setSaving(false);
     if (success && onClose) {
@@ -192,41 +190,47 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
         </CardContent>
       </Card>
 
-      {/* Assessment Triggers */}
+      {/* Assessment Schedule */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Clock className="w-4 h-4" />
-            When Should the Assessment Be Completed?
+            <CalendarClock className="w-4 h-4" />
+            Scheduled Assessment Frequency
           </CardTitle>
           <CardDescription>
-            Select all triggers that should prompt a pain assessment
+            Choose how often routine pain assessments should be completed. A reminder timer will indicate when the next assessment is due.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {(Object.keys(ASSESSMENT_TRIGGER_LABELS) as AssessmentTrigger[]).map((trigger) => (
-            <div key={trigger} className="flex items-center space-x-3">
-              <Checkbox
-                id={`trigger-${trigger}`}
-                checked={triggers.includes(trigger)}
-                onCheckedChange={() => handleTriggerToggle(trigger)}
+        <CardContent className="space-y-4">
+          <RadioGroup value={frequency} onValueChange={(val) => setFrequency(val as AssessmentFrequency)}>
+            {ASSESSMENT_FREQUENCY_OPTIONS.map((opt) => (
+              <div key={opt.value} className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                <RadioGroupItem value={opt.value} id={`freq-${opt.value}`} />
+                <Label htmlFor={`freq-${opt.value}`} className="cursor-pointer flex-1">
+                  <span className="font-medium">{opt.label}</span>
+                  <span className="text-xs text-muted-foreground ml-2">
+                    (every {opt.hours} hours)
+                  </span>
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
+
+          <div className="border-t pt-4">
+            <div className="flex items-center justify-between p-3 rounded-lg border">
+              <div className="flex items-center gap-3">
+                <Bell className="w-5 h-5 text-amber-500" />
+                <div>
+                  <p className="font-medium text-sm">Situational Assessment</p>
+                  <p className="text-xs text-muted-foreground">Also prompt when staff suspect or are concerned about pain</p>
+                </div>
+              </div>
+              <Switch
+                checked={situationalEnabled}
+                onCheckedChange={setSituationalEnabled}
               />
-              <Label htmlFor={`trigger-${trigger}`} className="cursor-pointer">
-                {ASSESSMENT_TRIGGER_LABELS[trigger]}
-              </Label>
             </div>
-          ))}
-          
-          {triggers.includes('other') && (
-            <div className="ml-6 mt-2">
-              <Textarea
-                value={customTrigger}
-                onChange={(e) => setCustomTrigger(e.target.value)}
-                placeholder="Describe custom trigger..."
-                rows={2}
-              />
-            </div>
-          )}
+          </div>
         </CardContent>
       </Card>
 
