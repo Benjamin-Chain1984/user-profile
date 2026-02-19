@@ -283,13 +283,11 @@ export function IddsiConfigSettings({ clientId }: Props) {
             {/* Protractor SVG */}
             {(() => {
               const cx = 150, cy = 160, r = 120;
-              const rangeMin = 60, rangeMax = 120;
+              const rangeMin = 0, rangeMax = 190;
               // Map angle value to position on a semicircle arc
-              // 60° → left (SVG angle 180°), 90° → top (SVG angle 270°/−90°), 120° → right (SVG angle 0°)
+              // 0° (too forward) → left, 90° → top (upright), 190° (too reclined) → right
               const angleToPos = (deg: number) => {
-                // Normalize: 60→0, 120→1
                 const t = (deg - rangeMin) / (rangeMax - rangeMin);
-                // Map to SVG angle: 180° (left) to 0° (right), going counter-clockwise through top
                 const svgAngle = Math.PI - t * Math.PI;
                 return { x: cx + r * Math.cos(svgAngle), y: cy - r * Math.sin(svgAngle) };
               };
@@ -298,13 +296,12 @@ export function IddsiConfigSettings({ clientId }: Props) {
                 const e = angleToPos(endDeg);
                 const angleSweep = ((endDeg - startDeg) / (rangeMax - rangeMin)) * 180;
                 const largeArc = angleSweep > 180 ? 1 : 0;
-                // Sweep direction: clockwise (1) because we go left→top→right
                 return `M ${s.x} ${s.y} A ${r} ${r} 0 ${largeArc} 1 ${e.x} ${e.y}`;
               };
-              // Tick marks
+              // Tick marks every 10°
               const ticks = [];
-              for (let d = rangeMin; d <= rangeMax; d += 5) {
-                const isMajor = d % 10 === 0;
+              for (let d = rangeMin; d <= rangeMax; d += 10) {
+                const isMajor = d % 30 === 0 || d === 0 || d === 190;
                 const inner = isMajor ? r - 14 : r - 8;
                 const outer = r + 2;
                 const t = (d - rangeMin) / (rangeMax - rangeMin);
@@ -325,11 +322,11 @@ export function IddsiConfigSettings({ clientId }: Props) {
                     {/* Background arc (thin) */}
                     <path d={arcPath(rangeMin, rangeMax)} fill="none" stroke="hsl(var(--muted))" strokeWidth="6" opacity="0.4" />
 
-                    {/* Danger arc – left (too reclined) */}
+                    {/* Danger arc – left (too forward) */}
                     <path d={arcPath(rangeMin, lo)} fill="none" stroke="hsl(var(--destructive))" strokeWidth="20" strokeLinecap="butt" opacity="0.25" />
                     {/* Safe arc */}
                     <path d={arcPath(lo, hi)} fill="none" stroke="hsl(var(--success))" strokeWidth="20" strokeLinecap="butt" opacity="0.35" />
-                    {/* Danger arc – right (too far forward) */}
+                    {/* Danger arc – right (too reclined) */}
                     <path d={arcPath(hi, rangeMax)} fill="none" stroke="hsl(var(--destructive))" strokeWidth="20" strokeLinecap="butt" opacity="0.25" />
 
                     {/* Tick marks */}
@@ -349,10 +346,10 @@ export function IddsiConfigSettings({ clientId }: Props) {
                     ))}
 
                     {/* 90° upright label */}
-                    <text x={cx} y={cy - r - 22} textAnchor="middle" fontSize="9" fill="hsl(var(--foreground))" fontWeight="600">
+                    <text x={angleToPos(90).x} y={cy - r - 22} textAnchor="middle" fontSize="9" fill="hsl(var(--foreground))" fontWeight="600">
                       90° upright
                     </text>
-                    <line x1={cx} y1={cy - r - 4} x2={cx} y2={cy - r + 12} stroke="hsl(var(--foreground))" strokeWidth="1.5" opacity="0.6" />
+                    <line x1={angleToPos(90).x} y1={cy - r - 4} x2={angleToPos(90).x} y2={cy - r + 12} stroke="hsl(var(--foreground))" strokeWidth="1.5" opacity="0.6" />
 
                     {/* Lower bound dot */}
                     {(() => {
@@ -375,11 +372,11 @@ export function IddsiConfigSettings({ clientId }: Props) {
 
                     {/* Left label */}
                     <text x={30} y={cy + 10} textAnchor="middle" fontSize="7" fill="hsl(var(--destructive))" fontWeight="600">
-                      Too Reclined
+                      Too Forward
                     </text>
                     {/* Right label */}
                     <text x={270} y={cy + 10} textAnchor="middle" fontSize="7" fill="hsl(var(--destructive))" fontWeight="600">
-                      Too Forward
+                      Too Reclined
                     </text>
 
                     {/* Base line */}
@@ -396,19 +393,19 @@ export function IddsiConfigSettings({ clientId }: Props) {
                 <div className="flex items-baseline gap-1">
                   <Input
                     type="number"
-                    min={60}
+                    min={0}
                     max={targetSafeAngle - 5}
                     step={5}
                     value={minSafeAngle}
                     onChange={e => {
                       const v = Number(e.target.value);
-                      if (v >= 60 && v < targetSafeAngle) setMinSafeAngle(v);
+                      if (v >= 0 && v < targetSafeAngle) setMinSafeAngle(v);
                     }}
                     className="text-2xl font-bold h-12 w-20 text-center border-destructive/30"
                   />
                   <span className="text-lg text-muted-foreground">°</span>
                 </div>
-                <p className="text-[11px] text-muted-foreground">Below → too reclined</p>
+                <p className="text-[11px] text-muted-foreground">Below → too far forward</p>
               </div>
 
               <div className="space-y-2 p-4 rounded-lg border border-success/20 bg-success/5">
@@ -417,18 +414,18 @@ export function IddsiConfigSettings({ clientId }: Props) {
                   <Input
                     type="number"
                     min={minSafeAngle + 5}
-                    max={120}
+                    max={190}
                     step={5}
                     value={targetSafeAngle}
                     onChange={e => {
                       const v = Number(e.target.value);
-                      if (v <= 120 && v > minSafeAngle) setTargetSafeAngle(v);
+                      if (v <= 190 && v > minSafeAngle) setTargetSafeAngle(v);
                     }}
                     className="text-2xl font-bold h-12 w-20 text-center border-success/30"
                   />
                   <span className="text-lg text-muted-foreground">°</span>
                 </div>
-                <p className="text-[11px] text-muted-foreground">Above → too far forward</p>
+                <p className="text-[11px] text-muted-foreground">Above → too reclined</p>
               </div>
             </div>
 
