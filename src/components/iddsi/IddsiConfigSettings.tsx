@@ -283,83 +283,123 @@ export function IddsiConfigSettings({ clientId }: Props) {
             {/* Protractor SVG */}
             {(() => {
               const cx = 150, cy = 160, r = 120;
-              const rangeMin = 0, rangeMax = 90;
-              // Map angle value to position on a semicircle arc
-              // 0° (lying flat) → left, 90° (upright) → right
-              const angleToPos = (deg: number) => {
-                const t = (deg - rangeMin) / (rangeMax - rangeMin);
+              // The protractor displays 0°–90°–0° (symmetric)
+              // Left = 0° (lying flat forward), Top = 90° (upright), Right = 0° (lying flat reclined)
+              // Internal arc position: 0..180 SVG degrees mapped from left to right
+              // We show labels: left half 0→90, right half 90→0
+              const posFromArcT = (t: number) => {
+                // t: 0 = left edge, 1 = right edge
                 const svgAngle = Math.PI - t * Math.PI;
                 return { x: cx + r * Math.cos(svgAngle), y: cy - r * Math.sin(svgAngle) };
               };
-              const arcPath = (startDeg: number, endDeg: number) => {
-                const s = angleToPos(startDeg);
-                const e = angleToPos(endDeg);
-                const angleSweep = ((endDeg - startDeg) / (rangeMax - rangeMin)) * 180;
+              // Convert a "displayed degree" (0–90) on the LEFT side to arc t
+              const leftDegToT = (deg: number) => (deg / 90) * 0.5; // 0→0, 90→0.5
+              // Convert a "displayed degree" (90–0) on the RIGHT side to arc t
+              const rightDegToT = (deg: number) => 0.5 + ((90 - deg) / 90) * 0.5; // 90→0.5, 0→1
+
+              const arcPath = (t1: number, t2: number) => {
+                const s = posFromArcT(t1);
+                const e = posFromArcT(t2);
+                const angleSweep = (t2 - t1) * 180;
                 const largeArc = angleSweep > 180 ? 1 : 0;
                 return `M ${s.x} ${s.y} A ${r} ${r} 0 ${largeArc} 1 ${e.x} ${e.y}`;
               };
-              // Tick marks every 10°
-              const ticks = [];
-              for (let d = rangeMin; d <= rangeMax; d += 10) {
-                const isMajor = d % 30 === 0 || d === 0 || d === 90;
-                const inner = isMajor ? r - 14 : r - 8;
-                const outer = r + 2;
-                const t = (d - rangeMin) / (rangeMax - rangeMin);
-                const svgAngle = Math.PI - t * Math.PI;
-                ticks.push({
-                  x1: cx + inner * Math.cos(svgAngle), y1: cy - inner * Math.sin(svgAngle),
-                  x2: cx + outer * Math.cos(svgAngle), y2: cy - outer * Math.sin(svgAngle),
-                  label: d, isMajor,
-                  lx: cx + (r + 16) * Math.cos(svgAngle), ly: cy - (r + 16) * Math.sin(svgAngle),
-                });
+
+              // Tick marks: left side 0,10,20..90 then right side 80,70..0
+              const ticks: { t: number; label: string; isMajor: boolean }[] = [];
+              for (let d = 0; d <= 90; d += 10) {
+                const isMajor = d % 30 === 0 || d === 90;
+                ticks.push({ t: leftDegToT(d), label: `${d}°`, isMajor });
               }
-              const lo = Math.max(rangeMin, Math.min(rangeMax, minSafeAngle));
-              const hi = Math.max(rangeMin, Math.min(rangeMax, targetSafeAngle));
+              for (let d = 80; d >= 0; d -= 10) {
+                const isMajor = d % 30 === 0;
+                ticks.push({ t: rightDegToT(d), label: `${d}°`, isMajor });
+              }
+
+              // Safe zone bounds mapped to left-side arc positions
+              const lo = Math.max(0, Math.min(90, minSafeAngle));
+              const hi = Math.max(0, Math.min(90, targetSafeAngle));
+              const loT = leftDegToT(lo);
+              const hiT = leftDegToT(hi);
+              // Mirror safe zone on right side
+              const hiTR = rightDegToT(hi); // right side mirror of upper bound (closer to center)
+              const loTR = rightDegToT(lo); // right side mirror of lower bound (closer to edge)
 
               return (
                 <div className="flex justify-center">
                   <svg viewBox="0 0 300 185" className="w-full max-w-sm">
                     {/* Background arc (thin) */}
-                    <path d={arcPath(rangeMin, rangeMax)} fill="none" stroke="hsl(var(--muted))" strokeWidth="6" opacity="0.4" />
+                    <path d={arcPath(0, 1)} fill="none" stroke="hsl(var(--muted))" strokeWidth="6" opacity="0.4" />
 
-                    {/* Danger arc – left (too forward) */}
-                    <path d={arcPath(rangeMin, lo)} fill="none" stroke="hsl(var(--destructive))" strokeWidth="20" strokeLinecap="butt" opacity="0.25" />
-                    {/* Safe arc */}
-                    <path d={arcPath(lo, hi)} fill="none" stroke="hsl(var(--success))" strokeWidth="20" strokeLinecap="butt" opacity="0.35" />
-                    {/* Danger arc – right (too reclined) */}
-                    <path d={arcPath(hi, rangeMax)} fill="none" stroke="hsl(var(--destructive))" strokeWidth="20" strokeLinecap="butt" opacity="0.25" />
+                    {/* Left side: danger (0 to lo) */}
+                    <path d={arcPath(0, loT)} fill="none" stroke="hsl(var(--destructive))" strokeWidth="20" strokeLinecap="butt" opacity="0.25" />
+                    {/* Left side: safe (lo to hi) */}
+                    <path d={arcPath(loT, hiT)} fill="none" stroke="hsl(var(--success))" strokeWidth="20" strokeLinecap="butt" opacity="0.35" />
+                    {/* Top center: safe zone spanning across top (hi left to hi right) */}
+                    <path d={arcPath(hiT, hiTR)} fill="none" stroke="hsl(var(--success))" strokeWidth="20" strokeLinecap="butt" opacity="0.35" />
+                    {/* Right side: safe (hi mirror to lo mirror) */}
+                    <path d={arcPath(hiTR, loTR)} fill="none" stroke="hsl(var(--success))" strokeWidth="20" strokeLinecap="butt" opacity="0.35" />
+                    {/* Right side: danger (lo mirror to edge) */}
+                    <path d={arcPath(loTR, 1)} fill="none" stroke="hsl(var(--destructive))" strokeWidth="20" strokeLinecap="butt" opacity="0.25" />
 
                     {/* Tick marks */}
-                    {ticks.map(t => (
-                      <g key={t.label}>
-                        <line x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}
-                          stroke="hsl(var(--foreground))"
-                          strokeWidth={t.isMajor ? 1.2 : 0.6}
-                          opacity={t.isMajor ? 0.5 : 0.25}
-                        />
-                        {t.isMajor && (
-                          <text x={t.lx} y={t.ly} textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="hsl(var(--muted-foreground))" fontWeight="500">
-                            {t.label}°
+                    {ticks.map((tick, i) => {
+                      const inner = tick.isMajor ? r - 14 : r - 8;
+                      const outer = r + 2;
+                      const svgAngle = Math.PI - tick.t * Math.PI;
+                      const x1 = cx + inner * Math.cos(svgAngle), y1 = cy - inner * Math.sin(svgAngle);
+                      const x2 = cx + outer * Math.cos(svgAngle), y2 = cy - outer * Math.sin(svgAngle);
+                      const lx = cx + (r + 16) * Math.cos(svgAngle), ly = cy - (r + 16) * Math.sin(svgAngle);
+                      return (
+                        <g key={i}>
+                          <line x1={x1} y1={y1} x2={x2} y2={y2}
+                            stroke="hsl(var(--foreground))"
+                            strokeWidth={tick.isMajor ? 1.2 : 0.6}
+                            opacity={tick.isMajor ? 0.5 : 0.25}
+                          />
+                          {tick.isMajor && (
+                            <text x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="hsl(var(--muted-foreground))" fontWeight="500">
+                              {tick.label}
+                            </text>
+                          )}
+                        </g>
+                      );
+                    })}
+
+                    {/* 90° upright label at top center */}
+                    {(() => {
+                      const p = posFromArcT(0.5);
+                      return (
+                        <>
+                          <text x={p.x} y={cy - r - 22} textAnchor="middle" fontSize="9" fill="hsl(var(--foreground))" fontWeight="600">
+                            90° Upright
                           </text>
-                        )}
-                      </g>
-                    ))}
-
-                    {/* 90° upright label */}
-                    <text x={angleToPos(90).x} y={cy - r - 22} textAnchor="middle" fontSize="9" fill="hsl(var(--foreground))" fontWeight="600">
-                      90° Upright
-                    </text>
-                    <line x1={angleToPos(90).x} y1={cy - r - 4} x2={angleToPos(90).x} y2={cy - r + 12} stroke="hsl(var(--foreground))" strokeWidth="1.5" opacity="0.6" />
-
-                    {/* Lower bound dot */}
-                    {(() => {
-                      const p = angleToPos(lo);
-                      return <circle cx={p.x} cy={p.y} r="6" fill="hsl(var(--destructive))" stroke="white" strokeWidth="2" />;
+                          <line x1={p.x} y1={cy - r - 4} x2={p.x} y2={cy - r + 12} stroke="hsl(var(--foreground))" strokeWidth="1.5" opacity="0.6" />
+                        </>
+                      );
                     })()}
-                    {/* Upper bound dot */}
+
+                    {/* Lower bound dots (both sides) */}
                     {(() => {
-                      const p = angleToPos(hi);
-                      return <circle cx={p.x} cy={p.y} r="6" fill="hsl(var(--success))" stroke="white" strokeWidth="2" />;
+                      const pL = posFromArcT(loT);
+                      const pR = posFromArcT(loTR);
+                      return (
+                        <>
+                          <circle cx={pL.x} cy={pL.y} r="6" fill="hsl(var(--destructive))" stroke="white" strokeWidth="2" />
+                          <circle cx={pR.x} cy={pR.y} r="6" fill="hsl(var(--destructive))" stroke="white" strokeWidth="2" />
+                        </>
+                      );
+                    })()}
+                    {/* Upper bound dots (both sides) */}
+                    {(() => {
+                      const pL = posFromArcT(hiT);
+                      const pR = posFromArcT(hiTR);
+                      return (
+                        <>
+                          <circle cx={pL.x} cy={pL.y} r="6" fill="hsl(var(--success))" stroke="white" strokeWidth="2" />
+                          <circle cx={pR.x} cy={pR.y} r="6" fill="hsl(var(--success))" stroke="white" strokeWidth="2" />
+                        </>
+                      );
                     })()}
 
                     {/* Center info */}
@@ -375,8 +415,8 @@ export function IddsiConfigSettings({ clientId }: Props) {
                       0° Lying Flat
                     </text>
                     {/* Right label */}
-                    <text x={270} y={cy + 10} textAnchor="middle" fontSize="7" fill="hsl(var(--foreground))" fontWeight="600">
-                      90° Upright
+                    <text x={270} y={cy + 10} textAnchor="middle" fontSize="7" fill="hsl(var(--destructive))" fontWeight="600">
+                      0° Lying Flat
                     </text>
 
                     {/* Base line */}
