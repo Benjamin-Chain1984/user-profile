@@ -1,27 +1,21 @@
 export type PainSeverity = 'no_pain' | 'mild' | 'moderate' | 'severe';
 export type PainType = 'acute' | 'chronic' | 'acute_on_chronic';
 
-export type AssessmentTrigger = 
-  | 'daily'
-  | 'weekly'
-  | 'transfers'
-  | 'personal_care'
-  | 'agitation'
-  | 'behaviours_of_concern'
-  | 'post_fall'
-  | 'staff_concern'
-  | 'other';
+export type AssessmentFrequency = 'daily' | 'weekly' | 'fortnightly';
+
+export type AssessmentTrigger = AssessmentFrequency | 'staff_concern';
+
+export const ASSESSMENT_FREQUENCY_OPTIONS: { value: AssessmentFrequency; label: string; hours: number }[] = [
+  { value: 'daily', label: 'Daily', hours: 24 },
+  { value: 'weekly', label: 'Weekly', hours: 168 },
+  { value: 'fortnightly', label: 'Fortnightly', hours: 336 },
+];
 
 export const ASSESSMENT_TRIGGER_LABELS: Record<AssessmentTrigger, string> = {
   daily: 'Daily',
   weekly: 'Weekly',
-  transfers: 'During transfers',
-  personal_care: 'During personal care',
-  agitation: 'When agitation is observed',
-  behaviours_of_concern: 'When behaviours of concern occur',
-  post_fall: 'Post-fall or injury',
-  staff_concern: 'When staff are concerned about pain',
-  other: 'Other',
+  fortnightly: 'Fortnightly',
+  staff_concern: 'When staff suspect or are concerned about pain',
 };
 
 export interface AbbeyPainConfig {
