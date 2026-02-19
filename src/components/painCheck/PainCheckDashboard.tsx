@@ -57,30 +57,62 @@ export function PainCheckDashboard() {
   const latestAbbey = getLatestAbbey();
   const latestPainad = getLatestPainad();
 
-  // Compute next assessment due based on configured frequency
+  // Compute next assessment due based on configured frequency OR reassessment timeframe
   const nextDueInfo = useMemo(() => {
     const triggers = painConfig?.assessment_triggers || ['daily'];
     const freq = triggers.find(t => ['daily', 'weekly', 'fortnightly'].includes(t)) as AssessmentFrequency | undefined;
-    if (!freq) return null;
-    
-    const freqOption = ASSESSMENT_FREQUENCY_OPTIONS.find(o => o.value === freq);
-    if (!freqOption) return null;
+    const freqOption = freq ? ASSESSMENT_FREQUENCY_OPTIONS.find(o => o.value === freq) : null;
 
     // Find the most recent assessment across both tools
-    const latestTime = [
-      latestAbbey ? new Date(latestAbbey.created_at).getTime() : 0,
-      latestPainad ? new Date(latestPainad.created_at).getTime() : 0,
-    ].filter(t => t > 0);
+    const candidates: { time: number; severity: string }[] = [];
+    if (latestAbbey) candidates.push({ time: new Date(latestAbbey.created_at).getTime(), severity: latestAbbey.severity });
+    if (latestPainad) candidates.push({ time: new Date(latestPainad.created_at).getTime(), severity: latestPainad.severity as string });
 
-    if (latestTime.length === 0) {
-      return { dueDate: null, isOverdue: true, label: freqOption.label, hasAssessments: false };
+    if (candidates.length === 0) {
+      return { dueDate: null, isOverdue: true, label: freqOption?.label || 'Daily', hasAssessments: false, reason: null, isReassessment: false };
     }
 
-    const mostRecent = new Date(Math.max(...latestTime));
-    const dueDate = addHours(mostRecent, freqOption.hours);
-    const isOverdue = isPast(dueDate);
+    // Use the most recent assessment to determine severity-driven reassessment
+    const mostRecent = candidates.sort((a, b) => b.time - a.time)[0];
+    const mostRecentDate = new Date(mostRecent.time);
+    const severity = mostRecent.severity;
 
-    return { dueDate, isOverdue, label: freqOption.label, hasAssessments: true };
+    // If severity is NOT no_pain, use reassessment timeframe (takes priority)
+    if (severity !== 'no_pain') {
+      let reassessHours: number;
+      let severityLabel: string;
+      if (severity === 'severe') {
+        reassessHours = painConfig?.severe_reassess_hours ?? 1;
+        severityLabel = 'Severe pain';
+      } else if (severity === 'moderate') {
+        reassessHours = painConfig?.moderate_reassess_hours ?? 2;
+        severityLabel = 'Moderate pain';
+      } else {
+        reassessHours = painConfig?.mild_reassess_hours ?? 4;
+        severityLabel = 'Mild pain';
+      }
+      const dueDate = addHours(mostRecentDate, reassessHours);
+      return {
+        dueDate,
+        isOverdue: isPast(dueDate),
+        label: `Reassess in ${reassessHours}h`,
+        hasAssessments: true,
+        reason: `${severityLabel} detected — reassessment required`,
+        isReassessment: true,
+      };
+    }
+
+    // Green/no pain — use scheduled frequency
+    if (!freqOption) return null;
+    const dueDate = addHours(mostRecentDate, freqOption.hours);
+    return {
+      dueDate,
+      isOverdue: isPast(dueDate),
+      label: freqOption.label,
+      hasAssessments: true,
+      reason: null,
+      isReassessment: false,
+    };
   }, [painConfig, latestAbbey, latestPainad]);
 
   // Combine assessments for history/trends
@@ -180,40 +212,61 @@ export function PainCheckDashboard() {
 
       {/* Next Assessment Due Card */}
       {nextDueInfo && (
-        <Card className={`border-l-4 ${nextDueInfo.isOverdue ? 'border-l-destructive bg-destructive/5' : 'border-l-success bg-success/5'}`}>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {nextDueInfo.isOverdue ? (
-                <CalendarClock className="h-6 w-6 text-destructive" />
-              ) : (
-                <CheckCircle2 className="h-6 w-6 text-success" />
-              )}
-              <div>
-                <p className="text-sm font-medium">
-                  {nextDueInfo.isOverdue ? 'Assessment Overdue' : 'Next Assessment Due'}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Schedule: {nextDueInfo.label}
-                </p>
-              </div>
-            </div>
-            <div className="text-right">
-              {!nextDueInfo.hasAssessments ? (
-                <p className="text-sm font-semibold text-destructive">No assessments recorded</p>
-              ) : nextDueInfo.dueDate ? (
-                <>
-                  <p className={`text-sm font-semibold ${nextDueInfo.isOverdue ? 'text-destructive' : 'text-foreground'}`}>
-                    {nextDueInfo.isOverdue
-                      ? `Overdue by ${formatDistanceToNow(nextDueInfo.dueDate)}`
-                      : `Due in ${formatDistanceToNow(nextDueInfo.dueDate)}`
-                    }
+        <Card className={`border-l-4 ${
+          nextDueInfo.isReassessment 
+            ? 'border-l-amber-500 bg-amber-50/50' 
+            : nextDueInfo.isOverdue 
+              ? 'border-l-destructive bg-destructive/5' 
+              : 'border-l-success bg-success/5'
+        }`}>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {nextDueInfo.isReassessment ? (
+                  <AlertTriangle className="h-6 w-6 text-amber-600" />
+                ) : nextDueInfo.isOverdue ? (
+                  <CalendarClock className="h-6 w-6 text-destructive" />
+                ) : (
+                  <CheckCircle2 className="h-6 w-6 text-success" />
+                )}
+                <div>
+                  <p className="text-sm font-medium">
+                    {nextDueInfo.isReassessment 
+                      ? 'Reassessment Required'
+                      : nextDueInfo.isOverdue 
+                        ? 'Assessment Overdue' 
+                        : 'Next Assessment Due'}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {format(nextDueInfo.dueDate, 'PPp')}
+                    {nextDueInfo.isReassessment ? nextDueInfo.label : `Schedule: ${nextDueInfo.label}`}
                   </p>
-                </>
-              ) : null}
+                </div>
+              </div>
+              <div className="text-right">
+                {!nextDueInfo.hasAssessments ? (
+                  <p className="text-sm font-semibold text-destructive">No assessments recorded</p>
+                ) : nextDueInfo.dueDate ? (
+                  <>
+                    <p className={`text-sm font-semibold ${nextDueInfo.isOverdue || nextDueInfo.isReassessment ? 'text-destructive' : 'text-foreground'}`}>
+                      {nextDueInfo.isOverdue
+                        ? `Overdue by ${formatDistanceToNow(nextDueInfo.dueDate)}`
+                        : `Due in ${formatDistanceToNow(nextDueInfo.dueDate)}`
+                      }
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(nextDueInfo.dueDate, 'PPp')}
+                    </p>
+                  </>
+                ) : null}
+              </div>
             </div>
+            {nextDueInfo.reason && (
+              <div className="mt-2 px-9">
+                <p className="text-xs font-medium text-amber-700 bg-amber-100/60 rounded px-2 py-1 inline-block">
+                  ⚠ {nextDueInfo.reason}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
