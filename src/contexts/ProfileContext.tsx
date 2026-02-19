@@ -725,12 +725,31 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         isChangeOverdue = daysUntilChange < 0;
       }
 
-      // Parse flush frequency
+      // Parse flush frequency — must match module logic (parseFlushFrequencyToHours)
       let flushFrequencyHours: number | null = null;
-      if (planData?.flush_prescribed) {
-        const freq = planData.flush_frequency?.toLowerCase();
-        if (freq === 'daily') flushFrequencyHours = 24;
-        else if (freq === 'twice_daily') flushFrequencyHours = 12;
+      if (planData?.flush_prescribed && planData.flush_frequency) {
+        const freq = planData.flush_frequency.toLowerCase();
+        if (freq === 'daily') {
+          flushFrequencyHours = 24;
+        } else if (freq === 'twice_daily') {
+          flushFrequencyHours = 12;
+        } else if (freq.includes('custom') && planData.flush_custom_interval) {
+          const ci = planData.flush_custom_interval.toLowerCase().trim();
+          if (ci === 'weekly') flushFrequencyHours = 7 * 24;
+          else if (ci === 'daily') flushFrequencyHours = 24;
+          else if (ci === 'fortnightly') flushFrequencyHours = 14 * 24;
+          else {
+            const match = ci.match(/(\d+)\s*(day|hour|hr|week|wk)/i);
+            if (match) {
+              const num = parseInt(match[1], 10);
+              const unit = match[2].toLowerCase();
+              if (unit.startsWith('day')) flushFrequencyHours = num * 24;
+              else if (unit.startsWith('hour') || unit === 'hr') flushFrequencyHours = num;
+              else if (unit.startsWith('week') || unit === 'wk') flushFrequencyHours = num * 7 * 24;
+            }
+          }
+        }
+        // 'prn' or 'as_needed' alone → no scheduled frequency, leave null
       }
       if (!flushFrequencyHours && configData?.flush_frequency_hours) {
         flushFrequencyHours = configData.flush_frequency_hours;
