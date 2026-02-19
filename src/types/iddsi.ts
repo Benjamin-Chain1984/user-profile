@@ -238,7 +238,7 @@ export const DRINK_LEVELS: Record<number, LevelInfo> = {
       'Less than 1mL should remain in syringe',
     ],
     equipment: ['10mL slip-tip syringe'],
-    videoUrl: 'https://www.youtube.com/embed/KwXbV6gAaKQ',
+    videoUrl: 'https://www.youtube.com/embed/5vQzueOjgsM',
     videoTitle: 'IDDSI Flow Test – Level 1',
   },
   0: {
