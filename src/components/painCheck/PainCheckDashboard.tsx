@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,12 +15,12 @@ import { PainTrendChart } from './PainTrendChart';
 import { PainConfigSettings } from './PainConfigSettings';
 import { PainQuickStatus } from './PainQuickStatus';
 import { PainExportReports } from './PainExportReports';
-import { getSeverityLabel, getSeverityColor } from '@/types/painAssessment';
+import { getSeverityLabel, getSeverityColor, ASSESSMENT_FREQUENCY_OPTIONS, AssessmentFrequency } from '@/types/painAssessment';
 import { getPainadSeverityLabel, getPainadSeverityColor } from '@/types/painad';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { RoleTabsTrigger } from '@/components/ui/role-tabs-trigger';
-import { Plus, TrendingUp, ClipboardList, AlertTriangle, Info, Settings, FileDown, Clock } from 'lucide-react';
-import { format } from 'date-fns';
+import { Plus, TrendingUp, ClipboardList, AlertTriangle, Info, Settings, FileDown, Clock, CalendarClock, CheckCircle2 } from 'lucide-react';
+import { format, formatDistanceToNow, addHours, isPast } from 'date-fns';
 
 const SCREENING_WARNING = "Pain assessment tools are screening tools only. If pain is suspected or scores increase, seek advice from a medical professional immediately.";
 
@@ -56,6 +56,32 @@ export function PainCheckDashboard() {
 
   const latestAbbey = getLatestAbbey();
   const latestPainad = getLatestPainad();
+
+  // Compute next assessment due based on configured frequency
+  const nextDueInfo = useMemo(() => {
+    const triggers = painConfig?.assessment_triggers || ['daily'];
+    const freq = triggers.find(t => ['daily', 'weekly', 'fortnightly'].includes(t)) as AssessmentFrequency | undefined;
+    if (!freq) return null;
+    
+    const freqOption = ASSESSMENT_FREQUENCY_OPTIONS.find(o => o.value === freq);
+    if (!freqOption) return null;
+
+    // Find the most recent assessment across both tools
+    const latestTime = [
+      latestAbbey ? new Date(latestAbbey.created_at).getTime() : 0,
+      latestPainad ? new Date(latestPainad.created_at).getTime() : 0,
+    ].filter(t => t > 0);
+
+    if (latestTime.length === 0) {
+      return { dueDate: null, isOverdue: true, label: freqOption.label, hasAssessments: false };
+    }
+
+    const mostRecent = new Date(Math.max(...latestTime));
+    const dueDate = addHours(mostRecent, freqOption.hours);
+    const isOverdue = isPast(dueDate);
+
+    return { dueDate, isOverdue, label: freqOption.label, hasAssessments: true };
+  }, [painConfig, latestAbbey, latestPainad]);
 
   // Combine assessments for history/trends
   const allAssessments = [
@@ -151,6 +177,46 @@ export function PainCheckDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Next Assessment Due Card */}
+      {nextDueInfo && (
+        <Card className={`border-l-4 ${nextDueInfo.isOverdue ? 'border-l-destructive bg-destructive/5' : 'border-l-success bg-success/5'}`}>
+          <CardContent className="p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {nextDueInfo.isOverdue ? (
+                <CalendarClock className="h-6 w-6 text-destructive" />
+              ) : (
+                <CheckCircle2 className="h-6 w-6 text-success" />
+              )}
+              <div>
+                <p className="text-sm font-medium">
+                  {nextDueInfo.isOverdue ? 'Assessment Overdue' : 'Next Assessment Due'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Schedule: {nextDueInfo.label}
+                </p>
+              </div>
+            </div>
+            <div className="text-right">
+              {!nextDueInfo.hasAssessments ? (
+                <p className="text-sm font-semibold text-destructive">No assessments recorded</p>
+              ) : nextDueInfo.dueDate ? (
+                <>
+                  <p className={`text-sm font-semibold ${nextDueInfo.isOverdue ? 'text-destructive' : 'text-foreground'}`}>
+                    {nextDueInfo.isOverdue
+                      ? `Overdue by ${formatDistanceToNow(nextDueInfo.dueDate)}`
+                      : `Due in ${formatDistanceToNow(nextDueInfo.dueDate)}`
+                    }
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {format(nextDueInfo.dueDate, 'PPp')}
+                  </p>
+                </>
+              ) : null}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Status Cards - Side by side for both tools */}
       <div className="grid sm:grid-cols-2 gap-4">
