@@ -25,10 +25,12 @@ import type { AlertSeverity } from '@/types/notificationContacts';
 import {
   SCHEDULE_TYPES,
   UTI_FREQUENCIES,
+  SKIN_CHECK_FREQUENCIES,
   ScheduleType,
   UTITestingFrequency,
+  SkinCheckFrequency,
 } from '@/types/continence';
-import { Clock, TestTube, Droplets, Package, Save, X, Plus } from 'lucide-react';
+import { Clock, TestTube, Droplets, Package, Save, X, Plus, Eye } from 'lucide-react';
 
 const MODULE_NAME = 'continence';
 
@@ -78,6 +80,7 @@ export function ContinenceConfigSettings({ clientId }: ContinenceConfigSettingsP
   const [enableHydration, setEnableHydration] = useState(false);
   const [enableConsumables, setEnableConsumables] = useState(false);
   const [utiFrequency, setUtiFrequency] = useState<UTITestingFrequency>('if_symptoms');
+  const [skinCheckFrequency, setSkinCheckFrequency] = useState<SkinCheckFrequency>('every_pad_change');
   const [newTime, setNewTime] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -90,6 +93,7 @@ export function ContinenceConfigSettings({ clientId }: ContinenceConfigSettingsP
       setEnableHydration(config.enable_hydration_link);
       setEnableConsumables(config.enable_consumables_monitoring);
       setUtiFrequency(config.uti_testing_frequency as UTITestingFrequency);
+      setSkinCheckFrequency((config as any).skin_check_frequency as SkinCheckFrequency || 'every_pad_change');
       setHasChanges(false);
     }
   }, [config]);
@@ -135,7 +139,8 @@ export function ContinenceConfigSettings({ clientId }: ContinenceConfigSettingsP
       enable_hydration_link: enableHydration,
       enable_consumables_monitoring: enableConsumables,
       uti_testing_frequency: utiFrequency,
-    });
+      skin_check_frequency: skinCheckFrequency,
+    } as any);
     // Also save notification recipients
     handleSaveRecipients();
     setHasChanges(false);
@@ -150,6 +155,7 @@ export function ContinenceConfigSettings({ clientId }: ContinenceConfigSettingsP
       setEnableHydration(config.enable_hydration_link);
       setEnableConsumables(config.enable_consumables_monitoring);
       setUtiFrequency(config.uti_testing_frequency as UTITestingFrequency);
+      setSkinCheckFrequency((config as any).skin_check_frequency as SkinCheckFrequency || 'every_pad_change');
       setHasChanges(false);
     }
   };
@@ -258,6 +264,49 @@ export function ContinenceConfigSettings({ clientId }: ContinenceConfigSettingsP
                 </div>
               </div>
             )}
+          </CardContent>
+        </Card>
+      </RestrictedSection>
+
+      {/* Skin Check Frequency */}
+      <RestrictedSection requiredRole="admin">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              Skin Check Frequency
+            </CardTitle>
+            <CardDescription>
+              Configure how often skin checks should be completed
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid gap-3">
+              {SKIN_CHECK_FREQUENCIES.map((freq) => (
+                <div
+                  key={freq.value}
+                  className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                    skinCheckFrequency === freq.value
+                      ? 'bg-primary/10 border-primary'
+                      : 'hover:bg-muted'
+                  }`}
+                  onClick={() => {
+                    setSkinCheckFrequency(freq.value);
+                    markChanged();
+                  }}
+                >
+                  <div className={`w-4 h-4 rounded-full border-2 mt-0.5 ${
+                    skinCheckFrequency === freq.value
+                      ? 'bg-primary border-primary'
+                      : 'border-muted-foreground'
+                  }`} />
+                  <div>
+                    <p className="font-medium">{freq.label}</p>
+                    <p className="text-sm text-muted-foreground">{freq.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </RestrictedSection>
