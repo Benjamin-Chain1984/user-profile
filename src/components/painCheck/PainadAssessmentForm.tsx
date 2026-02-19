@@ -16,7 +16,7 @@ import {
   getPainadSeverityDotColor,
   PAINAD_SEVERE_PROMPTS,
 } from '@/types/painad';
-import { PainType, getPainTypeLabel, ASSESSMENT_TRIGGER_LABELS, AssessmentTrigger } from '@/types/painAssessment';
+import { ASSESSMENT_TRIGGER_LABELS } from '@/types/painAssessment';
 import { PainActionForm } from './PainActionForm';
 import { ArrowLeft, ArrowRight, Check, AlertTriangle, Info, ChevronDown } from 'lucide-react';
 
@@ -35,7 +35,6 @@ export function PainadAssessmentForm({ onComplete, onCancel, clientId }: PainadA
     q4_body_language: -1,
     q5_consolability: -1,
   });
-  const [painType, setPainType] = useState<PainType | ''>('');
   const [triggerReason, setTriggerReason] = useState('');
   const [notes, setNotes] = useState('');
   const [showActionForm, setShowActionForm] = useState(false);
@@ -56,7 +55,6 @@ export function PainadAssessmentForm({ onComplete, onCancel, clientId }: PainadA
   const requiresAction = currentScore >= 1;
 
   const handleSubmit = async () => {
-    if (!painType) return;
     const assessment = await createAssessment({
       client_id: clientId,
       q1_breathing: answers.q1_breathing,
@@ -64,7 +62,7 @@ export function PainadAssessmentForm({ onComplete, onCancel, clientId }: PainadA
       q3_facial_expression: answers.q3_facial_expression,
       q4_body_language: answers.q4_body_language,
       q5_consolability: answers.q5_consolability,
-      pain_type: painType,
+      pain_type: 'acute',
       trigger_reason: triggerReason || undefined,
       notes: notes || undefined,
     });
@@ -255,21 +253,6 @@ export function PainadAssessmentForm({ onComplete, onCancel, clientId }: PainadA
               </Select>
             </div>
 
-            {/* Pain Type */}
-            <div className="space-y-2">
-              <Label>Pain Type *</Label>
-              <Select value={painType} onValueChange={(val) => setPainType(val as PainType)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select pain type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="acute">{getPainTypeLabel('acute')}</SelectItem>
-                  <SelectItem value="chronic">{getPainTypeLabel('chronic')}</SelectItem>
-                  <SelectItem value="acute_on_chronic">{getPainTypeLabel('acute_on_chronic')}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* Notes */}
             <div className="space-y-2">
               <Label>Additional Observations (optional)</Label>
@@ -285,7 +268,7 @@ export function PainadAssessmentForm({ onComplete, onCancel, clientId }: PainadA
             <Button variant="outline" onClick={() => setStep(s => s - 1)}>
               <ArrowLeft className="w-4 h-4 mr-2" /> Back
             </Button>
-            <Button onClick={handleSubmit} disabled={!painType}>
+            <Button onClick={handleSubmit} disabled={!allAnswered}>
               <Check className="w-4 h-4 mr-2" />
               Save Assessment
             </Button>
