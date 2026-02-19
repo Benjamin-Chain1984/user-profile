@@ -4,6 +4,7 @@
 
 export type ScheduleType = 'fixed_times' | 'hourly' | 'as_required';
 export type UTITestingFrequency = 'fortnightly' | 'weekly' | 'twice_weekly' | 'if_symptoms';
+export type SkinCheckFrequency = 'daily' | 'twice_daily' | 'three_times_daily' | 'every_pad_change';
 
 export type PadType = 'pull_up' | 'all_in_one' | 'insert_pad' | 'night_pad' | 'other';
 export type PadCondition = 'dry' | 'lightly_wet' | 'soaked' | 'soiled_urine' | 'soiled_faeces' | 'mixed';
@@ -33,6 +34,7 @@ export interface ContinenceConfig {
   enable_hydration_link: boolean;
   enable_consumables_monitoring: boolean;
   uti_testing_frequency: UTITestingFrequency;
+  skin_check_frequency: SkinCheckFrequency;
   escalation_recipients: string[];
   created_at: string;
   created_by: string | null;
@@ -232,6 +234,13 @@ export const UTI_FREQUENCIES: { value: UTITestingFrequency; label: string }[] = 
   { value: 'weekly', label: 'Weekly' },
   { value: 'twice_weekly', label: 'Twice Weekly' },
   { value: 'if_symptoms', label: 'If Symptoms' },
+];
+
+export const SKIN_CHECK_FREQUENCIES: { value: SkinCheckFrequency; label: string; description: string }[] = [
+  { value: 'every_pad_change', label: 'Every Pad Change', description: 'Perform a skin check with every pad change' },
+  { value: 'daily', label: 'Daily', description: 'Once per day' },
+  { value: 'twice_daily', label: 'Twice Daily', description: 'Two checks per day' },
+  { value: 'three_times_daily', label: 'Three Times Daily', description: 'Three checks per day' },
 ];
 
 export const ON_BEHALF_REASONS = [

@@ -1796,6 +1796,7 @@ export type Database = {
           id: string
           interval_hours: number | null
           schedule_type: string
+          skin_check_frequency: string
           updated_at: string
           updated_by: string | null
           uti_testing_frequency: string | null
@@ -1812,6 +1813,7 @@ export type Database = {
           id?: string
           interval_hours?: number | null
           schedule_type?: string
+          skin_check_frequency?: string
           updated_at?: string
           updated_by?: string | null
           uti_testing_frequency?: string | null
@@ -1828,6 +1830,7 @@ export type Database = {
           id?: string
           interval_hours?: number | null
           schedule_type?: string
+          skin_check_frequency?: string
           updated_at?: string
           updated_by?: string | null
           uti_testing_frequency?: string | null

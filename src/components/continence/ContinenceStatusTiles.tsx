@@ -377,25 +377,92 @@ function SkinCheckTile({
   onLog: () => void;
   disabled?: boolean;
 }) {
-  const { checks, isOverdue, hoursSinceLastCheck, lastCheck } =
-    useSkinChecks(clientId);
+  const { config } = useContinenceConfig(clientId);
+  const { checks, lastCheck } = useSkinChecks(clientId);
+  const { changes } = usePadChanges(clientId);
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const skinCheckFrequency = (config as any)?.skin_check_frequency || 'every_pad_change';
+
+  // Calculate required checks per day and interval hours based on frequency
+  const { intervalHours, frequencyLabel, isOverdue, hoursUntilDue, checksRequiredToday, checksCompletedToday } =
+    useMemo(() => {
+      const todayStr = format(now, 'yyyy-MM-dd');
+      const todayChecks = checks.filter(
+        (c) => new Date(c.event_occurred_at).toDateString() === now.toDateString(),
+      );
+      const checksCompletedToday = todayChecks.length;
+
+      let intervalHours = 24;
+      let frequencyLabel = 'Daily';
+      let checksRequiredToday = 1;
+
+      switch (skinCheckFrequency) {
+        case 'daily':
+          intervalHours = 24;
+          frequencyLabel = 'Daily';
+          checksRequiredToday = 1;
+          break;
+        case 'twice_daily':
+          intervalHours = 12;
+          frequencyLabel = 'Twice daily';
+          checksRequiredToday = 2;
+          break;
+        case 'three_times_daily':
+          intervalHours = 8;
+          frequencyLabel = 'Three times daily';
+          checksRequiredToday = 3;
+          break;
+        case 'every_pad_change': {
+          // Count today's pad changes to determine expected checks
+          const todayPadChanges = changes.filter(
+            (c) => new Date(c.event_occurred_at).toDateString() === now.toDateString(),
+          );
+          checksRequiredToday = Math.max(1, todayPadChanges.length);
+          intervalHours = 0; // Not time-based
+          frequencyLabel = 'Every pad change';
+          break;
+        }
+      }
+
+      const hoursSinceLastCheck = lastCheck
+        ? differenceInHours(now, new Date(lastCheck.event_occurred_at))
+        : null;
+
+      let isOverdue = false;
+      let hoursUntilDue = 0;
+
+      if (skinCheckFrequency === 'every_pad_change') {
+        // Overdue if pad changes today > skin checks today
+        const todayPadChanges = changes.filter(
+          (c) => new Date(c.event_occurred_at).toDateString() === now.toDateString(),
+        );
+        isOverdue = todayPadChanges.length > checksCompletedToday;
+      } else {
+        isOverdue = hoursSinceLastCheck !== null && hoursSinceLastCheck >= intervalHours;
+        hoursUntilDue = lastCheck
+          ? Math.max(0, intervalHours - (hoursSinceLastCheck || 0))
+          : 0;
+      }
+
+      return { intervalHours, frequencyLabel, isOverdue, hoursUntilDue, checksRequiredToday, checksCompletedToday };
+    }, [config, checks, changes, lastCheck, now, skinCheckFrequency]);
 
   let status: HealthStatus = 'stable';
   let statusLabel = 'Healthy';
   let statusMessage: string | null = null;
 
   if (lastCheck) {
-    if (
-      ['broken_skin', 'fungal_signs'].includes(lastCheck.skin_condition)
-    ) {
+    if (['broken_skin', 'fungal_signs'].includes(lastCheck.skin_condition)) {
       status = 'action';
       statusLabel = 'Action Required';
       statusMessage = 'Active concern – seek medical advice';
-    } else if (
-      ['redness', 'rash', 'moisture_damage'].includes(
-        lastCheck.skin_condition,
-      )
-    ) {
+    } else if (['redness', 'rash', 'moisture_damage'].includes(lastCheck.skin_condition)) {
       status = 'monitor';
       statusLabel = 'Monitor';
       statusMessage = 'Skin changes identified';
@@ -404,7 +471,9 @@ function SkinCheckTile({
     if (isOverdue && status === 'stable') {
       status = 'monitor';
       statusLabel = 'Overdue';
-      statusMessage = `Last check ${Math.round(hoursSinceLastCheck || 0)}h ago`;
+      statusMessage = skinCheckFrequency === 'every_pad_change'
+        ? `${checksCompletedToday}/${checksRequiredToday} checks today`
+        : `Last check ${differenceInHours(now, new Date(lastCheck.event_occurred_at))}h ago`;
     }
   } else {
     status = 'monitor';
@@ -413,15 +482,8 @@ function SkinCheckTile({
   }
 
   const lastTime = lastCheck
-    ? formatDistanceToNow(new Date(lastCheck.event_occurred_at), {
-        addSuffix: true,
-      })
+    ? formatDistanceToNow(new Date(lastCheck.event_occurred_at), { addSuffix: true })
     : null;
-
-  // Countdown to next due (every 48h)
-  const hoursUntilDue = lastCheck
-    ? Math.max(0, 48 - (hoursSinceLastCheck || 0))
-    : 0;
 
   return (
     <Card>
@@ -446,10 +508,13 @@ function SkinCheckTile({
           >
             {statusLabel}
           </div>
+          <p className="text-xs text-muted-foreground">
+            Frequency: {frequencyLabel}
+          </p>
           {statusMessage && (
             <p className="text-xs text-muted-foreground">{statusMessage}</p>
           )}
-          {lastCheck && hoursUntilDue > 0 && (
+          {lastCheck && hoursUntilDue > 0 && skinCheckFrequency !== 'every_pad_change' && (
             <div className="flex items-center gap-2 text-sm">
               <Timer className="h-4 w-4 text-primary" />
               <span className="font-medium">
@@ -459,6 +524,11 @@ function SkinCheckTile({
                 </span>
               </span>
             </div>
+          )}
+          {skinCheckFrequency === 'every_pad_change' && (
+            <p className="text-xs text-muted-foreground">
+              Today: {checksCompletedToday}/{checksRequiredToday} checks
+            </p>
           )}
           {lastTime && (
             <p className="text-xs text-muted-foreground">
