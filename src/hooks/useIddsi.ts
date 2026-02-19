@@ -69,24 +69,19 @@ export function useIddsiConfig(clientId?: string) {
     const { data: user } = await supabase.auth.getUser();
     const now = new Date().toISOString();
 
-    if (config) {
-      const payload: Record<string, any> = { ...updates, updated_by: user.user?.id };
-      if ('food_level' in updates) payload.food_level_set_at = now;
-      if ('drink_level' in updates) payload.drink_level_set_at = now;
-      const { error } = await supabase.from('iddsi_config').update(payload).eq('id', config.id);
-      if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
-    } else {
-      const payload: Record<string, any> = {
-        client_id: cId,
-        ...updates,
-        created_by: user.user?.id,
-        updated_by: user.user?.id,
-      };
-      if ('food_level' in updates) payload.food_level_set_at = now;
-      if ('drink_level' in updates) payload.drink_level_set_at = now;
-      const { error } = await supabase.from('iddsi_config').insert(payload);
-      if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
-    }
+    const payload: Record<string, any> = {
+      client_id: cId,
+      ...updates,
+      updated_by: user.user?.id,
+    };
+    if (!config) payload.created_by = user.user?.id;
+    if ('food_level' in updates) payload.food_level_set_at = now;
+    if ('drink_level' in updates) payload.drink_level_set_at = now;
+
+    const { error } = config
+      ? await supabase.from('iddsi_config').update(payload).eq('id', config.id)
+      : await supabase.from('iddsi_config').upsert(payload, { onConflict: 'client_id' });
+    if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
     toast({ title: 'Saved', description: 'IDDSI configuration updated.' });
     fetch();
   };
