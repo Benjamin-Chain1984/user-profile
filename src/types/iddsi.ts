@@ -155,7 +155,7 @@ export const FOOD_LEVELS: Record<string, LevelInfo> = {
       'It should not drip, flow, or stick to the spoon',
     ],
     equipment: ['Spoon'],
-    videoUrl: 'https://www.youtube.com/embed/eLPVzMkSj2U',
+    videoUrl: 'https://www.youtube.com/embed/QgzlEAPZKy8',
     videoTitle: 'IDDSI Spoon Tilt Test – Level 4 Extremely Thick',
   },
   '3_food': {
@@ -190,7 +190,7 @@ export const DRINK_LEVELS: Record<number, LevelInfo> = {
       'Falls off in a cohesive mass when tilted',
     ],
     equipment: ['Spoon'],
-    videoUrl: 'https://www.youtube.com/embed/eLPVzMkSj2U',
+    videoUrl: 'https://www.youtube.com/embed/QgzlEAPZKy8',
     videoTitle: 'IDDSI Spoon Tilt Test – Level 4 Extremely Thick',
   },
   3: {
