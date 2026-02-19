@@ -24,6 +24,8 @@ const DEFAULT_CONFIG: Omit<AbbeyPainConfig, 'id' | 'created_at' | 'updated_at' |
   mild_alert_recipients: ['supervisor'],
   moderate_alert_recipients: ['supervisor', 'nurse'],
   severe_alert_recipients: ['supervisor', 'nurse', 'family', 'gp'],
+  enabled_tools: ['abbey', 'painad'],
+  default_tool: 'abbey',
 };
 
 export function usePainConfig(clientId?: string) {

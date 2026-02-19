@@ -92,6 +92,8 @@ export type Database = {
           created_at: string
           created_by: string | null
           custom_trigger_text: string | null
+          default_tool: string
+          enabled_tools: string[]
           id: string
           mild_alert_recipients: string[]
           mild_reassess_hours: number
@@ -108,6 +110,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           custom_trigger_text?: string | null
+          default_tool?: string
+          enabled_tools?: string[]
           id?: string
           mild_alert_recipients?: string[]
           mild_reassess_hours?: number
@@ -124,6 +128,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           custom_trigger_text?: string | null
+          default_tool?: string
+          enabled_tools?: string[]
           id?: string
           mild_alert_recipients?: string[]
           mild_reassess_hours?: number
@@ -3692,6 +3698,74 @@ export type Database = {
             columns: ["assessment_id"]
             isOneToOne: false
             referencedRelation: "abbey_pain_assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      painad_assessments: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          id: string
+          notes: string | null
+          pain_type: string
+          q1_breathing: number
+          q2_negative_vocalization: number
+          q3_facial_expression: number
+          q4_body_language: number
+          q5_consolability: number
+          severity: string
+          total_score: number
+          trigger_reason: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          id?: string
+          notes?: string | null
+          pain_type: string
+          q1_breathing: number
+          q2_negative_vocalization: number
+          q3_facial_expression: number
+          q4_body_language: number
+          q5_consolability: number
+          severity: string
+          total_score: number
+          trigger_reason?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          id?: string
+          notes?: string | null
+          pain_type?: string
+          q1_breathing?: number
+          q2_negative_vocalization?: number
+          q3_facial_expression?: number
+          q4_body_language?: number
+          q5_consolability?: number
+          severity?: string
+          total_score?: number
+          trigger_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "painad_assessments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]

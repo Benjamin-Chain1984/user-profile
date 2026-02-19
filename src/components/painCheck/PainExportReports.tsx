@@ -16,6 +16,7 @@ import {
   AssessmentTrigger,
   ABBEY_QUESTIONS
 } from '@/types/painAssessment';
+import { PainadAssessment, getPainadSeverityLabel, PAINAD_QUESTIONS } from '@/types/painad';
 import { format, isWithinInterval, startOfDay, endOfDay, subDays, subMonths, subYears } from 'date-fns';
 import { CalendarIcon, FileDown, FileText, Table, ArrowLeft, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -23,6 +24,7 @@ import jsPDF from 'jspdf';
 
 interface PainExportReportsProps {
   assessments: AbbeyPainAssessment[];
+  painadAssessments?: PainadAssessment[];
   onClose: () => void;
 }
 
@@ -34,7 +36,7 @@ interface ExportData {
 
 type DateRangePreset = 'last7' | 'last30' | 'lastMonth' | 'lastYear' | 'custom';
 
-export function PainExportReports({ assessments, onClose }: PainExportReportsProps) {
+export function PainExportReports({ assessments, painadAssessments = [], onClose }: PainExportReportsProps) {
   const [datePreset, setDatePreset] = useState<DateRangePreset>('last7');
   const [startDate, setStartDate] = useState<Date | undefined>(subDays(new Date(), 7));
   const [endDate, setEndDate] = useState<Date | undefined>(new Date());

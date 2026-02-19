@@ -6,12 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Switch } from '@/components/ui/switch';
 import { usePainConfig } from '@/hooks/usePainConfig';
 import { ASSESSMENT_TRIGGER_LABELS, AssessmentTrigger } from '@/types/painAssessment';
 import { ModuleNotificationsCard, type ModuleNotificationSettings } from '@/components/module';
 import { useModuleAlertRecipients, useSetModuleAlertRecipients } from '@/hooks/useNotificationContacts';
 import type { AlertSeverity } from '@/types/notificationContacts';
-import { Settings, Clock, Save, AlertTriangle } from 'lucide-react';
+import { Settings, Clock, Save, AlertTriangle, ClipboardList, Brain } from 'lucide-react';
 
 interface PainConfigSettingsProps {
   clientId?: string;
@@ -59,6 +60,7 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
   const [mildHours, setMildHours] = useState(effectiveConfig.mild_reassess_hours);
   const [moderateHours, setModerateHours] = useState(effectiveConfig.moderate_reassess_hours);
   const [severeHours, setSevereHours] = useState(effectiveConfig.severe_reassess_hours);
+  const [enabledTools, setEnabledTools] = useState<string[]>(effectiveConfig.enabled_tools || ['abbey', 'painad']);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -68,6 +70,7 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
       setMildHours(config.mild_reassess_hours);
       setModerateHours(config.moderate_reassess_hours);
       setSevereHours(config.severe_reassess_hours);
+      setEnabledTools(config.enabled_tools || ['abbey', 'painad']);
     }
   }, [config]);
 
@@ -104,10 +107,12 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
       mild_reassess_hours: mildHours,
       moderate_reassess_hours: moderateHours,
       severe_reassess_hours: severeHours,
-      mild_alert_recipients: [], // Recipients are now managed centrally
+      mild_alert_recipients: [],
       moderate_alert_recipients: [],
       severe_alert_recipients: [],
-    });
+      enabled_tools: enabledTools,
+      default_tool: enabledTools[0] || 'abbey',
+    } as any);
     // Also save notification recipients
     handleSaveNotifications();
     setSaving(false);
@@ -136,9 +141,56 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
         <Settings className="w-6 h-6 text-primary" />
         <div>
           <h2 className="text-lg font-semibold">Pain Assessment Configuration</h2>
-          <p className="text-sm text-muted-foreground">Configure when and how the Abbey Pain Scale is used</p>
+          <p className="text-sm text-muted-foreground">Configure assessment tools, triggers, and thresholds</p>
         </div>
       </div>
+
+      {/* Tool Selection */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <ClipboardList className="w-4 h-4" />
+            Enabled Assessment Tools
+          </CardTitle>
+          <CardDescription>
+            Select which pain assessment tools are available. At least one must be enabled.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center justify-between p-3 rounded-lg border">
+            <div className="flex items-center gap-3">
+              <ClipboardList className="w-5 h-5 text-success" />
+              <div>
+                <p className="font-medium text-sm">Abbey Pain Scale</p>
+                <p className="text-xs text-muted-foreground">6-item scale, scored 0–18</p>
+              </div>
+            </div>
+            <Switch
+              checked={enabledTools.includes('abbey')}
+              onCheckedChange={(checked) => {
+                if (!checked && enabledTools.length <= 1) return;
+                setEnabledTools(prev => checked ? [...prev, 'abbey'] : prev.filter(t => t !== 'abbey'));
+              }}
+            />
+          </div>
+          <div className="flex items-center justify-between p-3 rounded-lg border">
+            <div className="flex items-center gap-3">
+              <Brain className="w-5 h-5 text-primary" />
+              <div>
+                <p className="font-medium text-sm">PAINAD Scale</p>
+                <p className="text-xs text-muted-foreground">5-item scale, scored 0–10 (advanced dementia)</p>
+              </div>
+            </div>
+            <Switch
+              checked={enabledTools.includes('painad')}
+              onCheckedChange={(checked) => {
+                if (!checked && enabledTools.length <= 1) return;
+                setEnabledTools(prev => checked ? [...prev, 'painad'] : prev.filter(t => t !== 'painad'));
+              }}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Assessment Triggers */}
       <Card>

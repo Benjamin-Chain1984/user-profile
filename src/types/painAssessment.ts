@@ -35,6 +35,8 @@ export interface AbbeyPainConfig {
   mild_alert_recipients: string[];
   moderate_alert_recipients: string[];
   severe_alert_recipients: string[];
+  enabled_tools: string[];
+  default_tool: string;
   created_at: string;
   updated_at: string;
   created_by: string | null;
