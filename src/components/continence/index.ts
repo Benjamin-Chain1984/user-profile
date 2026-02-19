@@ -4,6 +4,7 @@
 
 export { ContinenceDashboard } from './ContinenceDashboard';
 export { ContinenceStatusCard } from './ContinenceStatusCard';
+export { ContinenceStatusTiles } from './ContinenceStatusTiles';
 export { PadChangeForm } from './PadChangeForm';
 export { SkinCheckForm } from './SkinCheckForm';
 export { ConsumablesCheckForm } from './ConsumablesCheckForm';

@@ -6,8 +6,8 @@ import { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertTriangle, FileDown, Plus, Package, TestTube, Shield, Settings, Clock, TrendingUp } from 'lucide-react';
-import { ContinenceStatusCard } from './ContinenceStatusCard';
+import { AlertTriangle, FileDown, Clock, TrendingUp, Settings } from 'lucide-react';
+import { ContinenceStatusTiles } from './ContinenceStatusTiles';
 import { ContinenceHistory } from './ContinenceHistory';
 import { ContinenceTrends } from './ContinenceTrends';
 import { ContinenceConfigSettings } from './ContinenceConfigSettings';
@@ -38,7 +38,6 @@ export function ContinenceDashboard({ clientId }: ContinenceDashboardProps) {
   const [showExport, setShowExport] = useState(false);
 
   const handlePadChangeComplete = () => {
-    // Prompt skin check after pad change
     setShowSkinCheckForm(true);
   };
 
@@ -50,16 +49,10 @@ export function ContinenceDashboard({ clientId }: ContinenceDashboardProps) {
           <h1 className="text-2xl font-bold">Continence Management</h1>
           <p className="text-muted-foreground">Monitor pad changes, skin integrity, and supplies</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setShowExport(true)} className="gap-2">
-            <FileDown className="h-4 w-4" />
-            Export
-          </Button>
-          <Button onClick={() => setShowPadChangeForm(true)} className="gap-2" disabled={isMonitoringPaused}>
-            <Plus className="h-4 w-4" />
-            Log Pad Change
-          </Button>
-        </div>
+        <Button variant="outline" onClick={() => setShowExport(true)} className="gap-2">
+          <FileDown className="h-4 w-4" />
+          Export
+        </Button>
       </div>
 
       {/* Monitoring Paused Banner */}
@@ -81,31 +74,15 @@ export function ContinenceDashboard({ clientId }: ContinenceDashboardProps) {
         </AlertDescription>
       </Alert>
 
-      {/* Status Card */}
-      <ContinenceStatusCard 
-        clientId={clientId} 
-        onLogPadChange={() => setShowPadChangeForm(true)} 
+      {/* Status Tiles — 4 individual tiles */}
+      <ContinenceStatusTiles
+        clientId={clientId}
+        onLogPadChange={() => setShowPadChangeForm(true)}
+        onLogSkinCheck={() => setShowSkinCheckForm(true)}
+        onLogConsumables={() => setShowConsumablesForm(true)}
+        onLogUTI={() => setShowUTIForm(true)}
+        disabled={isMonitoringPaused}
       />
-
-      {/* Quick Actions */}
-      <div className="flex flex-wrap gap-2">
-        <Button variant="outline" onClick={() => setShowSkinCheckForm(true)} className="gap-2">
-          <Shield className="h-4 w-4" />
-          Skin Check
-        </Button>
-        {config?.enable_consumables_monitoring && (
-          <Button variant="outline" onClick={() => setShowConsumablesForm(true)} className="gap-2">
-            <Package className="h-4 w-4" />
-            Stock Check
-          </Button>
-        )}
-        {config?.enable_uti_testing && (
-          <Button variant="outline" onClick={() => setShowUTIForm(true)} className="gap-2">
-            <TestTube className="h-4 w-4" />
-            UTI Test
-          </Button>
-        )}
-      </div>
 
       {/* Main Tabs */}
       <Tabs defaultValue="tracking" className="space-y-4">
