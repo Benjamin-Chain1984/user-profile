@@ -171,7 +171,7 @@ export const FOOD_LEVELS: Record<string, LevelInfo> = {
       'Fork Drip Test: Liquid should drip through fork tines slowly',
     ],
     equipment: ['10mL slip-tip syringe', 'Fork'],
-    videoUrl: 'https://www.youtube.com/embed/3gOq4K7Xxyg',
+    videoUrl: 'https://www.youtube.com/embed/u2QxsjQVvw',
     videoTitle: 'IDDSI Flow Test and Fork Drip Test – Level 3',
   },
 };
@@ -206,7 +206,7 @@ export const DRINK_LEVELS: Record<number, LevelInfo> = {
       'Between 4mL and 8mL should remain in syringe',
     ],
     equipment: ['10mL slip-tip syringe'],
-    videoUrl: 'https://www.youtube.com/embed/3gOq4K7Xxyg',
+    videoUrl: 'https://www.youtube.com/embed/u2QxsjQVvw',
     videoTitle: 'IDDSI Flow Test – Level 3',
   },
   2: {
