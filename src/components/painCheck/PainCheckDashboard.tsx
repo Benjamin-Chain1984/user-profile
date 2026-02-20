@@ -57,54 +57,90 @@ export function PainCheckDashboard() {
   const latestAbbey = getLatestAbbey();
   const latestPainad = getLatestPainad();
 
+  // PAINAD-specific reassessment timeframes (score-driven, tool-specific)
+  const PAINAD_REASSESS: Record<string, { hours: number; label: string; urgency: 'amber' | 'dark-amber' | 'red' }> = {
+    mild:     { hours: painConfig?.mild_reassess_hours ?? 4,     label: 'Monitor — reassess within 4h',                    urgency: 'amber' },
+    moderate: { hours: painConfig?.moderate_reassess_hours ?? 2,  label: 'Action Required — seek advice if persistent',     urgency: 'dark-amber' },
+    severe:   { hours: painConfig?.severe_reassess_hours ?? 1,    label: 'Urgent clinical review required',                 urgency: 'red' },
+  };
+
   // Compute next assessment due based on configured frequency OR reassessment timeframe
+  // Each tool drives its own reassessment; worst severity across tools takes priority.
   const nextDueInfo = useMemo(() => {
     const triggers = painConfig?.assessment_triggers || ['daily'];
     const freq = triggers.find(t => ['daily', 'weekly', 'fortnightly'].includes(t)) as AssessmentFrequency | undefined;
     const freqOption = freq ? ASSESSMENT_FREQUENCY_OPTIONS.find(o => o.value === freq) : null;
 
-    // Find the most recent assessment across both tools
-    const candidates: { time: number; severity: string }[] = [];
-    if (latestAbbey) candidates.push({ time: new Date(latestAbbey.created_at).getTime(), severity: latestAbbey.severity });
-    if (latestPainad) candidates.push({ time: new Date(latestPainad.created_at).getTime(), severity: latestPainad.severity as string });
+    // Build per-tool candidates with tool context
+    type Candidate = { time: number; severity: string; tool: 'abbey' | 'painad' };
+    const candidates: Candidate[] = [];
+    if (latestAbbey) candidates.push({ time: new Date(latestAbbey.created_at).getTime(), severity: latestAbbey.severity, tool: 'abbey' });
+    if (latestPainad) candidates.push({ time: new Date(latestPainad.created_at).getTime(), severity: latestPainad.severity as string, tool: 'painad' });
 
     if (candidates.length === 0) {
-      return { dueDate: null, isOverdue: true, label: freqOption?.label || 'Daily', hasAssessments: false, reason: null, isReassessment: false };
+      return { dueDate: null, isOverdue: true, label: freqOption?.label || 'Daily', hasAssessments: false, reason: null, isReassessment: false, urgency: null as null | 'amber' | 'dark-amber' | 'red' };
     }
 
-    // Use the most recent assessment to determine severity-driven reassessment
-    const mostRecent = candidates.sort((a, b) => b.time - a.time)[0];
-    const mostRecentDate = new Date(mostRecent.time);
-    const severity = mostRecent.severity;
+    // Priority: severe > moderate > mild > no_pain, then most recent
+    const SEVERITY_RANK: Record<string, number> = { severe: 3, moderate: 2, mild: 1, no_pain: 0 };
+    const mostUrgent = candidates.sort((a, b) => {
+      const rankDiff = (SEVERITY_RANK[b.severity] ?? 0) - (SEVERITY_RANK[a.severity] ?? 0);
+      return rankDiff !== 0 ? rankDiff : b.time - a.time;
+    })[0];
 
-    // If severity is NOT no_pain, use reassessment timeframe (takes priority)
+    const mostUrgentDate = new Date(mostUrgent.time);
+    const severity = mostUrgent.severity;
+    const tool = mostUrgent.tool;
+
     if (severity !== 'no_pain') {
       let reassessHours: number;
       let severityLabel: string;
-      if (severity === 'severe') {
-        reassessHours = painConfig?.severe_reassess_hours ?? 1;
-        severityLabel = 'Severe pain';
-      } else if (severity === 'moderate') {
-        reassessHours = painConfig?.moderate_reassess_hours ?? 2;
-        severityLabel = 'Moderate pain';
+      let urgency: 'amber' | 'dark-amber' | 'red';
+
+      if (tool === 'painad') {
+        // PAINAD-specific thresholds
+        const painadCfg = PAINAD_REASSESS[severity];
+        reassessHours = painadCfg?.hours ?? (severity === 'severe' ? 1 : severity === 'moderate' ? 2 : 4);
+        urgency = painadCfg?.urgency ?? 'amber';
+        if (severity === 'severe') {
+          severityLabel = 'PAINAD: Severe pain (7–10) — urgent clinical review';
+        } else if (severity === 'moderate') {
+          severityLabel = 'PAINAD: Moderate pain (4–6) — action required, seek advice if persistent';
+        } else {
+          severityLabel = 'PAINAD: Mild pain (1–3) — monitor closely';
+        }
       } else {
-        reassessHours = painConfig?.mild_reassess_hours ?? 4;
-        severityLabel = 'Mild pain';
+        // Abbey Pain Scale thresholds
+        if (severity === 'severe') {
+          reassessHours = painConfig?.severe_reassess_hours ?? 1;
+          severityLabel = 'Abbey: Severe pain — escalate immediately';
+          urgency = 'red';
+        } else if (severity === 'moderate') {
+          reassessHours = painConfig?.moderate_reassess_hours ?? 2;
+          severityLabel = 'Abbey: Moderate pain — notify supervisor';
+          urgency = 'dark-amber';
+        } else {
+          reassessHours = painConfig?.mild_reassess_hours ?? 4;
+          severityLabel = 'Abbey: Mild pain — monitor and reassess';
+          urgency = 'amber';
+        }
       }
-      const dueDate = addHours(mostRecentDate, reassessHours);
+
+      const dueDate = addHours(mostUrgentDate, reassessHours);
       return {
         dueDate,
         isOverdue: isPast(dueDate),
         label: `Reassess in ${reassessHours}h`,
         hasAssessments: true,
-        reason: `${severityLabel} detected — reassessment required`,
+        reason: severityLabel,
         isReassessment: true,
+        urgency,
       };
     }
 
     // Green/no pain — use scheduled frequency
     if (!freqOption) return null;
-    const dueDate = addHours(mostRecentDate, freqOption.hours);
+    const dueDate = addHours(mostUrgentDate, freqOption.hours);
     return {
       dueDate,
       isOverdue: isPast(dueDate),
@@ -112,6 +148,7 @@ export function PainCheckDashboard() {
       hasAssessments: true,
       reason: null,
       isReassessment: false,
+      urgency: null as null | 'amber' | 'dark-amber' | 'red',
     };
   }, [painConfig, latestAbbey, latestPainad]);
 
@@ -213,17 +250,25 @@ export function PainCheckDashboard() {
       {/* Next Assessment Due Card */}
       {nextDueInfo && (
         <Card className={`border-l-4 ${
-          nextDueInfo.isReassessment 
-            ? 'border-l-amber-500 bg-amber-50/50' 
-            : nextDueInfo.isOverdue 
-              ? 'border-l-destructive bg-destructive/5' 
-              : 'border-l-success bg-success/5'
+          nextDueInfo.urgency === 'red'
+            ? 'border-l-destructive bg-destructive/5'
+            : nextDueInfo.urgency === 'dark-amber'
+              ? 'border-l-orange-600 bg-orange-600/5'
+              : nextDueInfo.isReassessment
+                ? 'border-l-amber-500 bg-amber-500/5'
+                : nextDueInfo.isOverdue
+                  ? 'border-l-destructive bg-destructive/5'
+                  : 'border-l-success bg-success/5'
         }`}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                {nextDueInfo.isReassessment ? (
-                  <AlertTriangle className="h-6 w-6 text-amber-600" />
+                {nextDueInfo.urgency === 'red' ? (
+                  <AlertTriangle className="h-6 w-6 text-destructive" />
+                ) : nextDueInfo.urgency === 'dark-amber' ? (
+                  <AlertTriangle className="h-6 w-6 text-orange-600" />
+                ) : nextDueInfo.isReassessment ? (
+                  <AlertTriangle className="h-6 w-6 text-amber-500" />
                 ) : nextDueInfo.isOverdue ? (
                   <CalendarClock className="h-6 w-6 text-destructive" />
                 ) : (
@@ -231,11 +276,15 @@ export function PainCheckDashboard() {
                 )}
                 <div>
                   <p className="text-sm font-medium">
-                    {nextDueInfo.isReassessment 
-                      ? 'Reassessment Required'
-                      : nextDueInfo.isOverdue 
-                        ? 'Assessment Overdue' 
-                        : 'Next Assessment Due'}
+                    {nextDueInfo.urgency === 'red'
+                      ? 'Urgent Clinical Review Required'
+                      : nextDueInfo.urgency === 'dark-amber'
+                        ? 'Action Required — Seek Advice'
+                        : nextDueInfo.isReassessment
+                          ? 'Reassessment Required'
+                          : nextDueInfo.isOverdue
+                            ? 'Assessment Overdue'
+                            : 'Next Assessment Due'}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {nextDueInfo.isReassessment ? nextDueInfo.label : `Schedule: ${nextDueInfo.label}`}
@@ -247,7 +296,12 @@ export function PainCheckDashboard() {
                   <p className="text-sm font-semibold text-destructive">No assessments recorded</p>
                 ) : nextDueInfo.dueDate ? (
                   <>
-                    <p className={`text-sm font-semibold ${nextDueInfo.isOverdue || nextDueInfo.isReassessment ? 'text-destructive' : 'text-foreground'}`}>
+                    <p className={`text-sm font-semibold ${
+                      nextDueInfo.urgency === 'red' ? 'text-destructive'
+                      : nextDueInfo.urgency === 'dark-amber' ? 'text-orange-600'
+                      : nextDueInfo.isReassessment || nextDueInfo.isOverdue ? 'text-amber-600'
+                      : 'text-foreground'
+                    }`}>
                       {nextDueInfo.isOverdue
                         ? `Overdue by ${formatDistanceToNow(nextDueInfo.dueDate)}`
                         : `Due in ${formatDistanceToNow(nextDueInfo.dueDate)}`
@@ -262,8 +316,14 @@ export function PainCheckDashboard() {
             </div>
             {nextDueInfo.reason && (
               <div className="mt-2 px-9">
-                <p className="text-xs font-medium text-amber-700 bg-amber-100/60 rounded px-2 py-1 inline-block">
-                  ⚠ {nextDueInfo.reason}
+                <p className={`text-xs font-medium rounded px-2 py-1 inline-block ${
+                  nextDueInfo.urgency === 'red'
+                    ? 'text-destructive bg-destructive/10'
+                    : nextDueInfo.urgency === 'dark-amber'
+                      ? 'text-orange-700 bg-orange-100/60'
+                      : 'text-amber-700 bg-amber-100/60'
+                }`}>
+                  {nextDueInfo.urgency === 'red' ? '🔴' : nextDueInfo.urgency === 'dark-amber' ? '🟠' : '🟡'} {nextDueInfo.reason}
                 </p>
               </div>
             )}
