@@ -391,10 +391,9 @@ function SkinCheckTile({
 
   const skinCheckFrequency = (config as any)?.skin_check_frequency || 'every_pad_change';
 
-  // Calculate required checks per day and interval hours based on frequency
-  const { intervalHours, frequencyLabel, isOverdue, hoursUntilDue, checksRequiredToday, checksCompletedToday } =
+  // Calculate required checks and overdue status based on frequency
+  const { intervalHours, frequencyLabel, isOverdue, hoursUntilDue, checksRequiredToday, checksCompletedToday, missedPadChanges } =
     useMemo(() => {
-      const todayStr = format(now, 'yyyy-MM-dd');
       const todayChecks = checks.filter(
         (c) => new Date(c.event_occurred_at).toDateString() === now.toDateString(),
       );
@@ -403,6 +402,7 @@ function SkinCheckTile({
       let intervalHours = 24;
       let frequencyLabel = 'Daily';
       let checksRequiredToday = 1;
+      let missedPadChanges = 0;
 
       switch (skinCheckFrequency) {
         case 'daily':
@@ -421,12 +421,25 @@ function SkinCheckTile({
           checksRequiredToday = 3;
           break;
         case 'every_pad_change': {
-          // Count today's pad changes to determine expected checks
+          // Each pad change should have a paired skin check.
+          // A skin check is considered paired if it occurred within 30 mins after a pad change.
           const todayPadChanges = changes.filter(
             (c) => new Date(c.event_occurred_at).toDateString() === now.toDateString(),
           );
-          checksRequiredToday = Math.max(1, todayPadChanges.length);
+          checksRequiredToday = todayPadChanges.length;
           intervalHours = 0; // Not time-based
+
+          // Count pad changes that don't have a paired skin check within 30 mins after
+          missedPadChanges = todayPadChanges.filter((padChange) => {
+            const padTime = new Date(padChange.event_occurred_at).getTime();
+            const hasPairedCheck = todayChecks.some((check) => {
+              const checkTime = new Date(check.event_occurred_at).getTime();
+              // Skin check must be after pad change and within 30 mins
+              return checkTime >= padTime && checkTime <= padTime + 30 * 60 * 1000;
+            });
+            return !hasPairedCheck;
+          }).length;
+
           frequencyLabel = 'Every pad change';
           break;
         }
@@ -440,11 +453,8 @@ function SkinCheckTile({
       let hoursUntilDue = 0;
 
       if (skinCheckFrequency === 'every_pad_change') {
-        // Overdue if pad changes today > skin checks today
-        const todayPadChanges = changes.filter(
-          (c) => new Date(c.event_occurred_at).toDateString() === now.toDateString(),
-        );
-        isOverdue = todayPadChanges.length > checksCompletedToday;
+        // Overdue if there are pad changes today without a paired skin check
+        isOverdue = missedPadChanges > 0;
       } else {
         isOverdue = hoursSinceLastCheck !== null && hoursSinceLastCheck >= intervalHours;
         hoursUntilDue = lastCheck
@@ -452,13 +462,14 @@ function SkinCheckTile({
           : 0;
       }
 
-      return { intervalHours, frequencyLabel, isOverdue, hoursUntilDue, checksRequiredToday, checksCompletedToday };
+      return { intervalHours, frequencyLabel, isOverdue, hoursUntilDue, checksRequiredToday, checksCompletedToday, missedPadChanges };
     }, [config, checks, changes, lastCheck, now, skinCheckFrequency]);
 
   let status: HealthStatus = 'stable';
   let statusLabel = 'Healthy';
   let statusMessage: string | null = null;
 
+  // Clinical findings from last check take highest priority
   if (lastCheck) {
     if (['broken_skin', 'fungal_signs'].includes(lastCheck.skin_condition)) {
       status = 'action';
@@ -469,18 +480,29 @@ function SkinCheckTile({
       statusLabel = 'Monitor';
       statusMessage = 'Skin changes identified';
     }
-
-    if (isOverdue && status === 'stable') {
-      status = 'monitor';
-      statusLabel = 'Overdue';
-      statusMessage = skinCheckFrequency === 'every_pad_change'
-        ? `${checksCompletedToday}/${checksRequiredToday} checks today`
-        : `Last check ${differenceInHours(now, new Date(lastCheck.event_occurred_at))}h ago`;
-    }
   } else {
     status = 'monitor';
     statusLabel = 'Not yet logged';
     statusMessage = 'No skin checks recorded';
+  }
+
+  // Overdue check (only escalates status, doesn't downgrade clinical findings)
+  if (isOverdue && status === 'stable') {
+    status = 'monitor';
+    if (skinCheckFrequency === 'every_pad_change') {
+      statusLabel = 'Check Missed';
+      statusMessage = `${missedPadChanges} pad change${missedPadChanges > 1 ? 's' : ''} without skin check`;
+    } else {
+      statusLabel = 'Overdue';
+      statusMessage = lastCheck
+        ? `Last check ${differenceInHours(now, new Date(lastCheck.event_occurred_at))}h ago`
+        : null;
+    }
+  } else if (isOverdue && status !== 'action') {
+    // Already flagged clinical finding but also missed — add note
+    if (skinCheckFrequency === 'every_pad_change' && missedPadChanges > 0) {
+      statusMessage = `${statusMessage ? statusMessage + ' · ' : ''}${missedPadChanges} check${missedPadChanges > 1 ? 's' : ''} missed`;
+    }
   }
 
   const lastTime = lastCheck
@@ -514,8 +536,27 @@ function SkinCheckTile({
             Frequency: {frequencyLabel}
           </p>
           {statusMessage && (
-            <p className="text-xs text-muted-foreground">{statusMessage}</p>
+            <p className={`text-xs ${status === 'action' ? 'text-destructive' : status === 'monitor' ? 'text-amber-600' : 'text-muted-foreground'}`}>
+              {statusMessage}
+            </p>
           )}
+          {/* Per-pad-change progress */}
+          {skinCheckFrequency === 'every_pad_change' && checksRequiredToday > 0 && (
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">
+                Today: {checksCompletedToday}/{checksRequiredToday} checks
+              </p>
+              {missedPadChanges > 0 && (
+                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-amber-500 transition-all"
+                    style={{ width: `${Math.min(100, (checksCompletedToday / Math.max(checksRequiredToday, 1)) * 100)}%` }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+          {/* Countdown for time-based frequencies */}
           {lastCheck && hoursUntilDue > 0 && skinCheckFrequency !== 'every_pad_change' && (
             <div className="flex items-center gap-2 text-sm">
               <Timer className="h-4 w-4 text-primary" />
@@ -526,11 +567,6 @@ function SkinCheckTile({
                 </span>
               </span>
             </div>
-          )}
-          {skinCheckFrequency === 'every_pad_change' && (
-            <p className="text-xs text-muted-foreground">
-              Today: {checksCompletedToday}/{checksRequiredToday} checks
-            </p>
           )}
           {lastTime && (
             <p className="text-xs text-muted-foreground">
