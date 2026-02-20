@@ -264,23 +264,44 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   // ── Pain Assessment ──────────────────────────────────────────
   const fetchLatestPainAssessment = async () => {
     try {
-      const { data, error } = await supabase
-        .from('abbey_pain_assessments')
-        .select('total_score, severity, created_at')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      // Fetch latest from both Abbey and PAINAD tables
+      const [abbeyResult, painadResult] = await Promise.all([
+        supabase
+          .from('abbey_pain_assessments')
+          .select('total_score, severity, created_at')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from('painad_assessments')
+          .select('total_score, severity, created_at')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
 
-      if (error) { console.error('Error fetching pain assessment:', error); return; }
+      const SEVERITY_RANK: Record<string, number> = { severe: 3, moderate: 2, mild: 1, no_pain: 0 };
 
-      if (data) {
-        const severity = data.severity as PainSeverity;
-        const status = painSeverityToStatus(severity);
-        const timeAgo = formatDistanceToNow(new Date(data.created_at), { addSuffix: true });
-        
-        setLatestPainData({ severity, score: data.total_score, timestamp: data.created_at });
-        updateModuleStatus('pain-check', status, `Score ${data.total_score}/18 • ${getSeverityLabel(severity)} • ${timeAgo}`);
-      }
+      // Pick the most severe; if tied, pick the most recent
+      const candidates = [
+        abbeyResult.data ? { ...abbeyResult.data, tool: 'abbey' as const } : null,
+        painadResult.data ? { ...painadResult.data, tool: 'painad' as const } : null,
+      ].filter(Boolean) as Array<{ total_score: number; severity: string; created_at: string; tool: 'abbey' | 'painad' }>;
+
+      if (candidates.length === 0) return;
+
+      const best = candidates.sort((a, b) => {
+        const rankDiff = (SEVERITY_RANK[b.severity] ?? 0) - (SEVERITY_RANK[a.severity] ?? 0);
+        return rankDiff !== 0 ? rankDiff : new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      })[0];
+
+      const severity = best.severity as PainSeverity;
+      const status = painSeverityToStatus(severity);
+      const timeAgo = formatDistanceToNow(new Date(best.created_at), { addSuffix: true });
+      const toolLabel = best.tool === 'painad' ? 'PAINAD' : 'Abbey';
+
+      setLatestPainData({ severity, score: best.total_score, timestamp: best.created_at });
+      updateModuleStatus('pain-check', status, `${toolLabel} • ${getSeverityLabel(severity)} • ${timeAgo}`);
     } catch (err) { console.error('Error in fetchLatestPainAssessment:', err); }
   };
 
