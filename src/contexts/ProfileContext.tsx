@@ -486,6 +486,13 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         .eq('is_active', true)
         .eq('confirmed_by_medical_professional', true);
 
+      // Fetch config for schedule/frequency overdue checks
+      const { data: configData } = await supabase
+        .from('vital_sign_config')
+        .select('*')
+        .is('client_id', null)
+        .maybeSingle();
+
       const typedEntries = (entries || []) as unknown as VitalSignEntry[];
       const typedAlerts = (alertsData || []) as unknown as VitalSignAlert[];
 
@@ -519,8 +526,12 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           overall_status: recalculated.overall_status,
         };
 
-        // Use overridden entry for status calculation
-        const statusResult = calculateHealthMonitoringStatus([overriddenLatest, ...typedEntries.slice(1)], typedAlerts);
+        // Pass config so overdue schedule check runs correctly
+        const statusResult = calculateHealthMonitoringStatus(
+          [overriddenLatest, ...typedEntries.slice(1)],
+          typedAlerts,
+          configData
+        );
 
         const moduleStatus = statusResult.status === 'ideal' ? 'stable'
           : statusResult.status === 'amber' ? 'monitor' : 'action';
@@ -529,14 +540,16 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         const timeAgo = formatDistanceToNow(new Date(typedEntries[0].event_occurred_at), { addSuffix: true });
         updateModuleStatus('health-monitoring', moduleStatus, `${statusResult.message} • ${timeAgo}`);
       } else {
-        const statusResult = calculateHealthMonitoringStatus([], typedAlerts);
+        // No entries — pass config so we can detect overdue from day one
+        const statusResult = calculateHealthMonitoringStatus([], typedAlerts, configData);
         const moduleStatus = statusResult.status === 'ideal' ? 'stable'
           : statusResult.status === 'amber' ? 'monitor' : 'action';
         setLatestHealthMonitoringData({ status: moduleStatus, message: statusResult.message, timestamp: new Date().toISOString() });
-        updateModuleStatus('health-monitoring', moduleStatus, 'Not yet logged');
+        updateModuleStatus('health-monitoring', moduleStatus, statusResult.overdueVitals.length > 0 ? statusResult.message : 'Not yet logged');
       }
     } catch (err) { console.error('Error in fetchHealthMonitoringStatus:', err); }
   };
+
 
   // ── Epilepsy & Seizures ──────────────────────────────────────
   const fetchEpilepsyStatus = async () => {
