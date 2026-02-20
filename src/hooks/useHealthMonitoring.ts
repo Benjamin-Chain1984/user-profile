@@ -6,7 +6,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { calculateEntryStatuses, calculateHealthMonitoringStatus } from '@/utils/vitalSignStatusCalculator';
+import { calculateEntryStatuses } from '@/utils/vitalSignStatusCalculator';
+import { computeHealthMonitoringStatus } from '@/utils/computeHealthMonitoringStatus';
 import type {
   VitalSignEntry,
   VitalSignConfig,
@@ -446,22 +447,49 @@ export function useAlteredCriteria(clientId?: string) {
 // ==================== STATUS HOOK ====================
 
 export function useHealthMonitoringStatus(clientId?: string): HealthMonitoringStatusInfo {
-  const { entries } = useVitalSignEntries(clientId, 10);
+  const { entries } = useVitalSignEntries(clientId, 50);
   const { alerts } = useVitalSignAlerts(clientId);
   const { criteriaMap } = useAlteredCriteria(clientId);
-  const { config } = useVitalSignConfig(clientId);
-
-  // Recalculate latest entry statuses using altered criteria before passing to status calculator
-  const recalculatedEntries = entries.map(entry => {
-    const statuses = calculateEntryStatuses(entry, criteriaMap);
-    return { ...entry, ...statuses };
+  // IMPORTANT: use raw config from DB (not DEFAULT_CONFIG fallback) so frequency hours are always present
+  const { data: rawConfig } = useQuery({
+    queryKey: ['vitalSignConfig', clientId, 'raw'],
+    queryFn: async () => {
+      let query = supabase.from('vital_sign_config').select('*');
+      if (clientId) {
+        query = query.eq('client_id', clientId);
+      } else {
+        query = query.is('client_id', null);
+      }
+      const { data, error } = await query.maybeSingle();
+      if (error) throw error;
+      return data as import('@/types/healthMonitoring').VitalSignConfig | null;
+    },
   });
 
-  const statusInfo = calculateHealthMonitoringStatus(recalculatedEntries, alerts, config);
+  const computed = computeHealthMonitoringStatus({
+    config: rawConfig ?? null,
+    entries,
+    alerts,
+    alteredCriteriaMap: criteriaMap,
+  });
+
+  // Map computed result to the HealthMonitoringStatusInfo shape expected by existing UI
+  const vitalStatuses: Record<import('@/types/healthMonitoring').VitalType, import('@/types/healthMonitoring').VitalStatus | null> = {
+    temperature: computed.perVitalStatuses.find(v => v.vitalKey === 'temperature')?.statusColor ?? null,
+    bp_systolic: computed.perVitalStatuses.find(v => v.vitalKey === 'bp')?.statusColor ?? null,
+    bp_diastolic: computed.perVitalStatuses.find(v => v.vitalKey === 'bp')?.statusColor ?? null,
+    oxygen: computed.perVitalStatuses.find(v => v.vitalKey === 'oxygen')?.statusColor ?? null,
+    heart_rate: computed.perVitalStatuses.find(v => v.vitalKey === 'heart_rate')?.statusColor ?? null,
+    respiratory: computed.perVitalStatuses.find(v => v.vitalKey === 'respiratory')?.statusColor ?? null,
+  };
 
   return {
-    ...statusInfo,
+    status: computed.moduleStatus,
+    message: computed.message,
+    latestEntry: computed.latestEntry,
     activeAlerts: alerts,
+    vitalStatuses,
+    overdueVitals: computed.overdueVitals,
   };
 }
 
