@@ -25,8 +25,9 @@ import { calculateSleepStatus } from '@/utils/sleepStatusCalculator';
 import type { SleepEntry, SleepConfig } from '@/types/sleep';
 import { calculateOralHealthStatus } from '@/utils/oralHealthStatusCalculator';
 import type { OralHealthAssessment, OralHealthTaskLog, OralHealthConfig } from '@/types/oralHealth';
-import { calculateHealthMonitoringStatus, calculateEntryStatuses } from '@/utils/vitalSignStatusCalculator';
-import type { VitalSignEntry, VitalSignAlert, VitalType, AlteredCriteria } from '@/types/healthMonitoring';
+import { calculateEntryStatuses } from '@/utils/vitalSignStatusCalculator';
+import { computeHealthMonitoringStatus } from '@/utils/computeHealthMonitoringStatus';
+import type { VitalSignEntry, VitalSignAlert, VitalType, AlteredCriteria, VitalSignConfig } from '@/types/healthMonitoring';
 import { calculateEpilepsyStatus } from '@/utils/epilepsyStatusCalculator';
 import type { SeizureEvent, EpilepsyConfig, EpilepsyAlert } from '@/types/epilepsy';
 import { calculatePressureAreaStatus } from '@/utils/pressureAreaStatusCalculator';
@@ -510,43 +511,44 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Recalculate the latest entry's statuses using altered criteria
-      if (typedEntries.length > 0) {
-        const latest = typedEntries[0];
-        const recalculated = calculateEntryStatuses(latest, criteriaMap);
-
-        // Override the stored statuses with recalculated ones
-        const overriddenLatest = {
-          ...latest,
-          temperature_status: recalculated.temperature_status,
-          bp_status: recalculated.bp_status,
-          oxygen_status: recalculated.oxygen_status,
-          heart_rate_status: recalculated.heart_rate_status,
-          respiratory_status: recalculated.respiratory_status,
-          overall_status: recalculated.overall_status,
-        };
-
-        // Pass config so overdue schedule check runs correctly
-        const statusResult = calculateHealthMonitoringStatus(
-          [overriddenLatest, ...typedEntries.slice(1)],
-          typedAlerts,
-          configData
-        );
-
-        const moduleStatus = statusResult.status === 'ideal' ? 'stable'
-          : statusResult.status === 'amber' ? 'monitor' : 'action';
-
-        setLatestHealthMonitoringData({ status: moduleStatus, message: statusResult.message, timestamp: typedEntries[0]?.event_occurred_at || new Date().toISOString() });
-        const timeAgo = formatDistanceToNow(new Date(typedEntries[0].event_occurred_at), { addSuffix: true });
-        updateModuleStatus('health-monitoring', moduleStatus, `${statusResult.message} • ${timeAgo}`);
-      } else {
-        // No entries — pass config so we can detect overdue from day one
-        const statusResult = calculateHealthMonitoringStatus([], typedAlerts, configData);
-        const moduleStatus = statusResult.status === 'ideal' ? 'stable'
-          : statusResult.status === 'amber' ? 'monitor' : 'action';
-        setLatestHealthMonitoringData({ status: moduleStatus, message: statusResult.message, timestamp: new Date().toISOString() });
-        updateModuleStatus('health-monitoring', moduleStatus, statusResult.overdueVitals.length > 0 ? statusResult.message : 'Not yet logged');
+      // ── Guard: if config missing, warn and surface Amber ──────────────────
+      if (!configData) {
+        console.error('[ProfileContext] vital_sign_config not found — health monitoring overdue check skipped. Config must be configured via Settings.');
+        updateModuleStatus('health-monitoring', 'monitor', 'Health monitoring config missing — schedule cannot be evaluated');
+        setLatestHealthMonitoringData({ status: 'monitor', message: 'Health monitoring config missing — schedule cannot be evaluated', timestamp: new Date().toISOString() });
+        return;
       }
+
+      // Recalculate ALL entry statuses using altered criteria
+      const recalculatedEntries = typedEntries.map(entry => {
+        const recalculated = calculateEntryStatuses(entry, criteriaMap);
+        return { ...entry, ...recalculated };
+      });
+
+      // Use the single authoritative function — config is always required
+      const computed = computeHealthMonitoringStatus({
+        config: configData as VitalSignConfig,
+        entries: recalculatedEntries,
+        alerts: typedAlerts,
+        alteredCriteriaMap: criteriaMap,
+      });
+
+      const moduleStatus = computed.moduleStatus === 'ideal' ? 'stable'
+        : computed.moduleStatus === 'amber' ? 'monitor' : 'action';
+
+      const timeAgo = typedEntries[0]
+        ? formatDistanceToNow(new Date(typedEntries[0].event_occurred_at), { addSuffix: true })
+        : null;
+      const displayMessage = timeAgo
+        ? `${computed.message} • ${timeAgo}`
+        : computed.message;
+
+      setLatestHealthMonitoringData({
+        status: moduleStatus,
+        message: computed.message,
+        timestamp: typedEntries[0]?.event_occurred_at || new Date().toISOString(),
+      });
+      updateModuleStatus('health-monitoring', moduleStatus, displayMessage);
     } catch (err) { console.error('Error in fetchHealthMonitoringStatus:', err); }
   };
 
