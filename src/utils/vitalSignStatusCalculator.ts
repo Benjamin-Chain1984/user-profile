@@ -369,9 +369,11 @@ export function calculateHealthMonitoringStatus(
 
   const latestEntry = entries[0];
 
-  // Check for active red alerts — highest priority
   const hasRedAlerts = alerts.some(a => a.severity === 'red' && !a.resolved_at);
-  if (hasRedAlerts || latestEntry.overall_status === 'red') {
+  const hasAmberAlerts = alerts.some(a => a.severity === 'amber' && !a.resolved_at);
+
+  // Active RED alerts always take priority regardless of schedule
+  if (hasRedAlerts) {
     return {
       status: 'red',
       message: 'Critical vital signs detected – immediate action required',
@@ -381,23 +383,33 @@ export function calculateHealthMonitoringStatus(
     };
   }
 
-  // Check for amber alerts or amber vitals
-  const hasAmberAlerts = alerts.some(a => a.severity === 'amber' && !a.resolved_at);
-  if (hasAmberAlerts || latestEntry.overall_status === 'amber') {
+  // Overdue observations trump stale stored vital statuses — checked BEFORE
+  // using the stored overall_status which may be days old.
+  if (overdueVitals.length > 0) {
     return {
       status: 'amber',
-      message: 'Some vital signs require attention',
+      message: `Observations overdue: ${overdueVitals.join(', ')}`,
       latestEntry,
       vitalStatuses: buildVitalStatuses(latestEntry),
       overdueVitals,
     };
   }
 
-  // Check for missed/overdue scheduled observations
-  if (overdueVitals.length > 0) {
+  // Latest entry is current — use its stored status
+  if (latestEntry.overall_status === 'red') {
+    return {
+      status: 'red',
+      message: 'Critical vital signs detected – immediate action required',
+      latestEntry,
+      vitalStatuses: buildVitalStatuses(latestEntry),
+      overdueVitals,
+    };
+  }
+
+  if (hasAmberAlerts || latestEntry.overall_status === 'amber') {
     return {
       status: 'amber',
-      message: `Observations overdue: ${overdueVitals.join(', ')}`,
+      message: 'Some vital signs require attention',
       latestEntry,
       vitalStatuses: buildVitalStatuses(latestEntry),
       overdueVitals,
