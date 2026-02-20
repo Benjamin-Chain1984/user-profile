@@ -142,7 +142,7 @@ export function calculateBowelCareStatus(
     };
   }
 
-  // === DIARRHOEA THRESHOLD (TYPE 6-7) ===
+  // === DIARRHOEA THRESHOLD (TYPE 6-7) — RED if threshold met ===
   const recentDiarrhoea = logs.filter(l => {
     const eventTime = getEffectiveTimestamp(l);
     const hoursDiff = differenceInHours(now, eventTime);
@@ -153,6 +153,17 @@ export function calculateBowelCareStatus(
     return {
       status: 'action',
       message: `Persistent loose stools – consider medical review`,
+      daysSinceLastBm,
+      lastBristolType,
+      lastEventTimestamp,
+    };
+  }
+
+  // === DIARRHOEA AMBER: Any Type 6 or 7 (below threshold) ===
+  if (recentDiarrhoea.length > 0) {
+    return {
+      status: 'monitor',
+      message: `Loose/watery stool recorded – monitoring`,
       daysSinceLastBm,
       lastBristolType,
       lastEventTimestamp,
