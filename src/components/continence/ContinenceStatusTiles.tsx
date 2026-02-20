@@ -157,28 +157,25 @@ function PadChangeTile({
         ? differenceInMinutes(nextSlot.dueAt, now)
         : 0;
 
-      // Overdue logic — max amber (monitor), never red for scheduling alone
-      const overdueSlot = slots.find(
-        (s) => !s.completed && s.dueAt <= now,
-      );
-      if (overdueSlot) {
+      // Overdue logic — only check the MOST RECENTLY DUE slot.
+      // If that slot is completed, status is green regardless of earlier compliance.
+      // Earlier unmatched slots only show in the compliance detail, not status.
+      const slotsDueSoFar = slots.filter((s) => s.dueAt <= now);
+      const mostRecentDueSlot = slotsDueSoFar[slotsDueSoFar.length - 1] ?? null;
+
+      if (mostRecentDueSlot && !mostRecentDueSlot.completed) {
+        // The current window is overdue — flag amber
         status = 'monitor';
         statusLabel = 'Late';
       }
 
-      // Compliance: completed / scheduled so far today — max amber
-      const slotsDueSoFar = slots.filter((s) => s.dueAt <= now);
+      // Compliance — informational only (never changes status when current slot is done)
       const completedCount = slotsDueSoFar.filter((s) => s.completed).length;
       if (slotsDueSoFar.length > 0) {
         compliancePercent = Math.round(
           (completedCount / slotsDueSoFar.length) * 100,
         );
         detail = `Today: ${completedCount}/${slotsDueSoFar.length} (${compliancePercent}%)`;
-
-        if (compliancePercent < 90 && status === 'stable') {
-          status = 'monitor';
-          statusLabel = compliancePercent < 70 ? 'Low compliance' : 'Monitor compliance';
-        }
       }
 
       if (!latestChange && status === 'stable') {
