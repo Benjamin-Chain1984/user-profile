@@ -157,22 +157,16 @@ function PadChangeTile({
         ? differenceInMinutes(nextSlot.dueAt, now)
         : 0;
 
-      // Overdue logic
+      // Overdue logic — max amber (monitor), never red for scheduling alone
       const overdueSlot = slots.find(
         (s) => !s.completed && s.dueAt <= now,
       );
       if (overdueSlot) {
-        const overdueBy = differenceInMinutes(now, overdueSlot.dueAt);
-        if (overdueBy > 120) {
-          status = 'action';
-          statusLabel = 'Overdue';
-        } else {
-          status = 'monitor';
-          statusLabel = 'Late';
-        }
+        status = 'monitor';
+        statusLabel = 'Late';
       }
 
-      // Compliance: completed / scheduled so far today
+      // Compliance: completed / scheduled so far today — max amber
       const slotsDueSoFar = slots.filter((s) => s.dueAt <= now);
       const completedCount = slotsDueSoFar.filter((s) => s.completed).length;
       if (slotsDueSoFar.length > 0) {
@@ -181,12 +175,9 @@ function PadChangeTile({
         );
         detail = `Today: ${completedCount}/${slotsDueSoFar.length} (${compliancePercent}%)`;
 
-        if (compliancePercent < 70 && status !== 'action') {
-          status = 'action';
-          statusLabel = 'Low compliance';
-        } else if (compliancePercent < 90 && status === 'stable') {
+        if (compliancePercent < 90 && status === 'stable') {
           status = 'monitor';
-          statusLabel = 'Monitor compliance';
+          statusLabel = compliancePercent < 70 ? 'Low compliance' : 'Monitor compliance';
         }
       }
 
@@ -422,20 +413,23 @@ function SkinCheckTile({
           break;
         case 'every_pad_change': {
           // Each pad change should have a paired skin check.
-          // A skin check is considered paired if it occurred within 30 mins after a pad change.
+          // A skin check is considered paired if it occurred within 60 mins after a pad change.
           const todayPadChanges = changes.filter(
             (c) => new Date(c.event_occurred_at).toDateString() === now.toDateString(),
           );
           checksRequiredToday = todayPadChanges.length;
           intervalHours = 0; // Not time-based
 
-          // Count pad changes that don't have a paired skin check within 30 mins after
+          // Count pad changes that don't have a paired skin check.
+          // Give a 30-min grace window for very recent pad changes (skin check still pending, not missed).
           missedPadChanges = todayPadChanges.filter((padChange) => {
             const padTime = new Date(padChange.event_occurred_at).getTime();
+            const minutesSincePad = (now.getTime() - padTime) / 60_000;
+            // Within 30-min grace window → pending, not missed yet
+            if (minutesSincePad < 30) return false;
             const hasPairedCheck = todayChecks.some((check) => {
               const checkTime = new Date(check.event_occurred_at).getTime();
-              // Skin check must be after pad change and within 30 mins
-              return checkTime >= padTime && checkTime <= padTime + 30 * 60 * 1000;
+              return checkTime >= padTime && checkTime <= padTime + 60 * 60 * 1000;
             });
             return !hasPairedCheck;
           }).length;

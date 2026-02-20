@@ -152,6 +152,7 @@ export function usePadChanges(clientId?: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pad-changes', clientId] });
+      queryClient.invalidateQueries({ queryKey: ['skin-checks', clientId] });
       queryClient.invalidateQueries({ queryKey: ['continence-status', clientId] });
       toast({ title: 'Pad change logged', description: 'Entry recorded successfully.' });
     },
