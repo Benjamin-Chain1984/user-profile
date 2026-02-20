@@ -50,7 +50,7 @@ export function PainCheckDashboard() {
   const { assessments: painadAssessments, loading: painadLoading, getLatestAssessment: getLatestPainad, getTrendDirection: getPainadTrend, refresh: refreshPainad } = usePainadAssessments();
   const { config: painConfig, loading: configLoading } = usePainConfig();
   const { isAdmin } = useRoleAccess();
-  const { isMonitoringPaused, monitoringStatus } = useProfile();
+  const { isMonitoringPaused, monitoringStatus, refreshPainStatus } = useProfile();
 
   const enabledTools: PainTool[] = (painConfig?.enabled_tools as PainTool[]) || ['abbey', 'painad'];
 
@@ -171,6 +171,7 @@ export function PainCheckDashboard() {
     setShowPainadForm(false);
     refreshAbbey();
     refreshPainad();
+    refreshPainStatus();
   };
 
   const handleBeginAssessment = () => {
