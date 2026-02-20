@@ -4,7 +4,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Activity, Heart, Thermometer, Wind, Timer, AlertCircle } from 'lucide-react';
+import { Activity, Heart, Thermometer, Wind, Timer, AlertCircle, Clock } from 'lucide-react';
 import { useHealthMonitoringStatus, useVitalSignConfig } from '@/hooks/useHealthMonitoring';
 import { VITAL_THRESHOLDS, type VitalType } from '@/types/healthMonitoring';
 import { getStatusColor, getStatusLabel } from '@/utils/vitalSignStatusCalculator';
@@ -127,6 +127,19 @@ export function HealthMonitoringStatusCard({ clientId }: HealthMonitoringStatusC
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground mb-4">{statusInfo.message}</p>
+
+        {/* Overdue observations banner */}
+        {statusInfo.overdueVitals.length > 0 && (
+          <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 mb-4">
+            <Clock className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-amber-800">Scheduled observations overdue</p>
+              <p className="text-xs text-amber-700 mt-0.5">
+                {statusInfo.overdueVitals.join(' · ')}
+              </p>
+            </div>
+          </div>
+        )}
 
         {statusInfo.latestEntry && (
           <>

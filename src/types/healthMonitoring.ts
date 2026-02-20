@@ -218,6 +218,7 @@ export interface HealthMonitoringStatusInfo {
   latestEntry: VitalSignEntry | null;
   activeAlerts: VitalSignAlert[];
   vitalStatuses: Record<VitalType, VitalStatus | null>;
+  overdueVitals: string[];
 }
 
 // On-behalf-of reasons (reuse from bowel care)

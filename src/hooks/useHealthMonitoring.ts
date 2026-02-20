@@ -449,6 +449,7 @@ export function useHealthMonitoringStatus(clientId?: string): HealthMonitoringSt
   const { entries } = useVitalSignEntries(clientId, 10);
   const { alerts } = useVitalSignAlerts(clientId);
   const { criteriaMap } = useAlteredCriteria(clientId);
+  const { config } = useVitalSignConfig(clientId);
 
   // Recalculate latest entry statuses using altered criteria before passing to status calculator
   const recalculatedEntries = entries.map(entry => {
@@ -456,7 +457,7 @@ export function useHealthMonitoringStatus(clientId?: string): HealthMonitoringSt
     return { ...entry, ...statuses };
   });
 
-  const statusInfo = calculateHealthMonitoringStatus(recalculatedEntries, alerts);
+  const statusInfo = calculateHealthMonitoringStatus(recalculatedEntries, alerts, config);
 
   return {
     ...statusInfo,
