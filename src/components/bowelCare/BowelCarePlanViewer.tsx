@@ -259,10 +259,12 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
       addSectionHeader('Risk Monitoring & Early Warning Signs');
       riskEntries.forEach(risk => {
         let displayLabel = getRiskLabel(risk.risk_type);
-        if (risk.risk_type === 'no_bm_days' && config?.no_bm_days_threshold) {
-          displayLabel = `No bowel motion for ${config.no_bm_days_threshold} days`;
-        } else if (risk.risk_type === 'hard_pellets' && config?.type1_consecutive_days_threshold) {
-          displayLabel = `Hard pellets (Type 1) for ${config.type1_consecutive_days_threshold} days`;
+        if (risk.risk_type === 'no_bm_days' && (risk.threshold_value || config?.no_bm_days_threshold)) {
+          displayLabel = `No bowel motion for ${risk.threshold_value || config?.no_bm_days_threshold} days`;
+        } else if (risk.risk_type === 'hard_pellets' && (risk.threshold_value || config?.type1_consecutive_days_threshold)) {
+          displayLabel = `Hard pellets (Type 1) for ${risk.threshold_value || config?.type1_consecutive_days_threshold} days`;
+        } else if (risk.risk_type === 'loose_watery' && risk.threshold_value) {
+          displayLabel = `Loose/watery stools (Type 7) for ${risk.threshold_value} days`;
         }
         checkPage(8);
         addBullet(`${displayLabel} → ${risk.actions.map(getActionLabel).join(', ')}`);
@@ -524,10 +526,12 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
             <div className="space-y-3">
               {riskEntries.map(risk => {
                 let displayLabel = getRiskLabel(risk.risk_type);
-                if (risk.risk_type === 'no_bm_days' && config?.no_bm_days_threshold) {
-                  displayLabel = `No bowel motion for ${config.no_bm_days_threshold} days`;
-                } else if (risk.risk_type === 'hard_pellets' && config?.type1_consecutive_days_threshold) {
-                  displayLabel = `Hard pellets (Type 1) for ${config.type1_consecutive_days_threshold} days`;
+                if (risk.risk_type === 'no_bm_days' && (risk.threshold_value || config?.no_bm_days_threshold)) {
+                  displayLabel = `No bowel motion for ${risk.threshold_value || config?.no_bm_days_threshold} days`;
+                } else if (risk.risk_type === 'hard_pellets' && (risk.threshold_value || config?.type1_consecutive_days_threshold)) {
+                  displayLabel = `Hard pellets (Type 1) for ${risk.threshold_value || config?.type1_consecutive_days_threshold} days`;
+                } else if (risk.risk_type === 'loose_watery' && risk.threshold_value) {
+                  displayLabel = `Loose/watery stools (Type 7) for ${risk.threshold_value} days`;
                 }
 
                 return (

@@ -124,7 +124,7 @@ export interface PlanStatusInfo {
 export const RISK_TYPES = [
   { value: 'no_bm_days', label: 'No bowel motion for X days' },
   { value: 'hard_pellets', label: 'Hard pellets (Type 1) for X days' },
-  { value: 'loose_watery', label: 'Loose/watery stools' },
+  { value: 'loose_watery', label: 'Loose/watery stools (Type 7) for X days' },
   { value: 'abdominal_pain', label: 'Abdominal pain' },
   { value: 'vomiting', label: 'Vomiting' },
   { value: 'bloating', label: 'Bloating' },
