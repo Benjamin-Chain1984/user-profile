@@ -428,7 +428,7 @@ export function BowelCarePlanEditor({ clientId, onClose }: BowelCarePlanEditorPr
                       </Button>
                     )}
                   </div>
-                  {(risk.risk_type === 'no_bm_days' || risk.risk_type === 'hard_pellets') && (
+                  {(risk.risk_type === 'no_bm_days' || risk.risk_type === 'hard_pellets' || risk.risk_type === 'loose_watery') && (
                     <div className="flex items-center gap-2">
                       <Label className="text-sm">Threshold:</Label>
                       <Input
