@@ -250,7 +250,7 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-orange-400" />
-                Mild Pain (3-7)
+                Mild Pain
               </Label>
               <div className="flex items-center gap-2">
                 <Input
@@ -268,7 +268,7 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-orange-600" />
-                Moderate Pain (8-13)
+                Moderate Pain
               </Label>
               <div className="flex items-center gap-2">
                 <Input
@@ -286,7 +286,7 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-destructive" />
-                Severe Pain (14+)
+                Severe Pain
               </Label>
               <div className="flex items-center gap-2">
                 <Input
