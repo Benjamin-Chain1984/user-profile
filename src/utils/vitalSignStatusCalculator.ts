@@ -266,69 +266,141 @@ export function getAlertMessage(
 }
 
 /**
+ * Check if any enabled vitals are overdue based on config frequency settings.
+ * Returns the earliest overdue vital label, or null if all are on schedule.
+ */
+export function getOverdueVitals(
+  entries: VitalSignEntry[],
+  config: {
+    temperature_enabled?: boolean;
+    temperature_frequency_hours?: number | null;
+    bp_enabled?: boolean;
+    bp_frequency_hours?: number | null;
+    oxygen_enabled?: boolean;
+    oxygen_frequency_hours?: number | null;
+    heart_rate_enabled?: boolean;
+    heart_rate_frequency_hours?: number | null;
+    respiratory_enabled?: boolean;
+    respiratory_frequency_hours?: number | null;
+  } | null
+): string[] {
+  if (!config) return [];
+
+  const now = Date.now();
+  const overdue: string[] = [];
+
+  const check = (
+    enabled: boolean | undefined,
+    frequencyHours: number | null | undefined,
+    label: string,
+    latestValue: (e: VitalSignEntry) => number | null
+  ) => {
+    if (!enabled || !frequencyHours) return;
+    const deadlineMs = frequencyHours * 60 * 60 * 1000;
+    const latestEntry = entries.find(e => latestValue(e) !== null);
+    if (!latestEntry) {
+      overdue.push(label);
+      return;
+    }
+    const lastTime = new Date(latestEntry.event_occurred_at).getTime();
+    if (now - lastTime > deadlineMs) {
+      overdue.push(label);
+    }
+  };
+
+  check(config.temperature_enabled, config.temperature_frequency_hours, 'Temperature', e => e.temperature_celsius);
+  check(config.bp_enabled, config.bp_frequency_hours, 'Blood Pressure', e => e.bp_systolic);
+  check(config.oxygen_enabled, config.oxygen_frequency_hours, 'SpO₂', e => e.oxygen_saturation);
+  check(config.heart_rate_enabled, config.heart_rate_frequency_hours, 'Heart Rate', e => e.heart_rate);
+  check(config.respiratory_enabled, config.respiratory_frequency_hours, 'Resp. Rate', e => e.respiratory_rate);
+
+  return overdue;
+}
+
+/**
  * Calculate health monitoring status from entries and alerts
  */
 export function calculateHealthMonitoringStatus(
   entries: VitalSignEntry[],
-  alerts: VitalSignAlert[] = []
+  alerts: VitalSignAlert[] = [],
+  config?: {
+    temperature_enabled?: boolean;
+    temperature_frequency_hours?: number | null;
+    bp_enabled?: boolean;
+    bp_frequency_hours?: number | null;
+    oxygen_enabled?: boolean;
+    oxygen_frequency_hours?: number | null;
+    heart_rate_enabled?: boolean;
+    heart_rate_frequency_hours?: number | null;
+    respiratory_enabled?: boolean;
+    respiratory_frequency_hours?: number | null;
+  } | null
 ): {
   status: VitalStatus;
   message: string;
   latestEntry: VitalSignEntry | null;
   vitalStatuses: Record<VitalType, VitalStatus | null>;
+  overdueVitals: string[];
 } {
+  const overdueVitals = getOverdueVitals(entries, config ?? null);
+
+  const buildVitalStatuses = (entry: VitalSignEntry | null) => ({
+    temperature: entry?.temperature_status ?? null,
+    bp_systolic: entry?.bp_status ?? null,
+    bp_diastolic: entry?.bp_status ?? null,
+    oxygen: entry?.oxygen_status ?? null,
+    heart_rate: entry?.heart_rate_status ?? null,
+    respiratory: entry?.respiratory_status ?? null,
+  });
+
   // No entries case
   if (!entries || entries.length === 0) {
+    const noEntryMessage = overdueVitals.length > 0
+      ? `Observations overdue: ${overdueVitals.join(', ')}`
+      : 'No vital sign entries recorded yet';
     return {
       status: 'amber',
-      message: 'No vital sign entries recorded yet',
+      message: noEntryMessage,
       latestEntry: null,
-      vitalStatuses: {
-        temperature: null,
-        bp_systolic: null,
-        bp_diastolic: null,
-        oxygen: null,
-        heart_rate: null,
-        respiratory: null,
-      },
+      vitalStatuses: buildVitalStatuses(null),
+      overdueVitals,
     };
   }
 
   const latestEntry = entries[0];
-  
-  // Check for active red alerts
+
+  // Check for active red alerts — highest priority
   const hasRedAlerts = alerts.some(a => a.severity === 'red' && !a.resolved_at);
   if (hasRedAlerts || latestEntry.overall_status === 'red') {
     return {
       status: 'red',
       message: 'Critical vital signs detected – immediate action required',
       latestEntry,
-      vitalStatuses: {
-        temperature: latestEntry.temperature_status,
-        bp_systolic: latestEntry.bp_status,
-        bp_diastolic: latestEntry.bp_status,
-        oxygen: latestEntry.oxygen_status,
-        heart_rate: latestEntry.heart_rate_status,
-        respiratory: latestEntry.respiratory_status,
-      },
+      vitalStatuses: buildVitalStatuses(latestEntry),
+      overdueVitals,
     };
   }
 
-  // Check for amber status
+  // Check for amber alerts or amber vitals
   const hasAmberAlerts = alerts.some(a => a.severity === 'amber' && !a.resolved_at);
   if (hasAmberAlerts || latestEntry.overall_status === 'amber') {
     return {
       status: 'amber',
       message: 'Some vital signs require attention',
       latestEntry,
-      vitalStatuses: {
-        temperature: latestEntry.temperature_status,
-        bp_systolic: latestEntry.bp_status,
-        bp_diastolic: latestEntry.bp_status,
-        oxygen: latestEntry.oxygen_status,
-        heart_rate: latestEntry.heart_rate_status,
-        respiratory: latestEntry.respiratory_status,
-      },
+      vitalStatuses: buildVitalStatuses(latestEntry),
+      overdueVitals,
+    };
+  }
+
+  // Check for missed/overdue scheduled observations
+  if (overdueVitals.length > 0) {
+    return {
+      status: 'amber',
+      message: `Observations overdue: ${overdueVitals.join(', ')}`,
+      latestEntry,
+      vitalStatuses: buildVitalStatuses(latestEntry),
+      overdueVitals,
     };
   }
 
@@ -337,13 +409,7 @@ export function calculateHealthMonitoringStatus(
     status: 'ideal',
     message: 'All vital signs within normal range',
     latestEntry,
-    vitalStatuses: {
-      temperature: latestEntry.temperature_status,
-      bp_systolic: latestEntry.bp_status,
-      bp_diastolic: latestEntry.bp_status,
-      oxygen: latestEntry.oxygen_status,
-      heart_rate: latestEntry.heart_rate_status,
-      respiratory: latestEntry.respiratory_status,
-    },
+    vitalStatuses: buildVitalStatuses(latestEntry),
+    overdueVitals: [],
   };
 }
