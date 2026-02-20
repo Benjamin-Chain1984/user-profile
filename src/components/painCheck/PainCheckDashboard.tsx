@@ -340,7 +340,7 @@ export function PainCheckDashboard() {
               {latestAbbey ? (
                 <>
                   <p className={`text-xl font-bold ${getSeverityColor(latestAbbey.severity)}`}>
-                    {latestAbbey.total_score}/18 – {getSeverityLabel(latestAbbey.severity)}
+                    {getSeverityLabel(latestAbbey.severity)}
                   </p>
                   <p className="text-xs text-muted-foreground">{format(new Date(latestAbbey.created_at), 'PPp')}</p>
                 </>
@@ -357,7 +357,7 @@ export function PainCheckDashboard() {
               {latestPainad ? (
                 <>
                   <p className={`text-xl font-bold ${getPainadSeverityColor(latestPainad.severity)}`}>
-                    {latestPainad.total_score}/10 – {getPainadSeverityLabel(latestPainad.severity)}
+                    {getPainadSeverityLabel(latestPainad.severity)}
                   </p>
                   <p className="text-xs text-muted-foreground">{format(new Date(latestPainad.created_at), 'PPp')}</p>
                 </>

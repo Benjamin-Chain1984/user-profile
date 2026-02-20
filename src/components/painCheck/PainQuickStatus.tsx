@@ -56,7 +56,7 @@ export function PainQuickStatus({ latestAssessment, trendDirection, loading, onS
               </p>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
-              Score: {latestAssessment.total_score}/18 • {format(new Date(latestAssessment.created_at), 'PPp')}
+              {format(new Date(latestAssessment.created_at), 'PPp')}
             </p>
             <div className={`flex items-center gap-1 mt-2 ${trendColor}`}>
               <TrendIcon className="w-4 h-4" />
