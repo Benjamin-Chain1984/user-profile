@@ -29,7 +29,7 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
   
   const [enableMonitoring, setEnableMonitoring] = useState(true);
   const [frequency, setFrequency] = useState('unknown');
-  const [typicalDuration, setTypicalDuration] = useState('');
+  
   const [rescuePrescribed, setRescuePrescribed] = useState(false);
   const [rescueName, setRescueName] = useState('');
   const [rescueDose, setRescueDose] = useState('');
@@ -52,7 +52,7 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
     if (config) {
       setEnableMonitoring(config.enable_seizure_monitoring ?? true);
       setFrequency(config.expected_seizure_frequency || 'unknown');
-      setTypicalDuration(config.typical_seizure_duration_minutes?.toString() || '');
+      
       setRescuePrescribed(config.rescue_medication_prescribed ?? false);
       setRescueName(config.rescue_medication_name || '');
       setRescueDose(config.rescue_medication_dose || '');
@@ -72,7 +72,7 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
     updateConfig({
       enable_seizure_monitoring: enableMonitoring,
       expected_seizure_frequency: frequency,
-      typical_seizure_duration_minutes: typicalDuration ? parseFloat(typicalDuration) : null,
+      
       rescue_medication_prescribed: rescuePrescribed,
       rescue_medication_name: rescuePrescribed ? rescueName : null,
       rescue_medication_dose: rescuePrescribed ? rescueDose : null,
@@ -122,22 +122,16 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
               <Switch checked={enableMonitoring} onCheckedChange={setEnableMonitoring} />
             </div>
 
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <Label>Expected Seizure Frequency</Label>
-                <Select value={frequency} onValueChange={setFrequency}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {FREQUENCY_OPTIONS.map(f => (
-                      <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Typical Seizure Duration (minutes)</Label>
-                <Input type="number" value={typicalDuration} onChange={e => setTypicalDuration(e.target.value)} placeholder="Optional baseline" />
-              </div>
+            <div>
+              <Label>Expected Seizure Frequency</Label>
+              <Select value={frequency} onValueChange={setFrequency}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {FREQUENCY_OPTIONS.map(f => (
+                    <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <Separator />
