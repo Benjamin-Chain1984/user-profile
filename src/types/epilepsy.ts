@@ -21,6 +21,8 @@ export interface EpilepsyConfig {
   max_seizures_24h: number;
   duration_threshold_minutes: number;
   escalation_recipients: string[];
+  known_seizure_types: string[];
+  known_seizure_durations: Record<string, string>;
   created_at: string;
   created_by: string | null;
   updated_at: string;
