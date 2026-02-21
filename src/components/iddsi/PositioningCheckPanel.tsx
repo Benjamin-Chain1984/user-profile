@@ -39,9 +39,10 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
 
     const handleOrientation = (event: DeviceOrientationEvent) => {
       if (event.beta !== null) {
-        // 0–90 range: 0 = lying flat, 90 = upright
+        // Inverted: 90 - |beta| so flat device = 90° upright, tilted up = 0° flat
         const tilt = Math.round(Math.abs(event.beta));
-        setRawAngle(Math.min(90, Math.max(0, tilt)));
+        const inverted = 90 - Math.min(90, Math.max(0, tilt));
+        setRawAngle(inverted);
       }
     };
 
