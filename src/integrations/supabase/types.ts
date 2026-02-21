@@ -2184,6 +2184,7 @@ export type Database = {
           escalation_recipients: string[]
           expected_seizure_frequency: string
           id: string
+          known_cluster_seizures: boolean
           known_seizure_durations: Json
           known_seizure_types: string[]
           max_seizures_24h: number
@@ -2208,6 +2209,7 @@ export type Database = {
           escalation_recipients?: string[]
           expected_seizure_frequency?: string
           id?: string
+          known_cluster_seizures?: boolean
           known_seizure_durations?: Json
           known_seizure_types?: string[]
           max_seizures_24h?: number
@@ -2232,6 +2234,7 @@ export type Database = {
           escalation_recipients?: string[]
           expected_seizure_frequency?: string
           id?: string
+          known_cluster_seizures?: boolean
           known_seizure_durations?: Json
           known_seizure_types?: string[]
           max_seizures_24h?: number

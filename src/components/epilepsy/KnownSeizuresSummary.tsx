@@ -25,8 +25,9 @@ export function KnownSeizuresSummary({ clientId }: KnownSeizuresSummaryProps) {
 
   const knownTypes: string[] = config?.known_seizure_types ?? [];
   const knownDurations: Record<string, string> = config?.known_seizure_durations ?? {};
+  const knownClusterSeizures: boolean = config?.known_cluster_seizures ?? false;
 
-  if (isLoading || knownTypes.length === 0) return null;
+  if (isLoading || (knownTypes.length === 0 && !knownClusterSeizures)) return null;
 
   const firstName = profile?.fullName?.split(' ')[0] || 'This person';
 
@@ -56,6 +57,15 @@ export function KnownSeizuresSummary({ clientId }: KnownSeizuresSummaryProps) {
                 </li>
               );
             })}
+            {knownClusterSeizures && (
+              <li className="flex items-baseline gap-2 text-sm text-muted-foreground">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-warning flex-shrink-0 mt-1.5" />
+                <span>
+                  <span className="font-medium text-foreground">Cluster Seizures</span>
+                  <span className="ml-1 text-muted-foreground">— multiple seizures close together in time</span>
+                </span>
+              </li>
+            )}
           </ul>
         </div>
       </div>
