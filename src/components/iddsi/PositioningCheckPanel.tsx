@@ -39,10 +39,9 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
 
     const handleOrientation = (event: DeviceOrientationEvent) => {
       if (event.beta !== null) {
-        // Inverted: 90 - |beta| so flat device = 90° upright, tilted up = 0° flat
+        // Phone placed flat on chair back: beta ≈ 90° when upright, ≈ 0° when reclined
         const tilt = Math.round(Math.abs(event.beta));
-        const inverted = 90 - Math.min(90, Math.max(0, tilt));
-        setRawAngle(inverted);
+        setRawAngle(Math.min(90, Math.max(0, tilt)));
       }
     };
 
@@ -143,7 +142,7 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
           <div className="flex flex-col items-center space-y-4">
             {gyroSupported ? (
               <p className="text-sm text-muted-foreground text-center">
-                Hold device against person's torso or chair back
+                Place device flat against the back of the chair
               </p>
             ) : (
               <div className="space-y-2 w-full">
