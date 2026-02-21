@@ -42,6 +42,7 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
   const [durationThreshold, setDurationThreshold] = useState(5);
   const [knownSeizureTypes, setKnownSeizureTypes] = useState<string[]>([]);
   const [knownSeizureDurations, setKnownSeizureDurations] = useState<Record<string, string>>({});
+  const [knownClusterSeizures, setKnownClusterSeizures] = useState(false);
   const [notificationSettings, setNotificationSettings] = useState<ModuleNotificationSettings>({
     enableNotifications: false,
     amberRecipientIds: [],
@@ -65,6 +66,7 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
       setDurationThreshold(config.duration_threshold_minutes ?? 5);
       setKnownSeizureTypes(config.known_seizure_types || []);
       setKnownSeizureDurations((config.known_seizure_durations as Record<string, string>) || {});
+      setKnownClusterSeizures(config.known_cluster_seizures ?? false);
     }
   }, [config]);
 
@@ -85,6 +87,7 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
       duration_threshold_minutes: durationThreshold,
       known_seizure_types: knownSeizureTypes,
       known_seizure_durations: knownSeizureDurations,
+      known_cluster_seizures: knownClusterSeizures,
       escalation_recipients: [
         ...notificationSettings.amberRecipientIds,
         ...notificationSettings.redRecipientIds,
@@ -173,6 +176,38 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
                     </div>
                   );
                 })}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Known Cluster Seizures */}
+            <div className="space-y-3">
+              <Label className="text-base">Does the person have known Cluster Seizures?</Label>
+              <ul className="text-sm text-muted-foreground space-y-1 ml-1">
+                <li className="flex items-baseline gap-2">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground/60 flex-shrink-0 mt-1.5" />
+                  Multiple seizures
+                </li>
+                <li className="flex items-baseline gap-2">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground/60 flex-shrink-0 mt-1.5" />
+                  Close together in time (hours to 1–2 days)
+                </li>
+                <li className="flex items-baseline gap-2">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground/60 flex-shrink-0 mt-1.5" />
+                  Recovery between events
+                </li>
+                <li className="flex items-baseline gap-2">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground/60 flex-shrink-0 mt-1.5" />
+                  Different from status epilepticus (which is prolonged or continuous seizure activity)
+                </li>
+              </ul>
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <Label className="text-base">Known Cluster Seizures</Label>
+                  <p className="text-sm text-muted-foreground">Enable if this person is known to experience cluster seizures.</p>
+                </div>
+                <Switch checked={knownClusterSeizures} onCheckedChange={setKnownClusterSeizures} />
               </div>
             </div>
           </CardContent>
