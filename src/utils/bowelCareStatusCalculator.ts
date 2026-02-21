@@ -143,10 +143,17 @@ export function calculateBowelCareStatus(
   }
 
   // === DIARRHOEA THRESHOLD (TYPE 6-7) — RED if threshold met ===
+  // Only count Type 6/7 entries that are MORE RECENT than the last healthy stool (types 2-5)
+  const lastHealthyBm = logs.find(l => l.bristol_type >= 2 && l.bristol_type <= 5);
+  const lastHealthyTime = lastHealthyBm ? getEffectiveTimestamp(lastHealthyBm) : null;
+
   const recentDiarrhoea = logs.filter(l => {
     const eventTime = getEffectiveTimestamp(l);
     const hoursDiff = differenceInHours(now, eventTime);
-    return (l.bristol_type === 6 || l.bristol_type === 7) && hoursDiff <= effectiveConfig.diarrhoea_hours_window;
+    if ((l.bristol_type !== 6 && l.bristol_type !== 7) || hoursDiff > effectiveConfig.diarrhoea_hours_window) return false;
+    // If a healthy stool was logged after this diarrhoea entry, don't count it
+    if (lastHealthyTime && eventTime < lastHealthyTime) return false;
+    return true;
   });
   
   if (recentDiarrhoea.length >= effectiveConfig.diarrhoea_type67_count_threshold) {
@@ -159,7 +166,7 @@ export function calculateBowelCareStatus(
     };
   }
 
-  // === DIARRHOEA AMBER: Any Type 6 or 7 (below threshold) ===
+  // === DIARRHOEA AMBER: Any Type 6 or 7 (below threshold, and more recent than last healthy stool) ===
   if (recentDiarrhoea.length > 0) {
     return {
       status: 'monitor',
