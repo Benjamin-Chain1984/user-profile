@@ -39,9 +39,10 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
 
     const handleOrientation = (event: DeviceOrientationEvent) => {
       if (event.beta !== null) {
-        // Phone placed flat on chair back: beta ≈ 90° when upright, ≈ 0° when reclined
-        const tilt = Math.round(Math.abs(event.beta));
-        setRawAngle(Math.min(90, Math.max(0, tilt)));
+        // Full 0–180° range: 0° = flat reclined, 90° = upright, 180° = tilted forward
+        const beta = event.beta; // -180 to 180
+        const tilt = Math.round(beta < 0 ? 180 + beta : beta);
+        setRawAngle(Math.min(180, Math.max(0, tilt)));
       }
     };
 
@@ -67,7 +68,7 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
     };
   }, []);
 
-  const currentAngle = gyroSupported ? rawAngle : Number(manualAngle) || 0;
+  const currentAngle = gyroSupported ? rawAngle : Math.min(180, Math.max(0, Number(manualAngle) || 0));
 
   // Binary safety: within safe range = green, outside = red
   const isSafe = currentAngle >= safeLower && currentAngle <= safeUpper;
@@ -77,7 +78,8 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
   const getPositionLabel = (angle: number) => {
     if (angle >= safeLower && angle <= safeUpper) return 'Upright';
     if (angle < safeLower) return 'Too Reclined';
-    return 'Past Upright';
+    if (angle > safeUpper) return 'Past Upright';
+    return '';
   };
 
   const getStatusLabel = () => {
@@ -146,13 +148,13 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
               </p>
             ) : (
               <div className="space-y-2 w-full">
-                 <p className="text-sm text-muted-foreground text-center">
-                   Gyroscope not available. Enter angle manually (0–90°):
-                 </p>
-                 <Input
-                   type="number"
-                   min={0}
-                   max={90}
+                   <p className="text-sm text-muted-foreground text-center">
+                     Gyroscope not available. Enter angle manually (0–180°):
+                   </p>
+                   <Input
+                     type="number"
+                     min={0}
+                     max={180}
                   value={manualAngle}
                   onChange={e => setManualAngle(e.target.value)}
                   className="text-center text-2xl font-bold h-14"
@@ -184,7 +186,7 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
               }
               for (let d = 80; d >= 0; d -= 10) {
                 const isMajor = d % 30 === 0;
-                ticks.push({ t: rightDegToT(d), label: `${d}°`, isMajor });
+                ticks.push({ t: rightDegToT(d), label: `${180 - d}°`, isMajor });
               }
 
               const lo = Math.max(0, Math.min(90, safeLower));
@@ -194,8 +196,8 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
               const hiTR = rightDegToT(hi);
               const loTR = rightDegToT(lo);
 
-              // Needle position: map currentAngle (0-90) to left side of arc
-              const needleT = leftDegToT(Math.max(0, Math.min(90, currentAngle)));
+              // Needle position: map currentAngle (0-180) across full arc
+              const needleT = currentAngle <= 90 ? leftDegToT(currentAngle) : rightDegToT(180 - currentAngle);
               const needlePos = posFromArcT(needleT);
 
               return (
@@ -246,9 +248,9 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
                     <text x={28} y={cy + 12} textAnchor="middle" fontSize="7" fill="hsl(var(--destructive))" fontWeight="600">
                       0° Flat
                     </text>
-                    {/* Right 0° label */}
+                    {/* Right 180° label */}
                     <text x={272} y={cy + 12} textAnchor="middle" fontSize="7" fill="hsl(var(--destructive))" fontWeight="600">
-                      0° Flat
+                      180°
                     </text>
 
                     {/* Wheelchair silhouette at center */}
