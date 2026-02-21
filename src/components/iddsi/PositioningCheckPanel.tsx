@@ -68,7 +68,9 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
     };
   }, []);
 
-  const currentAngle = gyroSupported ? rawAngle : Math.min(180, Math.max(0, Number(manualAngle) || 0));
+  const rawDisplayAngle = gyroSupported ? rawAngle : Math.min(180, Math.max(0, Number(manualAngle) || 0));
+  // Display angle folds 0-180 into 0-90-0 (symmetric)
+  const currentAngle = rawDisplayAngle <= 90 ? rawDisplayAngle : 180 - rawDisplayAngle;
 
   // Binary safety: within safe range = green, outside = red
   const isSafe = currentAngle >= safeLower && currentAngle <= safeUpper;
@@ -78,7 +80,6 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
   const getPositionLabel = (angle: number) => {
     if (angle >= safeLower && angle <= safeUpper) return 'Upright';
     if (angle < safeLower) return 'Too Reclined';
-    if (angle > safeUpper) return 'Past Upright';
     return '';
   };
 
@@ -196,8 +197,8 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
               const hiTR = rightDegToT(hi);
               const loTR = rightDegToT(lo);
 
-              // Needle position: map currentAngle (0-180) across full arc
-              const needleT = currentAngle <= 90 ? leftDegToT(currentAngle) : rightDegToT(180 - currentAngle);
+              // Needle position: map rawDisplayAngle across full arc
+              const needleT = rawDisplayAngle <= 90 ? leftDegToT(rawDisplayAngle) : rightDegToT(180 - rawDisplayAngle);
               const needlePos = posFromArcT(needleT);
 
               return (
@@ -253,8 +254,8 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
                       0° Flat
                     </text>
 
-                    {/* Wheelchair silhouette at center */}
-                    <g transform={`translate(${cx}, ${cy - 8}) scale(1.6)`} opacity="0.15">
+                    {/* Wheelchair silhouette at center – flipped to face right */}
+                    <g transform={`translate(${cx}, ${cy - 8}) scale(-1.6, 1.6)`} opacity="0.15">
                       {/* Head */}
                       <circle cx="0" cy="-52" r="8" fill="hsl(var(--foreground))" />
                       {/* Body/torso */}
@@ -295,7 +296,7 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
                     {/* Angle readout */}
                     <text x={cx} y={cy - 28} textAnchor="middle" fontSize="22" fontWeight="700"
                       fill={isSafe ? 'hsl(var(--success))' : 'hsl(var(--destructive))'}>
-                      {currentAngle <= 90 ? currentAngle : 180 - currentAngle}°
+                      {currentAngle}°
                     </text>
                     <text x={cx} y={cy - 14} textAnchor="middle" fontSize="9" fill="hsl(var(--muted-foreground))">
                       {getPositionLabel(currentAngle)}
