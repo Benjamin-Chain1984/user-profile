@@ -186,7 +186,7 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
               }
               for (let d = 80; d >= 0; d -= 10) {
                 const isMajor = d % 30 === 0;
-                ticks.push({ t: rightDegToT(d), label: `${180 - d}°`, isMajor });
+                ticks.push({ t: rightDegToT(d), label: `${d}°`, isMajor });
               }
 
               const lo = Math.max(0, Math.min(90, safeLower));
@@ -248,9 +248,9 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
                     <text x={28} y={cy + 12} textAnchor="middle" fontSize="7" fill="hsl(var(--destructive))" fontWeight="600">
                       0° Flat
                     </text>
-                    {/* Right 180° label */}
+                    {/* Right 0° label */}
                     <text x={272} y={cy + 12} textAnchor="middle" fontSize="7" fill="hsl(var(--destructive))" fontWeight="600">
-                      180°
+                      0° Flat
                     </text>
 
                     {/* Wheelchair silhouette at center */}
@@ -295,7 +295,7 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
                     {/* Angle readout */}
                     <text x={cx} y={cy - 28} textAnchor="middle" fontSize="22" fontWeight="700"
                       fill={isSafe ? 'hsl(var(--success))' : 'hsl(var(--destructive))'}>
-                      {currentAngle}°
+                      {currentAngle <= 90 ? currentAngle : 180 - currentAngle}°
                     </text>
                     <text x={cx} y={cy - 14} textAnchor="middle" fontSize="9" fill="hsl(var(--muted-foreground))">
                       {getPositionLabel(currentAngle)}
