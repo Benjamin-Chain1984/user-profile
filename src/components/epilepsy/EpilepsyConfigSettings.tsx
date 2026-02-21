@@ -14,7 +14,8 @@ import { RestrictedSection } from '@/components/ui/restricted-section';
 import { ModuleNotificationsCard } from '@/components/module';
 import type { ModuleNotificationSettings } from '@/components/module';
 import { useEpilepsyConfig } from '@/hooks/useEpilepsy';
-import { FREQUENCY_OPTIONS } from '@/types/epilepsy';
+import { FREQUENCY_OPTIONS, SEIZURE_TYPES } from '@/types/epilepsy';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Settings, Shield, AlertTriangle, Pill, Link as LinkIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -39,6 +40,8 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
   const [clusterHours, setClusterHours] = useState(24);
   const [maxSeizures24h, setMaxSeizures24h] = useState(3);
   const [durationThreshold, setDurationThreshold] = useState(5);
+  const [knownSeizureTypes, setKnownSeizureTypes] = useState<string[]>([]);
+  const [knownSeizureDurations, setKnownSeizureDurations] = useState<Record<string, string>>({});
   const [notificationSettings, setNotificationSettings] = useState<ModuleNotificationSettings>({
     enableNotifications: false,
     amberRecipientIds: [],
@@ -60,6 +63,8 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
       setClusterHours(config.cluster_seizure_hours ?? 24);
       setMaxSeizures24h(config.max_seizures_24h ?? 3);
       setDurationThreshold(config.duration_threshold_minutes ?? 5);
+      setKnownSeizureTypes(config.known_seizure_types || []);
+      setKnownSeizureDurations((config.known_seizure_durations as Record<string, string>) || {});
     }
   }, [config]);
 
@@ -78,11 +83,23 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
       cluster_seizure_hours: clusterHours,
       max_seizures_24h: maxSeizures24h,
       duration_threshold_minutes: durationThreshold,
+      known_seizure_types: knownSeizureTypes,
+      known_seizure_durations: knownSeizureDurations,
       escalation_recipients: [
         ...notificationSettings.amberRecipientIds,
         ...notificationSettings.redRecipientIds,
       ],
     });
+  };
+
+  const allSeizureTypeOptions = Object.entries(SEIZURE_TYPES).flatMap(([category, group]) =>
+    group.types.map(t => ({ ...t, category: group.label }))
+  );
+
+  const toggleSeizureType = (value: string) => {
+    setKnownSeizureTypes(prev =>
+      prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
+    );
   };
 
   return (
@@ -120,6 +137,48 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
               <div>
                 <Label>Typical Seizure Duration (minutes)</Label>
                 <Input type="number" value={typicalDuration} onChange={e => setTypicalDuration(e.target.value)} placeholder="Optional baseline" />
+              </div>
+            </div>
+
+            <Separator />
+
+            <div>
+              <Label className="text-base">Known Seizure Patterns</Label>
+              <p className="text-sm text-muted-foreground mb-3">Select all seizure types this person is known to experience, and the estimated typical duration for each.</p>
+              <div className="space-y-2">
+                {allSeizureTypeOptions.map(opt => {
+                  const isChecked = knownSeizureTypes.includes(opt.value);
+                  return (
+                    <div key={opt.value} className="border rounded-lg p-3 space-y-2">
+                      <div className="flex items-start gap-3">
+                        <Checkbox
+                          id={`seizure-${opt.value}`}
+                          checked={isChecked}
+                          onCheckedChange={() => toggleSeizureType(opt.value)}
+                          className="mt-0.5"
+                        />
+                        <div className="flex-1">
+                          <label htmlFor={`seizure-${opt.value}`} className="text-sm font-medium cursor-pointer">
+                            {opt.label}
+                            <span className="text-xs text-muted-foreground ml-2">({opt.category})</span>
+                          </label>
+                          <p className="text-xs text-muted-foreground">{opt.info}</p>
+                        </div>
+                      </div>
+                      {isChecked && (
+                        <div className="ml-7">
+                          <Label className="text-xs">Estimated Duration</Label>
+                          <Input
+                            value={knownSeizureDurations[opt.value] || ''}
+                            onChange={e => setKnownSeizureDurations(prev => ({ ...prev, [opt.value]: e.target.value }))}
+                            placeholder="e.g. 1 – 3 mins"
+                            className="h-8 text-sm mt-1"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </CardContent>

@@ -2184,6 +2184,8 @@ export type Database = {
           escalation_recipients: string[]
           expected_seizure_frequency: string
           id: string
+          known_seizure_durations: Json
+          known_seizure_types: string[]
           max_seizures_24h: number
           rescue_medication_dose: string | null
           rescue_medication_name: string | null
@@ -2206,6 +2208,8 @@ export type Database = {
           escalation_recipients?: string[]
           expected_seizure_frequency?: string
           id?: string
+          known_seizure_durations?: Json
+          known_seizure_types?: string[]
           max_seizures_24h?: number
           rescue_medication_dose?: string | null
           rescue_medication_name?: string | null
@@ -2228,6 +2232,8 @@ export type Database = {
           escalation_recipients?: string[]
           expected_seizure_frequency?: string
           id?: string
+          known_seizure_durations?: Json
+          known_seizure_types?: string[]
           max_seizures_24h?: number
           rescue_medication_dose?: string | null
           rescue_medication_name?: string | null
