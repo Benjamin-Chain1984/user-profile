@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { EpilepsyStatusCard } from './EpilepsyStatusCard';
+import { KnownSeizuresSummary } from './KnownSeizuresSummary';
 import { SeizureLogForm } from './SeizureLogForm';
 import { EpilepsyHistory } from './EpilepsyHistory';
 import { EpilepsyTrends } from './EpilepsyTrends';
@@ -66,6 +67,9 @@ export function EpilepsyDashboard({ clientId }: EpilepsyDashboardProps) {
           pauseEndDatetime={monitoringStatus.pauseEndDatetime}
         />
       )}
+
+      {/* Known Seizure Patterns */}
+      <KnownSeizuresSummary clientId={clientId} />
 
       {/* Clinical Info Panel */}
       <Card className="border-primary/20 bg-primary/5">
