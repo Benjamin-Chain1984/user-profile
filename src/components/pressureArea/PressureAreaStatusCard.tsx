@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ideal/StatusBadge';
 import { usePressureReliefEvents, useSkinChecks, usePressureAreaConfig } from '@/hooks/usePressureArea';
 import { usePressureReliefPlan } from '@/hooks/usePressureReliefPlan';
-import { RotateCcw, Eye, CheckCircle2, Clock, Timer } from 'lucide-react';
+import { RotateCcw, Eye, CheckCircle2, Clock, Timer, AlertCircle } from 'lucide-react';
 import { differenceInMinutes, differenceInDays, formatDistanceToNow, addMinutes } from 'date-fns';
 import type { HealthStatus } from '@/types/ideal';
 import type { RotationPosition } from '@/types/pressureArea';
@@ -107,10 +107,8 @@ function PressureReliefTile({
       cumulativeMinutes += positions[i].target_duration_minutes || intervalMinutes;
     }
 
-    // Show slots from now onwards (plus recently past ones), max 4
-    const relevantSlots = slots
-      .filter(s => s.dueAt > addMinutes(now, -intervalMinutes) || s.completed)
-      .slice(0, 4);
+        // Show ALL slots for the day so staff can see completed, missed, and upcoming
+    const relevantSlots = slots;
 
     // Countdown to next uncompleted slot
     const nextSlot = relevantSlots.find(s => !s.completed && s.dueAt > now);
@@ -209,11 +207,12 @@ function PressureReliefTile({
         {hasPlan && upcomingSlots.length > 0 && (
           <div className="space-y-1.5">
             <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-              <Clock className="h-3 w-3" /> Upcoming Positions
+              <Clock className="h-3 w-3" /> Today's Schedule
             </p>
-            <div className="space-y-1">
+            <div className="space-y-1 max-h-[280px] overflow-y-auto">
               {upcomingSlots.map((slot, i) => {
                 const isPast = slot.dueAt <= now && !slot.completed;
+                const isFuture = slot.dueAt > now;
                 return (
                   <div
                     key={i}
@@ -227,20 +226,22 @@ function PressureReliefTile({
                   >
                     {slot.completed ? (
                       <CheckCircle2 className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
+                    ) : isPast ? (
+                      <AlertCircle className="h-3.5 w-3.5 text-destructive flex-shrink-0" />
                     ) : (
-                      <div className={`h-3.5 w-3.5 rounded-full border-2 flex-shrink-0 ${
-                        isPast ? 'border-destructive' : 'border-muted-foreground/40'
-                      }`} />
+                      <div className="h-3.5 w-3.5 rounded-full border-2 flex-shrink-0 border-muted-foreground/40" />
                     )}
-                    <span className={`flex-1 ${slot.completed ? 'line-through text-muted-foreground' : ''}`}>
+                    <span className={`flex-1 ${slot.completed ? 'line-through text-muted-foreground' : isPast ? 'text-destructive' : ''}`}>
                       {slot.position}
                     </span>
-                    <span className={`text-[10px] ${
+                    <span className={`text-[10px] whitespace-nowrap ${
                       slot.completed ? 'text-green-600' :
-                      isPast ? 'text-destructive' : 'text-muted-foreground'
+                      isPast ? 'text-destructive font-medium' : 'text-muted-foreground'
                     }`}>
                       {slot.completed
                         ? `✓${slot.completedBy ? ` ${slot.completedBy}` : ''}`
+                        : isPast
+                        ? `Missed ${slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
                         : slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                       }
                     </span>
