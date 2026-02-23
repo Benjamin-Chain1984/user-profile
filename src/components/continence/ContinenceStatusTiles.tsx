@@ -19,6 +19,7 @@ import {
   Clock,
   Timer,
   CheckCircle2,
+  AlertCircle,
   Eye,
   Package,
   TestTube,
@@ -146,10 +147,8 @@ function PadChangeTile({
         };
       });
 
-      // Show relevant slots (recent past + upcoming, max 6)
-      const relevantSlots = slots.filter(
-        (s) => s.dueAt > addMinutes(now, -120) || s.completed,
-      ).slice(0, 6);
+      // Show ALL slots for the day so staff can see completed, missed, and upcoming
+      const relevantSlots = slots;
 
       // Countdown to next uncompleted
       const nextSlot = slots.find((s) => !s.completed && s.dueAt > now);
@@ -287,9 +286,9 @@ function PadChangeTile({
         {upcomingSlots.length > 0 && (
           <div className="space-y-1.5">
             <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-              <Clock className="h-3 w-3" /> Schedule
+              <Clock className="h-3 w-3" /> Today's Schedule
             </p>
-            <div className="space-y-1">
+            <div className="space-y-1 max-h-[280px] overflow-y-auto">
               {upcomingSlots.map((slot, i) => {
                 const isPast = slot.dueAt <= now && !slot.completed;
                 return (
@@ -305,34 +304,26 @@ function PadChangeTile({
                   >
                     {slot.completed ? (
                       <CheckCircle2 className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
+                    ) : isPast ? (
+                      <AlertCircle className="h-3.5 w-3.5 text-destructive flex-shrink-0" />
                     ) : (
-                      <div
-                        className={`h-3.5 w-3.5 rounded-full border-2 flex-shrink-0 ${
-                          isPast
-                            ? 'border-destructive'
-                            : 'border-muted-foreground/40'
-                        }`}
-                      />
+                      <div className="h-3.5 w-3.5 rounded-full border-2 flex-shrink-0 border-muted-foreground/40" />
                     )}
-                    <span
-                      className={`flex-1 ${
-                        slot.completed
-                          ? 'line-through text-muted-foreground'
-                          : ''
-                      }`}
-                    >
+                    <span className={`flex-1 ${slot.completed ? 'line-through text-muted-foreground' : isPast ? 'text-destructive' : ''}`}>
                       Pad Change
                     </span>
                     <span
-                      className={`text-[10px] ${
-                        slot.completed
-                          ? 'text-green-600'
-                          : isPast
-                          ? 'text-destructive'
-                          : 'text-muted-foreground'
+                      className={`text-[10px] whitespace-nowrap ${
+                        slot.completed ? 'text-green-600' :
+                        isPast ? 'text-destructive font-medium' : 'text-muted-foreground'
                       }`}
                     >
-                      {slot.completed ? '✓' : slot.label}
+                      {slot.completed
+                        ? `✓ ${slot.label}`
+                        : isPast
+                        ? `Missed ${slot.label}`
+                        : slot.label
+                      }
                     </span>
                   </div>
                 );
