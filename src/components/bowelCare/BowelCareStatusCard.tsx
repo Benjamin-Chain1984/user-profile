@@ -112,8 +112,8 @@ export function BowelCareStatusCard({ clientId }: BowelCareStatusCardProps) {
         </p>
       </div>
 
-      <p className="mt-4 text-xs opacity-60 italic">
-        Thresholds and PRN use should be defined by a GP or health practitioner.
+      <p className="mt-4 text-xs opacity-60 italic">Thresholds and PRN use should be defined by a GP or health practitioner.
+
       </p>
     </div>);
 
