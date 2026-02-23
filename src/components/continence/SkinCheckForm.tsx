@@ -63,6 +63,7 @@ export function SkinCheckForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const requiresEscalation = ['broken_skin', 'fungal_signs'].includes(skinCondition);
+  const requiresMonitoring = ['rash', 'redness', 'moisture_damage', 'bruising'].includes(skinCondition);
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -112,26 +113,43 @@ export function SkinCheckForm({
           <div className="space-y-2">
             <Label>Skin Condition</Label>
             <div className="grid grid-cols-2 gap-2">
-              {SKIN_CONDITIONS.map((condition) => (
-                <Button
-                  key={condition.value}
-                  type="button"
-                  variant={skinCondition === condition.value ? 'default' : 'outline'}
-                  className={`justify-start ${
-                    ['broken_skin', 'fungal_signs'].includes(condition.value)
-                      ? 'border-destructive/50'
-                      : ''
-                  }`}
-                  onClick={() => setSkinCondition(condition.value)}
-                >
-                  {condition.label}
-                  {['broken_skin', 'fungal_signs'].includes(condition.value) && (
-                    <AlertTriangle className="h-3 w-3 ml-auto text-destructive" />
-                  )}
-                </Button>
-              ))}
+              {SKIN_CONDITIONS.map((condition) => {
+                const isRed = ['broken_skin', 'fungal_signs'].includes(condition.value);
+                const isAmber = ['rash', 'redness', 'moisture_damage', 'bruising'].includes(condition.value);
+                return (
+                  <Button
+                    key={condition.value}
+                    type="button"
+                    variant={skinCondition === condition.value ? 'default' : 'outline'}
+                    className={`justify-start ${
+                      isRed ? 'border-destructive/50' :
+                      isAmber ? 'border-orange-400/60' : ''
+                    }`}
+                    onClick={() => setSkinCondition(condition.value)}
+                  >
+                    {condition.label}
+                    {isRed && <AlertTriangle className="h-3 w-3 ml-auto text-destructive" />}
+                    {isAmber && <AlertTriangle className="h-3 w-3 ml-auto text-orange-500" />}
+                  </Button>
+                );
+              })}
             </div>
           </div>
+
+          {/* Alert for amber conditions */}
+          {requiresMonitoring && (
+            <div className="bg-orange-50 border border-orange-300 rounded-lg p-4">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-5 w-5 text-orange-500 mt-0.5" />
+                <div>
+                  <p className="font-medium text-orange-700">Monitor Closely</p>
+                  <p className="text-sm text-orange-600">
+                    If no improvement or you have concerns, seek advice from GP or Nurse.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Alert for serious conditions */}
           {requiresEscalation && (
@@ -139,9 +157,9 @@ export function SkinCheckForm({
               <div className="flex items-start gap-2">
                 <AlertTriangle className="h-5 w-5 text-destructive mt-0.5" />
                 <div>
-                  <p className="font-medium text-destructive">Escalation Required</p>
+                  <p className="font-medium text-destructive">Action Required</p>
                   <p className="text-sm text-muted-foreground">
-                    This condition requires review by a Registered Nurse or GP.
+                    This condition requires medical review. Seek advice from GP or Nurse.
                   </p>
                 </div>
               </div>
@@ -199,31 +217,7 @@ export function SkinCheckForm({
             </div>
           </div>
 
-          {/* Escalation */}
-          <div className="space-y-4 p-4 border rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Escalated to RN / GP</Label>
-                <p className="text-xs text-muted-foreground">
-                  Record if a clinician was contacted about this check
-                </p>
-              </div>
-              <Switch checked={escalated} onCheckedChange={setEscalated} />
-            </div>
-
-            {escalated && (
-              <div className="space-y-2">
-                <Label htmlFor="escalationNotes">Escalation Notes</Label>
-                <Textarea
-                  id="escalationNotes"
-                  placeholder="Who was contacted and what advice was given..."
-                  value={escalationNotes}
-                  onChange={(e) => setEscalationNotes(e.target.value)}
-                  rows={3}
-                />
-              </div>
-            )}
-          </div>
+          {/* Notes */}
 
           {/* Notes */}
           <div className="space-y-2">
