@@ -24,6 +24,7 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
   const [rawAngle, setRawAngle] = useState<number>(90);
   const [gyroSupported, setGyroSupported] = useState(true);
   const [manualAngle, setManualAngle] = useState('90');
+  const [showVideo, setShowVideo] = useState(false);
   const [checklist, setChecklist] = useState({
     personUpright: false,
     hipsAtBack: false,
@@ -139,28 +140,38 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
         </CardContent>
       </Card>
 
-      {/* Embedded Position Check Video */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <PlayCircle className="h-4 w-4" />
-            Position Check Video
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="max-w-[280px] mx-auto">
-            <video
-              controls
-              playsInline
-              preload="metadata"
-              className="w-full rounded-lg"
-              src="/Position_Check.mp4"
-            >
-              Your browser does not support the video tag.
-            </video>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Position Check Video Toggle */}
+      {!showVideo ? (
+        <Button variant="outline" className="w-full" onClick={() => setShowVideo(true)}>
+          <PlayCircle className="h-4 w-4 mr-2" />
+          View Position Check Video
+        </Button>
+      ) : (
+        <Card>
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <PlayCircle className="h-4 w-4" />
+              Position Check Video
+            </CardTitle>
+            <Button variant="ghost" size="sm" onClick={() => setShowVideo(false)}>
+              Hide
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="max-w-[280px] mx-auto">
+              <video
+                controls
+                playsInline
+                preload="metadata"
+                className="w-full rounded-lg"
+                src="/Position_Check.mp4"
+              >
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Inclinometer with Protractor */}
       <Card>
