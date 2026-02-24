@@ -139,15 +139,26 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
         </CardContent>
       </Card>
 
-      {/* Watch Position Check Video */}
-      <Button
-        variant="outline"
-        className="w-full"
-        onClick={() => window.open('https://github.com/Benjamin-Chain1984/user-profile/blob/main/public/Position_Check.mp4?raw=true', '_blank')}
-      >
-        <PlayCircle className="h-4 w-4 mr-2" />
-        Watch Position Check Video
-      </Button>
+      {/* Embedded Position Check Video */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <PlayCircle className="h-4 w-4" />
+            Position Check Video
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <video
+            controls
+            playsInline
+            preload="metadata"
+            className="w-full rounded-lg"
+            src="/Position_Check.mp4"
+          >
+            Your browser does not support the video tag.
+          </video>
+        </CardContent>
+      </Card>
 
       {/* Inclinometer with Protractor */}
       <Card>
