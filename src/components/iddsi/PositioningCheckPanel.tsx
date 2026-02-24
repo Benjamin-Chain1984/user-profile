@@ -8,7 +8,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, CheckCircle2, AlertCircle, Info, Circle } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, AlertCircle, Info, Circle, PlayCircle } from 'lucide-react';
 import { useIddsiConfig } from '@/hooks/useIddsi';
 
 interface Props {
@@ -138,6 +138,16 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Watch Position Check Video */}
+      <Button
+        variant="outline"
+        className="w-full"
+        onClick={() => window.open('https://github.com/Benjamin-Chain1984/user-profile/blob/main/public/Position_Check.mp4?raw=true', '_blank')}
+      >
+        <PlayCircle className="h-4 w-4 mr-2" />
+        Watch Position Check Video
+      </Button>
 
       {/* Inclinometer with Protractor */}
       <Card>
