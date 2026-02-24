@@ -148,15 +148,17 @@ export function PositioningCheckPanel({ clientId, onClose }: Props) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <video
-            controls
-            playsInline
-            preload="metadata"
-            className="w-full rounded-lg"
-            src="/Position_Check.mp4"
-          >
-            Your browser does not support the video tag.
-          </video>
+          <div className="max-w-[280px] mx-auto">
+            <video
+              controls
+              playsInline
+              preload="metadata"
+              className="w-full rounded-lg"
+              src="/Position_Check.mp4"
+            >
+              Your browser does not support the video tag.
+            </video>
+          </div>
         </CardContent>
       </Card>
 
