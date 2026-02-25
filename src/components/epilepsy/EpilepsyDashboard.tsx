@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { EpilepsyStatusCard } from './EpilepsyStatusCard';
 import { KnownSeizuresSummary } from './KnownSeizuresSummary';
 import { SeizureLogForm } from './SeizureLogForm';
@@ -91,13 +92,16 @@ export function EpilepsyDashboard({ clientId }: EpilepsyDashboardProps) {
         message="This tool supports recording and pattern recognition. Always follow the person's Epilepsy Management Plan and seek medical advice if concerned."
       />
 
-      {/* Emergency Panel */}
-      {showEmergencyPanel && (
-        <EmergencySeizurePanel 
-          clientId={clientId} 
-          onComplete={() => setShowEmergencyPanel(false)} 
-        />
-      )}
+      {/* Emergency Panel Dialog */}
+      <Dialog open={showEmergencyPanel} onOpenChange={setShowEmergencyPanel}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogTitle className="sr-only">Seizure First Aid</DialogTitle>
+          <EmergencySeizurePanel 
+            clientId={clientId} 
+            onComplete={() => setShowEmergencyPanel(false)} 
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Status Card */}
       <EpilepsyStatusCard clientId={clientId} />
