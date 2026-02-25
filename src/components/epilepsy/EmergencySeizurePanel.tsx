@@ -25,7 +25,7 @@ export function EmergencySeizurePanel({ clientId, seizureEventId, onComplete }: 
   const { config } = useEpilepsyConfig(clientId);
   const { addAction, isAdding } = useSeizureActions(clientId);
   const [expanded, setExpanded] = useState(true);
-  
+
   // State for each step
   const [planConfirmed, setPlanConfirmed] = useState(false);
   const [timeAdministered, setTimeAdministered] = useState('');
@@ -61,7 +61,7 @@ export function EmergencySeizurePanel({ clientId, seizureEventId, onComplete }: 
       total_recovery_time_minutes: totalRecoveryTime ? parseFloat(totalRecoveryTime) : null,
       injuries_noted: injuries || null,
       escalation_completed: escalationDone,
-      post_event_notes: postNotes || null,
+      post_event_notes: postNotes || null
     });
     onComplete?.();
   };
@@ -90,14 +90,14 @@ export function EmergencySeizurePanel({ clientId, seizureEventId, onComplete }: 
                 <li>Time the seizure.</li>
                 <li>Protect from injury (move objects away).</li>
                 <li>Do NOT restrain.</li>
-                <li>Do NOT put anything in the mouth.</li>
+                <li>Do NOT put anything in the mouth (unless prescribed PRN seizure medication).</li>
                 <li>Place in recovery position when safe.</li>
               </ul>
             </div>
 
             {/* Step 2 - Rescue Med Plan */}
-            {config?.rescue_medication_prescribed && (
-              <div className="p-4 bg-card rounded-lg border space-y-3">
+            {config?.rescue_medication_prescribed &&
+            <div className="p-4 bg-card rounded-lg border space-y-3">
                 <h4 className="font-semibold flex items-center gap-2"><Badge>2</Badge> <Pill className="h-4 w-4" /> Check Rescue Medication Plan</h4>
                 <div className="p-3 bg-muted/50 rounded-lg text-sm space-y-1">
                   <p><strong>Medication:</strong> {config.rescue_medication_name || 'Not specified'}</p>
@@ -110,38 +110,38 @@ export function EmergencySeizurePanel({ clientId, seizureEventId, onComplete }: 
                   <Label className="text-sm">This matches the person's current Epilepsy Management Plan.</Label>
                 </div>
               </div>
-            )}
+            }
 
             {/* Step 3 - Administer */}
-            {config?.rescue_medication_prescribed && (
-              <div className="p-4 bg-card rounded-lg border space-y-3">
+            {config?.rescue_medication_prescribed &&
+            <div className="p-4 bg-card rounded-lg border space-y-3">
                 <h4 className="font-semibold flex items-center gap-2"><Badge>3</Badge> <Clock className="h-4 w-4" /> Administer PRN Medication</h4>
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div>
                     <Label>Time Administered</Label>
-                    <Input type="datetime-local" value={timeAdministered} onChange={e => setTimeAdministered(e.target.value)} />
+                    <Input type="datetime-local" value={timeAdministered} onChange={(e) => setTimeAdministered(e.target.value)} />
                   </div>
                   <div>
                     <Label>Dose Given</Label>
-                    <Input value={doseGiven} onChange={e => setDoseGiven(e.target.value)} />
+                    <Input value={doseGiven} onChange={(e) => setDoseGiven(e.target.value)} />
                   </div>
                   <div>
                     <Label>Route</Label>
-                    <Input value={route} onChange={e => setRoute(e.target.value)} />
+                    <Input value={route} onChange={(e) => setRoute(e.target.value)} />
                   </div>
                   <div>
                     <Label>Witness (optional)</Label>
-                    <Input value={witness} onChange={e => setWitness(e.target.value)} />
+                    <Input value={witness} onChange={(e) => setWitness(e.target.value)} />
                   </div>
                 </div>
-                {!doseMatchesPlan && (
-                  <div>
+                {!doseMatchesPlan &&
+              <div>
                     <Label>Reason for dose change</Label>
-                    <Input value={doseChangeReason} onChange={e => setDoseChangeReason(e.target.value)} />
+                    <Input value={doseChangeReason} onChange={(e) => setDoseChangeReason(e.target.value)} />
                   </div>
-                )}
+              }
               </div>
-            )}
+            }
 
             {/* Step 5 - Call 000 */}
             <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/30 space-y-3">
@@ -158,21 +158,21 @@ export function EmergencySeizurePanel({ clientId, seizureEventId, onComplete }: 
                 <li>Staff concern</li>
               </ul>
               <div className="flex items-center gap-2 pt-2">
-                <Checkbox checked={ambulanceCalled} onCheckedChange={v => setAmbulanceCalled(v as boolean)} />
+                <Checkbox checked={ambulanceCalled} onCheckedChange={(v) => setAmbulanceCalled(v as boolean)} />
                 <Label className="text-sm font-medium">Ambulance called</Label>
               </div>
-              {ambulanceCalled && (
-                <div className="grid sm:grid-cols-2 gap-3">
+              {ambulanceCalled &&
+              <div className="grid sm:grid-cols-2 gap-3">
                   <div>
                     <Label>Time Called</Label>
-                    <Input type="datetime-local" value={ambulanceTime} onChange={e => setAmbulanceTime(e.target.value)} />
+                    <Input type="datetime-local" value={ambulanceTime} onChange={(e) => setAmbulanceTime(e.target.value)} />
                   </div>
                   <div>
                     <Label>Outcome / Instructions</Label>
-                    <Input value={ambulanceOutcome} onChange={e => setAmbulanceOutcome(e.target.value)} />
+                    <Input value={ambulanceOutcome} onChange={(e) => setAmbulanceOutcome(e.target.value)} />
                   </div>
                 </div>
-              )}
+              }
             </div>
 
             {/* Step 6 - Post-Event */}
@@ -181,24 +181,24 @@ export function EmergencySeizurePanel({ clientId, seizureEventId, onComplete }: 
               <div className="grid sm:grid-cols-2 gap-3">
                 <div>
                   <Label>Total Seizure Duration (minutes)</Label>
-                  <Input type="number" value={totalSeizureDuration} onChange={e => setTotalSeizureDuration(e.target.value)} />
+                  <Input type="number" value={totalSeizureDuration} onChange={(e) => setTotalSeizureDuration(e.target.value)} />
                 </div>
                 <div>
                   <Label>Total Recovery Time (minutes)</Label>
-                  <Input type="number" value={totalRecoveryTime} onChange={e => setTotalRecoveryTime(e.target.value)} />
+                  <Input type="number" value={totalRecoveryTime} onChange={(e) => setTotalRecoveryTime(e.target.value)} />
                 </div>
               </div>
               <div>
                 <Label>Any Injuries</Label>
-                <Input value={injuries} onChange={e => setInjuries(e.target.value)} placeholder="Describe any injuries..." />
+                <Input value={injuries} onChange={(e) => setInjuries(e.target.value)} placeholder="Describe any injuries..." />
               </div>
               <div className="flex items-center gap-2">
-                <Checkbox checked={escalationDone} onCheckedChange={v => setEscalationDone(v as boolean)} />
+                <Checkbox checked={escalationDone} onCheckedChange={(v) => setEscalationDone(v as boolean)} />
                 <Label className="text-sm">Escalation completed (family notified)</Label>
               </div>
               <div>
                 <Label>Notes</Label>
-                <Textarea value={postNotes} onChange={e => setPostNotes(e.target.value)} placeholder="Additional documentation..." />
+                <Textarea value={postNotes} onChange={(e) => setPostNotes(e.target.value)} placeholder="Additional documentation..." />
               </div>
             </div>
 
@@ -208,6 +208,6 @@ export function EmergencySeizurePanel({ clientId, seizureEventId, onComplete }: 
           </CardContent>
         </CollapsibleContent>
       </Card>
-    </Collapsible>
-  );
+    </Collapsible>);
+
 }
