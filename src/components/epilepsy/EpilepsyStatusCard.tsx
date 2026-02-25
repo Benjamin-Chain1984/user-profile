@@ -11,22 +11,22 @@ interface EpilepsyStatusCardProps {
   clientId?: string;
 }
 
-const statusConfig: Record<EpilepsyStatus, { label: string; icon: React.ElementType; className: string }> = {
+const statusConfig: Record<EpilepsyStatus, {label: string;icon: React.ElementType;className: string;}> = {
   ideal: {
     label: 'IDEAL',
     icon: CheckCircle,
-    className: 'bg-success/10 text-success border-success/30',
+    className: 'bg-success/10 text-success border-success/30'
   },
   monitor: {
     label: 'Amber – Attention Required',
     icon: AlertTriangle,
-    className: 'bg-warning/10 text-warning border-warning/30',
+    className: 'bg-warning/10 text-warning border-warning/30'
   },
   action: {
     label: 'Red – Action Needed',
     icon: AlertCircle,
-    className: 'bg-destructive/10 text-destructive border-destructive/30',
-  },
+    className: 'bg-destructive/10 text-destructive border-destructive/30'
+  }
 };
 
 export function EpilepsyStatusCard({ clientId }: EpilepsyStatusCardProps) {
@@ -42,7 +42,7 @@ export function EpilepsyStatusCard({ clientId }: EpilepsyStatusCardProps) {
             'p-3 rounded-full',
             statusInfo.status === 'ideal' && 'bg-success/20',
             statusInfo.status === 'monitor' && 'bg-warning/20',
-            statusInfo.status === 'action' && 'bg-destructive/20',
+            statusInfo.status === 'action' && 'bg-destructive/20'
           )}>
             <Icon className="h-6 w-6" />
           </div>
@@ -50,34 +50,34 @@ export function EpilepsyStatusCard({ clientId }: EpilepsyStatusCardProps) {
             <div className="flex items-center gap-2">
               <h3 className="text-lg font-bold">{config.label}</h3>
               {statusInfo.status === 'ideal' && <span className="text-2xl">🟢</span>}
-              {statusInfo.status === 'monitor' && <span className="text-2xl">🟡</span>}
+              {statusInfo.status === 'monitor'}
               {statusInfo.status === 'action' && <span className="text-2xl">🔴</span>}
             </div>
             <p className="text-sm opacity-80">{statusInfo.message}</p>
           </div>
         </div>
         <div className="text-right">
-          {statusInfo.daysSinceLastSeizure !== null && (
-            <div>
+          {statusInfo.daysSinceLastSeizure !== null &&
+          <div>
               <span className="text-3xl font-bold">{statusInfo.daysSinceLastSeizure}</span>
               <p className="text-xs opacity-70">
                 {statusInfo.daysSinceLastSeizure === 1 ? 'day' : 'days'} since last seizure
               </p>
             </div>
-          )}
+          }
         </div>
       </div>
 
-      {statusInfo.activeAlerts.length > 0 && (
-        <div className="mt-4 pt-4 border-t border-current/20">
+      {statusInfo.activeAlerts.length > 0 &&
+      <div className="mt-4 pt-4 border-t border-current/20">
           <div className="text-sm font-medium mb-2">Active Alerts ({statusInfo.activeAlerts.length})</div>
           <ul className="space-y-1">
-            {statusInfo.activeAlerts.slice(0, 3).map((alert) => (
-              <li key={alert.id} className="text-sm opacity-80">• {alert.message}</li>
-            ))}
+            {statusInfo.activeAlerts.slice(0, 3).map((alert) =>
+          <li key={alert.id} className="text-sm opacity-80">• {alert.message}</li>
+          )}
           </ul>
         </div>
-      )}
+      }
 
       <div className="mt-4 pt-4 border-t border-current/20">
         <h4 className="text-sm font-medium mb-1">What to do:</h4>
@@ -87,6 +87,6 @@ export function EpilepsyStatusCard({ clientId }: EpilepsyStatusCardProps) {
           {statusInfo.status === 'action' && 'Follow Epilepsy Management Plan. Administer rescue medication if prescribed. Call 000 if indicated.'}
         </p>
       </div>
-    </div>
-  );
+    </div>);
+
 }
