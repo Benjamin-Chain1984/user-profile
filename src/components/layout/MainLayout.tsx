@@ -6,7 +6,7 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 import { ViewAsToggle } from './ViewAsToggle';
 import { PreviewBanner } from './PreviewBanner';
-import idealLogo from '@/assets/ideal-logo.png';
+const idealLogo = '/logo_design.png';
 
 interface MainLayoutProps {
   children: React.ReactNode;
