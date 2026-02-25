@@ -72,8 +72,9 @@ export function EmergencySeizurePanel({ clientId, seizureEventId, onComplete }: 
         <CollapsibleTrigger asChild>
           <CardHeader className="cursor-pointer">
             <CardTitle className="text-lg flex items-center justify-between text-destructive">
-              <div className="flex items-center gap-2">Seizure First Aid 
-                <AlertCircle className="h-5 w-5" />
+              <div className="flex items-center gap-2">
+
+Seizure First Aid <AlertCircle className="h-5 w-5" />
                 Emergency Seizure Action
               </div>
               {expanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
@@ -96,8 +97,7 @@ export function EmergencySeizurePanel({ clientId, seizureEventId, onComplete }: 
             </div>
 
             {/* Step 2 - Rescue Med Plan */}
-            {config?.rescue_medication_prescribed &&
-            <div className="p-4 bg-card rounded-lg border space-y-3">
+            {config?.rescue_medication_prescribed && <div className="p-4 bg-card rounded-lg border space-y-3">
                 <h4 className="font-semibold flex items-center gap-2"><Badge>2</Badge> <Pill className="h-4 w-4" /> Check Rescue Medication Plan</h4>
                 <div className="p-3 bg-muted/50 rounded-lg text-sm space-y-1">
                   <p><strong>Medication:</strong> {config.rescue_medication_name || 'Not specified'}</p>
