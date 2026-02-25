@@ -80,7 +80,7 @@ export function IndustryResources() {
       </div>
 
       <div className="p-4 bg-muted/50 rounded-xl border border-border">
-        <p className="text-sm text-muted-foreground">Disclaimer: These resources are provided for information only.
+        <p className="text-sm text-muted-foreground">These resources are provided for information only.
           <strong className="text-foreground">Disclaimer:</strong> These resources are provided for reference. 
           Always follow your organisation's policies and procedures.
         </p>
