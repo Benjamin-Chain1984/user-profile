@@ -90,7 +90,7 @@ export function EmergencySeizurePanel({ clientId, seizureEventId, onComplete }: 
                 <li>Time the seizure.</li>
                 <li>Protect from injury (move objects away).</li>
                 <li>Do NOT restrain.</li>
-                <li>Do NOT put anything in the mouth (unless prescribed PRN seizure medication).</li>
+                <li>Do NOT put anything in the mouth (other than prescribed PRN seizure medication).</li>
                 <li>Place in recovery position when safe.</li>
               </ul>
             </div>
