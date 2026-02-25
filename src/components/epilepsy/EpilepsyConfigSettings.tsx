@@ -14,7 +14,7 @@ import { RestrictedSection } from '@/components/ui/restricted-section';
 import { ModuleNotificationsCard } from '@/components/module';
 import type { ModuleNotificationSettings } from '@/components/module';
 import { useEpilepsyConfig } from '@/hooks/useEpilepsy';
-import { FREQUENCY_OPTIONS, SEIZURE_TYPES } from '@/types/epilepsy';
+import { FREQUENCY_OPTIONS, SEIZURE_TYPES, SEIZURE_TRIGGERS } from '@/types/epilepsy';
 import type { EpilepsyWindowUnit } from '@/types/epilepsy';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Settings, Shield, AlertTriangle, Pill, Link as LinkIcon, Info } from 'lucide-react';
@@ -53,6 +53,7 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
 
   const [knownSeizureTypes, setKnownSeizureTypes] = useState<string[]>([]);
   const [knownSeizureDurations, setKnownSeizureDurations] = useState<Record<string, string>>({});
+  const [knownSeizureTriggers, setKnownSeizureTriggers] = useState<string[]>([]);
   const [knownClusterSeizures, setKnownClusterSeizures] = useState(false);
   const [notificationSettings, setNotificationSettings] = useState<ModuleNotificationSettings>({
     enableNotifications: false,
@@ -84,6 +85,7 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
       setDurationThreshold(config.duration_threshold_minutes ?? 5);
       setKnownSeizureTypes(config.known_seizure_types || []);
       setKnownSeizureDurations((config.known_seizure_durations as Record<string, string>) || {});
+      setKnownSeizureTriggers(config.known_seizure_triggers || []);
       setKnownClusterSeizures(config.known_cluster_seizures ?? false);
     }
   }, [config]);
@@ -111,6 +113,7 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
       max_seizures_24h: redCount,
       known_seizure_types: knownSeizureTypes,
       known_seizure_durations: knownSeizureDurations,
+      known_seizure_triggers: knownSeizureTriggers,
       known_cluster_seizures: knownClusterSeizures,
       escalation_recipients: [
         ...notificationSettings.amberRecipientIds,
@@ -125,6 +128,12 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
 
   const toggleSeizureType = (value: string) => {
     setKnownSeizureTypes(prev =>
+      prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
+    );
+  };
+
+  const toggleTrigger = (value: string) => {
+    setKnownSeizureTriggers(prev =>
       prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
     );
   };
@@ -238,6 +247,26 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
                   <p className="text-sm text-muted-foreground">Enable if this person is known to experience cluster seizures.</p>
                 </div>
                 <Switch checked={knownClusterSeizures} onCheckedChange={setKnownClusterSeizures} />
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Known Seizure Triggers */}
+            <div>
+              <Label className="text-base">Potential seizure triggers</Label>
+              <p className="text-sm text-muted-foreground mb-3">Select known triggers for this person. These will be displayed on the tracking page for staff awareness.</p>
+              <div className="grid sm:grid-cols-2 gap-2">
+                {SEIZURE_TRIGGERS.map(trigger => (
+                  <div key={trigger} className="flex items-center gap-2 border rounded-lg p-2.5">
+                    <Checkbox
+                      id={`trigger-${trigger}`}
+                      checked={knownSeizureTriggers.includes(trigger)}
+                      onCheckedChange={() => toggleTrigger(trigger)}
+                    />
+                    <label htmlFor={`trigger-${trigger}`} className="text-sm cursor-pointer">{trigger}</label>
+                  </div>
+                ))}
               </div>
             </div>
           </CardContent>
