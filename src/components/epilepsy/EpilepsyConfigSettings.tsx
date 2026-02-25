@@ -170,7 +170,7 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
             <Separator />
 
             <div>
-              <Label className="text-base">Known Seizure Patterns</Label>
+              <Label className="text-base">Known seizure history</Label>
               <p className="text-sm text-muted-foreground mb-3">Select all seizure types this person is known to experience, and the estimated typical duration for each.</p>
               <div className="space-y-2">
                 {allSeizureTypeOptions.map(opt => {
