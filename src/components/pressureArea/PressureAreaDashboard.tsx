@@ -26,6 +26,30 @@ import {
   FileText, AlertTriangle, Activity,
 } from 'lucide-react';
 
+const PRESSURE_AREA_SYMPTOMS = [
+  'Red, purple, or dark patches on the skin',
+  'Skin that feels warm, hard, or squishy',
+  'Swelling',
+  'Pain or tenderness',
+  'Skin that does not fade when pressed',
+  'Blisters',
+  'Broken skin',
+  'Open or weeping areas',
+  'Shallow wounds',
+  'Deep holes or craters',
+  'Yellow or black tissue',
+  'Bad smell',
+  'Visible muscle or bone',
+];
+
+const PRESSURE_AREA_BEHAVIOUR_SIGNS = [
+  'More agitation or distress',
+  'Refusing to sit or lie in usual spots',
+  'Pulling away during care',
+  'Not sleeping well',
+  'Sudden changes in behaviour',
+];
+
 const PRESSURE_AREA_TIPS = [
   'Support the person to check their skin regularly and report any signs to a healthcare professional.',
   'Keep moving – change position as much as possible. If in bed, alternate between back and sides. Follow the pressure relief schedule.',
@@ -151,7 +175,40 @@ export function PressureAreaDashboard({ clientId }: Props) {
         <TabsContent value="tracking" className="space-y-4">
           <PressureAreaHistory clientId={clientId} />
 
-          {/* Good Pressure Area Prevention Tips */}
+          {/* Symptoms to Be Aware Of */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-red-500" />
+                Symptoms to Be Aware Of and Seek Advice
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="grid sm:grid-cols-2 gap-2">
+                {PRESSURE_AREA_SYMPTOMS.map((symptom, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <span className="text-red-500 mt-1">•</span>
+                    <span className="text-sm text-muted-foreground">{symptom}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-4 p-3 rounded-md bg-amber-50 border border-amber-200">
+                <p className="text-sm text-amber-800 font-medium mb-1">⚠️ On darker skin, it may look purple, blue, or shiny instead of red.</p>
+              </div>
+              <div className="mt-4">
+                <p className="text-sm font-medium text-foreground mb-2">Look for behaviour changes, such as:</p>
+                <ul className="grid sm:grid-cols-2 gap-2">
+                  {PRESSURE_AREA_BEHAVIOUR_SIGNS.map((sign, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <span className="text-red-500 mt-1">•</span>
+                      <span className="text-sm text-muted-foreground">{sign}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
