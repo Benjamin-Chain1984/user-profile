@@ -165,6 +165,46 @@ export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
             <BowelCareHistory clientId={clientId} />
             <PrnWorkflowCard clientId={clientId} />
           </div>
+
+          {/* Symptoms to Be Aware Of */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-red-500" />
+                Symptoms to Be Aware Of and Seek Advice
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="grid sm:grid-cols-2 gap-2">
+                {SYMPTOMS_LIST.map((symptom, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <span className="text-red-500 mt-1">•</span>
+                    <span className="text-sm text-muted-foreground">{symptom}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+
+          {/* Good Bowel Care Tips */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Activity className="h-5 w-5 text-green-500" />
+                Good Bowel Care Tips
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {BOWEL_CARE_TIPS.map((tip, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <span className="text-green-500 mt-1">✓</span>
+                    <span className="text-sm text-muted-foreground">{tip}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="trends">
@@ -177,46 +217,6 @@ export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
           </TabsContent>
         )}
       </Tabs>
-
-      {/* Symptoms to Be Aware Of */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-red-500" />
-            Symptoms to Be Aware Of and Seek Advice
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="grid sm:grid-cols-2 gap-2">
-            {SYMPTOMS_LIST.map((symptom, index) => (
-              <li key={index} className="flex items-start gap-2">
-                <span className="text-red-500 mt-1">•</span>
-                <span className="text-sm text-muted-foreground">{symptom}</span>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
-
-      {/* Good Bowel Care Tips */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Activity className="h-5 w-5 text-green-500" />
-            Good Bowel Care Tips
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-2">
-            {BOWEL_CARE_TIPS.map((tip, index) => (
-              <li key={index} className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
-                <span className="text-sm text-muted-foreground">{tip}</span>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
 
       {/* Plan Status Banners */}
       {plan?.status === 'published' && !hasCurrentUserAcknowledged && (
