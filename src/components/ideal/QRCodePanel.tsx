@@ -4,7 +4,7 @@ import { X, Smartphone, ScanLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-const idealLogo = '/logo_design.png';
+const idealLogo = '/logo-design-new.png';
 
 interface QRCodePanelProps {
   open: boolean;

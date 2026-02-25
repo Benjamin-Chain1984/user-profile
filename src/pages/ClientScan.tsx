@@ -29,7 +29,7 @@ import {
   Shield,
   LogIn
 } from 'lucide-react';
-const idealLogo = '/logo_design.png';
+const idealLogo = '/logo-design-new.png';
 
 // Session storage key for QR redirect
 const QR_REDIRECT_KEY = 'ideal_qr_redirect';
