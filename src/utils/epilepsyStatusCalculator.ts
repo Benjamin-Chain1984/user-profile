@@ -103,20 +103,20 @@ export function calculateEpilepsyStatus({ events, config, alerts }: CalculatePar
   }
 
   // 2️⃣ Red frequency threshold
-  if (eventsInRedWindow.length > redCount) {
+  if (eventsInRedWindow.length >= redCount) {
     return {
       status: 'action',
-      message: `Red: ${eventsInRedWindow.length} seizures within ${windowLabel(redWindow, redUnit)} (threshold >${redCount}).`,
+      message: `Red: ${eventsInRedWindow.length} seizures within ${windowLabel(redWindow, redUnit)} (threshold ≥${redCount}).`,
       needsPrnPrompt: true,
       ...commonFields,
     };
   }
 
   // 3️⃣ Amber frequency threshold
-  if (eventsInAmberWindow.length > amberCount) {
+  if (eventsInAmberWindow.length >= amberCount) {
     return {
       status: 'monitor',
-      message: `Amber: ${eventsInAmberWindow.length} seizures within ${windowLabel(amberWindow, amberUnit)} (threshold >${amberCount}).`,
+      message: `Amber: ${eventsInAmberWindow.length} seizures within ${windowLabel(amberWindow, amberUnit)} (threshold ≥${amberCount}).`,
       needsPrnPrompt: false,
       ...commonFields,
     };
