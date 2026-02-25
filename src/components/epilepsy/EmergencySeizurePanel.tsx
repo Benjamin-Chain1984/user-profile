@@ -202,9 +202,6 @@ export function EmergencySeizurePanel({ clientId, seizureEventId, onComplete }: 
 
 
 
-            <Button onClick={handleSave} disabled={isAdding} className="w-full" size="lg">
-              {isAdding ? 'Saving...' : 'Save Emergency Action Record'}
-            </Button>
           </CardContent>
         </CollapsibleContent>
       </Card>
