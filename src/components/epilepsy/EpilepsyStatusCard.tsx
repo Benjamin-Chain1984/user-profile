@@ -103,7 +103,7 @@ export function EpilepsyStatusCard({ clientId }: EpilepsyStatusCardProps) {
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-bold">{cfg.label}</h3>
                 {statusInfo.status === 'ideal' && <span className="text-2xl">🟢</span>}
-                {statusInfo.status === 'monitor' && <span className="text-2xl">🟠</span>}
+                {statusInfo.status === 'monitor'}
                 {statusInfo.status === 'action' && <span className="text-2xl">🔴</span>}
               </div>
               <p className="text-sm opacity-80">{statusInfo.message}</p>
