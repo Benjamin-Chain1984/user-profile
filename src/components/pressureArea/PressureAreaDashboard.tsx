@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RoleTabsTrigger } from '@/components/ui/role-tabs-trigger';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
@@ -23,8 +23,20 @@ import { PressureAreaConfigSettings } from './PressureAreaConfigSettings';
 import { PressureAreaExportReports } from './PressureAreaExportReports';
 import {
   Settings, BarChart3, Clock, AlertCircle, FileDown,
-  FileText, AlertTriangle,
+  FileText, AlertTriangle, Activity,
 } from 'lucide-react';
+
+const PRESSURE_AREA_TIPS = [
+  'Support the person to check their skin regularly and report any signs to a healthcare professional.',
+  'Keep moving – change position as much as possible. If in bed, alternate between back and sides. Follow the pressure relief schedule.',
+  'When sitting in a chair, relieve pressure on the bottom regularly. Stand if able, or support the person to shift their weight from side to side.',
+  'Elevate heels.',
+  'Manage moisture – keep skin clean and dry.',
+  'Regularly moisturise skin, focusing on areas such as heels and elbows.',
+  'Eat well – a high protein diet helps repair damaged skin.',
+  'Eat a diet rich in vitamins and minerals.',
+  'Drink plenty of fluids.',
+];
 
 interface Props {
   clientId?: string;
@@ -138,6 +150,26 @@ export function PressureAreaDashboard({ clientId }: Props) {
 
         <TabsContent value="tracking" className="space-y-4">
           <PressureAreaHistory clientId={clientId} />
+
+          {/* Good Pressure Area Prevention Tips */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Activity className="h-5 w-5 text-green-500" />
+                Good Pressure Area Prevention Tips
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {PRESSURE_AREA_TIPS.map((tip, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <span className="text-green-500 mt-1">✓</span>
+                    <span className="text-sm text-muted-foreground">{tip}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="trends">
