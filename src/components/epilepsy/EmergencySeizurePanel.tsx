@@ -176,31 +176,31 @@ export function EmergencySeizurePanel({ clientId, seizureEventId, onComplete }: 
             </div>
 
             {/* Step 6 - Post-Event */}
-            <div className="p-4 bg-card rounded-lg border space-y-3">
-              <h4 className="font-semibold flex items-center gap-2"><Badge>6</Badge> <FileText className="h-4 w-4" /> Post-Event Documentation</h4>
-              <div className="grid sm:grid-cols-2 gap-3">
-                <div>
-                  <Label>Total Seizure Duration (minutes)</Label>
-                  <Input type="number" value={totalSeizureDuration} onChange={(e) => setTotalSeizureDuration(e.target.value)} />
-                </div>
-                <div>
-                  <Label>Total Recovery Time (minutes)</Label>
-                  <Input type="number" value={totalRecoveryTime} onChange={(e) => setTotalRecoveryTime(e.target.value)} />
-                </div>
-              </div>
-              <div>
-                <Label>Any Injuries</Label>
-                <Input value={injuries} onChange={(e) => setInjuries(e.target.value)} placeholder="Describe any injuries..." />
-              </div>
-              <div className="flex items-center gap-2">
-                <Checkbox checked={escalationDone} onCheckedChange={(v) => setEscalationDone(v as boolean)} />
-                <Label className="text-sm">Escalation completed (family notified)</Label>
-              </div>
-              <div>
-                <Label>Notes</Label>
-                <Textarea value={postNotes} onChange={(e) => setPostNotes(e.target.value)} placeholder="Additional documentation..." />
-              </div>
-            </div>
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
             <Button onClick={handleSave} disabled={isAdding} className="w-full" size="lg">
               {isAdding ? 'Saving...' : 'Save Emergency Action Record'}
