@@ -305,6 +305,9 @@ export function BowelCareConfigSettings({ clientId }: BowelCareConfigSettingsPro
               </Link>
             ))}
           </div>
+          <p className="text-xs text-muted-foreground mt-4">
+            Always consult a healthcare professional to ensure modules are clinically valid and set according to individual need.
+          </p>
         </CardContent>
       </Card>
     </div>
