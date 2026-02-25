@@ -113,34 +113,34 @@ export function EmergencySeizurePanel({ clientId, seizureEventId, onComplete }: 
             }
 
             {/* Step 3 - Administer */}
-            {config?.rescue_medication_prescribed &&
-            <div className="p-4 bg-card rounded-lg border space-y-3">
-                <h4 className="font-semibold flex items-center gap-2"><Badge>3</Badge> <Clock className="h-4 w-4" /> Administer PRN Medication</h4>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  <div>
-                    <Label>Time Administered</Label>
-                    <Input type="datetime-local" value={timeAdministered} onChange={(e) => setTimeAdministered(e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>Dose Given</Label>
-                    <Input value={doseGiven} onChange={(e) => setDoseGiven(e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>Route</Label>
-                    <Input value={route} onChange={(e) => setRoute(e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>Witness (optional)</Label>
-                    <Input value={witness} onChange={(e) => setWitness(e.target.value)} />
-                  </div>
-                </div>
-                {!doseMatchesPlan &&
-              <div>
-                    <Label>Reason for dose change</Label>
-                    <Input value={doseChangeReason} onChange={(e) => setDoseChangeReason(e.target.value)} />
-                  </div>
-              }
-              </div>
+            {config?.rescue_medication_prescribed
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             }
 
             {/* Step 5 - Call 000 */}
