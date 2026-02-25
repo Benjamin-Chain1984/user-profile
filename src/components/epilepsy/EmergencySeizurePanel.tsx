@@ -72,10 +72,9 @@ export function EmergencySeizurePanel({ clientId, seizureEventId, onComplete }: 
         <CollapsibleTrigger asChild>
           <CardHeader className="cursor-pointer">
             <CardTitle className="text-lg flex items-center justify-between text-destructive">
-              <div className="flex items-center gap-2">Emergency Seizure Action
-
+              <div className="flex items-center gap-2">
                 <AlertCircle className="h-5 w-5" />
-                Emergency Seizure Action
+                Seizure First Aid
               </div>
               {expanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
             </CardTitle>
