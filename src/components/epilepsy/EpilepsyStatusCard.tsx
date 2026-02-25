@@ -125,7 +125,7 @@ export function EpilepsyStatusCard({ clientId }: EpilepsyStatusCardProps) {
         <div className="mt-4 pt-4 border-t border-current/20">
           <div className="flex justify-between text-xs mb-1">
             <span>Seizures in last {statusInfo.windowLabel}: <strong>{statusInfo.seizuresInWindow}</strong></span>
-            <span>Amber &gt;{statusInfo.amberThreshold} · Red &gt;{statusInfo.redThreshold}</span>
+            <span>Amber ≥{statusInfo.amberThreshold} · Red ≥{statusInfo.redThreshold}</span>
           </div>
           <div className="w-full h-3 bg-current/10 rounded-full overflow-hidden">
             <div
