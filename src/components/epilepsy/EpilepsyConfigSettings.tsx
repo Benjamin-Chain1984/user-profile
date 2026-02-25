@@ -15,8 +15,9 @@ import { ModuleNotificationsCard } from '@/components/module';
 import type { ModuleNotificationSettings } from '@/components/module';
 import { useEpilepsyConfig } from '@/hooks/useEpilepsy';
 import { FREQUENCY_OPTIONS, SEIZURE_TYPES } from '@/types/epilepsy';
+import type { EpilepsyWindowUnit } from '@/types/epilepsy';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Settings, Shield, AlertTriangle, Pill, Link as LinkIcon } from 'lucide-react';
+import { Settings, Shield, AlertTriangle, Pill, Link as LinkIcon, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface EpilepsyConfigSettingsProps {
@@ -36,10 +37,20 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
   const [rescueRoute, setRescueRoute] = useState('');
   const [rescueWhen, setRescueWhen] = useState('');
   const [call000After, setCall000After] = useState(5);
-  const [clusterCount, setClusterCount] = useState(2);
-  const [clusterHours, setClusterHours] = useState(24);
-  const [maxSeizures24h, setMaxSeizures24h] = useState(3);
+
+  // Amber thresholds
+  const [amberCount, setAmberCount] = useState(2);
+  const [amberWindow, setAmberWindow] = useState(24);
+  const [amberUnit, setAmberUnit] = useState<EpilepsyWindowUnit>('hours');
+
+  // Red thresholds
+  const [redCount, setRedCount] = useState(3);
+  const [redWindow, setRedWindow] = useState(24);
+  const [redUnit, setRedUnit] = useState<EpilepsyWindowUnit>('hours');
+
+  // Duration threshold
   const [durationThreshold, setDurationThreshold] = useState(5);
+
   const [knownSeizureTypes, setKnownSeizureTypes] = useState<string[]>([]);
   const [knownSeizureDurations, setKnownSeizureDurations] = useState<Record<string, string>>({});
   const [knownClusterSeizures, setKnownClusterSeizures] = useState(false);
@@ -49,20 +60,27 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
     redRecipientIds: [],
   });
 
+  // Validation
+  const redWindowMinutes = redUnit === 'minutes' ? redWindow : redWindow * 60;
+  const amberWindowMinutes = amberUnit === 'minutes' ? amberWindow : amberWindow * 60;
+  const isValidThresholds = redCount > amberCount || (redCount === amberCount && redWindowMinutes < amberWindowMinutes);
+
   useEffect(() => {
     if (config) {
       setEnableMonitoring(config.enable_seizure_monitoring ?? true);
       setFrequency(config.expected_seizure_frequency || 'unknown');
-      
       setRescuePrescribed(config.rescue_medication_prescribed ?? false);
       setRescueName(config.rescue_medication_name || '');
       setRescueDose(config.rescue_medication_dose || '');
       setRescueRoute(config.rescue_medication_route || '');
       setRescueWhen(config.rescue_medication_when || '');
       setCall000After(config.call_000_after_minutes ?? 5);
-      setClusterCount(config.cluster_seizure_count ?? 2);
-      setClusterHours(config.cluster_seizure_hours ?? 24);
-      setMaxSeizures24h(config.max_seizures_24h ?? 3);
+      setAmberCount(config.amber_seizure_count ?? 2);
+      setAmberWindow(config.amber_seizure_window ?? 24);
+      setAmberUnit((config.amber_seizure_window_unit as EpilepsyWindowUnit) ?? 'hours');
+      setRedCount(config.red_seizure_count ?? 3);
+      setRedWindow(config.red_seizure_window ?? 24);
+      setRedUnit((config.red_seizure_window_unit as EpilepsyWindowUnit) ?? 'hours');
       setDurationThreshold(config.duration_threshold_minutes ?? 5);
       setKnownSeizureTypes(config.known_seizure_types || []);
       setKnownSeizureDurations((config.known_seizure_durations as Record<string, string>) || {});
@@ -74,17 +92,23 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
     updateConfig({
       enable_seizure_monitoring: enableMonitoring,
       expected_seizure_frequency: frequency,
-      
       rescue_medication_prescribed: rescuePrescribed,
       rescue_medication_name: rescuePrescribed ? rescueName : null,
       rescue_medication_dose: rescuePrescribed ? rescueDose : null,
       rescue_medication_route: rescuePrescribed ? rescueRoute : null,
       rescue_medication_when: rescuePrescribed ? rescueWhen : null,
       call_000_after_minutes: call000After,
-      cluster_seizure_count: clusterCount,
-      cluster_seizure_hours: clusterHours,
-      max_seizures_24h: maxSeizures24h,
+      amber_seizure_count: amberCount,
+      amber_seizure_window: amberWindow,
+      amber_seizure_window_unit: amberUnit,
+      red_seizure_count: redCount,
+      red_seizure_window: redWindow,
+      red_seizure_window_unit: redUnit,
       duration_threshold_minutes: durationThreshold,
+      // Keep legacy fields in sync
+      cluster_seizure_count: amberCount,
+      cluster_seizure_hours: amberUnit === 'hours' ? amberWindow : Math.ceil(amberWindow / 60),
+      max_seizures_24h: redCount,
       known_seizure_types: knownSeizureTypes,
       known_seizure_durations: knownSeizureDurations,
       known_cluster_seizures: knownClusterSeizures,
@@ -108,6 +132,12 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
   return (
     <RestrictedSection>
       <div className="space-y-6">
+        {/* Persistent Note */}
+        <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg text-sm text-foreground flex gap-2">
+          <Info className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+          <span>Always follow the person's Epilepsy Management Plan.</span>
+        </div>
+
         {/* Enable Toggle */}
         <Card>
           <CardHeader>
@@ -260,32 +290,80 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
               <Shield className="h-5 w-5" />
               Escalation Thresholds
             </CardTitle>
-            <CardDescription>Thresholds that drive Amber/Red alerts.</CardDescription>
+            <CardDescription>Configure Amber and Red alert triggers. Uses rolling window logic (not calendar day).</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <Label>Max seizures in 24 hours (Red)</Label>
-                <Input type="number" min={1} value={maxSeizures24h} onChange={e => setMaxSeizures24h(parseInt(e.target.value) || 3)} />
+          <CardContent className="space-y-6">
+            {/* Amber Threshold */}
+            <div className="p-4 border-l-4 border-warning bg-warning/5 rounded-r-lg space-y-3">
+              <h4 className="font-semibold text-sm flex items-center gap-2">
+                <span className="text-lg">🟠</span> Amber – Monitor
+              </h4>
+              <p className="text-xs text-muted-foreground">Triggers increased observation and monitoring guidance.</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm">Amber if &gt;</span>
+                <Input type="number" min={1} value={amberCount} onChange={e => setAmberCount(parseInt(e.target.value) || 1)} className="w-16 h-9" />
+                <span className="text-sm">seizures within</span>
+                <Input type="number" min={1} value={amberWindow} onChange={e => setAmberWindow(parseInt(e.target.value) || 1)} className="w-16 h-9" />
+                <Select value={amberUnit} onValueChange={(v) => setAmberUnit(v as EpilepsyWindowUnit)}>
+                  <SelectTrigger className="w-24 h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="hours">Hours</SelectItem>
+                    <SelectItem value="minutes">Minutes</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <div>
-                <Label>Duration threshold (minutes, Red)</Label>
-                <Input type="number" min={1} value={durationThreshold} onChange={e => setDurationThreshold(parseFloat(e.target.value) || 5)} />
-              </div>
-              <div>
-                <Label>Cluster: seizures within</Label>
-                <div className="flex gap-2 items-center">
-                  <Input type="number" min={2} value={clusterCount} onChange={e => setClusterCount(parseInt(e.target.value) || 2)} className="w-20" />
-                  <span className="text-sm text-muted-foreground">in</span>
-                  <Input type="number" min={1} value={clusterHours} onChange={e => setClusterHours(parseInt(e.target.value) || 24)} className="w-20" />
-                  <span className="text-sm text-muted-foreground">hours</span>
-                </div>
-              </div>
-              <div>
-                <Label>Call 000 after (minutes)</Label>
-                <Input type="number" min={1} value={call000After} onChange={e => setCall000After(parseFloat(e.target.value) || 5)} />
+              <div className="p-2 bg-warning/10 rounded text-xs text-muted-foreground">
+                <strong>Staff guidance:</strong> Monitor closely. Increase observation. Seek medical advice if pattern continues.
               </div>
             </div>
+
+            {/* Red Threshold */}
+            <div className="p-4 border-l-4 border-destructive bg-destructive/5 rounded-r-lg space-y-3">
+              <h4 className="font-semibold text-sm flex items-center gap-2">
+                <span className="text-lg">🔴</span> Red – Emergency
+              </h4>
+              <p className="text-xs text-muted-foreground">Triggers PRN medication prompt and escalation documentation.</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm">Red if &gt;</span>
+                <Input type="number" min={1} value={redCount} onChange={e => setRedCount(parseInt(e.target.value) || 1)} className="w-16 h-9" />
+                <span className="text-sm">seizures within</span>
+                <Input type="number" min={1} value={redWindow} onChange={e => setRedWindow(parseInt(e.target.value) || 1)} className="w-16 h-9" />
+                <Select value={redUnit} onValueChange={(v) => setRedUnit(v as EpilepsyWindowUnit)}>
+                  <SelectTrigger className="w-24 h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="hours">Hours</SelectItem>
+                    <SelectItem value="minutes">Minutes</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {!isValidThresholds && (
+                <p className="text-xs text-destructive font-medium flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  Red threshold must be greater than Amber threshold.
+                </p>
+              )}
+            </div>
+
+            {/* Duration Threshold */}
+            <div className="p-4 border-l-4 border-destructive bg-destructive/5 rounded-r-lg space-y-3">
+              <h4 className="font-semibold text-sm flex items-center gap-2">
+                <span className="text-lg">🔴</span> Prolonged Seizure Duration
+              </h4>
+              <p className="text-xs text-muted-foreground">Duration threshold overrides frequency rules — immediately triggers Red.</p>
+              <div className="flex items-center gap-2">
+                <span className="text-sm">Red if seizure lasts ≥</span>
+                <Input type="number" min={1} value={durationThreshold} onChange={e => setDurationThreshold(parseFloat(e.target.value) || 5)} className="w-16 h-9" />
+                <span className="text-sm">minutes</span>
+              </div>
+            </div>
+
+            {/* Call 000 */}
+            <div className="flex items-center gap-2">
+              <Label>Call 000 after</Label>
+              <Input type="number" min={1} value={call000After} onChange={e => setCall000After(parseFloat(e.target.value) || 5)} className="w-16 h-9" />
+              <span className="text-sm text-muted-foreground">minutes</span>
+            </div>
+
             <div className="p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
               <p><strong>Auto Red alerts:</strong> Any seizure involving injury or requiring emergency support.</p>
             </div>
@@ -327,7 +405,7 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
           </CardContent>
         </Card>
 
-        <Button onClick={handleSave} disabled={isUpdating} className="w-full" size="lg">
+        <Button onClick={handleSave} disabled={isUpdating || !isValidThresholds} className="w-full" size="lg">
           {isUpdating ? 'Saving...' : 'Save Settings'}
         </Button>
       </div>

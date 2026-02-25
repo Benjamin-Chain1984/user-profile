@@ -1,9 +1,10 @@
 /**
- * Epilepsy Status Calculator - Single source of truth
+ * Epilepsy Status Calculator - Rolling window logic
+ * Red > Amber > IDEAL hierarchy
  */
 
-import type { SeizureEvent, EpilepsyConfig, EpilepsyAlert, EpilepsyStatus, EpilepsyStatusInfo } from '@/types/epilepsy';
-import { differenceInHours, differenceInDays } from 'date-fns';
+import type { SeizureEvent, EpilepsyConfig, EpilepsyAlert, EpilepsyStatusInfo } from '@/types/epilepsy';
+import { differenceInMinutes, differenceInDays } from 'date-fns';
 
 interface CalculateParams {
   events: SeizureEvent[];
@@ -11,9 +12,56 @@ interface CalculateParams {
   alerts: EpilepsyAlert[];
 }
 
+function windowToMinutes(value: number, unit: string): number {
+  return unit === 'minutes' ? value : value * 60;
+}
+
+function windowLabel(value: number, unit: string): string {
+  return `${value} ${unit}`;
+}
+
 export function calculateEpilepsyStatus({ events, config, alerts }: CalculateParams): EpilepsyStatusInfo {
   const now = new Date();
   const activeAlerts = alerts.filter(a => !a.resolved_at);
+
+  // Config values
+  const amberCount = config?.amber_seizure_count ?? 2;
+  const amberWindow = config?.amber_seizure_window ?? 24;
+  const amberUnit = config?.amber_seizure_window_unit ?? 'hours';
+  const redCount = config?.red_seizure_count ?? 3;
+  const redWindow = config?.red_seizure_window ?? 24;
+  const redUnit = config?.red_seizure_window_unit ?? 'hours';
+  const durationThreshold = config?.duration_threshold_minutes ?? 5;
+
+  // Use the larger window for display
+  const redWindowMin = windowToMinutes(redWindow, redUnit);
+  const amberWindowMin = windowToMinutes(amberWindow, amberUnit);
+  const displayWindowMin = Math.max(redWindowMin, amberWindowMin);
+  const displayWindowLabel = redWindowMin >= amberWindowMin
+    ? windowLabel(redWindow, redUnit)
+    : windowLabel(amberWindow, amberUnit);
+
+  // Events within windows
+  const eventsInRedWindow = events.filter(e => differenceInMinutes(now, new Date(e.event_occurred_at)) <= redWindowMin);
+  const eventsInAmberWindow = events.filter(e => differenceInMinutes(now, new Date(e.event_occurred_at)) <= amberWindowMin);
+  const eventsInDisplayWindow = events.filter(e => differenceInMinutes(now, new Date(e.event_occurred_at)) <= displayWindowMin);
+
+  const seizuresInWindow = eventsInDisplayWindow.length;
+
+  // Longest duration in display window
+  const longestDurationInWindow = eventsInDisplayWindow.reduce((max, e) => {
+    const dur = e.duration_minutes + e.duration_seconds / 60;
+    return dur > max ? dur : max;
+  }, 0);
+
+  const baseInfo = {
+    amberThreshold: amberCount,
+    redThreshold: redCount,
+    windowLabel: displayWindowLabel,
+    seizuresInWindow,
+    longestDurationInWindow,
+    durationThreshold,
+  };
 
   if (events.length === 0) {
     return {
@@ -22,6 +70,10 @@ export function calculateEpilepsyStatus({ events, config, alerts }: CalculatePar
       daysSinceLastSeizure: null,
       lastSeizureDate: null,
       activeAlerts,
+      needsPrnPrompt: false,
+      ...baseInfo,
+      seizuresInWindow: 0,
+      longestDurationInWindow: 0,
     };
   }
 
@@ -32,94 +84,73 @@ export function calculateEpilepsyStatus({ events, config, alerts }: CalculatePar
   const lastDate = new Date(latest.event_occurred_at);
   const daysSince = differenceInDays(now, lastDate);
 
-  // Check for RED conditions
-  const maxSeizures24h = config?.max_seizures_24h ?? 3;
-  const durationThreshold = config?.duration_threshold_minutes ?? 5;
-  const clusterCount = config?.cluster_seizure_count ?? 2;
-  const clusterHours = config?.cluster_seizure_hours ?? 24;
+  const commonFields = {
+    daysSinceLastSeizure: daysSince,
+    lastSeizureDate: latest.event_occurred_at,
+    activeAlerts,
+    ...baseInfo,
+  };
 
-  // Events in last 24h
-  const last24h = sorted.filter(e => differenceInHours(now, new Date(e.event_occurred_at)) <= 24);
-  
-  // Cluster check
-  const clusterWindow = sorted.filter(e => differenceInHours(now, new Date(e.event_occurred_at)) <= clusterHours);
-
-  // Check for injury or emergency
-  const hasInjury = latest.recovery.includes('Injured (notes required)');
-  const hasEmergency = latest.recovery.includes('Emergency support required');
-
-  // Check duration
-  const totalDuration = latest.duration_minutes + (latest.duration_seconds / 60);
-  const exceededDuration = totalDuration >= durationThreshold;
-
-  // RED conditions
-  if (
-    last24h.length >= maxSeizures24h ||
-    exceededDuration ||
-    clusterWindow.length >= clusterCount ||
-    hasInjury ||
-    hasEmergency
-  ) {
-    let message = 'Action needed – ';
-    if (last24h.length >= maxSeizures24h) message += `${last24h.length} seizures in 24h.`;
-    else if (exceededDuration) message += `Seizure exceeded ${durationThreshold} minute threshold.`;
-    else if (clusterWindow.length >= clusterCount) message += `Cluster detected: ${clusterWindow.length} seizures in ${clusterHours}h.`;
-    else if (hasInjury) message += 'Injury recorded during seizure.';
-    else if (hasEmergency) message += 'Emergency support was required.';
-
+  // 1️⃣ Duration threshold → Red
+  const latestDuration = latest.duration_minutes + latest.duration_seconds / 60;
+  if (latestDuration >= durationThreshold) {
     return {
       status: 'action',
-      message,
-      daysSinceLastSeizure: daysSince,
-      lastSeizureDate: latest.event_occurred_at,
-      activeAlerts,
+      message: `Red: Seizure duration (${latestDuration.toFixed(1)} min) exceeds ${durationThreshold} min threshold.`,
+      needsPrnPrompt: true,
+      ...commonFields,
     };
   }
 
-  // AMBER conditions - frequency increasing or approaching threshold
-  const last7d = sorted.filter(e => differenceInDays(now, new Date(e.event_occurred_at)) <= 7);
-  const prev7d = sorted.filter(e => {
-    const d = differenceInDays(now, new Date(e.event_occurred_at));
-    return d > 7 && d <= 14;
-  });
+  // 2️⃣ Red frequency threshold
+  if (eventsInRedWindow.length > redCount) {
+    return {
+      status: 'action',
+      message: `Red: ${eventsInRedWindow.length} seizures within ${windowLabel(redWindow, redUnit)} (threshold >${redCount}).`,
+      needsPrnPrompt: true,
+      ...commonFields,
+    };
+  }
 
-  if (last7d.length > prev7d.length && last7d.length > 1) {
+  // 3️⃣ Amber frequency threshold
+  if (eventsInAmberWindow.length > amberCount) {
     return {
       status: 'monitor',
-      message: `Seizure frequency increasing – ${last7d.length} events this week vs ${prev7d.length} previous week.`,
-      daysSinceLastSeizure: daysSince,
-      lastSeizureDate: latest.event_occurred_at,
-      activeAlerts,
+      message: `Amber: ${eventsInAmberWindow.length} seizures within ${windowLabel(amberWindow, amberUnit)} (threshold >${amberCount}).`,
+      needsPrnPrompt: false,
+      ...commonFields,
     };
   }
 
-  if (last24h.length >= Math.max(1, maxSeizures24h - 1)) {
+  // 4️⃣ Check for injury or emergency on latest event
+  const hasInjury = latest.recovery.includes('Injured (notes required)');
+  const hasEmergency = latest.recovery.includes('Emergency support required');
+  if (hasInjury || hasEmergency) {
     return {
-      status: 'monitor',
-      message: `${last24h.length} seizure(s) in 24h – approaching threshold.`,
-      daysSinceLastSeizure: daysSince,
-      lastSeizureDate: latest.event_occurred_at,
-      activeAlerts,
+      status: 'action',
+      message: hasEmergency ? 'Red: Emergency support was required.' : 'Red: Injury recorded during seizure.',
+      needsPrnPrompt: true,
+      ...commonFields,
     };
   }
 
+  // 5️⃣ Unresolved alerts → Amber
   if (activeAlerts.length > 0) {
     return {
       status: 'monitor',
       message: `${activeAlerts.length} unresolved alert(s).`,
-      daysSinceLastSeizure: daysSince,
-      lastSeizureDate: latest.event_occurred_at,
-      activeAlerts,
+      needsPrnPrompt: false,
+      ...commonFields,
     };
   }
 
+  // 6️⃣ IDEAL
   return {
     status: 'ideal',
-    message: daysSince === 0 
-      ? 'Last seizure today – continue monitoring.' 
+    message: daysSince === 0
+      ? 'Last seizure today – continue monitoring.'
       : `${daysSince} day${daysSince === 1 ? '' : 's'} since last seizure.`,
-    daysSinceLastSeizure: daysSince,
-    lastSeizureDate: latest.event_occurred_at,
-    activeAlerts,
+    needsPrnPrompt: false,
+    ...commonFields,
   };
 }

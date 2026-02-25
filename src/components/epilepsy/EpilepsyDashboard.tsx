@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { EpilepsyStatusCard } from './EpilepsyStatusCard';
 import { KnownSeizuresSummary } from './KnownSeizuresSummary';
 import { SeizureLogForm } from './SeizureLogForm';
+import { SeizureTimelineGraph } from './SeizureTimelineGraph';
 import { EpilepsyHistory } from './EpilepsyHistory';
 import { EpilepsyTrends } from './EpilepsyTrends';
 import { EpilepsyConfigSettings } from './EpilepsyConfigSettings';
@@ -100,6 +101,9 @@ export function EpilepsyDashboard({ clientId }: EpilepsyDashboardProps) {
 
       {/* Status Card */}
       <EpilepsyStatusCard clientId={clientId} />
+
+      {/* Timeline Graph */}
+      <SeizureTimelineGraph clientId={clientId} />
 
       {/* Tabs */}
       <ModuleTabs

@@ -10,3 +10,4 @@ export { EpilepsyTrends } from './EpilepsyTrends';
 export { EpilepsyConfigSettings } from './EpilepsyConfigSettings';
 export { EmergencySeizurePanel } from './EmergencySeizurePanel';
 export { EpilepsyExportReports } from './EpilepsyExportReports';
+export { SeizureTimelineGraph } from './SeizureTimelineGraph';
