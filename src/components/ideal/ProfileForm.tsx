@@ -12,8 +12,9 @@ import { QRPosterSection } from './QRPosterSection';
 import { SubscriptionBillingSection } from './SubscriptionBillingSection';
 import { NotificationContactsSection } from '@/components/profile';
 import { differenceInYears } from 'date-fns';
-import { Camera, User, Phone, Users, Lock, Loader2, Save } from 'lucide-react';
+import { Camera, User, Phone, Users, Lock, Loader2, Save, Watch } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import type { IndividualProfile } from '@/types/ideal';
@@ -333,6 +334,27 @@ export function ProfileForm() {
           )}
         </Button>
       )}
+
+      {/* IoT Wearable Device */}
+      <Separator className="my-8" />
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Watch className="w-5 h-5 text-primary" />
+            <CardTitle className="text-lg">IoT Wearable Device</CardTitle>
+          </div>
+          <CardDescription>
+            Connect a wearable device to enable continuous health monitoring
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="outline" disabled>
+            <Watch className="w-4 h-4 mr-2" />
+            Enable IoT Wearable Device
+          </Button>
+          <p className="text-xs text-muted-foreground mt-2">Coming soon — wearable integration is under development.</p>
+        </CardContent>
+      </Card>
 
       {/* QR & Poster Section */}
       <Separator className="my-8" />
