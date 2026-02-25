@@ -17,7 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Mail, Lock, User, Smartphone, KeyRound } from 'lucide-react';
-import idealLogo from '@/assets/ideal-logo.png';
+const idealLogo = '/logo_design.png';
 
 // Validation schemas
 const emailSchema = z.object({

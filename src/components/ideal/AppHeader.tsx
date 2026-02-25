@@ -1,4 +1,4 @@
-import idealLogo from '@/assets/ideal-logo.png';
+const idealLogo = '/logo_design.png';
 
 export function AppHeader() {
   return (
