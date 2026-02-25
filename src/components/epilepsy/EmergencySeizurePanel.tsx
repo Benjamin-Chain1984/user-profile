@@ -105,10 +105,10 @@ export function EmergencySeizurePanel({ clientId, seizureEventId, onComplete }: 
                   <p><strong>Route:</strong> {config.rescue_medication_route || 'Not specified'}</p>
                   <p><strong>When:</strong> {config.rescue_medication_when || 'As prescribed'}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox checked={planConfirmed} onCheckedChange={(v) => setPlanConfirmed(v as boolean)} />
-                  <Label className="text-sm">This matches the person's current Epilepsy Management Plan.</Label>
-                </div>
+                
+
+
+
               </div>
             }
 
