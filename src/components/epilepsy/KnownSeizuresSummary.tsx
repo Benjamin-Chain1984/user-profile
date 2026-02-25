@@ -39,7 +39,7 @@ export function KnownSeizuresSummary({ clientId }: KnownSeizuresSummaryProps) {
         </div>
         <div className="space-y-1.5">
           <h3 className="text-sm font-semibold text-foreground">
-            {firstName} is known to have:
+            Known seizure history
           </h3>
           <ul className="space-y-1">
             {knownTypes.map(type => {
