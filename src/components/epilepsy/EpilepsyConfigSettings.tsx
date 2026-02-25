@@ -17,8 +17,8 @@ import { useEpilepsyConfig } from '@/hooks/useEpilepsy';
 import { FREQUENCY_OPTIONS, SEIZURE_TYPES, SEIZURE_TRIGGERS } from '@/types/epilepsy';
 import type { EpilepsyWindowUnit } from '@/types/epilepsy';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Settings, Shield, AlertTriangle, Pill, Link as LinkIcon, Info } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Settings, Shield, AlertTriangle, Pill, Link as LinkIcon, Info, Moon, Thermometer, Activity, Droplets, Heart, Brain } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 
 interface EpilepsyConfigSettingsProps {
   clientId?: string;
@@ -411,26 +411,39 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
         {/* Related Modules */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <LinkIcon className="h-5 w-5" />
-              Other Recommended Related Modules
-            </CardTitle>
+            <CardTitle className="text-lg">Other Recommended Related Modules</CardTitle>
+            <CardDescription>
+              Comprehensive care involves monitoring multiple aspects of health
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid sm:grid-cols-2 gap-2">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {[
-                { label: 'Bowel Care', path: '/module/constipation' },
-                { label: 'Sleep Chart', path: '/module/sleep' },
-                { label: 'Pain Assessment', path: '/module/pain-check' },
-                { label: 'Health Monitoring', path: '/module/health-monitoring' },
-                { label: 'Fluid Balance', path: '/module/fluid-balance' },
-                { label: 'Health Prevention', path: '/module/health-prevention' },
+                { id: 'bowel', name: 'Bowel Care', description: 'Monitor bowel patterns that may be affected by seizure medications', icon: Activity, path: '/module/constipation' },
+                { id: 'sleep', name: 'Sleep Chart', description: 'Track sleep quality — a key seizure trigger', icon: Moon, path: '/module/sleep' },
+                { id: 'pain', name: 'Pain Assessment', description: 'Identify post-seizure pain or injury', icon: Thermometer, path: '/module/pain-check' },
+                { id: 'health', name: 'Health Monitoring', description: 'Monitor vital signs and general health indicators', icon: Heart, path: '/module/health-monitoring' },
+                { id: 'fluid', name: 'Fluid Balance', description: 'Track hydration — dehydration can lower seizure threshold', icon: Droplets, path: '/module/fluid-balance' },
+                { id: 'prevention', name: 'Health Prevention', description: 'Proactive health monitoring to catch early warning signs', icon: Brain, path: '/module/health-prevention' },
               ].map(mod => (
-                <Button key={mod.path} variant="outline" size="sm" className="justify-start" onClick={() => navigate(mod.path)}>
-                  {mod.label}
-                </Button>
+                <Link
+                  key={mod.id}
+                  to={mod.path}
+                  className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                >
+                  <div className="p-2 rounded-md bg-primary/10">
+                    <mod.icon className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm">{mod.name}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{mod.description}</p>
+                  </div>
+                </Link>
               ))}
             </div>
+            <p className="text-xs text-muted-foreground mt-4">
+              Always consult a healthcare professional to ensure modules are clinically valid and set according to individual need.
+            </p>
           </CardContent>
         </Card>
 
