@@ -32,6 +32,7 @@ export interface EpilepsyConfig {
   escalation_recipients: string[];
   known_seizure_types: string[];
   known_seizure_durations: Record<string, string>;
+  known_seizure_triggers: string[];
   known_cluster_seizures: boolean;
   created_at: string;
   created_by: string | null;

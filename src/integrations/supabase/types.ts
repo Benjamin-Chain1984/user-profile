@@ -2189,6 +2189,7 @@ export type Database = {
           id: string
           known_cluster_seizures: boolean
           known_seizure_durations: Json
+          known_seizure_triggers: string[]
           known_seizure_types: string[]
           max_seizures_24h: number
           red_seizure_count: number
@@ -2220,6 +2221,7 @@ export type Database = {
           id?: string
           known_cluster_seizures?: boolean
           known_seizure_durations?: Json
+          known_seizure_triggers?: string[]
           known_seizure_types?: string[]
           max_seizures_24h?: number
           red_seizure_count?: number
@@ -2251,6 +2253,7 @@ export type Database = {
           id?: string
           known_cluster_seizures?: boolean
           known_seizure_durations?: Json
+          known_seizure_triggers?: string[]
           known_seizure_types?: string[]
           max_seizures_24h?: number
           red_seizure_count?: number
