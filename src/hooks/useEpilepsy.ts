@@ -24,6 +24,12 @@ const DEFAULT_CONFIG: Partial<EpilepsyConfig> = {
   cluster_seizure_hours: 24,
   max_seizures_24h: 3,
   duration_threshold_minutes: 5,
+  amber_seizure_count: 2,
+  amber_seizure_window: 24,
+  amber_seizure_window_unit: 'hours',
+  red_seizure_count: 3,
+  red_seizure_window: 24,
+  red_seizure_window_unit: 'hours',
   escalation_recipients: [],
 };
 

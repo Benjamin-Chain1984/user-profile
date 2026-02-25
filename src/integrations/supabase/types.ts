@@ -2173,6 +2173,9 @@ export type Database = {
       }
       epilepsy_config: {
         Row: {
+          amber_seizure_count: number
+          amber_seizure_window: number
+          amber_seizure_window_unit: string
           call_000_after_minutes: number
           client_id: string | null
           cluster_seizure_count: number
@@ -2188,6 +2191,9 @@ export type Database = {
           known_seizure_durations: Json
           known_seizure_types: string[]
           max_seizures_24h: number
+          red_seizure_count: number
+          red_seizure_window: number
+          red_seizure_window_unit: string
           rescue_medication_dose: string | null
           rescue_medication_name: string | null
           rescue_medication_prescribed: boolean
@@ -2198,6 +2204,9 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          amber_seizure_count?: number
+          amber_seizure_window?: number
+          amber_seizure_window_unit?: string
           call_000_after_minutes?: number
           client_id?: string | null
           cluster_seizure_count?: number
@@ -2213,6 +2222,9 @@ export type Database = {
           known_seizure_durations?: Json
           known_seizure_types?: string[]
           max_seizures_24h?: number
+          red_seizure_count?: number
+          red_seizure_window?: number
+          red_seizure_window_unit?: string
           rescue_medication_dose?: string | null
           rescue_medication_name?: string | null
           rescue_medication_prescribed?: boolean
@@ -2223,6 +2235,9 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          amber_seizure_count?: number
+          amber_seizure_window?: number
+          amber_seizure_window_unit?: string
           call_000_after_minutes?: number
           client_id?: string | null
           cluster_seizure_count?: number
@@ -2238,6 +2253,9 @@ export type Database = {
           known_seizure_durations?: Json
           known_seizure_types?: string[]
           max_seizures_24h?: number
+          red_seizure_count?: number
+          red_seizure_window?: number
+          red_seizure_window_unit?: string
           rescue_medication_dose?: string | null
           rescue_medication_name?: string | null
           rescue_medication_prescribed?: boolean

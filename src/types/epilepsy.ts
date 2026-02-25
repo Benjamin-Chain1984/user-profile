@@ -4,6 +4,8 @@
 
 export type EpilepsyStatus = 'ideal' | 'monitor' | 'action';
 
+export type EpilepsyWindowUnit = 'hours' | 'minutes';
+
 export interface EpilepsyConfig {
   id: string;
   client_id: string | null;
@@ -20,6 +22,13 @@ export interface EpilepsyConfig {
   cluster_seizure_hours: number;
   max_seizures_24h: number;
   duration_threshold_minutes: number;
+  // New Amber/Red escalation thresholds
+  amber_seizure_count: number;
+  amber_seizure_window: number;
+  amber_seizure_window_unit: EpilepsyWindowUnit;
+  red_seizure_count: number;
+  red_seizure_window: number;
+  red_seizure_window_unit: EpilepsyWindowUnit;
   escalation_recipients: string[];
   known_seizure_types: string[];
   known_seizure_durations: Record<string, string>;
@@ -180,4 +189,11 @@ export interface EpilepsyStatusInfo {
   daysSinceLastSeizure: number | null;
   lastSeizureDate: string | null;
   activeAlerts: EpilepsyAlert[];
+  seizuresInWindow: number;
+  amberThreshold: number;
+  redThreshold: number;
+  windowLabel: string;
+  longestDurationInWindow: number;
+  durationThreshold: number;
+  needsPrnPrompt: boolean;
 }
