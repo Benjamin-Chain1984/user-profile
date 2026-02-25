@@ -157,10 +157,10 @@ export function EmergencySeizurePanel({ clientId, seizureEventId, onComplete }: 
                 <li>Rescue medication does not stop seizure</li>
                 <li>Staff concern</li>
               </ul>
-              <div className="flex items-center gap-2 pt-2">
-                <Checkbox checked={ambulanceCalled} onCheckedChange={(v) => setAmbulanceCalled(v as boolean)} />
-                <Label className="text-sm font-medium">Ambulance called</Label>
-              </div>
+              
+
+
+
               {ambulanceCalled &&
               <div className="grid sm:grid-cols-2 gap-3">
                   <div>
