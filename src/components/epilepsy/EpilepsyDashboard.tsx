@@ -55,7 +55,7 @@ export function EpilepsyDashboard({ clientId }: EpilepsyDashboardProps) {
           onClick={() => setShowEmergencyPanel(!showEmergencyPanel)}
         >
           <AlertCircle className="h-4 w-4 mr-2" />
-          Emergency Action
+          Seizure First Aid
         </Button>
       </ModuleHeader>
 
