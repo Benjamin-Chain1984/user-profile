@@ -68,7 +68,8 @@ export function usePressureReliefPlan(clientId?: string) {
         rotation_sequence: normalizeRotationSequence(data.rotation_sequence),
         high_risk_areas: data.high_risk_areas || [],
         escalation_rules: (data.escalation_rules as Record<string, unknown>) || {},
-      } as PressureReliefPlan;
+        skin_check_schedule: (data.skin_check_schedule as Record<string, any>) || {},
+      } as unknown as PressureReliefPlan;
     },
   });
 
@@ -94,7 +95,8 @@ export function usePressureReliefPlan(clientId?: string) {
             updated_by: user.id,
             rotation_sequence: updates.rotation_sequence ? JSON.parse(JSON.stringify(updates.rotation_sequence)) : undefined,
             escalation_rules: updates.escalation_rules ? JSON.parse(JSON.stringify(updates.escalation_rules)) : undefined,
-          })
+            skin_check_schedule: updates.skin_check_schedule ? JSON.parse(JSON.stringify(updates.skin_check_schedule)) : undefined,
+          } as any)
           .eq('id', plan.id)
           .select()
           .single();
@@ -108,9 +110,10 @@ export function usePressureReliefPlan(clientId?: string) {
             ...updates,
             rotation_sequence: updates.rotation_sequence ? JSON.parse(JSON.stringify(updates.rotation_sequence)) : [],
             escalation_rules: updates.escalation_rules ? JSON.parse(JSON.stringify(updates.escalation_rules)) : {},
+            skin_check_schedule: updates.skin_check_schedule ? JSON.parse(JSON.stringify(updates.skin_check_schedule)) : {},
             created_by: user.id,
             updated_by: user.id,
-          })
+          } as any)
           .select()
           .single();
         if (error) throw error;

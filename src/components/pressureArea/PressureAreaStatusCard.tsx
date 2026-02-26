@@ -282,7 +282,7 @@ function PressureReliefTile({
 }
 
 /* ──────────────────────────────────────────────
- * 2. Skin Check Tile (unchanged)
+ * 2. Skin Check Tile — with countdown + amber alert
  * ────────────────────────────────────────────── */
 function SkinCheckTile({
   clientId,
@@ -295,8 +295,72 @@ function SkinCheckTile({
 }) {
   const { sessions } = useSkinChecks(clientId);
   const { config } = usePressureAreaConfig(clientId);
+  const { plan } = usePressureReliefPlan(clientId);
+  const [now, setNow] = useState(new Date());
+
+  // Tick every 30s for countdown
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(interval);
+  }, []);
 
   const latestCheck = sessions[0];
+
+  // Calculate expected checks per day from skin_check_schedule
+  const { totalChecksPerDay, skinCheckEnabled } = useMemo(() => {
+    const schedule = plan?.skin_check_schedule || {};
+    let total = 0;
+    let enabled = false;
+    Object.values(schedule).forEach((s: any) => {
+      if (s?.enabled) {
+        enabled = true;
+        switch (s.frequency) {
+          case 'twice_daily': total += 2; break;
+          case 'three_times_daily': total += 3; break;
+          case 'custom': total += (s.custom_times_per_day || 1); break;
+          default: total += 1; break; // daily
+        }
+      }
+    });
+    return { totalChecksPerDay: total, skinCheckEnabled: enabled };
+  }, [plan]);
+
+  // Count today's checks
+  const todayChecks = useMemo(() => {
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return sessions.filter(s => new Date(s.event_occurred_at) >= todayStart).length;
+  }, [sessions, now]);
+
+  // Calculate time until next check is due
+  const { minutesUntilNext, isOverdue } = useMemo(() => {
+    if (!skinCheckEnabled || totalChecksPerDay === 0) return { minutesUntilNext: 0, isOverdue: false };
+
+    // Spread checks across waking hours (6am-10pm = 16h)
+    const intervalHours = 16 / totalChecksPerDay;
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 6, 0);
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 22, 0);
+
+    if (now < todayStart || now > todayEnd) return { minutesUntilNext: 0, isOverdue: false };
+
+    // Find which check slot we're at
+    for (let i = 0; i < totalChecksPerDay; i++) {
+      const slotTime = addMinutes(todayStart, i * intervalHours * 60);
+      const nextSlotTime = i < totalChecksPerDay - 1
+        ? addMinutes(todayStart, (i + 1) * intervalHours * 60)
+        : todayEnd;
+
+      if (now >= slotTime && now < nextSlotTime && todayChecks <= i) {
+        const mins = differenceInMinutes(nextSlotTime, now);
+        const overdue = todayChecks < i + 1 && now > addMinutes(slotTime, 30); // 30 min grace
+        return { minutesUntilNext: Math.max(0, mins), isOverdue: overdue };
+      }
+    }
+
+    // Check if all done
+    if (todayChecks >= totalChecksPerDay) return { minutesUntilNext: 0, isOverdue: false };
+
+    return { minutesUntilNext: 0, isOverdue: todayChecks < totalChecksPerDay && now > addMinutes(todayStart, 30) };
+  }, [skinCheckEnabled, totalChecksPerDay, todayChecks, now]);
 
   let status: HealthStatus = 'stable';
   let statusLabel = 'Healthy';
@@ -314,7 +378,7 @@ function SkinCheckTile({
     }
 
     if (config) {
-      const daysSince = differenceInDays(new Date(), new Date(latestCheck.event_occurred_at));
+      const daysSince = differenceInDays(now, new Date(latestCheck.event_occurred_at));
       if (daysSince > config.skin_check_frequency_days) {
         if (status === 'stable') {
           status = 'monitor';
@@ -327,6 +391,13 @@ function SkinCheckTile({
     status = 'monitor';
     statusLabel = 'Not yet logged';
     statusMessage = 'No skin checks recorded';
+  }
+
+  // Amber alert for overdue skin check based on plan schedule
+  if (isOverdue && status === 'stable') {
+    status = 'monitor';
+    statusLabel = 'Skin Check Due';
+    statusMessage = `${todayChecks}/${totalChecksPerDay} checks completed today`;
   }
 
   const lastTime = latestCheck
@@ -351,6 +422,30 @@ function SkinCheckTile({
           }`}>
             {statusLabel}
           </div>
+
+          {/* Countdown timer */}
+          {skinCheckEnabled && minutesUntilNext > 0 && !isOverdue && (
+            <div className="flex items-center gap-2 text-sm">
+              <Timer className="h-4 w-4 text-primary" />
+              <span className="font-medium">Next check in: <span className={`${
+                minutesUntilNext <= 30 ? 'text-amber-600 font-bold' : 'text-primary'
+              }`}>{formatCountdown(minutesUntilNext)}</span></span>
+            </div>
+          )}
+
+          {isOverdue && (
+            <div className="flex items-center gap-2 text-sm text-amber-600 font-medium">
+              <AlertCircle className="h-4 w-4" />
+              <span>Skin check due NOW</span>
+            </div>
+          )}
+
+          {skinCheckEnabled && totalChecksPerDay > 0 && (
+            <p className="text-xs text-muted-foreground">
+              Today: {todayChecks}/{totalChecksPerDay} checks completed
+            </p>
+          )}
+
           {statusMessage && (
             <p className="text-xs text-muted-foreground">{statusMessage}</p>
           )}

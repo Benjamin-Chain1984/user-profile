@@ -95,6 +95,32 @@ export const RELIEF_ISSUES = [
   'Other',
 ] as const;
 
+export const SKIN_CHECK_FREQUENCIES = ['daily', 'twice_daily', 'three_times_daily', 'custom'] as const;
+export type SkinCheckFrequency = typeof SKIN_CHECK_FREQUENCIES[number];
+export const SKIN_CHECK_FREQUENCY_LABELS: Record<SkinCheckFrequency, string> = {
+  daily: 'Daily',
+  twice_daily: 'Twice Daily',
+  three_times_daily: 'Three Times Per Day',
+  custom: 'Custom',
+};
+
+export function skinCheckTimesPerDay(freq: SkinCheckFrequency, customCount?: number): number {
+  switch (freq) {
+    case 'daily': return 1;
+    case 'twice_daily': return 2;
+    case 'three_times_daily': return 3;
+    case 'custom': return customCount || 1;
+  }
+}
+
+export interface SkinCheckAreaSchedule {
+  enabled: boolean;
+  frequency: SkinCheckFrequency;
+  custom_times_per_day?: number;
+}
+
+export type SkinCheckSchedule = Record<string, SkinCheckAreaSchedule>;
+
 export interface PressureReliefPlan {
   id: string;
   client_id: string | null;
@@ -117,6 +143,7 @@ export interface PressureReliefPlan {
   escalation_rules: Record<string, unknown>;
   overdue_amber_minutes: number;
   overdue_red_minutes: number;
+  skin_check_schedule: SkinCheckSchedule;
   additional_instructions: string | null;
   published_at: string | null;
   published_by: string | null;
