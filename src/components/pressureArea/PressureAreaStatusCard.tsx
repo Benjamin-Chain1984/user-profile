@@ -84,6 +84,20 @@ function PressureReliefTile({
     const [startH, startM] = dayStartStr.split(':').map(Number);
     const todayBase = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startH, startM);
 
+    const dayEndStr = plan?.day_schedule_end;
+    const todayEnd = dayEndStr
+      ? (() => {
+          const [endH, endM] = dayEndStr.split(':').map(Number);
+          return new Date(now.getFullYear(), now.getMonth(), now.getDate(), endH, endM);
+        })()
+      : null;
+
+    const isWithinScheduleWindow = todayEnd
+      ? (todayEnd >= todayBase
+          ? now >= todayBase && now <= todayEnd
+          : now >= todayBase || now <= todayEnd)
+      : now >= todayBase;
+
     const todayEvents = events.filter(e => {
       const d = new Date(e.event_occurred_at);
       return d.toDateString() === now.toDateString();
@@ -115,7 +129,7 @@ function PressureReliefTile({
     const nextSlot = relevantSlots.find(s => !s.completed && s.dueAt > now);
     const pastDueSlot = relevantSlots.find(s => !s.completed && s.dueAt <= now);
     minutesUntilNext = nextSlot ? differenceInMinutes(nextSlot.dueAt, now) : 0;
-    const hasPastDueSlot = !!pastDueSlot;
+    const hasPastDueSlot = isWithinScheduleWindow && !!pastDueSlot;
 
     // Status logic
     if (latestEvent) {
