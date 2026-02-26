@@ -62,7 +62,7 @@ function PressureReliefTile({
   const hasPlan = plan?.status === 'published' && plan.schedule_type !== 'as_required' && intervalMinutes > 0;
 
   // Build upcoming position schedule with completion status
-  const { upcomingSlots, minutesUntilNext, status, statusLabel, detail } = useMemo(() => {
+  const { upcomingSlots, minutesUntilNext, hasPastDueSlot, status, statusLabel, detail } = useMemo(() => {
     let status: HealthStatus = 'stable';
     let statusLabel = 'On track';
     let detail: string | null = null;
@@ -72,6 +72,7 @@ function PressureReliefTile({
       return {
         upcomingSlots: [] as { position: string; dueAt: Date; completed: boolean; completedBy?: string }[],
         minutesUntilNext: 0,
+        hasPastDueSlot: false,
         status: (!plan || plan.status === 'draft') ? 'monitor' as HealthStatus : 'stable' as HealthStatus,
         statusLabel: (!plan || plan.status === 'draft') ? 'No plan published' : 'On track',
         detail: null as string | null,
@@ -112,7 +113,9 @@ function PressureReliefTile({
 
     // Countdown to next uncompleted slot
     const nextSlot = relevantSlots.find(s => !s.completed && s.dueAt > now);
+    const pastDueSlot = relevantSlots.find(s => !s.completed && s.dueAt <= now);
     minutesUntilNext = nextSlot ? differenceInMinutes(nextSlot.dueAt, now) : 0;
+    const hasPastDueSlot = !!pastDueSlot;
 
     // Status logic
     if (latestEvent) {
@@ -151,7 +154,7 @@ function PressureReliefTile({
       }
     }
 
-    return { upcomingSlots: relevantSlots, minutesUntilNext, status, statusLabel, detail };
+    return { upcomingSlots: relevantSlots, minutesUntilNext, hasPastDueSlot, status, statusLabel, detail };
   }, [plan, latestEvent, events, positions, intervalMinutes, hasPlan, config, now]);
 
   return (
@@ -184,7 +187,7 @@ function PressureReliefTile({
             </div>
           )}
 
-          {hasPlan && minutesUntilNext <= 0 && latestEvent && (
+          {hasPlan && hasPastDueSlot && (
             <div className="flex items-center gap-2 text-sm text-destructive font-medium">
               <Timer className="h-4 w-4" />
               <span>Position change due NOW</span>
