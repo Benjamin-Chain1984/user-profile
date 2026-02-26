@@ -90,6 +90,17 @@ export function PressureAreaConfigSettings({ clientId }: Props) {
 
   return (
     <div className="space-y-4">
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="pt-5 pb-4">
+          <p className="text-sm font-medium mb-1">Who can help set up this module?</p>
+          <ul className="text-sm text-muted-foreground list-disc list-inside space-y-0.5">
+            <li>Registered Nurse</li>
+            <li>General Practitioner (GP)</li>
+            <li>Occupational Therapist</li>
+          </ul>
+        </CardContent>
+      </Card>
+
       <RestrictedSection>
         <Card>
           <CardHeader><CardTitle className="text-base">Module Settings</CardTitle></CardHeader>
