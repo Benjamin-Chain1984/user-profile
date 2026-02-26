@@ -4,12 +4,13 @@
  */
 
 import { differenceInHours, differenceInDays, formatDistanceToNow } from 'date-fns';
-import type { PressureAreaStatusInfo, PressureReliefEvent, SkinCheckSession, PressureReliefPlan } from '@/types/pressureArea';
+import type { PressureAreaStatusInfo, PressureReliefEvent, SkinCheckSession, PressureReliefPlan, SkinFindingMarker } from '@/types/pressureArea';
+import { HIGH_RISK_AREAS } from '@/types/pressureArea';
 
 interface StatusInput {
   plan: PressureReliefPlan | null;
   events: PressureReliefEvent[];
-  skinChecks: SkinCheckSession[];
+  skinChecks: (SkinCheckSession & { skin_finding_markers?: SkinFindingMarker[] })[];
   config: {
     skin_check_frequency_days: number;
     enable_compliance_scoring: boolean;
@@ -17,25 +18,73 @@ interface StatusInput {
   planAcknowledged: boolean;
 }
 
+/**
+ * Walk skin check sessions (newest first) and determine which findings
+ * have NOT been cleared by a subsequent 'ok' check on the same area.
+ */
+function getUnresolvedFindings(skinChecks: (SkinCheckSession & { skin_finding_markers?: SkinFindingMarker[] })[]) {
+  // Track per-area: once we see 'ok' for an area (in a newer session), it's resolved.
+  const resolvedAreas = new Set<string>();
+  const unresolved: { location: string; severity: string; findingType: string }[] = [];
+
+  for (const session of skinChecks) {
+    const markers = (session as any).skin_finding_markers || [];
+    for (const m of markers) {
+      if (resolvedAreas.has(m.location)) continue; // already cleared by a newer check
+
+      if (m.finding_type === 'ok') {
+        // This area was checked OK — marks it as resolved
+        resolvedAreas.add(m.location);
+      } else if (m.finding_type !== 'unable' && (m.severity === 'red' || m.severity === 'amber')) {
+        // Active finding — not yet resolved
+        unresolved.push({ location: m.location, severity: m.severity, findingType: m.finding_type });
+        resolvedAreas.add(m.location); // don't double-count from older sessions
+      }
+    }
+  }
+
+  return unresolved;
+}
+
 export function calculatePressureAreaStatus(input: StatusInput): PressureAreaStatusInfo {
   const { plan, events, skinChecks, config, planAcknowledged } = input;
 
-  // Check for active pressure areas (red skin checks)
-  const latestSkinCheck = skinChecks[0];
-  if (latestSkinCheck?.overall_status === 'red') {
+  // --- Unresolved skin findings logic ---
+  // A finding (amber/red) on a specific area persists until a later check
+  // marks that same area as 'ok'. Walk sessions newest→oldest to build
+  // the set of unresolved findings.
+  const unresolvedFindings = getUnresolvedFindings(skinChecks);
+
+  const hasUnresolvedRed = unresolvedFindings.some(f => f.severity === 'red');
+  const hasUnresolvedAmber = unresolvedFindings.some(f => f.severity === 'amber');
+
+  if (hasUnresolvedRed) {
+    const redAreas = unresolvedFindings.filter(f => f.severity === 'red').map(f => {
+      const area = HIGH_RISK_AREAS.find(a => a.id === f.location);
+      return area?.label || f.location;
+    });
+    const latestSkinCheck = skinChecks[0];
     return {
       status: 'action',
-      message: 'Active pressure area recorded – avoid pressure on affected area. Seek medical advice.',
-      lastEntry: `Skin check ${formatDistanceToNow(new Date(latestSkinCheck.event_occurred_at), { addSuffix: true })}`,
+      message: `Active pressure area (${redAreas.join(', ')}) – not yet cleared. Avoid pressure on affected area. Seek medical advice.`,
+      lastEntry: latestSkinCheck
+        ? `Skin check ${formatDistanceToNow(new Date(latestSkinCheck.event_occurred_at), { addSuffix: true })}`
+        : 'Not yet logged',
     };
   }
 
-  // Check for amber skin findings
-  if (latestSkinCheck?.overall_status === 'amber') {
+  if (hasUnresolvedAmber) {
+    const amberAreas = unresolvedFindings.filter(f => f.severity === 'amber').map(f => {
+      const area = HIGH_RISK_AREAS.find(a => a.id === f.location);
+      return area?.label || f.location;
+    });
+    const latestSkinCheck = skinChecks[0];
     return {
       status: 'monitor',
-      message: 'Skin changes identified – monitor closely and escalate if worsening.',
-      lastEntry: `Skin check ${formatDistanceToNow(new Date(latestSkinCheck.event_occurred_at), { addSuffix: true })}`,
+      message: `Skin changes on ${amberAreas.join(', ')} – not yet cleared. Monitor closely and escalate if worsening.`,
+      lastEntry: latestSkinCheck
+        ? `Skin check ${formatDistanceToNow(new Date(latestSkinCheck.event_occurred_at), { addSuffix: true })}`
+        : 'Not yet logged',
     };
   }
 
@@ -80,6 +129,7 @@ export function calculatePressureAreaStatus(input: StatusInput): PressureAreaSta
   }
 
   // Check skin check overdue
+  const latestSkinCheck = skinChecks[0];
   if (config && latestSkinCheck) {
     const daysSince = differenceInDays(new Date(), new Date(latestSkinCheck.event_occurred_at));
     if (daysSince > config.skin_check_frequency_days) {
@@ -122,7 +172,7 @@ export function calculatePressureAreaStatus(input: StatusInput): PressureAreaSta
   }
 
   // All clear
-  const latestEntry = events[0] || latestSkinCheck;
+  const latestEntry = events[0] || skinChecks[0];
   return {
     status: 'ideal',
     message: 'Pressure area prevention on track.',
