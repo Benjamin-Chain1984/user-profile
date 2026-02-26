@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePressureReliefEvents, useSkinChecks } from '@/hooks/usePressureArea';
 import { HIGH_RISK_AREAS, SKIN_FINDING_TYPES } from '@/types/pressureArea';
 import { formatDistanceToNow } from 'date-fns';
-import { RotateCcw, Eye } from 'lucide-react';
+import { RotateCcw, Eye, User, CheckCircle2, AlertCircle, MinusCircle } from 'lucide-react';
 
 interface Props {
   clientId?: string;
@@ -85,13 +85,52 @@ export function PressureAreaHistory({ clientId }: Props) {
                     ? <Badge className="bg-amber-100 text-amber-800 text-xs">Amber</Badge>
                     : <Badge className="bg-green-100 text-green-800 text-xs">Healthy</Badge>;
 
+                  const markers = (session as any).skin_finding_markers || [];
+                  const completedBy = (session as any).created_by_name;
+
                   return (
-                    <div key={session.id} className="border rounded-lg p-3 text-sm">
-                      <div className="flex items-center justify-between mb-1">
+                    <div key={session.id} className="border rounded-lg p-3 text-sm space-y-2">
+                      <div className="flex items-center justify-between">
                         {statusBadge}
                         <span className="text-xs text-muted-foreground">{formatDateTime(session.event_occurred_at)}</span>
                       </div>
-                      {session.notes && <p className="text-muted-foreground mt-1">{session.notes}</p>}
+
+                      {/* Completed by */}
+                      {completedBy && (
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <User className="h-3.5 w-3.5" />
+                          <span>Completed by: <span className="font-medium text-foreground">{completedBy}</span></span>
+                        </div>
+                      )}
+
+                      {/* Findings detail */}
+                      {markers.length > 0 ? (
+                        <div className="space-y-1">
+                          <p className="text-xs font-medium text-muted-foreground">Findings:</p>
+                          {markers.map((m: any) => {
+                            const areaLabel = HIGH_RISK_AREAS.find(a => a.id === m.location)?.label || m.location;
+                            const findingLabel = SKIN_FINDING_TYPES.find(t => t.id === m.finding_type)?.label || m.finding_type;
+                            return (
+                              <div key={m.id} className="flex items-center gap-2 text-xs pl-2">
+                                {m.severity === 'red' ? (
+                                  <AlertCircle className="h-3.5 w-3.5 text-destructive flex-shrink-0" />
+                                ) : (
+                                  <AlertCircle className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
+                                )}
+                                <span><span className="font-medium">{areaLabel}</span> — {findingLabel}</span>
+                                {m.notes && <span className="text-muted-foreground">({m.notes})</span>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground pl-2">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+                          <span>All areas checked — no concerns</span>
+                        </div>
+                      )}
+
+                      {session.notes && <p className="text-muted-foreground text-xs mt-1">{session.notes}</p>}
                     </div>
                   );
                 })}

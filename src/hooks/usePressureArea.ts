@@ -120,13 +120,30 @@ export function useSkinChecks(clientId?: string) {
     queryFn: async () => {
       let query = supabase
         .from('skin_check_sessions')
-        .select('*')
+        .select('*, skin_finding_markers(*)')
         .order('event_occurred_at', { ascending: false })
         .limit(50);
       if (clientId) query = query.eq('client_id', clientId);
       const { data, error } = await query;
       if (error) throw error;
-      return (data || []) as SkinCheckSession[];
+
+      // Fetch profile names for created_by user IDs
+      const userIds = [...new Set((data || []).map(s => s.created_by).filter(Boolean))];
+      let profileMap: Record<string, string> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', userIds);
+        if (profiles) {
+          profileMap = Object.fromEntries(profiles.map(p => [p.id, p.full_name || 'Unknown']));
+        }
+      }
+
+      return (data || []).map(s => ({
+        ...s,
+        created_by_name: s.created_by ? (profileMap[s.created_by] || 'Unknown') : null,
+      })) as (SkinCheckSession & { skin_finding_markers?: SkinFindingMarker[]; created_by_name?: string | null })[];
     },
   });
 
