@@ -365,70 +365,103 @@ export function PressureReliefPlanEditor({ clientId, onClose }: Props) {
 
       {/* High Risk Areas + Skin Check Schedule */}
       <Card>
-        <CardHeader><CardTitle className="text-lg">High-Risk Areas & Skin Check Schedule</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
+        <CardHeader>
+          <CardTitle className="text-lg">High-Risk Areas & Skin Check Schedule</CardTitle>
+          <p className="text-sm text-muted-foreground">Select areas at risk and configure skin check frequency for each.</p>
+        </CardHeader>
+        <CardContent className="space-y-1">
+          {/* Header row */}
+          <div className="hidden sm:grid sm:grid-cols-[1fr,auto,auto] gap-4 px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide border-b">
+            <span>Area</span>
+            <span className="w-[100px] text-center">Skin Checks</span>
+            <span className="w-[200px] text-center">Frequency</span>
+          </div>
+
           {HIGH_RISK_AREAS.map(area => {
             const isChecked = highRiskAreas.includes(area.id);
             const schedule = skinCheckSchedule[area.id];
             const isEnabled = schedule?.enabled ?? false;
 
             return (
-              <div key={area.id} className="border rounded-lg p-3 space-y-3">
-                <div className="flex items-center gap-2">
+              <div
+                key={area.id}
+                className={`grid sm:grid-cols-[1fr,auto,auto] gap-3 sm:gap-4 items-center rounded-lg px-3 py-2.5 transition-colors ${
+                  isChecked ? 'bg-muted/40' : 'hover:bg-muted/20'
+                }`}
+              >
+                {/* Area checkbox + label */}
+                <div className="flex items-center gap-2.5">
                   <Checkbox checked={isChecked} onCheckedChange={() => toggleHighRisk(area.id)} />
-                  <Label className="text-sm font-medium">{area.label}</Label>
+                  <Label className={`text-sm cursor-pointer ${isChecked ? 'font-medium' : 'text-muted-foreground'}`}>
+                    {area.label}
+                  </Label>
                 </div>
 
-                {isChecked && (
-                  <div className="ml-6 space-y-3">
-                    <div className="flex items-center gap-3">
-                      <Eye className="h-4 w-4 text-muted-foreground" />
-                      <Label className="text-sm">Skin Checks Enabled</Label>
+                {/* Skin check toggle */}
+                <div className="w-[100px] flex justify-center">
+                  {isChecked ? (
+                    <div className="flex items-center gap-2">
                       <Switch
                         checked={isEnabled}
                         onCheckedChange={(checked) => updateSkinCheckArea(area.id, { enabled: checked })}
                       />
-                      <span className="text-xs text-muted-foreground">{isEnabled ? 'Yes' : 'No'}</span>
+                      <span className={`text-xs font-medium ${isEnabled ? 'text-green-600' : 'text-muted-foreground'}`}>
+                        {isEnabled ? 'Yes' : 'No'}
+                      </span>
                     </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
+                </div>
 
-                    {isEnabled && (
-                      <div className="flex flex-wrap items-end gap-3">
-                        <div>
-                          <Label className="text-xs">Frequency</Label>
-                          <Select
-                            value={schedule?.frequency || 'daily'}
-                            onValueChange={(v) => updateSkinCheckArea(area.id, { frequency: v as SkinCheckFrequency })}
-                          >
-                            <SelectTrigger className="w-[180px] h-8">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {SKIN_CHECK_FREQUENCIES.map(f => (
-                                <SelectItem key={f} value={f}>{SKIN_CHECK_FREQUENCY_LABELS[f]}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        {schedule?.frequency === 'custom' && (
-                          <div>
-                            <Label className="text-xs">Times Per Day</Label>
-                            <Input
-                              type="number"
-                              min={1}
-                              max={12}
-                              value={schedule?.custom_times_per_day || 1}
-                              onChange={(e) => updateSkinCheckArea(area.id, { custom_times_per_day: Number(e.target.value) })}
-                              className="w-20 h-8"
-                            />
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
+                {/* Frequency selector */}
+                <div className="w-[200px] flex items-center gap-2">
+                  {isChecked && isEnabled ? (
+                    <>
+                      <Select
+                        value={schedule?.frequency || 'daily'}
+                        onValueChange={(v) => updateSkinCheckArea(area.id, { frequency: v as SkinCheckFrequency })}
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SKIN_CHECK_FREQUENCIES.map(f => (
+                            <SelectItem key={f} value={f}>{SKIN_CHECK_FREQUENCY_LABELS[f]}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {schedule?.frequency === 'custom' && (
+                        <Input
+                          type="number"
+                          min={1}
+                          max={12}
+                          value={schedule?.custom_times_per_day || 1}
+                          onChange={(e) => updateSkinCheckArea(area.id, { custom_times_per_day: Number(e.target.value) })}
+                          className="w-16 h-8 text-xs"
+                          placeholder="×/day"
+                        />
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">{isChecked ? '—' : ''}</span>
+                  )}
+                </div>
               </div>
             );
           })}
+
+          {/* Summary footer */}
+          {highRiskAreas.length > 0 && (
+            <div className="flex items-center gap-2 pt-3 mt-2 border-t text-xs text-muted-foreground">
+              <Eye className="h-3.5 w-3.5" />
+              <span>
+                {Object.values(skinCheckSchedule).filter((s: any) => s?.enabled).length} area(s) with skin checks enabled
+                {' · '}
+                {highRiskAreas.length} high-risk area(s) selected
+              </span>
+            </div>
+          )}
         </CardContent>
       </Card>
 
