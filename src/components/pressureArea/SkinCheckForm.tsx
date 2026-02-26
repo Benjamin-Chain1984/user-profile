@@ -34,13 +34,16 @@ export function SkinCheckForm({ clientId, open, onOpenChange }: Props) {
   const hasAmberFinding = Object.values(areaResults).some(r => r.status === 'finding' && r.severity === 'amber');
   const overallStatus = hasRedFinding ? 'red' : hasAmberFinding ? 'amber' : 'healthy';
 
+  const checkedCount = Object.values(areaResults).filter(r => r.status !== 'unchecked').length;
+
   const handleSubmit = () => {
+    // Save ALL checked areas — ok, unable, and findings — for full transparency
     const markers = Object.values(areaResults)
-      .filter(r => r.status === 'finding' && r.findingType)
+      .filter(r => r.status !== 'unchecked')
       .map(r => ({
         location: r.areaId,
-        finding_type: r.findingType!,
-        severity: r.severity as string,
+        finding_type: r.status === 'finding' ? r.findingType! : r.status, // 'ok' | 'unable' | finding type
+        severity: r.status === 'finding' ? (r.severity as string) : r.status, // 'ok' | 'unable' | 'amber' | 'red'
         notes: r.notes || null,
       }));
 
@@ -94,8 +97,9 @@ export function SkinCheckForm({ clientId, open, onOpenChange }: Props) {
         </div>
 
         <DialogFooter>
+          <p className="text-xs text-muted-foreground">{checkedCount} of {HIGH_RISK_AREAS.length} areas assessed</p>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={isLogging}>
+          <Button onClick={handleSubmit} disabled={isLogging || checkedCount === 0}>
             {isLogging ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
             Record Skin Check
           </Button>

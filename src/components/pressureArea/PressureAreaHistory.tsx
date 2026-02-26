@@ -103,30 +103,85 @@ export function PressureAreaHistory({ clientId }: Props) {
                         </div>
                       )}
 
-                      {/* Findings detail */}
+                      {/* Areas checked detail */}
                       {markers.length > 0 ? (
                         <div className="space-y-1">
-                          <p className="text-xs font-medium text-muted-foreground">Findings:</p>
-                          {markers.map((m: any) => {
-                            const areaLabel = HIGH_RISK_AREAS.find(a => a.id === m.location)?.label || m.location;
-                            const findingLabel = SKIN_FINDING_TYPES.find(t => t.id === m.finding_type)?.label || m.finding_type;
-                            return (
-                              <div key={m.id} className="flex items-center gap-2 text-xs pl-2">
-                                {m.severity === 'red' ? (
-                                  <AlertCircle className="h-3.5 w-3.5 text-destructive flex-shrink-0" />
-                                ) : (
-                                  <AlertCircle className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
-                                )}
-                                <span><span className="font-medium">{areaLabel}</span> — {findingLabel}</span>
-                                {m.notes && <span className="text-muted-foreground">({m.notes})</span>}
+                          {/* Findings first */}
+                          {markers.filter((m: any) => m.finding_type !== 'ok' && m.finding_type !== 'unable').length > 0 && (
+                            <>
+                              <p className="text-xs font-medium text-muted-foreground">Findings:</p>
+                              {markers.filter((m: any) => m.finding_type !== 'ok' && m.finding_type !== 'unable').map((m: any) => {
+                                const areaLabel = HIGH_RISK_AREAS.find(a => a.id === m.location)?.label || m.location;
+                                const findingLabel = SKIN_FINDING_TYPES.find(t => t.id === m.finding_type)?.label || m.finding_type;
+                                return (
+                                  <div key={m.id} className="flex items-center gap-2 text-xs pl-2">
+                                    {m.severity === 'red' ? (
+                                      <AlertCircle className="h-3.5 w-3.5 text-destructive flex-shrink-0" />
+                                    ) : (
+                                      <AlertCircle className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
+                                    )}
+                                    <span><span className="font-medium">{areaLabel}</span> — {findingLabel}</span>
+                                    {m.notes && <span className="text-muted-foreground">({m.notes})</span>}
+                                  </div>
+                                );
+                              })}
+                            </>
+                          )}
+
+                          {/* OK areas */}
+                          {markers.filter((m: any) => m.finding_type === 'ok').length > 0 && (
+                            <div className="space-y-0.5">
+                              <p className="text-xs font-medium text-muted-foreground">Checked OK:</p>
+                              <div className="flex flex-wrap gap-1 pl-2">
+                                {markers.filter((m: any) => m.finding_type === 'ok').map((m: any) => {
+                                  const areaLabel = HIGH_RISK_AREAS.find(a => a.id === m.location)?.label || m.location;
+                                  return (
+                                    <Badge key={m.id} variant="outline" className="text-[10px] border-green-300 text-green-700 dark:text-green-400 gap-1">
+                                      <CheckCircle2 className="h-3 w-3" />
+                                      {areaLabel}
+                                    </Badge>
+                                  );
+                                })}
                               </div>
-                            );
-                          })}
+                            </div>
+                          )}
+
+                          {/* Unable to check */}
+                          {markers.filter((m: any) => m.finding_type === 'unable').length > 0 && (
+                            <div className="space-y-0.5">
+                              <p className="text-xs font-medium text-muted-foreground">Unable to check:</p>
+                              <div className="flex flex-wrap gap-1 pl-2">
+                                {markers.filter((m: any) => m.finding_type === 'unable').map((m: any) => {
+                                  const areaLabel = HIGH_RISK_AREAS.find(a => a.id === m.location)?.label || m.location;
+                                  return (
+                                    <Badge key={m.id} variant="outline" className="text-[10px] gap-1">
+                                      <MinusCircle className="h-3 w-3" />
+                                      {areaLabel}
+                                    </Badge>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Not checked count */}
+                          {(() => {
+                            const checkedIds = markers.map((m: any) => m.location);
+                            const notChecked = HIGH_RISK_AREAS.filter(a => !checkedIds.includes(a.id));
+                            if (notChecked.length > 0) {
+                              return (
+                                <p className="text-[10px] text-muted-foreground pl-2 pt-1">
+                                  {notChecked.length} area{notChecked.length !== 1 ? 's' : ''} not assessed: {notChecked.map(a => a.label).join(', ')}
+                                </p>
+                              );
+                            }
+                            return null;
+                          })()}
                         </div>
                       ) : (
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground pl-2">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
-                          <span>All areas checked — no concerns</span>
+                          <MinusCircle className="h-3.5 w-3.5" />
+                          <span>No areas were assessed in this check</span>
                         </div>
                       )}
 
