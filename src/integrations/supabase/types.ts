@@ -4228,6 +4228,7 @@ export type Database = {
           published_by: string | null
           rotation_sequence: Json | null
           schedule_type: string | null
+          skin_check_schedule: Json | null
           status: string
           updated_at: string
           updated_by: string | null
@@ -4258,6 +4259,7 @@ export type Database = {
           published_by?: string | null
           rotation_sequence?: Json | null
           schedule_type?: string | null
+          skin_check_schedule?: Json | null
           status?: string
           updated_at?: string
           updated_by?: string | null
@@ -4288,6 +4290,7 @@ export type Database = {
           published_by?: string | null
           rotation_sequence?: Json | null
           schedule_type?: string | null
+          skin_check_schedule?: Json | null
           status?: string
           updated_at?: string
           updated_by?: string | null

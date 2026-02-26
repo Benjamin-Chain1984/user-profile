@@ -20,10 +20,12 @@ import {
 import { usePressureReliefPlan } from '@/hooks/usePressureReliefPlan';
 import {
   SCHEDULE_TYPE_LABELS, DEFAULT_POSITIONS, HIGH_RISK_AREAS, DAYS_OF_WEEK, DAY_LABELS,
+  SKIN_CHECK_FREQUENCIES, SKIN_CHECK_FREQUENCY_LABELS,
   type ScheduleType, type RotationPosition, type DayOfWeek, type WeeklyRotationSequence,
+  type SkinCheckSchedule, type SkinCheckFrequency, type SkinCheckAreaSchedule,
   emptyWeeklySequence, normalizeRotationSequence,
 } from '@/types/pressureArea';
-import { Save, ArrowLeft, Send, Loader2, Plus, Trash2, Clock, Copy } from 'lucide-react';
+import { Save, ArrowLeft, Send, Loader2, Plus, Trash2, Clock, Copy, Eye } from 'lucide-react';
 
 interface Props {
   clientId?: string;
@@ -46,6 +48,7 @@ export function PressureReliefPlanEditor({ clientId, onClose }: Props) {
   const [weeklySequence, setWeeklySequence] = useState<WeeklyRotationSequence>(emptyWeeklySequence());
   const [activeDay, setActiveDay] = useState<DayOfWeek>('monday');
   const [highRiskAreas, setHighRiskAreas] = useState<string[]>(['sacrum_coccyx', 'heels', 'hips']);
+  const [skinCheckSchedule, setSkinCheckSchedule] = useState<SkinCheckSchedule>({});
   const [overdueAmber, setOverdueAmber] = useState(30);
   const [overdueRed, setOverdueRed] = useState(60);
   const [additionalInstructions, setAdditionalInstructions] = useState('');
@@ -69,6 +72,7 @@ export function PressureReliefPlanEditor({ clientId, onClose }: Props) {
       setIntervalMinutes(plan.interval_minutes || 120);
       setWeeklySequence(plan.rotation_sequence || emptyWeeklySequence());
       setHighRiskAreas(plan.high_risk_areas || ['sacrum_coccyx', 'heels', 'hips']);
+      setSkinCheckSchedule(plan.skin_check_schedule || {});
       setOverdueAmber(plan.overdue_amber_minutes || 30);
       setOverdueRed(plan.overdue_red_minutes || 60);
       setAdditionalInstructions(plan.additional_instructions || '');
@@ -112,7 +116,25 @@ export function PressureReliefPlanEditor({ clientId, onClose }: Props) {
   };
 
   const toggleHighRisk = (area: string) => {
-    setHighRiskAreas(prev => prev.includes(area) ? prev.filter(a => a !== area) : [...prev, area]);
+    setHighRiskAreas(prev => {
+      const next = prev.includes(area) ? prev.filter(a => a !== area) : [...prev, area];
+      // Remove skin check schedule for unchecked areas
+      if (!next.includes(area)) {
+        setSkinCheckSchedule(prev => {
+          const copy = { ...prev };
+          delete copy[area];
+          return copy;
+        });
+      }
+      return next;
+    });
+  };
+
+  const updateSkinCheckArea = (areaId: string, update: Partial<SkinCheckAreaSchedule>) => {
+    setSkinCheckSchedule(prev => ({
+      ...prev,
+      [areaId]: { ...{ enabled: false, frequency: 'daily' as SkinCheckFrequency }, ...(prev[areaId] || {}), ...update },
+    }));
   };
 
   const handleSave = () => {
@@ -129,6 +151,7 @@ export function PressureReliefPlanEditor({ clientId, onClose }: Props) {
       interval_minutes: intervalMinutes,
       rotation_sequence: weeklySequence,
       high_risk_areas: highRiskAreas,
+      skin_check_schedule: skinCheckSchedule,
       overdue_amber_minutes: overdueAmber,
       overdue_red_minutes: overdueRed,
       additional_instructions: additionalInstructions || null,
@@ -340,18 +363,72 @@ export function PressureReliefPlanEditor({ clientId, onClose }: Props) {
         </CardContent>
       </Card>
 
-      {/* High Risk Areas */}
+      {/* High Risk Areas + Skin Check Schedule */}
       <Card>
-        <CardHeader><CardTitle className="text-lg">High-Risk Areas (Bony Prominences)</CardTitle></CardHeader>
-        <CardContent>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {HIGH_RISK_AREAS.map(area => (
-              <div key={area.id} className="flex items-center gap-2">
-                <Checkbox checked={highRiskAreas.includes(area.id)} onCheckedChange={() => toggleHighRisk(area.id)} />
-                <Label className="text-sm">{area.label}</Label>
+        <CardHeader><CardTitle className="text-lg">High-Risk Areas & Skin Check Schedule</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          {HIGH_RISK_AREAS.map(area => {
+            const isChecked = highRiskAreas.includes(area.id);
+            const schedule = skinCheckSchedule[area.id];
+            const isEnabled = schedule?.enabled ?? false;
+
+            return (
+              <div key={area.id} className="border rounded-lg p-3 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Checkbox checked={isChecked} onCheckedChange={() => toggleHighRisk(area.id)} />
+                  <Label className="text-sm font-medium">{area.label}</Label>
+                </div>
+
+                {isChecked && (
+                  <div className="ml-6 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                      <Label className="text-sm">Skin Checks Enabled</Label>
+                      <Switch
+                        checked={isEnabled}
+                        onCheckedChange={(checked) => updateSkinCheckArea(area.id, { enabled: checked })}
+                      />
+                      <span className="text-xs text-muted-foreground">{isEnabled ? 'Yes' : 'No'}</span>
+                    </div>
+
+                    {isEnabled && (
+                      <div className="flex flex-wrap items-end gap-3">
+                        <div>
+                          <Label className="text-xs">Frequency</Label>
+                          <Select
+                            value={schedule?.frequency || 'daily'}
+                            onValueChange={(v) => updateSkinCheckArea(area.id, { frequency: v as SkinCheckFrequency })}
+                          >
+                            <SelectTrigger className="w-[180px] h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {SKIN_CHECK_FREQUENCIES.map(f => (
+                                <SelectItem key={f} value={f}>{SKIN_CHECK_FREQUENCY_LABELS[f]}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {schedule?.frequency === 'custom' && (
+                          <div>
+                            <Label className="text-xs">Times Per Day</Label>
+                            <Input
+                              type="number"
+                              min={1}
+                              max={12}
+                              value={schedule?.custom_times_per_day || 1}
+                              onChange={(e) => updateSkinCheckArea(area.id, { custom_times_per_day: Number(e.target.value) })}
+                              className="w-20 h-8"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
+            );
+          })}
         </CardContent>
       </Card>
 
