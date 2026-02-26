@@ -127,7 +127,10 @@ function PressureReliefTile({
 
     // Countdown to next uncompleted slot
     const nextSlot = relevantSlots.find(s => !s.completed && s.dueAt > now);
-    const pastDueSlot = relevantSlots.find(s => !s.completed && s.dueAt <= now);
+    const lastCompletedIndex = relevantSlots.reduce((lastIdx, slot, idx) => (
+      slot.completed ? idx : lastIdx
+    ), -1);
+    const pastDueSlot = relevantSlots.find((s, idx) => !s.completed && s.dueAt <= now && idx > lastCompletedIndex);
     minutesUntilNext = nextSlot ? differenceInMinutes(nextSlot.dueAt, now) : 0;
     const hasPastDueSlot = isWithinScheduleWindow && !!pastDueSlot;
 
