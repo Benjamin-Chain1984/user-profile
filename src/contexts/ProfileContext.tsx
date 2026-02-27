@@ -33,7 +33,7 @@ import type { VitalSignEntry, VitalSignAlert, VitalType, AlteredCriteria, VitalS
 import { calculateEpilepsyStatus } from '@/utils/epilepsyStatusCalculator';
 import type { SeizureEvent, EpilepsyConfig, EpilepsyAlert } from '@/types/epilepsy';
 import { calculatePressureAreaStatus } from '@/utils/pressureAreaStatusCalculator';
-import type { PressureReliefEvent, SkinCheckSession, PressureReliefPlan } from '@/types/pressureArea';
+import type { PressureReliefEvent, SkinCheckSession, PressureReliefPlan, SkinFindingMarker } from '@/types/pressureArea';
 
 // ── Generic alert data type ────────────────────────────────────
 type ModuleAlertData = {
@@ -836,7 +836,11 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     try {
       const { data: configData } = await supabase.from('pressure_area_config').select('*').limit(1).maybeSingle();
       const { data: events } = await supabase.from('pressure_relief_events').select('*').order('event_occurred_at', { ascending: false }).limit(50);
-      const { data: skinChecks } = await supabase.from('skin_check_sessions').select('*').order('event_occurred_at', { ascending: false }).limit(10);
+      const { data: skinChecks } = await supabase
+        .from('skin_check_sessions')
+        .select('*, skin_finding_markers(*)')
+        .order('event_occurred_at', { ascending: false })
+        .limit(200);
 
       // Fetch published plan
       const { data: planData } = await supabase
@@ -848,7 +852,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       const typedEvents = (events || []) as unknown as PressureReliefEvent[];
-      const typedSkinChecks = (skinChecks || []) as unknown as SkinCheckSession[];
+      const typedSkinChecks = (skinChecks || []) as unknown as (SkinCheckSession & { skin_finding_markers?: SkinFindingMarker[] })[];
 
       const statusResult = calculatePressureAreaStatus({
         plan: planData as unknown as PressureReliefPlan | null,
@@ -1030,6 +1034,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
     const skinCheckChannel = supabase.channel('skin-check-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'skin_check_sessions' }, () => fetchPressureAreaStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'skin_finding_markers' }, () => fetchPressureAreaStatus())
       .subscribe();
 
     const mealtimeChannel = supabase.channel('mealtime-alerts')
