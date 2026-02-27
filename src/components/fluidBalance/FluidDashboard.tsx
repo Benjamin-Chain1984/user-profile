@@ -15,6 +15,7 @@ import { IntakeLogForm } from './IntakeLogForm';
 import { OutputLogForm } from './OutputLogForm';
 import { FluidHistory } from './FluidHistory';
 import { FluidTrends } from './FluidTrends';
+import { FluidInsights } from './FluidInsights';
 import { SignsAndSymptomsPanel } from './SignsAndSymptomsPanel';
 import { FluidConfigSettings } from './FluidConfigSettings';
 import { FluidExportReports } from './FluidExportReports';
@@ -181,10 +182,16 @@ export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
           />
         </TabsContent>
         
-        <TabsContent value="trends">
+        <TabsContent value="trends" className="space-y-6">
           <FluidTrends
             intakeEntries={intakeEntries}
             outputEntries={outputEntries}
+            config={config}
+          />
+          <FluidInsights
+            intakeEntries={intakeEntries}
+            outputEntries={outputEntries}
+            symptomChecks={symptomChecks}
             config={config}
           />
         </TabsContent>
