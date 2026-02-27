@@ -332,6 +332,8 @@ function SkinCheckTile({
   }, [sessions, now]);
 
   // Calculate time until next check is due
+  // Uses "reset" logic: completing a check clears the alert; only the NEXT
+  // upcoming slot after the latest check can trigger overdue.
   const { minutesUntilNext, isOverdue } = useMemo(() => {
     if (!skinCheckEnabled || totalChecksPerDay === 0) return { minutesUntilNext: 0, isOverdue: false };
 
@@ -342,25 +344,45 @@ function SkinCheckTile({
 
     if (now < todayStart || now > todayEnd) return { minutesUntilNext: 0, isOverdue: false };
 
-    // Find which check slot we're at
+    // All done for the day
+    if (todayChecks >= totalChecksPerDay) return { minutesUntilNext: 0, isOverdue: false };
+
+    // Find the latest check time today (if any)
+    const latestCheckTime = sessions.length > 0
+      ? (() => {
+          const todayStartDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          const todaySession = sessions.find(s => new Date(s.event_occurred_at) >= todayStartDate);
+          return todaySession ? new Date(todaySession.event_occurred_at) : null;
+        })()
+      : null;
+
+    // Find the next slot that is AFTER the latest check (reset logic)
+    // Only that slot can trigger an overdue alert.
     for (let i = 0; i < totalChecksPerDay; i++) {
       const slotTime = addMinutes(todayStart, i * intervalHours * 60);
       const nextSlotTime = i < totalChecksPerDay - 1
         ? addMinutes(todayStart, (i + 1) * intervalHours * 60)
         : todayEnd;
 
-      if (now >= slotTime && now < nextSlotTime && todayChecks <= i) {
-        const mins = differenceInMinutes(nextSlotTime, now);
-        const overdue = todayChecks < i + 1 && now > addMinutes(slotTime, 30); // 30 min grace
-        return { minutesUntilNext: Math.max(0, mins), isOverdue: overdue };
+      // Skip slots that started before the latest check — they're "reset"
+      if (latestCheckTime && slotTime <= latestCheckTime) continue;
+
+      // This is the next relevant slot
+      if (now < slotTime) {
+        // Slot hasn't started yet — show countdown, not overdue
+        const mins = differenceInMinutes(slotTime, now);
+        return { minutesUntilNext: Math.max(0, mins), isOverdue: false };
       }
+
+      // We're inside this slot's window
+      const mins = differenceInMinutes(nextSlotTime, now);
+      const overdue = now > addMinutes(slotTime, 30); // 30 min grace
+      return { minutesUntilNext: Math.max(0, mins), isOverdue: overdue };
     }
 
-    // Check if all done
-    if (todayChecks >= totalChecksPerDay) return { minutesUntilNext: 0, isOverdue: false };
-
-    return { minutesUntilNext: 0, isOverdue: todayChecks < totalChecksPerDay && now > addMinutes(todayStart, 30) };
-  }, [skinCheckEnabled, totalChecksPerDay, todayChecks, now]);
+    // No relevant slots remain — all future slots cleared
+    return { minutesUntilNext: 0, isOverdue: false };
+  }, [skinCheckEnabled, totalChecksPerDay, todayChecks, sessions, now]);
 
   let status: HealthStatus = 'stable';
   let statusLabel = 'Healthy';
