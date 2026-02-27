@@ -13,6 +13,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { calculateSeverity, getSeverityLabel, PainSeverity } from '@/types/painAssessment';
 import { formatDistanceToNow, differenceInHours, differenceInDays, parseISO, addDays, addHours } from 'date-fns';
 import { BRISTOL_TYPES } from '@/types/bowelCare';
+import { calculateStomaStatusLevel } from '@/hooks/useCatheter';
+import type { StomaFinding, StomaPainLevel } from '@/types/catheter';
 import { calculateBowelCareStatus, type CalculatedBowelStatus } from '@/utils/bowelCareStatusCalculator';
 import { calculateWeightBmiStatus } from '@/utils/weightBmiCalculator';
 import { calculateFluidStatus } from '@/utils/fluidBalanceCalculator';
@@ -797,21 +799,30 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         isFlushOverdue = differenceInDays(nextFlush, now) < 0;
       }
 
-      // Stoma concern
-      const hasConcern = lastStoma && (lastStoma.status_level === 'red' || lastStoma.status_level === 'amber');
+      // Stoma concern — use dynamic calculation (same as tile) to account for overdue
+      const hoursSinceStoma = lastStoma
+        ? differenceInHours(now, parseISO(lastStoma.event_occurred_at))
+        : null;
+      const stomaFindings: StomaFinding[] = (lastStoma?.findings as StomaFinding[]) || [];
+      const stomaPainLevel: StomaPainLevel = (lastStoma?.pain_level as StomaPainLevel) || 'none';
+      const dynamicStomaStatus = lastStoma
+        ? calculateStomaStatusLevel(stomaFindings, stomaPainLevel, hoursSinceStoma)
+        : 'green';
 
       let status: 'stable' | 'monitor' | 'action' = 'stable';
       let message = 'Catheter management on track.';
 
-      if (isChangeOverdue || isFlushOverdue || (lastStoma?.status_level === 'red')) {
+      // RED hierarchy first
+      if (isChangeOverdue || isFlushOverdue || dynamicStomaStatus === 'red') {
         status = 'action';
         if (isChangeOverdue) message = `Catheter change overdue by ${Math.abs(daysUntilChange!)} days.`;
         else if (isFlushOverdue) message = 'Catheter flush overdue – action required.';
         else message = 'Stoma site concern – escalate to clinician.';
-      } else if ((daysUntilChange !== null && daysUntilChange <= 3) || lastStoma?.status_level === 'amber') {
+      // AMBER hierarchy second
+      } else if ((daysUntilChange !== null && daysUntilChange <= 3) || dynamicStomaStatus === 'amber') {
         status = 'monitor';
-        if (daysUntilChange !== null && daysUntilChange <= 3) message = `Catheter change due in ${daysUntilChange} day(s).`;
-        else message = 'Stoma site requires monitoring.';
+        if (dynamicStomaStatus === 'amber') message = 'Stoma site requires monitoring – recheck within 24 hours.';
+        else if (daysUntilChange !== null && daysUntilChange <= 3) message = `Catheter change due in ${daysUntilChange} day(s).`;
       }
 
       setLatestCatheterData({ status, message, timestamp: lastChange?.event_occurred_at || new Date().toISOString() });
@@ -1010,6 +1021,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
     const catheterChangeChannel = supabase.channel('catheter-change-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'catheter_change_logs' }, () => fetchCatheterStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'catheter_stoma_checks' }, () => fetchCatheterStatus())
       .subscribe();
 
     const pressureChannel = supabase.channel('pressure-alerts')
