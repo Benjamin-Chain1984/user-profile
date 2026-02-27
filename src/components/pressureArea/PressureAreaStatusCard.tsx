@@ -12,7 +12,7 @@ import { usePressureReliefPlan } from '@/hooks/usePressureReliefPlan';
 import { RotateCcw, Eye, CheckCircle2, Clock, Timer, AlertCircle } from 'lucide-react';
 import { differenceInMinutes, differenceInDays, formatDistanceToNow, addMinutes } from 'date-fns';
 import type { HealthStatus } from '@/types/ideal';
-import type { RotationPosition } from '@/types/pressureArea';
+import type { RotationPosition, SkinCheckSession } from '@/types/pressureArea';
 import { getPositionsForDay } from '@/types/pressureArea';
 
 interface Props {
@@ -306,6 +306,33 @@ function SkinCheckTile({
 
   const latestCheck = sessions[0];
 
+  const { hasUnresolvedRed, hasUnresolvedAmber, unresolvedCount } = useMemo(() => {
+    const resolvedAreas = new Set<string>();
+    let unresolvedRed = 0;
+    let unresolvedAmber = 0;
+
+    for (const session of sessions as Array<SkinCheckSession & { skin_finding_markers?: Array<{ location: string; finding_type: string; severity: string }> }>) {
+      const markers = session.skin_finding_markers || [];
+      for (const marker of markers) {
+        if (resolvedAreas.has(marker.location)) continue;
+
+        if (marker.finding_type === 'ok') {
+          resolvedAreas.add(marker.location);
+        } else if (marker.finding_type !== 'unable' && (marker.severity === 'red' || marker.severity === 'amber')) {
+          if (marker.severity === 'red') unresolvedRed += 1;
+          if (marker.severity === 'amber') unresolvedAmber += 1;
+          resolvedAreas.add(marker.location);
+        }
+      }
+    }
+
+    return {
+      hasUnresolvedRed: unresolvedRed > 0,
+      hasUnresolvedAmber: unresolvedAmber > 0,
+      unresolvedCount: unresolvedRed + unresolvedAmber,
+    };
+  }, [sessions]);
+
   // Calculate expected checks per day from skin_check_schedule
   const { totalChecksPerDay, skinCheckEnabled } = useMemo(() => {
     const schedule = plan?.skin_check_schedule || {};
@@ -388,7 +415,16 @@ function SkinCheckTile({
   let statusLabel = 'Healthy';
   let statusMessage: string | null = null;
 
-  if (latestCheck) {
+  // Severity hierarchy: Red > Amber > Healthy
+  if (hasUnresolvedRed) {
+    status = 'action';
+    statusLabel = 'Action Required';
+    statusMessage = `${unresolvedCount} active finding${unresolvedCount === 1 ? '' : 's'} not yet cleared`;
+  } else if (hasUnresolvedAmber) {
+    status = 'monitor';
+    statusLabel = 'Monitor';
+    statusMessage = `${unresolvedCount} active skin change${unresolvedCount === 1 ? '' : 's'} not yet cleared`;
+  } else if (latestCheck) {
     if (latestCheck.overall_status === 'red') {
       status = 'action';
       statusLabel = 'Action Required';
