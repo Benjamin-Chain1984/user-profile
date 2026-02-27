@@ -29,15 +29,16 @@ export function OralHealthTaskLogging({ clientId }: Props) {
     setNotes('');
   };
 
-  // Compliance stats
+  // Compliance stats — denominator is EXPECTED tasks (7 days × 2 periods = 14),
+  // not just logged entries, so unlogged days correctly count as missed.
   const last7 = logs.filter(l => {
     const d = parseISO(l.log_date);
     const diff = (Date.now() - d.getTime()) / (1000 * 60 * 60 * 24);
     return diff <= 7;
   });
   const completedCount = last7.filter(l => l.completed).length;
-  const totalCount = last7.length;
-  const compliancePercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+  const expectedCount = 14; // 7 days × 2 periods (AM + PM)
+  const compliancePercent = Math.round((completedCount / expectedCount) * 100);
 
   return (
     <div className="space-y-4">
@@ -125,7 +126,7 @@ export function OralHealthTaskLogging({ clientId }: Props) {
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {completedCount}/{totalCount} tasks completed (last 7 days)
+                {completedCount}/{expectedCount} tasks completed (last 7 days)
               </p>
             </div>
           </div>
