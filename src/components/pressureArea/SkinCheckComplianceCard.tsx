@@ -4,8 +4,9 @@
  */
 
 import { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useSkinChecks } from '@/hooks/usePressureArea';
 import { usePressureReliefPlan } from '@/hooks/usePressureReliefPlan';
 import { HIGH_RISK_AREAS, SKIN_CHECK_FREQUENCY_LABELS } from '@/types/pressureArea';
@@ -76,83 +77,86 @@ export function SkinCheckComplianceCard({ clientId }: Props) {
 
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base flex items-center gap-2">
-            <ClipboardCheck className="h-4 w-4 text-primary" />
-            Today's Skin Checks
-          </CardTitle>
-          <Badge
-            variant="outline"
-            className={allComplete
-              ? 'bg-green-50 text-green-700 border-green-200'
-              : 'bg-amber-50 text-amber-700 border-amber-200'
-            }
-          >
-            {totalDone}/{totalRequired}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-1.5">
-        {enabledAreas.map(({ areaId, label, frequency, required }) => {
-          const done = todayChecksByArea[areaId] || 0;
-          const isComplete = required === -1 ? done > 0 : done >= required;
-          const displayRequired = required === -1 ? '1+' : required;
-          const freqLabel = SKIN_CHECK_FREQUENCY_LABELS[frequency];
-
-          return (
-            <div
-              key={areaId}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm border ${
-                isComplete
-                  ? 'bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800'
-                  : 'bg-muted/30 border-border'
-              }`}
-            >
-              {isComplete ? (
-                <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
-              ) : done > 0 ? (
-                <AlertCircle className="h-4 w-4 text-amber-500 flex-shrink-0" />
-              ) : (
-                <Circle className="h-4 w-4 text-muted-foreground/40 flex-shrink-0" />
-              )}
-
-              <span className="flex-1 font-medium">{label}</span>
-
-              {/* Progress dots */}
-              {required !== -1 && required <= 4 ? (
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: required }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={`h-2.5 w-2.5 rounded-full ${
-                        i < done
-                          ? 'bg-green-500'
-                          : 'bg-muted-foreground/20'
-                      }`}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <span className="text-xs text-muted-foreground">
-                  {done}/{displayRequired}
-                </span>
-              )}
-
-              <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                {freqLabel}
-              </span>
+      <Collapsible>
+        <CollapsibleTrigger className="w-full">
+          <div className="flex items-center justify-between px-5 py-3 hover:bg-muted/50 transition-colors">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <ClipboardCheck className="h-4 w-4 text-primary" />
+              Today's Skin Checks
             </div>
-          );
-        })}
-
-        {allComplete && (
-          <div className="flex items-center gap-2 pt-2 text-sm text-green-700 font-medium">
-            <CheckCircle2 className="h-4 w-4" />
-            All skin checks completed for today
+            <Badge
+              variant="outline"
+              className={allComplete
+                ? 'bg-green-50 text-green-700 border-green-200'
+                : 'bg-amber-50 text-amber-700 border-amber-200'
+              }
+            >
+              {totalDone}/{totalRequired}
+            </Badge>
           </div>
-        )}
-      </CardContent>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent className="pt-0 space-y-1.5">
+            {enabledAreas.map(({ areaId, label, frequency, required }) => {
+              const done = todayChecksByArea[areaId] || 0;
+              const isComplete = required === -1 ? done > 0 : done >= required;
+              const displayRequired = required === -1 ? '1+' : required;
+              const freqLabel = SKIN_CHECK_FREQUENCY_LABELS[frequency];
+
+              return (
+                <div
+                  key={areaId}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm border ${
+                    isComplete
+                      ? 'bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800'
+                      : 'bg-muted/30 border-border'
+                  }`}
+                >
+                  {isComplete ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                  ) : done > 0 ? (
+                    <AlertCircle className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                  ) : (
+                    <Circle className="h-4 w-4 text-muted-foreground/40 flex-shrink-0" />
+                  )}
+
+                  <span className="flex-1 font-medium">{label}</span>
+
+                  {required !== -1 && required <= 4 ? (
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: required }).map((_, i) => (
+                        <div
+                          key={i}
+                          className={`h-2.5 w-2.5 rounded-full ${
+                            i < done
+                              ? 'bg-green-500'
+                              : 'bg-muted-foreground/20'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      {done}/{displayRequired}
+                    </span>
+                  )}
+
+                  <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                    {freqLabel}
+                  </span>
+                </div>
+              );
+            })}
+
+            {allComplete && (
+              <div className="flex items-center gap-2 pt-2 text-sm text-green-700 font-medium">
+                <CheckCircle2 className="h-4 w-4" />
+                All skin checks completed for today
+              </div>
+            )}
+          </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
     </Card>
   );
 }
