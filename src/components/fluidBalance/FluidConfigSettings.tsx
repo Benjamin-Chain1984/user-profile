@@ -61,7 +61,7 @@ export const FluidConfigSettings: React.FC<FluidConfigSettingsProps> = ({
       target_daily_intake_ml: config?.target_daily_intake_ml || 2000,
       enable_output_logging: config?.enable_output_logging ?? true,
       day_boundary_time: config?.day_boundary_time || '00:00',
-      dehydration_threshold_ml: config?.dehydration_threshold_ml || -500,
+      dehydration_threshold_ml: config?.dehydration_threshold_ml ?? 0,
       overhydration_threshold_ml: config?.overhydration_threshold_ml || 1000,
       dehydration_warning_percent: config?.dehydration_warning_percent || 30,
       overhydration_warning_percent: config?.overhydration_warning_percent || 120,
@@ -287,11 +287,14 @@ export const FluidConfigSettings: React.FC<FluidConfigSettingsProps> = ({
                           <Input 
                             type="number" 
                             {...field} 
-                            onChange={e => field.onChange(parseInt(e.target.value) || -500)}
+                            onChange={e => {
+                              const val = e.target.value;
+                              field.onChange(val === '' ? 0 : parseInt(val));
+                            }}
                           />
                         </FormControl>
                         <FormDescription>
-                          Alert when balance falls below this (negative value). Default: -500ml
+                          Alert when balance falls below this value. Default: 0ml
                         </FormDescription>
                       </FormItem>
                     )}
