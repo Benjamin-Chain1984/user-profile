@@ -95,12 +95,13 @@ export const RELIEF_ISSUES = [
   'Other',
 ] as const;
 
-export const SKIN_CHECK_FREQUENCIES = ['daily', 'twice_daily', 'three_times_daily', 'custom'] as const;
+export const SKIN_CHECK_FREQUENCIES = ['daily', 'twice_daily', 'three_times_daily', 'every_reposition', 'custom'] as const;
 export type SkinCheckFrequency = typeof SKIN_CHECK_FREQUENCIES[number];
 export const SKIN_CHECK_FREQUENCY_LABELS: Record<SkinCheckFrequency, string> = {
-  daily: 'Daily',
-  twice_daily: 'Twice Daily',
+  daily: 'Once Per Day',
+  twice_daily: 'Twice Per Day',
   three_times_daily: 'Three Times Per Day',
+  every_reposition: 'Every Reposition',
   custom: 'Custom',
 };
 
@@ -109,6 +110,7 @@ export function skinCheckTimesPerDay(freq: SkinCheckFrequency, customCount?: num
     case 'daily': return 1;
     case 'twice_daily': return 2;
     case 'three_times_daily': return 3;
+    case 'every_reposition': return -1; // dynamic, tied to reposition schedule
     case 'custom': return customCount || 1;
   }
 }
