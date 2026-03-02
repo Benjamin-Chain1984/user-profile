@@ -111,7 +111,6 @@ export const FLUID_TYPES = [
   'Soup',
   'Milk',
   'Tube Feed',
-  'IV Fluid',
   'Other'
 ] as const;
 
