@@ -21,6 +21,7 @@ import { PressureAreaHistory } from './PressureAreaHistory';
 import { PressureAreaTrends } from './PressureAreaTrends';
 import { PressureAreaConfigSettings } from './PressureAreaConfigSettings';
 import { PressureAreaExportReports } from './PressureAreaExportReports';
+import { SkinCheckComplianceCard } from './SkinCheckComplianceCard';
 import {
   Settings, BarChart3, Clock, AlertCircle, FileDown,
   FileText, AlertTriangle, Activity,
@@ -152,6 +153,9 @@ export function PressureAreaDashboard({ clientId }: Props) {
         onLogSkinCheck={() => setShowSkinCheck(true)}
         disabled={isMonitoringPaused}
       />
+
+      {/* Skin Check Compliance */}
+      <SkinCheckComplianceCard clientId={clientId} />
 
       {/* Tabs */}
       <Tabs defaultValue="tracking" className="space-y-4">
