@@ -371,24 +371,6 @@ export const FluidConfigSettings: React.FC<FluidConfigSettingsProps> = ({
                         </FormItem>
                       )}
                     />
-                    
-                    <FormField
-                      control={form.control}
-                      name="hard_stop_on_limit_exceeded"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 p-4">
-                          <div>
-                            <FormLabel>Hard Stop When Exceeded</FormLabel>
-                            <FormDescription>
-                              Block further intake logging when limit is reached
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch checked={field.value} onCheckedChange={field.onChange} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
                   </>
                 )}
               </CardContent>

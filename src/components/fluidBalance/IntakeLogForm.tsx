@@ -95,7 +95,7 @@ export const IntakeLogForm: React.FC<IntakeLogFormProps> = ({
     setOnBehalfData({ onBehalfUserId: null, onBehalfName: null, onBehalfRole: null, onBehalfReason: null });
   };
   
-  const wouldExceedLimit = isRestricted && maxAllowance && (currentTotal + currentAmount) > maxAllowance;
+  const wouldExceedLimit = isRestricted && maxAllowance && currentAmount > 0 && (currentTotal + currentAmount) > maxAllowance;
   
   return (
     <Card>
@@ -225,7 +225,7 @@ export const IntakeLogForm: React.FC<IntakeLogFormProps> = ({
               )}
             />
             
-            <Button type="submit" className="w-full" disabled={wouldExceedLimit}>
+            <Button type="submit" className="w-full">
               <Plus className="h-4 w-4 mr-2" />
               Log Intake
             </Button>

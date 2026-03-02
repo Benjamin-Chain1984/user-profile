@@ -212,19 +212,18 @@ export function useFluidBalance(clientId?: string): UseFluidBalanceReturn {
     if (!user) return;
     
     try {
-      // Check for hard stop on fluid restriction
-      if (config?.fluid_restriction_enabled && config?.hard_stop_on_limit_exceeded && config?.max_fluid_allowance_ml) {
+      // Warn (but allow) when fluid restriction is exceeded
+      if (config?.fluid_restriction_enabled && config?.max_fluid_allowance_ml) {
         const todayTotal = intakeEntries
           .filter(e => new Date(e.event_occurred_at).toDateString() === new Date().toDateString())
           .reduce((sum, e) => sum + e.amount_ml, 0);
         
         if (todayTotal + entry.amount_ml > config.max_fluid_allowance_ml) {
           toast({
-            title: 'Fluid Limit Exceeded',
-            description: `Cannot log intake - daily limit of ${config.max_fluid_allowance_ml}ml would be exceeded.`,
+            title: '⚠️ Fluid Restriction Exceeded',
+            description: `Daily limit of ${config.max_fluid_allowance_ml}ml has been exceeded. Current total: ${todayTotal + entry.amount_ml}ml. Please follow the care plan.`,
             variant: 'destructive'
           });
-          return;
         }
       }
       
