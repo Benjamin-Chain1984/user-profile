@@ -42,46 +42,6 @@ export const SignsAndSymptomsPanel: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      {/* Symptoms to Be Aware Of */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-destructive" />
-            Symptoms to Be Aware Of and Seek Advice
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="grid sm:grid-cols-2 gap-2">
-            {SYMPTOMS_LIST.map((symptom, index) => (
-              <li key={index} className="flex items-start gap-2">
-                <span className="text-destructive mt-1">•</span>
-                <span className="text-sm text-muted-foreground">{symptom}</span>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
-
-      {/* Good Hydration Tips */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Activity className="h-5 w-5 text-green-500" />
-            Good Hydration Tips
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-2">
-            {HYDRATION_TIPS.map((tip, index) => (
-              <li key={index} className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
-                <span className="text-sm text-muted-foreground">{tip}</span>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
-
       {/* Urine Colour Check */}
       <Card>
         <CardHeader>
@@ -137,6 +97,46 @@ export const SignsAndSymptomsPanel: React.FC = () => {
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Symptoms to Be Aware Of */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-destructive" />
+            Symptoms to Be Aware Of and Seek Advice
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="grid sm:grid-cols-2 gap-2">
+            {SYMPTOMS_LIST.map((symptom, index) => (
+              <li key={index} className="flex items-start gap-2">
+                <span className="text-destructive mt-1">•</span>
+                <span className="text-sm text-muted-foreground">{symptom}</span>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+
+      {/* Good Hydration Tips */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Activity className="h-5 w-5 text-green-500" />
+            Good Hydration Tips
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="space-y-2">
+            {HYDRATION_TIPS.map((tip, index) => (
+              <li key={index} className="flex items-start gap-2">
+                <span className="text-green-500 mt-1">✓</span>
+                <span className="text-sm text-muted-foreground">{tip}</span>
+              </li>
+            ))}
+          </ul>
         </CardContent>
       </Card>
     </div>
