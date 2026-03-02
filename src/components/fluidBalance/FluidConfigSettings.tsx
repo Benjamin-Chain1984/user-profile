@@ -95,6 +95,16 @@ export const FluidConfigSettings: React.FC<FluidConfigSettingsProps> = ({
   return (
     <RestrictedSection requiredRole="admin" message="Only administrators can modify fluid balance settings.">
       <div className="space-y-6">
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="pt-5 pb-4">
+            <p className="text-sm font-medium mb-1">Who can help set up this module?</p>
+            <ul className="text-sm text-muted-foreground list-disc list-inside space-y-0.5">
+              <li>Registered Nurse</li>
+              <li>General Practitioner (GP)</li>
+              <li>Dietitian</li>
+            </ul>
+          </CardContent>
+        </Card>
         <Alert>
           <Info className="h-4 w-4" />
           <AlertTitle>Clinical Guidance</AlertTitle>
