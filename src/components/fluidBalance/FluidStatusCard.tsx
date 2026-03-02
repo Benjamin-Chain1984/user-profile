@@ -140,8 +140,8 @@ export const FluidStatusCard: React.FC<FluidStatusCardProps> = ({
         <p className="text-sm text-muted-foreground">{statusMessage}</p>
         
         {isRestricted && (
-          <div className="p-2 bg-amber-100 rounded-lg border border-amber-200">
-            <p className="text-xs text-amber-800 font-medium">
+          <div className="p-2 bg-red-50 rounded-lg border-2 border-destructive">
+            <p className="text-xs text-red-800 font-medium">
               ⚠️ Fluid Restriction Active — Max {targetOrCap}ml/day
             </p>
           </div>
