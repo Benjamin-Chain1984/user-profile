@@ -212,13 +212,6 @@ export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
         )}
       </Tabs>
       
-      {/* Clinical Citations */}
-      <div className="text-xs text-muted-foreground border-t pt-4 space-y-1">
-        <p><strong>References:</strong></p>
-        <p>• European Hydration Institute. (2024). Daily fluid intake recommendations.</p>
-        <p>• National Institute for Health and Care Excellence. (2017). Intravenous fluid therapy in adults in hospital. CG174.</p>
-        <p>• Armstrong, L.E. (2012). Challenges of linking chronic dehydration and fluid consumption to health outcomes. Nutrition Reviews.</p>
-      </div>
     </div>
   );
 };
