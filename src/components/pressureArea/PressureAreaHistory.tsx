@@ -1,17 +1,41 @@
 /**
  * Pressure Area Prevention History - Events and Skin Checks
+ * Shows last 5 entries with time-range filters
  */
 
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePressureReliefEvents, useSkinChecks } from '@/hooks/usePressureArea';
 import { HIGH_RISK_AREAS, SKIN_FINDING_TYPES } from '@/types/pressureArea';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, subHours, subDays, subMonths, subYears } from 'date-fns';
 import { RotateCcw, Eye, User, CheckCircle2, AlertCircle, MinusCircle } from 'lucide-react';
 
 interface Props {
   clientId?: string;
+}
+
+const TIME_FILTERS = [
+  { label: '24h', value: '24h' },
+  { label: '7 days', value: '7d' },
+  { label: '30 days', value: '30d' },
+  { label: '1 year', value: '1y' },
+  { label: 'All', value: 'all' },
+] as const;
+
+type TimeFilter = typeof TIME_FILTERS[number]['value'];
+
+function getFilterCutoff(filter: TimeFilter): Date | null {
+  const now = new Date();
+  switch (filter) {
+    case '24h': return subHours(now, 24);
+    case '7d': return subDays(now, 7);
+    case '30d': return subDays(now, 30);
+    case '1y': return subYears(now, 1);
+    case 'all': return null;
+  }
 }
 
 function formatDateTime(val: string): string {
@@ -20,9 +44,34 @@ function formatDateTime(val: string): string {
   return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
+const DISPLAY_LIMIT = 5;
+
 export function PressureAreaHistory({ clientId }: Props) {
   const { events } = usePressureReliefEvents(clientId);
   const { sessions } = useSkinChecks(clientId);
+  const [reliefFilter, setReliefFilter] = useState<TimeFilter>('24h');
+  const [skinFilter, setSkinFilter] = useState<TimeFilter>('24h');
+  const [reliefShowAll, setReliefShowAll] = useState(false);
+  const [skinShowAll, setSkinShowAll] = useState(false);
+
+  const filteredEvents = useMemo(() => {
+    const cutoff = getFilterCutoff(reliefFilter);
+    const filtered = cutoff
+      ? events.filter(e => new Date(e.event_occurred_at) >= cutoff)
+      : events;
+    return filtered;
+  }, [events, reliefFilter]);
+
+  const filteredSessions = useMemo(() => {
+    const cutoff = getFilterCutoff(skinFilter);
+    const filtered = cutoff
+      ? sessions.filter(s => new Date(s.event_occurred_at) >= cutoff)
+      : sessions;
+    return filtered;
+  }, [sessions, skinFilter]);
+
+  const displayedEvents = reliefShowAll ? filteredEvents : filteredEvents.slice(0, DISPLAY_LIMIT);
+  const displayedSessions = skinShowAll ? filteredSessions : filteredSessions.slice(0, DISPLAY_LIMIT);
 
   return (
     <Tabs defaultValue="relief" className="space-y-4">
@@ -39,13 +88,30 @@ export function PressureAreaHistory({ clientId }: Props) {
 
       <TabsContent value="relief">
         <Card>
-          <CardHeader><CardTitle className="text-base">Pressure Relief Events</CardTitle></CardHeader>
+          <CardHeader className="pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <CardTitle className="text-base">Pressure Relief Events</CardTitle>
+              <div className="flex gap-1 flex-wrap">
+                {TIME_FILTERS.map(f => (
+                  <Button
+                    key={f.value}
+                    variant={reliefFilter === f.value ? 'default' : 'outline'}
+                    size="sm"
+                    className="h-7 text-xs px-2.5"
+                    onClick={() => { setReliefFilter(f.value); setReliefShowAll(false); }}
+                  >
+                    {f.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </CardHeader>
           <CardContent>
-            {events.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">No events logged yet.</p>
+            {filteredEvents.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">No events in this period.</p>
             ) : (
               <div className="space-y-3">
-                {events.slice(0, 30).map(event => (
+                {displayedEvents.map(event => (
                   <div key={event.id} className="border rounded-lg p-3 text-sm">
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-medium">{event.position_completed}</span>
@@ -64,6 +130,27 @@ export function PressureAreaHistory({ clientId }: Props) {
                     {event.notes && <p className="text-muted-foreground mt-1">{event.notes}</p>}
                   </div>
                 ))}
+
+                {!reliefShowAll && filteredEvents.length > DISPLAY_LIMIT && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-xs"
+                    onClick={() => setReliefShowAll(true)}
+                  >
+                    Show all {filteredEvents.length} events
+                  </Button>
+                )}
+                {reliefShowAll && filteredEvents.length > DISPLAY_LIMIT && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-xs"
+                    onClick={() => setReliefShowAll(false)}
+                  >
+                    Show less
+                  </Button>
+                )}
               </div>
             )}
           </CardContent>
@@ -72,13 +159,30 @@ export function PressureAreaHistory({ clientId }: Props) {
 
       <TabsContent value="skin">
         <Card>
-          <CardHeader><CardTitle className="text-base">Skin Check History</CardTitle></CardHeader>
+          <CardHeader className="pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <CardTitle className="text-base">Skin Check History</CardTitle>
+              <div className="flex gap-1 flex-wrap">
+                {TIME_FILTERS.map(f => (
+                  <Button
+                    key={f.value}
+                    variant={skinFilter === f.value ? 'default' : 'outline'}
+                    size="sm"
+                    className="h-7 text-xs px-2.5"
+                    onClick={() => { setSkinFilter(f.value); setSkinShowAll(false); }}
+                  >
+                    {f.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </CardHeader>
           <CardContent>
-            {sessions.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">No skin checks logged yet.</p>
+            {filteredSessions.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">No skin checks in this period.</p>
             ) : (
               <div className="space-y-3">
-                {sessions.slice(0, 20).map(session => {
+                {displayedSessions.map(session => {
                   const statusBadge = session.overall_status === 'red'
                     ? <Badge variant="destructive" className="text-xs">Red</Badge>
                     : session.overall_status === 'amber'
@@ -95,7 +199,6 @@ export function PressureAreaHistory({ clientId }: Props) {
                         <span className="text-xs text-muted-foreground">{formatDateTime(session.event_occurred_at)}</span>
                       </div>
 
-                      {/* Completed by */}
                       {completedBy && (
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                           <User className="h-3.5 w-3.5" />
@@ -103,10 +206,8 @@ export function PressureAreaHistory({ clientId }: Props) {
                         </div>
                       )}
 
-                      {/* Areas checked detail */}
                       {markers.length > 0 ? (
                         <div className="space-y-1">
-                          {/* Findings first */}
                           {markers.filter((m: any) => m.finding_type !== 'ok' && m.finding_type !== 'unable').length > 0 && (
                             <>
                               <p className="text-xs font-medium text-muted-foreground">Findings:</p>
@@ -128,7 +229,6 @@ export function PressureAreaHistory({ clientId }: Props) {
                             </>
                           )}
 
-                          {/* OK areas */}
                           {markers.filter((m: any) => m.finding_type === 'ok').length > 0 && (
                             <div className="space-y-0.5">
                               <p className="text-xs font-medium text-muted-foreground">Checked OK:</p>
@@ -146,7 +246,6 @@ export function PressureAreaHistory({ clientId }: Props) {
                             </div>
                           )}
 
-                          {/* Unable to check */}
                           {markers.filter((m: any) => m.finding_type === 'unable').length > 0 && (
                             <div className="space-y-0.5">
                               <p className="text-xs font-medium text-muted-foreground">Unable to check:</p>
@@ -164,7 +263,6 @@ export function PressureAreaHistory({ clientId }: Props) {
                             </div>
                           )}
 
-                          {/* Not checked count */}
                           {(() => {
                             const checkedIds = markers.map((m: any) => m.location);
                             const notChecked = HIGH_RISK_AREAS.filter(a => !checkedIds.includes(a.id));
@@ -189,6 +287,27 @@ export function PressureAreaHistory({ clientId }: Props) {
                     </div>
                   );
                 })}
+
+                {!skinShowAll && filteredSessions.length > DISPLAY_LIMIT && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-xs"
+                    onClick={() => setSkinShowAll(true)}
+                  >
+                    Show all {filteredSessions.length} checks
+                  </Button>
+                )}
+                {skinShowAll && filteredSessions.length > DISPLAY_LIMIT && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-xs"
+                    onClick={() => setSkinShowAll(false)}
+                  >
+                    Show less
+                  </Button>
+                )}
               </div>
             )}
           </CardContent>
