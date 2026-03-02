@@ -92,10 +92,16 @@ export const FluidStatusCard: React.FC<FluidStatusCardProps> = ({
               style={{ width: `${Math.min(percentOfTarget, 100)}%` }}
             />
           </div>
-          {isRestricted && percentOfTarget > 90 && (
+          {isRestricted && percentOfTarget > 90 && percentOfTarget <= 100 && (
             <p className="text-sm text-amber-700 font-medium flex items-center gap-1">
               <AlertTriangle className="h-3 w-3" />
               Approaching fluid limit
+            </p>
+          )}
+          {isRestricted && percentOfTarget > 100 && (
+            <p className="text-sm text-red-700 font-medium flex items-center gap-1">
+              <AlertTriangle className="h-3 w-3" />
+              Fluid restriction exceeded
             </p>
           )}
         </div>
