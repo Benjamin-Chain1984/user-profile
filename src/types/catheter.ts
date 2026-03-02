@@ -385,7 +385,7 @@ export const CHANGE_REASONS: { value: ChangeReason; label: string }[] = [
 
 export const BAG_CHANGE_REASONS: { value: BagChangeReason; label: string }[] = [
   { value: 'routine', label: 'Routine Change' },
-  { value: 'soiled', label: 'Soiled' },
+  { value: 'soiled', label: 'Bag Full' },
   { value: 'damaged', label: 'Damaged' },
   { value: 'leakage', label: 'Leakage' },
   { value: 'blockage', label: 'Blocked' },
