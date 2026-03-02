@@ -7,6 +7,7 @@ interface HydrationInfographicProps {
   isRestricted: boolean;
   targetOrCap: number;
   todayIntake: number;
+  status?: 'ideal' | 'amber' | 'red';
 }
 
 // Generate rising bubble positions based on fill level
@@ -47,7 +48,8 @@ export const HydrationInfographic: React.FC<HydrationInfographicProps> = ({
   percentOfTarget,
   isRestricted,
   targetOrCap,
-  todayIntake
+  todayIntake,
+  status = 'ideal'
 }) => {
   // Clamp fill percentage
   const fillPercent = Math.min(Math.max(percentOfTarget, 0), 100);
@@ -56,6 +58,12 @@ export const HydrationInfographic: React.FC<HydrationInfographicProps> = ({
   const bubbles = useMemo(() => generateBubbles(fillPercent), [fillPercent]);
   const reflections = useMemo(() => generateReflections(fillPercent), [fillPercent]);
   
+  // Determine water colors based on status
+  const isRedStatus = status === 'red';
+  const waterColors = isRedStatus
+    ? { deep: 'hsl(0, 70%, 50%)', mid: 'hsl(0, 65%, 55%)', light: 'hsl(0, 60%, 60%)', surface: 'hsl(0, 55%, 65%)' }
+    : { deep: 'hsl(200, 85%, 45%)', mid: 'hsl(200, 80%, 50%)', light: 'hsl(195, 75%, 55%)', surface: 'hsl(190, 70%, 65%)' };
+
   // Calculate fill height - body fills from bottom up
   const fillHeight = (fillPercent / 100) * 140;
   const fillY = 180 - fillHeight;
@@ -91,10 +99,10 @@ export const HydrationInfographic: React.FC<HydrationInfographicProps> = ({
               
               {/* Enhanced water gradient with depth */}
               <linearGradient id="bodyWaterGradient" x1="0%" y1="100%" x2="0%" y2="0%">
-                <stop offset="0%" stopColor="hsl(200, 85%, 45%)" stopOpacity="0.9" />
-                <stop offset="30%" stopColor="hsl(200, 80%, 50%)" stopOpacity="0.85" />
-                <stop offset="70%" stopColor="hsl(195, 75%, 55%)" stopOpacity="0.75" />
-                <stop offset="100%" stopColor="hsl(190, 70%, 65%)" stopOpacity="0.6" />
+                <stop offset="0%" stopColor={waterColors.deep} stopOpacity="0.9" />
+                <stop offset="30%" stopColor={waterColors.mid} stopOpacity="0.85" />
+                <stop offset="70%" stopColor={waterColors.light} stopOpacity="0.75" />
+                <stop offset="100%" stopColor={waterColors.surface} stopOpacity="0.6" />
               </linearGradient>
               
               {/* Surface highlight gradient */}
@@ -207,7 +215,7 @@ export const HydrationInfographic: React.FC<HydrationInfographicProps> = ({
                     cy={fillY}
                     rx="45"
                     ry="4"
-                    fill="hsl(195, 80%, 70%)"
+                    fill={isRedStatus ? 'hsl(0, 65%, 70%)' : 'hsl(195, 80%, 70%)'}
                     opacity="0.5"
                     className="transition-all duration-700 ease-out"
                   />
@@ -298,7 +306,7 @@ export const HydrationInfographic: React.FC<HydrationInfographicProps> = ({
         
         {/* Stats below graphic */}
         <div className="text-center mt-4 space-y-1">
-          <p className="text-3xl font-bold text-primary">
+          <p className={`text-3xl font-bold ${isRedStatus ? 'text-destructive' : 'text-primary'}`}>
             {fillPercent}%
           </p>
           <p className="text-sm text-muted-foreground">
