@@ -94,6 +94,7 @@ export function AlertDashboard() {
 function AlertCard({ alert }: { alert: { id: string; moduleId: string; moduleName: string; message: string; status: 'red' | 'amber'; timestamp: string } }) {
   const navigate = useNavigate();
   const isRed = alert.status === 'red';
+  const isFluidRestrictionExceeded = alert.moduleId === 'fluid-balance' && isRed && alert.message.toLowerCase().includes('restriction exceeded');
   
   const handleClick = () => {
     // Navigate to the module page
@@ -115,6 +116,11 @@ function AlertCard({ alert }: { alert: { id: string; moduleId: string; moduleNam
           <div>
             <p className="font-medium text-foreground">{alert.moduleName}</p>
             <p className="text-sm text-muted-foreground">{alert.message}</p>
+            {isFluidRestrictionExceeded && (
+              <p className="text-sm font-medium text-destructive mt-1">
+                ⚠️ Seek medical advice
+              </p>
+            )}
             <p className="text-xs text-muted-foreground/70 mt-1">
               {formatDistanceToNow(new Date(alert.timestamp), { addSuffix: true })}
             </p>
