@@ -155,6 +155,7 @@ export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
               isRestricted={config?.fluid_restriction_enabled ?? false}
               targetOrCap={targetOrCap}
               todayIntake={todayIntake}
+              status={currentStatus}
             />
           </div>
           
