@@ -1,0 +1,211 @@
+/**
+ * Enteral Nutrition Module - Hooks
+ */
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import type {
+  EnteralConfig,
+  EnteralFeedLog,
+  EnteralMedicationConfig,
+  EnteralMedicationLog,
+  EnteralStomaCheck,
+  EnteralAlert,
+} from '@/types/enteral';
+
+// ── Config ──────────────────────────────────────────────────────
+export function useEnteralConfig(clientId?: string) {
+  return useQuery({
+    queryKey: ['enteral-config', clientId],
+    queryFn: async () => {
+      let query = supabase.from('enteral_config').select('*');
+      if (clientId) query = query.eq('client_id', clientId);
+      const { data, error } = await query.limit(1).maybeSingle();
+      if (error) throw error;
+      return data as unknown as EnteralConfig | null;
+    },
+  });
+}
+
+export function useSaveEnteralConfig(clientId?: string) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (config: Partial<EnteralConfig>) => {
+      const payload = {
+        ...config,
+        client_id: clientId || null,
+        updated_by: user?.id || null,
+      };
+      const { error } = await supabase
+        .from('enteral_config')
+        .upsert(payload as any, { onConflict: 'client_id' });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['enteral-config'] });
+      toast({ title: 'Settings saved', description: 'Enteral nutrition settings updated.' });
+    },
+    onError: (err: any) => {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    },
+  });
+}
+
+// ── Medication Config ───────────────────────────────────────────
+export function useEnteralMedications(clientId?: string) {
+  return useQuery({
+    queryKey: ['enteral-medications', clientId],
+    queryFn: async () => {
+      let query = supabase.from('enteral_medication_config').select('*').eq('is_active', true).order('display_order');
+      if (clientId) query = query.eq('client_id', clientId);
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data || []) as unknown as EnteralMedicationConfig[];
+    },
+  });
+}
+
+export function useSaveEnteralMedication() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (med: Partial<EnteralMedicationConfig> & { client_id?: string }) => {
+      const payload = { ...med, updated_by: user?.id || null };
+      if (med.id) {
+        const { error } = await supabase.from('enteral_medication_config').update(payload as any).eq('id', med.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('enteral_medication_config').insert({ ...payload, created_by: user?.id || null } as any);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['enteral-medications'] });
+      toast({ title: 'Medication saved' });
+    },
+    onError: (err: any) => {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    },
+  });
+}
+
+// ── Feed Logs ───────────────────────────────────────────────────
+export function useEnteralFeedLogs(clientId?: string) {
+  return useQuery({
+    queryKey: ['enteral-feed-logs', clientId],
+    queryFn: async () => {
+      let query = supabase.from('enteral_feed_logs').select('*').order('event_occurred_at', { ascending: false }).limit(100);
+      if (clientId) query = query.eq('client_id', clientId);
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data || []) as unknown as EnteralFeedLog[];
+    },
+  });
+}
+
+export function useLogEnteralFeed(clientId?: string) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (entry: Partial<EnteralFeedLog>) => {
+      const { error } = await supabase.from('enteral_feed_logs').insert({
+        ...entry,
+        client_id: clientId || null,
+        created_by: user?.id || null,
+      } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['enteral-feed-logs'] });
+      toast({ title: 'Feed logged', description: 'Feed entry recorded successfully.' });
+    },
+    onError: (err: any) => {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    },
+  });
+}
+
+// ── Medication Logs ─────────────────────────────────────────────
+export function useEnteralMedicationLogs(clientId?: string) {
+  return useQuery({
+    queryKey: ['enteral-med-logs', clientId],
+    queryFn: async () => {
+      let query = supabase.from('enteral_medication_logs').select('*').order('event_occurred_at', { ascending: false }).limit(100);
+      if (clientId) query = query.eq('client_id', clientId);
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data || []) as unknown as EnteralMedicationLog[];
+    },
+  });
+}
+
+export function useLogEnteralMedication(clientId?: string) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (entry: Partial<EnteralMedicationLog>) => {
+      const { error } = await supabase.from('enteral_medication_logs').insert({
+        ...entry,
+        client_id: clientId || null,
+        created_by: user?.id || null,
+      } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['enteral-med-logs'] });
+      toast({ title: 'Medication logged', description: 'Medication administration recorded.' });
+    },
+    onError: (err: any) => {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    },
+  });
+}
+
+// ── Stoma Checks ────────────────────────────────────────────────
+export function useEnteralStomaChecks(clientId?: string) {
+  return useQuery({
+    queryKey: ['enteral-stoma-checks', clientId],
+    queryFn: async () => {
+      let query = supabase.from('enteral_stoma_checks').select('*').order('event_occurred_at', { ascending: false }).limit(50);
+      if (clientId) query = query.eq('client_id', clientId);
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data || []) as unknown as EnteralStomaCheck[];
+    },
+  });
+}
+
+export function useLogEnteralStomaCheck(clientId?: string) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (entry: Partial<EnteralStomaCheck>) => {
+      const { error } = await supabase.from('enteral_stoma_checks').insert({
+        ...entry,
+        client_id: clientId || null,
+        created_by: user?.id || null,
+      } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['enteral-stoma-checks'] });
+      toast({ title: 'Stoma check logged', description: 'Stoma check recorded successfully.' });
+    },
+    onError: (err: any) => {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    },
+  });
+}

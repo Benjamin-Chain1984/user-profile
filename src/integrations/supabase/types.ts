@@ -2115,6 +2115,439 @@ export type Database = {
           },
         ]
       }
+      enteral_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          resolved_at: string | null
+          resolved_by: string | null
+          resolved_reason: string | null
+          severity: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_reason?: string | null
+          severity?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_reason?: string | null
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enteral_alerts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enteral_config: {
+        Row: {
+          apply_position_to_medication: boolean
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          enable_medication_logging: boolean
+          enable_stoma_checks: boolean
+          escalation_recipients: string[]
+          feed_schedule_times: string[]
+          feeding_type: string | null
+          flush_after_feed_ml: number | null
+          flush_after_med_ml: number | null
+          flush_before_feed_ml: number | null
+          flush_before_med_ml: number | null
+          flush_continuous_interval_hours: number | null
+          flush_continuous_ml: number | null
+          formula_custom_name: string | null
+          formula_name: string | null
+          grace_window_mins: number
+          id: string
+          missed_feed_red_threshold: number
+          next_tube_change_due: string | null
+          nil_by_mouth: boolean
+          position_angle_min: number | null
+          position_maintain_mins: number | null
+          prescribed_volume_ml: number | null
+          tube_change_alert_lead_days: number
+          tube_change_interval_days: number | null
+          tube_change_overdue_days: number
+          tube_inserted_date: string | null
+          tube_size_fr: string | null
+          tube_type: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          apply_position_to_medication?: boolean
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          enable_medication_logging?: boolean
+          enable_stoma_checks?: boolean
+          escalation_recipients?: string[]
+          feed_schedule_times?: string[]
+          feeding_type?: string | null
+          flush_after_feed_ml?: number | null
+          flush_after_med_ml?: number | null
+          flush_before_feed_ml?: number | null
+          flush_before_med_ml?: number | null
+          flush_continuous_interval_hours?: number | null
+          flush_continuous_ml?: number | null
+          formula_custom_name?: string | null
+          formula_name?: string | null
+          grace_window_mins?: number
+          id?: string
+          missed_feed_red_threshold?: number
+          next_tube_change_due?: string | null
+          nil_by_mouth?: boolean
+          position_angle_min?: number | null
+          position_maintain_mins?: number | null
+          prescribed_volume_ml?: number | null
+          tube_change_alert_lead_days?: number
+          tube_change_interval_days?: number | null
+          tube_change_overdue_days?: number
+          tube_inserted_date?: string | null
+          tube_size_fr?: string | null
+          tube_type?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          apply_position_to_medication?: boolean
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          enable_medication_logging?: boolean
+          enable_stoma_checks?: boolean
+          escalation_recipients?: string[]
+          feed_schedule_times?: string[]
+          feeding_type?: string | null
+          flush_after_feed_ml?: number | null
+          flush_after_med_ml?: number | null
+          flush_before_feed_ml?: number | null
+          flush_before_med_ml?: number | null
+          flush_continuous_interval_hours?: number | null
+          flush_continuous_ml?: number | null
+          formula_custom_name?: string | null
+          formula_name?: string | null
+          grace_window_mins?: number
+          id?: string
+          missed_feed_red_threshold?: number
+          next_tube_change_due?: string | null
+          nil_by_mouth?: boolean
+          position_angle_min?: number | null
+          position_maintain_mins?: number | null
+          prescribed_volume_ml?: number | null
+          tube_change_alert_lead_days?: number
+          tube_change_interval_days?: number | null
+          tube_change_overdue_days?: number
+          tube_inserted_date?: string | null
+          tube_size_fr?: string | null
+          tube_type?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enteral_config_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enteral_feed_logs: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          event_occurred_at: string
+          feed_volume_ml: number
+          flush_given_ml: number
+          id: string
+          method: string | null
+          notes: string | null
+          position_angle: number | null
+          position_confirmed: boolean
+          position_override_reason: string | null
+          rate_ml_per_hour: number | null
+          scheduled_time: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          feed_volume_ml: number
+          flush_given_ml?: number
+          id?: string
+          method?: string | null
+          notes?: string | null
+          position_angle?: number | null
+          position_confirmed?: boolean
+          position_override_reason?: string | null
+          rate_ml_per_hour?: number | null
+          scheduled_time?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          feed_volume_ml?: number
+          flush_given_ml?: number
+          id?: string
+          method?: string | null
+          notes?: string | null
+          position_angle?: number | null
+          position_confirmed?: boolean
+          position_override_reason?: string | null
+          rate_ml_per_hour?: number | null
+          scheduled_time?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enteral_feed_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enteral_medication_config: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          display_order: number
+          dose: string
+          flush_after_ml: number
+          flush_before_ml: number
+          id: string
+          is_active: boolean
+          medication_name: string
+          route: string | null
+          scheduled_times: string[]
+          special_instructions: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          dose: string
+          flush_after_ml?: number
+          flush_before_ml?: number
+          id?: string
+          is_active?: boolean
+          medication_name: string
+          route?: string | null
+          scheduled_times?: string[]
+          special_instructions?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          dose?: string
+          flush_after_ml?: number
+          flush_before_ml?: number
+          id?: string
+          is_active?: boolean
+          medication_name?: string
+          route?: string | null
+          scheduled_times?: string[]
+          special_instructions?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enteral_medication_config_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enteral_medication_logs: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          dose: string
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          event_occurred_at: string
+          flush_after_ml: number
+          flush_before_ml: number
+          id: string
+          medication_config_id: string | null
+          medication_name: string
+          notes: string | null
+          position_confirmed: boolean
+          scheduled_time: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          dose: string
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          flush_after_ml?: number
+          flush_before_ml?: number
+          id?: string
+          medication_config_id?: string | null
+          medication_name: string
+          notes?: string | null
+          position_confirmed?: boolean
+          scheduled_time?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          dose?: string
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          flush_after_ml?: number
+          flush_before_ml?: number
+          id?: string
+          medication_config_id?: string | null
+          medication_name?: string
+          notes?: string | null
+          position_confirmed?: boolean
+          scheduled_time?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enteral_medication_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enteral_medication_logs_medication_config_id_fkey"
+            columns: ["medication_config_id"]
+            isOneToOne: false
+            referencedRelation: "enteral_medication_config"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enteral_stoma_checks: {
+        Row: {
+          action_taken: string | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          escalation_type: string | null
+          event_occurred_at: string
+          findings: string[]
+          id: string
+          notes: string | null
+          pain_level: string
+          status_level: string
+        }
+        Insert: {
+          action_taken?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          escalation_type?: string | null
+          event_occurred_at?: string
+          findings?: string[]
+          id?: string
+          notes?: string | null
+          pain_level?: string
+          status_level?: string
+        }
+        Update: {
+          action_taken?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          escalation_type?: string | null
+          event_occurred_at?: string
+          findings?: string[]
+          id?: string
+          notes?: string | null
+          pain_level?: string
+          status_level?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enteral_stoma_checks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       epilepsy_alerts: {
         Row: {
           acknowledged_at: string | null
