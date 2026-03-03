@@ -29,6 +29,7 @@ import OralHealthPage from "./pages/OralHealth";
 import EpilepsyPage from "./pages/Epilepsy";
 import PressureAreaPage from "./pages/PressureArea";
 import IddsiPage from "./pages/Iddsi";
+import EnteralPage from "./pages/Enteral";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -92,6 +93,7 @@ const App = () => (
                   <Route path="/module/epilepsy" element={<EpilepsyPage />} />
                   <Route path="/module/pressure-area" element={<PressureAreaPage />} />
                   <Route path="/module/iddsi" element={<IddsiPage />} />
+                  <Route path="/module/enteral" element={<EnteralPage />} />
                   <Route path="/module/:moduleId" element={<ModulePlaceholder />} />
 
                   {/* Admin */}

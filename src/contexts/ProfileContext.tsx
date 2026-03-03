@@ -34,6 +34,7 @@ import { calculateEpilepsyStatus } from '@/utils/epilepsyStatusCalculator';
 import type { SeizureEvent, EpilepsyConfig, EpilepsyAlert } from '@/types/epilepsy';
 import { calculatePressureAreaStatus } from '@/utils/pressureAreaStatusCalculator';
 import type { PressureReliefEvent, SkinCheckSession, PressureReliefPlan, SkinFindingMarker } from '@/types/pressureArea';
+import { calculateEnteralStatus } from '@/utils/enteralStatusCalculator';
 
 // ── Generic alert data type ────────────────────────────────────
 type ModuleAlertData = {
@@ -68,7 +69,7 @@ interface ProfileContextType {
   refreshCatheterStatus: () => void;
   refreshPressureAreaStatus: () => void;
   refreshIddsiStatus: () => void;
-  // Monitoring pause state
+  refreshEnteralStatus: () => void;
   monitoringStatus: MonitoringStatus | null;
   isMonitoringPaused: boolean;
   pauseMonitoring: (data: {
@@ -125,6 +126,7 @@ function generateAlertsFromModules(
     'catheter': 'Urinary Catheter',
     'pressure-area': 'Pressure Area Prevention',
     'iddsi': 'IDDSI & Safe Swallowing',
+    'enteral': 'Enteral Nutrition',
   };
 
   return modules
@@ -240,6 +242,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const [latestCatheterData, setLatestCatheterData] = useState<ModuleAlertData | null>(null);
   const [latestPressureAreaData, setLatestPressureAreaData] = useState<ModuleAlertData | null>(null);
   const [latestIddsiData, setLatestIddsiData] = useState<ModuleAlertData | null>(null);
+  const [latestEnteralData, setLatestEnteralData] = useState<ModuleAlertData | null>(null);
 
   // Enable ALL modules by default for master project development
   const [enabledModules, setEnabledModules] = useState<HealthModule[]>(
@@ -953,6 +956,26 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     } catch (err) { console.error('Error in fetchIddsiStatus:', err); }
   };
 
+  // ── Enteral Nutrition ────────────────────────────────────────
+  const fetchEnteralStatus = async () => {
+    try {
+      const { data: configData } = await supabase.from('enteral_config').select('*').limit(1).maybeSingle();
+      const { data: feedLogs } = await supabase.from('enteral_feed_logs').select('*').order('event_occurred_at', { ascending: false }).limit(100);
+      const { data: stomaChecks } = await supabase.from('enteral_stoma_checks').select('*').order('event_occurred_at', { ascending: false }).limit(10);
+      const { data: medLogs } = await supabase.from('enteral_medication_logs').select('*').order('event_occurred_at', { ascending: false }).limit(50);
+
+      const result = calculateEnteralStatus({
+        config: configData as any,
+        feedLogs: (feedLogs || []) as any,
+        stomaChecks: (stomaChecks || []) as any,
+        medLogs: (medLogs || []) as any,
+      });
+
+      setLatestEnteralData({ status: result.status, message: result.message, timestamp: feedLogs?.[0]?.event_occurred_at || new Date().toISOString() });
+      updateModuleStatus('enteral', result.status, result.lastEntry);
+    } catch (err) { console.error('Error in fetchEnteralStatus:', err); }
+  };
+
   // ══════════════════════════════════════════════════════════════
   // LIFECYCLE: Fetch on mount + realtime subscriptions
   // ══════════════════════════════════════════════════════════════
@@ -972,6 +995,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     fetchCatheterStatus();
     fetchPressureAreaStatus();
     fetchIddsiStatus();
+    fetchEnteralStatus();
 
     // ── Realtime Subscriptions ────────────────────────────────
     const painChannel = supabase.channel('pain-alerts')
@@ -1041,6 +1065,11 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'mealtime_observations' }, () => fetchIddsiStatus())
       .subscribe();
 
+    const enteralChannel = supabase.channel('enteral-alerts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'enteral_feed_logs' }, () => fetchEnteralStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'enteral_stoma_checks' }, () => fetchEnteralStatus())
+      .subscribe();
+
     return () => {
       supabase.removeChannel(painChannel);
       supabase.removeChannel(bowelChannel);
@@ -1058,6 +1087,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       supabase.removeChannel(pressureChannel);
       supabase.removeChannel(skinCheckChannel);
       supabase.removeChannel(mealtimeChannel);
+      supabase.removeChannel(enteralChannel);
     };
   }, []);
 
@@ -1077,6 +1107,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       fetchCatheterStatus();
       fetchPressureAreaStatus();
       fetchIddsiStatus();
+      fetchEnteralStatus();
     }
   }, [profile?.id, profile?.dateOfBirth]);
 
@@ -1132,6 +1163,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     'catheter': latestCatheterData || undefined,
     'pressure-area': latestPressureAreaData || undefined,
     'iddsi': latestIddsiData || undefined,
+    'enteral': latestEnteralData || undefined,
   };
 
   // Calculate global alert state dynamically from module statuses
@@ -1193,6 +1225,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         refreshCatheterStatus: fetchCatheterStatus,
         refreshPressureAreaStatus: fetchPressureAreaStatus,
         refreshIddsiStatus: fetchIddsiStatus,
+        refreshEnteralStatus: fetchEnteralStatus,
         monitoringStatus,
         isMonitoringPaused,
         pauseMonitoring,
