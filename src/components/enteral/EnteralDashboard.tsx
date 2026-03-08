@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertTriangle, Clock, TrendingUp, Settings, Plus, Droplets, Pill, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, Clock, TrendingUp, Settings, Plus, Droplets, Pill, CheckCircle2, Armchair } from 'lucide-react';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { useProfile } from '@/contexts/ProfileContext';
 import { MonitoringPausedBanner } from '@/components/monitoring';
@@ -27,6 +27,7 @@ import { EnteralLevelInfographic } from './EnteralLevelInfographic';
 import { EnteralFeedingSchedule, getScheduleTotals } from './EnteralFeedingSchedule';
 import { EnteralNutritionTips } from './EnteralNutritionTips';
 import { EnteralDailySchedule } from './EnteralDailySchedule';
+import { PositioningCheckPanel } from '@/components/iddsi/PositioningCheckPanel';
 
 interface EnteralDashboardProps {
   clientId?: string;
@@ -39,6 +40,7 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
   const [showFeedForm, setShowFeedForm] = useState(false);
   const [showStomaForm, setShowStomaForm] = useState(false);
   const [showMedForm, setShowMedForm] = useState(false);
+  const [showPositioning, setShowPositioning] = useState(false);
 
   const { data: config } = useEnteralConfig(clientId);
   const { data: feedLogs = [] } = useEnteralFeedLogs(clientId);
@@ -69,6 +71,11 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
   const scheduleTotals = useMemo(() => getScheduleTotals(schedule), [schedule]);
 
   const graceMinutes = config?.grace_window_mins || 60;
+
+  // Sub-views
+  if (showPositioning) {
+    return <PositioningCheckPanel clientId={clientId} onClose={() => setShowPositioning(false)} />;
+  }
 
   return (
     <div className="container py-6 space-y-6">
@@ -197,6 +204,9 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
       <div className="flex gap-2 flex-wrap">
         <Button onClick={() => setShowFeedForm(true)} className="gap-2">
           <Plus className="h-4 w-4" /> Log Feed
+        </Button>
+        <Button variant="outline" onClick={() => setShowPositioning(true)} className="gap-2">
+          <Armchair className="h-4 w-4" /> Check Position
         </Button>
         {showMedSection && (
           <Button variant="outline" onClick={() => setShowMedForm(true)} className="gap-2">
