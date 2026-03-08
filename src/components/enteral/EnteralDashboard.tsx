@@ -174,7 +174,7 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
         <EnteralLevelInfographic
           type="flush"
           currentMl={statusResult.todayFlushVolume + statusResult.todayMedFlushVolume}
-          targetMl={scheduleTotals.flushTotal || config?.prescribed_flush_ml || 500}
+          targetMl={scheduleTotals.flushTotal || 500}
         />
       </div>
 
