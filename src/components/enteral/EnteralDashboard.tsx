@@ -40,6 +40,7 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
   const [showFeedForm, setShowFeedForm] = useState(false);
   const [showStomaForm, setShowStomaForm] = useState(false);
   const [showMedForm, setShowMedForm] = useState(false);
+  const [showPositioning, setShowPositioning] = useState(false);
 
   const { data: config } = useEnteralConfig(clientId);
   const { data: feedLogs = [] } = useEnteralFeedLogs(clientId);
