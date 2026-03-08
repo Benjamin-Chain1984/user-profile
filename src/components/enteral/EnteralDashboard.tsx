@@ -140,8 +140,7 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
             </p>
           </CardContent>
         </Card>
-
-
+      </div>
 
       {/* Infographics - Formula & Flush Level */}
       <div className="grid grid-cols-2 gap-4">
