@@ -34,14 +34,7 @@ export function EnteralFeedLogForm({ clientId, config, open, onOpenChange }: Ent
   );
   const [method, setMethod] = useState(config?.feeding_type || '');
   const [notes, setNotes] = useState('');
-  const [positionAngle, setPositionAngle] = useState('');
   const [positionConfirmed, setPositionConfirmed] = useState(false);
-  const [overrideReason, setOverrideReason] = useState('');
-
-  const minAngle = config?.position_angle_min ?? 30;
-  const angleNum = positionAngle ? parseInt(positionAngle) : null;
-  const isBelowThreshold = angleNum !== null && angleNum < minAngle;
-  const canProceed = positionConfirmed || (isBelowThreshold && overrideReason.trim());
 
   const resetForm = () => {
     setScheduledTime('');
