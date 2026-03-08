@@ -141,17 +141,6 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-              <Droplets className="h-3 w-3" /> Feed Volume
-            </div>
-            <div className="text-lg font-bold">{statusResult.todayFeedVolume}ml</div>
-            <p className="text-xs text-muted-foreground">
-              of {scheduleTotals.formulaTotal || config?.prescribed_volume_ml || '—'}ml prescribed
-            </p>
-          </CardContent>
-        </Card>
 
         <Card>
           <CardContent className="p-4">
