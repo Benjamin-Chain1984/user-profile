@@ -2181,6 +2181,7 @@ export type Database = {
           enable_stoma_checks: boolean
           escalation_recipients: string[]
           feed_schedule_times: string[]
+          feeding_schedule: Json | null
           feeding_type: string | null
           flush_after_feed_ml: number | null
           flush_after_med_ml: number | null
@@ -2216,6 +2217,7 @@ export type Database = {
           enable_stoma_checks?: boolean
           escalation_recipients?: string[]
           feed_schedule_times?: string[]
+          feeding_schedule?: Json | null
           feeding_type?: string | null
           flush_after_feed_ml?: number | null
           flush_after_med_ml?: number | null
@@ -2251,6 +2253,7 @@ export type Database = {
           enable_stoma_checks?: boolean
           escalation_recipients?: string[]
           feed_schedule_times?: string[]
+          feeding_schedule?: Json | null
           feeding_type?: string | null
           flush_after_feed_ml?: number | null
           flush_after_med_ml?: number | null
