@@ -395,5 +395,6 @@ export function HealthMonitoringExportReports({ clientId, onClose }: HealthMonit
         </div>
       </CardContent>
     </Card>
+    </div>
   );
 }
