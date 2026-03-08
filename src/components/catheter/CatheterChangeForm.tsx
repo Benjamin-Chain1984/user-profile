@@ -29,6 +29,7 @@ import { useCatheterCarePlan } from '@/hooks/useCatheterCarePlan';
 import {
   CATHETER_TYPES,
   CHANGE_REASONS,
+  normalizeCatheterType,
   type CatheterType,
   type ChangeReason,
 } from '@/types/catheter';
