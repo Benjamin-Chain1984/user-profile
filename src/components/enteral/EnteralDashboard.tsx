@@ -165,20 +165,18 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
       </div>
 
       {/* Infographics - Formula & Flush Level */}
-      {(scheduleTotals.formulaTotal > 0 || scheduleTotals.flushTotal > 0) && (
-        <div className="grid grid-cols-2 gap-4">
-          <EnteralLevelInfographic
-            type="formula"
-            currentMl={statusResult.todayFeedVolume}
-            targetMl={scheduleTotals.formulaTotal || config?.prescribed_volume_ml || 0}
-          />
-          <EnteralLevelInfographic
-            type="flush"
-            currentMl={statusResult.todayFlushVolume + statusResult.todayMedFlushVolume}
-            targetMl={scheduleTotals.flushTotal || 0}
-          />
-        </div>
-      )}
+      <div className="grid grid-cols-2 gap-4">
+        <EnteralLevelInfographic
+          type="formula"
+          currentMl={statusResult.todayFeedVolume}
+          targetMl={scheduleTotals.formulaTotal || config?.prescribed_volume_ml || 1250}
+        />
+        <EnteralLevelInfographic
+          type="flush"
+          currentMl={statusResult.todayFlushVolume + statusResult.todayMedFlushVolume}
+          targetMl={scheduleTotals.flushTotal || 500}
+        />
+      </div>
 
       {/* Secondary tiles row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
