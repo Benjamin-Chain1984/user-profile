@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertTriangle, Clock, TrendingUp, Settings, Plus, Droplets, Pill, Apple, Timer, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, Clock, TrendingUp, Settings, Plus, Droplets, Pill, CheckCircle2 } from 'lucide-react';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { useProfile } from '@/contexts/ProfileContext';
 import { MonitoringPausedBanner } from '@/components/monitoring';
@@ -17,7 +17,7 @@ import { StatusBadge } from '@/components/ideal/StatusBadge';
 import { useEnteralConfig, useEnteralFeedLogs, useEnteralMedicationLogs, useEnteralStomaChecks, useEnteralMedications } from '@/hooks/useEnteral';
 import { calculateEnteralStatus } from '@/utils/enteralStatusCalculator';
 import { tubeRequiresStomaCheck, TUBE_TYPES } from '@/types/enteral';
-import { format } from 'date-fns';
+
 import { EnteralFeedLogForm } from './EnteralFeedLogForm';
 import { EnteralStomaCheckForm } from './EnteralStomaCheckForm';
 import { EnteralMedicationLogForm } from './EnteralMedicationLogForm';
@@ -26,6 +26,7 @@ import { EnteralHistory } from './EnteralHistory';
 import { EnteralLevelInfographic } from './EnteralLevelInfographic';
 import { EnteralFeedingSchedule, getScheduleTotals } from './EnteralFeedingSchedule';
 import { EnteralNutritionTips } from './EnteralNutritionTips';
+import { EnteralDailySchedule } from './EnteralDailySchedule';
 
 interface EnteralDashboardProps {
   clientId?: string;
@@ -67,17 +68,7 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
 
   const scheduleTotals = useMemo(() => getScheduleTotals(schedule), [schedule]);
 
-  // Next feed due
-  const now = new Date();
-  const todayStr = now.toISOString().split('T')[0];
-  const nextFeedTime = useMemo(() => {
-    if (!config?.feed_schedule_times?.length) return null;
-    const upcoming = config.feed_schedule_times
-      .map(t => new Date(`${todayStr}T${t}:00`))
-      .filter(d => d > now)
-      .sort((a, b) => a.getTime() - b.getTime());
-    return upcoming[0] || null;
-  }, [config?.feed_schedule_times, todayStr]);
+  const graceMinutes = config?.grace_window_mins || 60;
 
   return (
     <div className="container py-6 space-y-6">
@@ -118,7 +109,7 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
       </Alert>
 
       {/* Status Overview Tiles */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <Card>
           <CardContent className="p-4">
             <div className="text-xs text-muted-foreground mb-1">Status</div>
@@ -126,21 +117,16 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
             <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{statusResult.message}</p>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-              <Timer className="h-3 w-3" /> Next Feed
-            </div>
-            <div className="text-lg font-bold">
-              {nextFeedTime ? format(nextFeedTime, 'HH:mm') : '—'}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {statusResult.feedsToday}/{statusResult.feedsScheduled} feeds today
-            </p>
-          </CardContent>
-        </Card>
       </div>
+
+      {/* Daily Feeding Schedule */}
+      {schedule.length > 0 && (
+        <EnteralDailySchedule
+          schedule={schedule}
+          feedLogs={feedLogs}
+          graceMinutes={graceMinutes}
+        />
+      )}
 
       {/* Infographics - Formula & Flush Level */}
       <div className="grid grid-cols-2 gap-4">
