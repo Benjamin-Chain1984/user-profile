@@ -18,11 +18,12 @@ import { cn } from '@/lib/utils';
 
 interface HealthMonitoringExportReportsProps {
   clientId?: string;
+  onClose?: () => void;
 }
 
 type DatePreset = 'last7' | 'last30' | 'thisMonth' | 'lastMonth' | 'thisYear' | 'custom';
 
-export function HealthMonitoringExportReports({ clientId }: HealthMonitoringExportReportsProps) {
+export function HealthMonitoringExportReports({ clientId, onClose }: HealthMonitoringExportReportsProps) {
   const { toast } = useToast();
   const { entries } = useVitalSignEntries(clientId, 1000);
   const { config } = useVitalSignConfig(clientId);
