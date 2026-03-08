@@ -144,7 +144,7 @@ export function HealthMonitoringDashboard({ clientId }: HealthMonitoringDashboar
 
       {/* Tabs */}
       <Tabs defaultValue="tracking" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
+        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
           <TabsTrigger value="tracking" className="gap-2">
             <Clock className="h-4 w-4" />
             <span className="hidden sm:inline">Tracking</span>
@@ -152,10 +152,6 @@ export function HealthMonitoringDashboard({ clientId }: HealthMonitoringDashboar
           <TabsTrigger value="trends" className="gap-2">
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">Trends</span>
-          </TabsTrigger>
-          <TabsTrigger value="reports" className="gap-2">
-            <FileDown className="h-4 w-4" />
-            <span className="hidden sm:inline">Reports</span>
           </TabsTrigger>
           <RoleTabsTrigger
             value="settings"
@@ -171,10 +167,6 @@ export function HealthMonitoringDashboard({ clientId }: HealthMonitoringDashboar
 
         <TabsContent value="trends">
           <HealthMonitoringTrends clientId={clientId} />
-        </TabsContent>
-
-        <TabsContent value="reports">
-          <HealthMonitoringExportReports clientId={clientId} />
         </TabsContent>
 
         {isAdmin && (
