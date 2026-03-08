@@ -17,7 +17,7 @@ import { StatusBadge } from '@/components/ideal/StatusBadge';
 import { useEnteralConfig, useEnteralFeedLogs, useEnteralMedicationLogs, useEnteralStomaChecks, useEnteralMedications } from '@/hooks/useEnteral';
 import { calculateEnteralStatus } from '@/utils/enteralStatusCalculator';
 import { tubeRequiresStomaCheck, TUBE_TYPES } from '@/types/enteral';
-import { format } from 'date-fns';
+
 import { EnteralFeedLogForm } from './EnteralFeedLogForm';
 import { EnteralStomaCheckForm } from './EnteralStomaCheckForm';
 import { EnteralMedicationLogForm } from './EnteralMedicationLogForm';
