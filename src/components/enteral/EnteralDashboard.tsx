@@ -27,6 +27,7 @@ import { EnteralLevelInfographic } from './EnteralLevelInfographic';
 import { EnteralFeedingSchedule, getScheduleTotals } from './EnteralFeedingSchedule';
 import { EnteralNutritionTips } from './EnteralNutritionTips';
 import { EnteralDailySchedule } from './EnteralDailySchedule';
+import { PositioningCheckPanel } from '@/components/iddsi/PositioningCheckPanel';
 
 interface EnteralDashboardProps {
   clientId?: string;
