@@ -88,6 +88,11 @@ export function HealthMonitoringDashboard({ clientId }: HealthMonitoringDashboar
     setShowLogForm(true);
   };
 
+  // Show export view
+  if (showExport) {
+    return <HealthMonitoringExportReports clientId={clientId} onClose={() => setShowExport(false)} />;
+  }
+
   return (
     <div className="space-y-6">
       {/* Header Actions */}
@@ -102,6 +107,10 @@ export function HealthMonitoringDashboard({ clientId }: HealthMonitoringDashboar
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowExport(true)}>
+            <FileDown className="h-4 w-4 mr-2" />
+            Export
+          </Button>
           <Button onClick={handleOpenLogForm} disabled={isMonitoringPaused}>
             <Plus className="h-4 w-4 mr-2" />
             Record Vital Signs
