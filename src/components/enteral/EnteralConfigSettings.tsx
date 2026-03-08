@@ -290,12 +290,19 @@ export function EnteralConfigSettings({ clientId }: EnteralConfigSettingsProps) 
               <Label>Apply positioning requirement during medication administration</Label>
             </div>
 
-            {/* Schedule */}
-            <div className="space-y-2">
-              <Label>Feed Schedule Times (comma-separated)</Label>
-              <Input value={scheduleTimesStr} onChange={e => setScheduleTimesStr(e.target.value)} placeholder="06:00,10:00,14:00,18:00,22:00,02:00" />
-              <p className="text-xs text-muted-foreground">Editable list of 24-hour times</p>
-            </div>
+          </CardContent>
+        </Card>
+
+        {/* Feeding Schedule */}
+        <EnteralFeedingSchedule
+          schedule={feedingSchedule}
+          onChange={setFeedingSchedule}
+        />
+
+        {/* Compliance Thresholds */}
+        <Card>
+          <CardHeader><CardTitle className="text-lg">Compliance Thresholds</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Grace Window (mins)</Label>
