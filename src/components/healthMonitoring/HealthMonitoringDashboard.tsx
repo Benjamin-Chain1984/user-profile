@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { VitalTilesDashboard } from './VitalTilesDashboard';
 import { VitalEntryFormEnhanced } from './VitalEntryFormEnhanced';
+import { VitalCheckComplianceCard } from './VitalCheckComplianceCard';
 import { HealthMonitoringHistory } from './HealthMonitoringHistory';
 import { HealthMonitoringTrends } from './HealthMonitoringTrends';
 import { HealthMonitoringConfigSettings } from './HealthMonitoringConfigSettings';
@@ -126,6 +127,9 @@ export function HealthMonitoringDashboard({ clientId }: HealthMonitoringDashboar
         clientId={clientId} 
         onVitalClick={handleVitalClick}
       />
+
+      {/* Today's Vital Check Compliance */}
+      <VitalCheckComplianceCard clientId={clientId} />
 
 
       {/* Tabs */}
