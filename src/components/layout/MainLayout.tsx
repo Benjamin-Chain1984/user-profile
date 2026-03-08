@@ -15,9 +15,9 @@ interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full flex-col">
+      <div className="h-screen overflow-hidden flex w-full flex-col">
         <PreviewBanner />
-        <div className="flex flex-1">
+        <div className="flex flex-1 min-h-0">
           <AppSidebar />
         <div className="flex-1 flex flex-col min-h-0">
             <header className="h-14 flex-shrink-0 flex items-center justify-between border-b border-border px-4 bg-card gap-3">
