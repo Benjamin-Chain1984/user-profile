@@ -18,11 +18,12 @@ import { cn } from '@/lib/utils';
 
 interface HealthMonitoringExportReportsProps {
   clientId?: string;
+  onClose?: () => void;
 }
 
 type DatePreset = 'last7' | 'last30' | 'thisMonth' | 'lastMonth' | 'thisYear' | 'custom';
 
-export function HealthMonitoringExportReports({ clientId }: HealthMonitoringExportReportsProps) {
+export function HealthMonitoringExportReports({ clientId, onClose }: HealthMonitoringExportReportsProps) {
   const { toast } = useToast();
   const { entries } = useVitalSignEntries(clientId, 1000);
   const { config } = useVitalSignConfig(clientId);
@@ -275,6 +276,12 @@ export function HealthMonitoringExportReports({ clientId }: HealthMonitoringExpo
   };
 
   return (
+    <div className="space-y-6">
+      {onClose && (
+        <Button variant="ghost" onClick={onClose} className="gap-2">
+          ← Back to Health Monitoring
+        </Button>
+      )}
     <Card>
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
@@ -388,5 +395,6 @@ export function HealthMonitoringExportReports({ clientId }: HealthMonitoringExpo
         </div>
       </CardContent>
     </Card>
+    </div>
   );
 }

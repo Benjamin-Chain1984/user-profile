@@ -58,6 +58,7 @@ const MONITORING_TIPS = [
 
 export function HealthMonitoringDashboard({ clientId }: HealthMonitoringDashboardProps) {
   const [showLogForm, setShowLogForm] = useState(false);
+  const [showExport, setShowExport] = useState(false);
   const [selectedVitalType, setSelectedVitalType] = useState<VitalType | undefined>(undefined);
   const [activeEmergencyAlert, setActiveEmergencyAlert] = useState<VitalSignAlert | null>(null);
   const statusInfo = useHealthMonitoringStatus(clientId);
@@ -87,6 +88,11 @@ export function HealthMonitoringDashboard({ clientId }: HealthMonitoringDashboar
     setShowLogForm(true);
   };
 
+  // Show export view
+  if (showExport) {
+    return <HealthMonitoringExportReports clientId={clientId} onClose={() => setShowExport(false)} />;
+  }
+
   return (
     <div className="space-y-6">
       {/* Header Actions */}
@@ -101,6 +107,10 @@ export function HealthMonitoringDashboard({ clientId }: HealthMonitoringDashboar
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowExport(true)}>
+            <FileDown className="h-4 w-4 mr-2" />
+            Export
+          </Button>
           <Button onClick={handleOpenLogForm} disabled={isMonitoringPaused}>
             <Plus className="h-4 w-4 mr-2" />
             Record Vital Signs
@@ -134,7 +144,7 @@ export function HealthMonitoringDashboard({ clientId }: HealthMonitoringDashboar
 
       {/* Tabs */}
       <Tabs defaultValue="tracking" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
+        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
           <TabsTrigger value="tracking" className="gap-2">
             <Clock className="h-4 w-4" />
             <span className="hidden sm:inline">Tracking</span>
@@ -142,10 +152,6 @@ export function HealthMonitoringDashboard({ clientId }: HealthMonitoringDashboar
           <TabsTrigger value="trends" className="gap-2">
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">Trends</span>
-          </TabsTrigger>
-          <TabsTrigger value="reports" className="gap-2">
-            <FileDown className="h-4 w-4" />
-            <span className="hidden sm:inline">Reports</span>
           </TabsTrigger>
           <RoleTabsTrigger
             value="settings"
@@ -161,10 +167,6 @@ export function HealthMonitoringDashboard({ clientId }: HealthMonitoringDashboar
 
         <TabsContent value="trends">
           <HealthMonitoringTrends clientId={clientId} />
-        </TabsContent>
-
-        <TabsContent value="reports">
-          <HealthMonitoringExportReports clientId={clientId} />
         </TabsContent>
 
         {isAdmin && (
