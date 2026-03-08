@@ -15,7 +15,8 @@ import { Plus, Trash2, Save } from 'lucide-react';
 import { RestrictedSection } from '@/components/ui/restricted-section';
 import { ModuleDisclaimer } from '@/components/module/ModuleDisclaimer';
 import { useEnteralConfig, useSaveEnteralConfig, useEnteralMedications, useSaveEnteralMedication } from '@/hooks/useEnteral';
-import { TUBE_TYPES, FORMULA_OPTIONS, FEEDING_TYPES, type TubeType, type FeedingType } from '@/types/enteral';
+import { TUBE_TYPES, FORMULA_OPTIONS, FEEDING_TYPES, type TubeType, type FeedingType, type FeedingScheduleEntry } from '@/types/enteral';
+import { EnteralFeedingSchedule, DEFAULT_SCHEDULE } from './EnteralFeedingSchedule';
 
 interface EnteralConfigSettingsProps {
   clientId?: string;
@@ -48,6 +49,7 @@ export function EnteralConfigSettings({ clientId }: EnteralConfigSettingsProps) 
   const [positionMaintain, setPositionMaintain] = useState('30');
   const [applyPositionToMed, setApplyPositionToMed] = useState(false);
   const [scheduleTimesStr, setScheduleTimesStr] = useState('06:00,10:00,14:00,18:00,22:00,02:00');
+  const [feedingSchedule, setFeedingSchedule] = useState<FeedingScheduleEntry[]>([]);
   const [graceWindow, setGraceWindow] = useState('60');
   const [missedFeedThreshold, setMissedFeedThreshold] = useState('2');
   const [enableMedication, setEnableMedication] = useState(false);
