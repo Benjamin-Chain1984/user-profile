@@ -36,15 +36,33 @@ export function useSaveEnteralConfig(clientId?: string) {
 
   return useMutation({
     mutationFn: async (config: Partial<EnteralConfig>) => {
+      // Check for existing config first (NULL client_id can't use onConflict)
+      let query = supabase.from('enteral_config').select('id');
+      if (clientId) {
+        query = query.eq('client_id', clientId);
+      } else {
+        query = query.is('client_id', null);
+      }
+      const { data: existing } = await query.limit(1).maybeSingle();
+
       const payload = {
         ...config,
         client_id: clientId || null,
         updated_by: user?.id || null,
       };
-      const { error } = await supabase
-        .from('enteral_config')
-        .upsert(payload as any, { onConflict: 'client_id' });
-      if (error) throw error;
+
+      if (existing?.id) {
+        const { error } = await supabase
+          .from('enteral_config')
+          .update(payload as any)
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('enteral_config')
+          .insert(payload as any);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['enteral-config'] });
