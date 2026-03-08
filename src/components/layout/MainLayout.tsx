@@ -19,8 +19,8 @@ export function MainLayout({ children }: MainLayoutProps) {
         <PreviewBanner />
         <div className="flex flex-1">
           <AppSidebar />
-          <div className="flex-1 flex flex-col">
-            <header className="h-14 flex items-center justify-between border-b border-border px-4 bg-card gap-3">
+        <div className="flex-1 flex flex-col min-h-0">
+            <header className="h-14 flex-shrink-0 flex items-center justify-between border-b border-border px-4 bg-card gap-3">
               <div className="flex items-center gap-3">
                 <SidebarTrigger />
                 <img 
@@ -31,7 +31,7 @@ export function MainLayout({ children }: MainLayoutProps) {
               </div>
               <ViewAsToggle />
             </header>
-            <main className="flex-1">{children}</main>
+            <main className="flex-1 overflow-y-auto">{children}</main>
           </div>
         </div>
       </div>
