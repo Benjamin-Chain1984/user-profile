@@ -46,7 +46,7 @@ export function CatheterChangeForm({ clientId, open, onOpenChange }: CatheterCha
   const { addChange } = useCatheterChanges(clientId);
 
   // Derive catheter details from plan (read-only)
-  const planCatheterType = (plan?.catheter_type as CatheterType) || 'idc';
+  const planCatheterType = normalizeCatheterType(plan?.catheter_type) || 'idc';
   const planCatheterSize = plan?.catheter_size_fr || '';
   const catheterTypeLabel = CATHETER_TYPES.find(t => t.value === planCatheterType)?.label || planCatheterType;
 
