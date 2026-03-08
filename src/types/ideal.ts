@@ -83,6 +83,7 @@ export const HEALTH_MONITORING_VITALS = [
 export const MONITORING_FREQUENCIES = [
   { value: 'daily', label: 'Daily', hours: 24 },
   { value: 'twice_daily', label: 'Twice Daily', hours: 12 },
+  { value: 'three_times_daily', label: 'Three Times Daily', hours: 8 },
   { value: 'weekly', label: 'Weekly', hours: 168 },
   { value: 'monthly', label: 'Monthly', hours: 720 },
   { value: 'as_needed', label: 'As Needed', hours: null },
