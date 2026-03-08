@@ -58,6 +58,7 @@ const MONITORING_TIPS = [
 
 export function HealthMonitoringDashboard({ clientId }: HealthMonitoringDashboardProps) {
   const [showLogForm, setShowLogForm] = useState(false);
+  const [showExport, setShowExport] = useState(false);
   const [selectedVitalType, setSelectedVitalType] = useState<VitalType | undefined>(undefined);
   const [activeEmergencyAlert, setActiveEmergencyAlert] = useState<VitalSignAlert | null>(null);
   const statusInfo = useHealthMonitoringStatus(clientId);
