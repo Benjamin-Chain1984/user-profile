@@ -85,6 +85,11 @@ export function EnteralConfigSettings({ clientId }: EnteralConfigSettingsProps) 
       setPositionMaintain(String(config.position_maintain_mins));
       setApplyPositionToMed(config.apply_position_to_medication);
       setScheduleTimesStr(config.feed_schedule_times?.join(',') || '');
+      setFeedingSchedule(
+        Array.isArray(config.feeding_schedule) && config.feeding_schedule.length > 0
+          ? config.feeding_schedule
+          : []
+      );
       setGraceWindow(String(config.grace_window_mins));
       setMissedFeedThreshold(String(config.missed_feed_red_threshold));
       setEnableMedication(config.enable_medication_logging);
