@@ -163,6 +163,46 @@ export function HealthMonitoringDashboard({ clientId }: HealthMonitoringDashboar
 
         <TabsContent value="tracking" className="space-y-4">
           <HealthMonitoringHistory clientId={clientId} />
+
+          {/* When to Seek Medical Advice */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-red-500" />
+                When to Seek Medical Advice
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="grid sm:grid-cols-2 gap-2">
+                {CLINICAL_WARNINGS.map((warning, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <span className="text-red-500 mt-1">•</span>
+                    <span className="text-sm text-muted-foreground">{warning}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+
+          {/* Monitoring Tips */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Heart className="h-5 w-5 text-green-500" />
+                Good Monitoring Practice
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {MONITORING_TIPS.map((tip, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <span className="text-green-500 mt-1">✓</span>
+                    <span className="text-sm text-muted-foreground">{tip}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="trends">
