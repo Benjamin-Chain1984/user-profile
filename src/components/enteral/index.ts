@@ -4,3 +4,6 @@ export { EnteralFeedLogForm } from './EnteralFeedLogForm';
 export { EnteralStomaCheckForm } from './EnteralStomaCheckForm';
 export { EnteralMedicationLogForm } from './EnteralMedicationLogForm';
 export { EnteralHistory } from './EnteralHistory';
+export { EnteralLevelInfographic } from './EnteralLevelInfographic';
+export { EnteralFeedingSchedule } from './EnteralFeedingSchedule';
+export { EnteralNutritionTips } from './EnteralNutritionTips';

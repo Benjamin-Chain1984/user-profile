@@ -1,0 +1,1 @@
+ALTER TABLE public.enteral_config ADD COLUMN IF NOT EXISTS feeding_schedule JSONB DEFAULT '[]'::jsonb;

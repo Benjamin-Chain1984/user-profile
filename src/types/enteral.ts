@@ -29,10 +29,18 @@ export type EnteralStomaPainLevel = 'none' | 'mild' | 'moderate' | 'severe';
 export type EnteralStomaStatusLevel = 'green' | 'amber' | 'red';
 export type EnteralEscalationType = 'rn' | 'gp' | 'monitoring' | 'other';
 
+export interface FeedingScheduleEntry {
+  id: string;
+  time: string;
+  activity: 'water_flush' | 'formula_feed';
+  amount_ml: number;
+}
+
 export interface EnteralConfig {
   id: string;
   client_id: string | null;
   nil_by_mouth: boolean;
+  feeding_schedule: FeedingScheduleEntry[];
   tube_type: TubeType | null;
   tube_size_fr: string | null;
   tube_inserted_date: string | null;

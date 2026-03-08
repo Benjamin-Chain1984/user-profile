@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertTriangle, Clock, TrendingUp, Settings, Plus, FileDown, Droplets, Pill, Apple, Timer, CheckCircle2, AlertCircle, Circle } from 'lucide-react';
+import { AlertTriangle, Clock, TrendingUp, Settings, Plus, Droplets, Pill, Apple, Timer, CheckCircle2 } from 'lucide-react';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { useProfile } from '@/contexts/ProfileContext';
 import { MonitoringPausedBanner } from '@/components/monitoring';
@@ -17,12 +17,15 @@ import { StatusBadge } from '@/components/ideal/StatusBadge';
 import { useEnteralConfig, useEnteralFeedLogs, useEnteralMedicationLogs, useEnteralStomaChecks, useEnteralMedications } from '@/hooks/useEnteral';
 import { calculateEnteralStatus } from '@/utils/enteralStatusCalculator';
 import { tubeRequiresStomaCheck, TUBE_TYPES } from '@/types/enteral';
-import { differenceInDays, differenceInHours, parseISO, formatDistanceToNow, format, isToday } from 'date-fns';
+import { format } from 'date-fns';
 import { EnteralFeedLogForm } from './EnteralFeedLogForm';
 import { EnteralStomaCheckForm } from './EnteralStomaCheckForm';
 import { EnteralMedicationLogForm } from './EnteralMedicationLogForm';
 import { EnteralConfigSettings } from './EnteralConfigSettings';
 import { EnteralHistory } from './EnteralHistory';
+import { EnteralLevelInfographic } from './EnteralLevelInfographic';
+import { EnteralFeedingSchedule, getScheduleTotals } from './EnteralFeedingSchedule';
+import { EnteralNutritionTips } from './EnteralNutritionTips';
 
 interface EnteralDashboardProps {
   clientId?: string;
@@ -53,6 +56,16 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
   const showMedSection = config?.enable_medication_logging && medications.length > 0;
 
   const tubeLabel = TUBE_TYPES.find(t => t.value === config?.tube_type)?.label || config?.tube_type || 'Not configured';
+
+  // Schedule-based targets
+  const schedule = useMemo(() => {
+    if (Array.isArray(config?.feeding_schedule) && config.feeding_schedule.length > 0) {
+      return config.feeding_schedule;
+    }
+    return [];
+  }, [config?.feeding_schedule]);
+
+  const scheduleTotals = useMemo(() => getScheduleTotals(schedule), [schedule]);
 
   // Next feed due
   const now = new Date();
@@ -106,7 +119,6 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
 
       {/* Status Overview Tiles */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* Current Status */}
         <Card>
           <CardContent className="p-4">
             <div className="text-xs text-muted-foreground mb-1">Status</div>
@@ -115,7 +127,6 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
           </CardContent>
         </Card>
 
-        {/* Next Feed */}
         <Card>
           <CardContent className="p-4">
             <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
@@ -130,7 +141,6 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
           </CardContent>
         </Card>
 
-        {/* Today's Volume */}
         <Card>
           <CardContent className="p-4">
             <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
@@ -138,12 +148,11 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
             </div>
             <div className="text-lg font-bold">{statusResult.todayFeedVolume}ml</div>
             <p className="text-xs text-muted-foreground">
-              of {config?.prescribed_volume_ml || '—'}ml prescribed
+              of {scheduleTotals.formulaTotal || config?.prescribed_volume_ml || '—'}ml prescribed
             </p>
           </CardContent>
         </Card>
 
-        {/* Total Enteral Fluid */}
         <Card>
           <CardContent className="p-4">
             <div className="text-xs text-muted-foreground mb-1">Total Enteral Fluid</div>
@@ -155,9 +164,24 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
         </Card>
       </div>
 
+      {/* Infographics - Formula & Flush Level */}
+      {(scheduleTotals.formulaTotal > 0 || scheduleTotals.flushTotal > 0) && (
+        <div className="grid grid-cols-2 gap-4">
+          <EnteralLevelInfographic
+            type="formula"
+            currentMl={statusResult.todayFeedVolume}
+            targetMl={scheduleTotals.formulaTotal || config?.prescribed_volume_ml || 0}
+          />
+          <EnteralLevelInfographic
+            type="flush"
+            currentMl={statusResult.todayFlushVolume + statusResult.todayMedFlushVolume}
+            targetMl={scheduleTotals.flushTotal || 0}
+          />
+        </div>
+      )}
+
       {/* Secondary tiles row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* Tube Change */}
         <Card>
           <CardContent className="p-4">
             <div className="text-xs text-muted-foreground mb-1">Tube Change</div>
@@ -174,7 +198,6 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
           </CardContent>
         </Card>
 
-        {/* Flush Today */}
         <Card>
           <CardContent className="p-4">
             <div className="text-xs text-muted-foreground mb-1">Flush Today</div>
@@ -183,7 +206,6 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
           </CardContent>
         </Card>
 
-        {/* Medication Flush */}
         {showMedSection && (
           <Card>
             <CardContent className="p-4">
@@ -196,7 +218,6 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
           </Card>
         )}
 
-        {/* Missed Feeds */}
         {statusResult.missedFeeds > 0 && (
           <Card className={statusResult.status === 'action' ? 'border-destructive/50' : 'border-warning/50'}>
             <CardContent className="p-4">
@@ -246,8 +267,16 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
           />
         </TabsList>
 
-        <TabsContent value="tracking">
+        <TabsContent value="tracking" className="space-y-4">
+          {/* Read-only schedule viewer */}
+          {schedule.length > 0 && (
+            <EnteralFeedingSchedule schedule={schedule} readOnly />
+          )}
+
           <EnteralHistory clientId={clientId} />
+
+          {/* Tips section */}
+          <EnteralNutritionTips />
         </TabsContent>
 
         <TabsContent value="trends">

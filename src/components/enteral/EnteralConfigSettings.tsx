@@ -15,7 +15,8 @@ import { Plus, Trash2, Save } from 'lucide-react';
 import { RestrictedSection } from '@/components/ui/restricted-section';
 import { ModuleDisclaimer } from '@/components/module/ModuleDisclaimer';
 import { useEnteralConfig, useSaveEnteralConfig, useEnteralMedications, useSaveEnteralMedication } from '@/hooks/useEnteral';
-import { TUBE_TYPES, FORMULA_OPTIONS, FEEDING_TYPES, type TubeType, type FeedingType } from '@/types/enteral';
+import { TUBE_TYPES, FORMULA_OPTIONS, FEEDING_TYPES, type TubeType, type FeedingType, type FeedingScheduleEntry } from '@/types/enteral';
+import { EnteralFeedingSchedule, DEFAULT_SCHEDULE } from './EnteralFeedingSchedule';
 
 interface EnteralConfigSettingsProps {
   clientId?: string;
@@ -48,6 +49,7 @@ export function EnteralConfigSettings({ clientId }: EnteralConfigSettingsProps) 
   const [positionMaintain, setPositionMaintain] = useState('30');
   const [applyPositionToMed, setApplyPositionToMed] = useState(false);
   const [scheduleTimesStr, setScheduleTimesStr] = useState('06:00,10:00,14:00,18:00,22:00,02:00');
+  const [feedingSchedule, setFeedingSchedule] = useState<FeedingScheduleEntry[]>([]);
   const [graceWindow, setGraceWindow] = useState('60');
   const [missedFeedThreshold, setMissedFeedThreshold] = useState('2');
   const [enableMedication, setEnableMedication] = useState(false);
@@ -83,6 +85,11 @@ export function EnteralConfigSettings({ clientId }: EnteralConfigSettingsProps) 
       setPositionMaintain(String(config.position_maintain_mins));
       setApplyPositionToMed(config.apply_position_to_medication);
       setScheduleTimesStr(config.feed_schedule_times?.join(',') || '');
+      setFeedingSchedule(
+        Array.isArray(config.feeding_schedule) && config.feeding_schedule.length > 0
+          ? config.feeding_schedule
+          : []
+      );
       setGraceWindow(String(config.grace_window_mins));
       setMissedFeedThreshold(String(config.missed_feed_red_threshold));
       setEnableMedication(config.enable_medication_logging);
@@ -111,7 +118,10 @@ export function EnteralConfigSettings({ clientId }: EnteralConfigSettingsProps) 
       position_angle_min: parseInt(positionAngle) || 30,
       position_maintain_mins: parseInt(positionMaintain) || 30,
       apply_position_to_medication: applyPositionToMed,
-      feed_schedule_times: scheduleTimesStr.split(',').map(s => s.trim()).filter(Boolean),
+      feed_schedule_times: feedingSchedule
+        .filter(e => e.activity === 'formula_feed')
+        .map(e => e.time),
+      feeding_schedule: feedingSchedule,
       grace_window_mins: parseInt(graceWindow) || 60,
       missed_feed_red_threshold: parseInt(missedFeedThreshold) || 2,
       enable_medication_logging: enableMedication,
@@ -280,12 +290,19 @@ export function EnteralConfigSettings({ clientId }: EnteralConfigSettingsProps) 
               <Label>Apply positioning requirement during medication administration</Label>
             </div>
 
-            {/* Schedule */}
-            <div className="space-y-2">
-              <Label>Feed Schedule Times (comma-separated)</Label>
-              <Input value={scheduleTimesStr} onChange={e => setScheduleTimesStr(e.target.value)} placeholder="06:00,10:00,14:00,18:00,22:00,02:00" />
-              <p className="text-xs text-muted-foreground">Editable list of 24-hour times</p>
-            </div>
+          </CardContent>
+        </Card>
+
+        {/* Feeding Schedule */}
+        <EnteralFeedingSchedule
+          schedule={feedingSchedule}
+          onChange={setFeedingSchedule}
+        />
+
+        {/* Compliance Thresholds */}
+        <Card>
+          <CardHeader><CardTitle className="text-lg">Compliance Thresholds</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Grace Window (mins)</Label>
