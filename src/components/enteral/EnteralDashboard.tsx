@@ -26,6 +26,7 @@ import { EnteralHistory } from './EnteralHistory';
 import { EnteralLevelInfographic } from './EnteralLevelInfographic';
 import { EnteralFeedingSchedule, getScheduleTotals } from './EnteralFeedingSchedule';
 import { EnteralNutritionTips } from './EnteralNutritionTips';
+import { EnteralDailySchedule } from './EnteralDailySchedule';
 
 interface EnteralDashboardProps {
   clientId?: string;
@@ -67,17 +68,7 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
 
   const scheduleTotals = useMemo(() => getScheduleTotals(schedule), [schedule]);
 
-  // Next feed due
-  const now = new Date();
-  const todayStr = now.toISOString().split('T')[0];
-  const nextFeedTime = useMemo(() => {
-    if (!config?.feed_schedule_times?.length) return null;
-    const upcoming = config.feed_schedule_times
-      .map(t => new Date(`${todayStr}T${t}:00`))
-      .filter(d => d > now)
-      .sort((a, b) => a.getTime() - b.getTime());
-    return upcoming[0] || null;
-  }, [config?.feed_schedule_times, todayStr]);
+  const graceMinutes = config?.grace_window_mins || 60;
 
   return (
     <div className="container py-6 space-y-6">
@@ -118,7 +109,7 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
       </Alert>
 
       {/* Status Overview Tiles */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <Card>
           <CardContent className="p-4">
             <div className="text-xs text-muted-foreground mb-1">Status</div>
@@ -126,21 +117,6 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
             <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{statusResult.message}</p>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-              <Timer className="h-3 w-3" /> Next Feed
-            </div>
-            <div className="text-lg font-bold">
-              {nextFeedTime ? format(nextFeedTime, 'HH:mm') : '—'}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {statusResult.feedsToday}/{statusResult.feedsScheduled} feeds today
-            </p>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Infographics - Formula & Flush Level */}
       <div className="grid grid-cols-2 gap-4">
