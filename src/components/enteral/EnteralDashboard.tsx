@@ -205,6 +205,9 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
         <Button onClick={() => setShowFeedForm(true)} className="gap-2">
           <Plus className="h-4 w-4" /> Log Feed
         </Button>
+        <Button variant="outline" onClick={() => setShowPositioning(true)} className="gap-2">
+          <Armchair className="h-4 w-4" /> Check Position
+        </Button>
         {showMedSection && (
           <Button variant="outline" onClick={() => setShowMedForm(true)} className="gap-2">
             <Pill className="h-4 w-4" /> Log Medication
