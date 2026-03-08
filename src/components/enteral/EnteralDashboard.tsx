@@ -117,6 +117,16 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
             <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{statusResult.message}</p>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Daily Feeding Schedule */}
+      {schedule.length > 0 && (
+        <EnteralDailySchedule
+          schedule={schedule}
+          feedLogs={feedLogs}
+          graceMinutes={graceMinutes}
+        />
+      )}
 
       {/* Infographics - Formula & Flush Level */}
       <div className="grid grid-cols-2 gap-4">
