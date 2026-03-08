@@ -72,6 +72,11 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
 
   const graceMinutes = config?.grace_window_mins || 60;
 
+  // Sub-views
+  if (showPositioning) {
+    return <PositioningCheckPanel clientId={clientId} onClose={() => setShowPositioning(false)} />;
+  }
+
   return (
     <div className="container py-6 space-y-6">
       {/* Header */}
