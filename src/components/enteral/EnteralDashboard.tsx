@@ -142,16 +142,6 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
         </Card>
 
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-xs text-muted-foreground mb-1">Total Enteral Fluid</div>
-            <div className="text-lg font-bold">{statusResult.todayTotalEnteral}ml</div>
-            <p className="text-xs text-muted-foreground">
-              Feed {statusResult.todayFeedVolume} + Flush {statusResult.todayFlushVolume} + Med {statusResult.todayMedFlushVolume}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Infographics - Formula & Flush Level */}
       <div className="grid grid-cols-2 gap-4">
