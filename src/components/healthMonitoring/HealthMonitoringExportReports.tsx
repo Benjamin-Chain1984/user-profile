@@ -276,6 +276,12 @@ export function HealthMonitoringExportReports({ clientId, onClose }: HealthMonit
   };
 
   return (
+    <div className="space-y-6">
+      {onClose && (
+        <Button variant="ghost" onClick={onClose} className="gap-2">
+          ← Back to Health Monitoring
+        </Button>
+      )}
     <Card>
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
