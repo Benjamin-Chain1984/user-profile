@@ -169,7 +169,7 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
 
         <Card>
           <CardContent className="p-4">
-            <div className="text-xs text-muted-foreground mb-1">Flush Today</div>
+            <div className="text-xs text-muted-foreground mb-1">Flush / Hydration</div>
             <div className="text-lg font-bold">{statusResult.todayFlushVolume}ml</div>
             <p className="text-xs text-muted-foreground">Feed flushes</p>
           </CardContent>
