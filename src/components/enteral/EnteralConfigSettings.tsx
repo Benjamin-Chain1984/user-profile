@@ -252,27 +252,6 @@ export function EnteralConfigSettings({ clientId }: EnteralConfigSettingsProps) 
               </div>
             </div>
 
-            {/* Flush */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Flush Before Feed (mL)</Label>
-                <Input type="number" value={flushBeforeFeed} onChange={e => setFlushBeforeFeed(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>Flush After Feed (mL)</Label>
-                <Input type="number" value={flushAfterFeed} onChange={e => setFlushAfterFeed(e.target.value)} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Flush Before Med (mL)</Label>
-                <Input type="number" value={flushBeforeMed} onChange={e => setFlushBeforeMed(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>Flush After Med (mL)</Label>
-                <Input type="number" value={flushAfterMed} onChange={e => setFlushAfterMed(e.target.value)} />
-              </div>
-            </div>
 
             {/* Position */}
             <div className="grid grid-cols-2 gap-4">
