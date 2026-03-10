@@ -15,6 +15,7 @@ import { PainTrendChart } from './PainTrendChart';
 import { PainConfigSettings } from './PainConfigSettings';
 import { PainQuickStatus } from './PainQuickStatus';
 import { PainExportReports } from './PainExportReports';
+import { PainActiveActionPlan } from './PainActiveActionPlan';
 import { getSeverityLabel, getSeverityColor, ASSESSMENT_FREQUENCY_OPTIONS, AssessmentFrequency } from '@/types/painAssessment';
 import { getPainadSeverityLabel, getPainadSeverityColor } from '@/types/painad';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
