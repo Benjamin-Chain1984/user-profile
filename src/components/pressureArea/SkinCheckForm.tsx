@@ -65,6 +65,8 @@ export function SkinCheckForm({ clientId, open, onOpenChange }: Props) {
 
     setAreaResults({});
     setNotes('');
+    setSelectedScheduledTime('');
+    setNotes('');
     onOpenChange(false);
   };
 
