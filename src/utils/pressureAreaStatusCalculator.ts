@@ -169,37 +169,24 @@ export function calculatePressureAreaStatus(input: StatusInput): PressureAreaSta
     }
   }
 
-  // Compliance check
+  // Compliance info — show score but don't block green when back on schedule.
+  // Status is only escalated by actual overdue/late repositioning or skin findings above.
+  let compliancePercent: number | undefined;
   if (config?.enable_compliance_scoring && events.length > 0) {
     const today = new Date();
     const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const todayEvents = events.filter(e => new Date(e.event_occurred_at) >= todayStart);
     
     if (plan?.interval_minutes && plan.schedule_type !== 'as_required') {
-      const dayMinutes = 16 * 60; // ~16 waking hours
+      const dayMinutes = 16 * 60;
       const expectedCount = Math.floor(dayMinutes / plan.interval_minutes);
-      const compliance = expectedCount > 0 ? Math.round((todayEvents.length / expectedCount) * 100) : 100;
-      
-      if (compliance < 70) {
-        return {
-          status: 'action',
-          message: `Low compliance today: ${compliance}% (${todayEvents.length}/${expectedCount} repositions).`,
-          lastEntry: events[0] ? `${events[0].position_completed} • ${formatDistanceToNow(new Date(events[0].event_occurred_at), { addSuffix: true })}` : 'Not yet logged',
-          compliancePercent: compliance,
-        };
-      }
-      if (compliance < 90) {
-        return {
-          status: 'monitor',
-          message: `Compliance today: ${compliance}% (${todayEvents.length}/${expectedCount} repositions).`,
-          lastEntry: events[0] ? `${events[0].position_completed} • ${formatDistanceToNow(new Date(events[0].event_occurred_at), { addSuffix: true })}` : 'Not yet logged',
-          compliancePercent: compliance,
-        };
+      if (expectedCount > 0) {
+        compliancePercent = Math.round((todayEvents.length / expectedCount) * 100);
       }
     }
   }
 
-  // All clear
+  // All clear — back on track = GREEN
   const latestEntry = events[0] || skinChecks[0];
   return {
     status: 'ideal',
@@ -207,5 +194,6 @@ export function calculatePressureAreaStatus(input: StatusInput): PressureAreaSta
     lastEntry: latestEntry
       ? `${formatDistanceToNow(new Date(latestEntry.event_occurred_at || latestEntry.created_at), { addSuffix: true })}`
       : 'Not yet logged',
+    compliancePercent,
   };
 }
