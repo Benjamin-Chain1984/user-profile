@@ -130,7 +130,49 @@ export function WeightBmiDashboard({ clientId }: WeightBmiDashboardProps) {
         </TabsList>
 
         <TabsContent value="tracking">
-          <WeightHistory clientId={clientId} />
+          <div className="space-y-6">
+            <WeightHistory clientId={clientId} />
+
+            {/* Symptoms to Be Aware Of */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-red-500" />
+                  Symptoms to Be Aware Of and Seek Advice
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="grid sm:grid-cols-2 gap-2">
+                  {SYMPTOMS_TO_WATCH.map((symptom, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <span className="text-red-500 mt-1">•</span>
+                      <span className="text-sm text-muted-foreground">{symptom}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+
+            {/* Healthy Weight Tips */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <HeartPulse className="h-5 w-5 text-green-500" />
+                  Healthy Weight Tips
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {HEALTHY_WEIGHT_TIPS.map((tip, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <span className="text-green-500 mt-1">✓</span>
+                      <span className="text-sm text-muted-foreground">{tip}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="trends">
