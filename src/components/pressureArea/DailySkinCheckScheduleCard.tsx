@@ -153,6 +153,16 @@ export function DailySkinCheckScheduleCard({ clientId, onLogSkinCheck, disabled 
           <p className="text-xs text-muted-foreground">
             Today: {completedCount}/{slots.length} ({compliance}%)
           </p>
+
+          {!allComplete && minutesUntilNext > 0 && (
+            <div className="flex items-center gap-2 text-sm">
+              <Timer className="h-4 w-4 text-primary" />
+              <span className="font-medium">Next due in: <span className={`${
+                minutesUntilNext <= 10 ? 'text-destructive font-bold' :
+                minutesUntilNext <= 30 ? 'text-amber-600 font-bold' : 'text-primary'
+              }`}>{formatCountdown(minutesUntilNext)}</span></span>
+            </div>
+          )}
         </div>
 
         {/* Schedule slots — matches PressureReliefTile row style */}
