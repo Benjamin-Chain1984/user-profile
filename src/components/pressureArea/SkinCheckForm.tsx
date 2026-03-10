@@ -58,6 +58,7 @@ export function SkinCheckForm({ clientId, open, onOpenChange }: Props) {
         overall_status: overallStatus as 'healthy' | 'amber' | 'red',
         notes: notes || null,
         event_occurred_at: new Date().toISOString(),
+        scheduled_time: selectedScheduledTime || null,
       },
       markers,
     });
