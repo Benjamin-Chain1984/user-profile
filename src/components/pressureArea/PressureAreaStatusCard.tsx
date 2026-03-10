@@ -39,12 +39,12 @@ function formatCountdown(totalMinutes: number): string {
 function PressureReliefTile({
   clientId,
   onLog,
-  disabled,
-}: {
-  clientId?: string;
-  onLog: () => void;
-  disabled?: boolean;
-}) {
+  disabled
+
+
+
+
+}: {clientId?: string;onLog: () => void;disabled?: boolean;}) {
   const { plan } = usePressureReliefPlan(clientId);
   const { events } = usePressureReliefEvents(clientId);
   const { config } = usePressureAreaConfig(clientId);
@@ -70,12 +70,12 @@ function PressureReliefTile({
 
     if (!hasPlan || positions.length === 0) {
       return {
-        upcomingSlots: [] as { position: string; dueAt: Date; completed: boolean; completedBy?: string }[],
+        upcomingSlots: [] as {position: string;dueAt: Date;completed: boolean;completedBy?: string;}[],
         minutesUntilNext: 0,
         hasPastDueSlot: false,
-        status: (!plan || plan.status === 'draft') ? 'monitor' as HealthStatus : 'stable' as HealthStatus,
-        statusLabel: (!plan || plan.status === 'draft') ? 'No plan published' : 'On track',
-        detail: null as string | null,
+        status: !plan || plan.status === 'draft' ? 'monitor' as HealthStatus : 'stable' as HealthStatus,
+        statusLabel: !plan || plan.status === 'draft' ? 'No plan published' : 'On track',
+        detail: null as string | null
       };
     }
 
@@ -85,51 +85,51 @@ function PressureReliefTile({
     const todayBase = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startH, startM);
 
     const dayEndStr = plan?.day_schedule_end;
-    const todayEnd = dayEndStr
-      ? (() => {
-          const [endH, endM] = dayEndStr.split(':').map(Number);
-          return new Date(now.getFullYear(), now.getMonth(), now.getDate(), endH, endM);
-        })()
-      : null;
+    const todayEnd = dayEndStr ?
+    (() => {
+      const [endH, endM] = dayEndStr.split(':').map(Number);
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate(), endH, endM);
+    })() :
+    null;
 
-    const isWithinScheduleWindow = todayEnd
-      ? (todayEnd >= todayBase
-          ? now >= todayBase && now <= todayEnd
-          : now >= todayBase || now <= todayEnd)
-      : now >= todayBase;
+    const isWithinScheduleWindow = todayEnd ?
+    todayEnd >= todayBase ?
+    now >= todayBase && now <= todayEnd :
+    now >= todayBase || now <= todayEnd :
+    now >= todayBase;
 
-    const todayEvents = events.filter(e => {
+    const todayEvents = events.filter((e) => {
       const d = new Date(e.event_occurred_at);
       return d.toDateString() === now.toDateString();
     });
 
     // Generate scheduled slots from the plan's rotation sequence for today
-    const slots: { position: string; dueAt: Date; completed: boolean; completedBy?: string }[] = [];
+    const slots: {position: string;dueAt: Date;completed: boolean;completedBy?: string;}[] = [];
     let cumulativeMinutes = 0;
     for (let i = 0; i < positions.length; i++) {
       const dueAt = addMinutes(todayBase, cumulativeMinutes);
-      const matchingEvent = todayEvents.find(e => {
+      const matchingEvent = todayEvents.find((e) => {
         const eventTime = new Date(e.event_occurred_at);
-        return e.position_completed === positions[i].name
-          && Math.abs(differenceInMinutes(eventTime, dueAt)) < intervalMinutes / 2;
+        return e.position_completed === positions[i].name &&
+        Math.abs(differenceInMinutes(eventTime, dueAt)) < intervalMinutes / 2;
       });
       slots.push({
         position: positions[i].name,
         dueAt,
         completed: !!matchingEvent,
-        completedBy: matchingEvent?.completed_by_name || undefined,
+        completedBy: matchingEvent?.completed_by_name || undefined
       });
       cumulativeMinutes += positions[i].target_duration_minutes || intervalMinutes;
     }
 
-        // Show ALL slots for the day so staff can see completed, missed, and upcoming
+    // Show ALL slots for the day so staff can see completed, missed, and upcoming
     const relevantSlots = slots;
 
     // Countdown to next uncompleted slot
-    const nextSlot = relevantSlots.find(s => !s.completed && s.dueAt > now);
-    const lastCompletedIndex = relevantSlots.reduce((lastIdx, slot, idx) => (
-      slot.completed ? idx : lastIdx
-    ), -1);
+    const nextSlot = relevantSlots.find((s) => !s.completed && s.dueAt > now);
+    const lastCompletedIndex = relevantSlots.reduce((lastIdx, slot, idx) =>
+    slot.completed ? idx : lastIdx,
+    -1);
     const pastDueSlot = relevantSlots.find((s, idx) => !s.completed && s.dueAt <= now && idx > lastCompletedIndex);
     minutesUntilNext = nextSlot ? differenceInMinutes(nextSlot.dueAt, now) : 0;
     const hasPastDueSlot = isWithinScheduleWindow && !!pastDueSlot;
@@ -156,11 +156,11 @@ function PressureReliefTile({
     // if the person is NOT currently back on track (i.e. already amber/red)
     if (config?.enable_compliance_scoring && events.length > 0) {
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const todayEvts = events.filter(e => new Date(e.event_occurred_at) >= todayStart);
+      const todayEvts = events.filter((e) => new Date(e.event_occurred_at) >= todayStart);
       const dayMinutes = 16 * 60;
       const expectedCount = Math.floor(dayMinutes / intervalMinutes);
       if (expectedCount > 0) {
-        const compliance = Math.round((todayEvts.length / expectedCount) * 100);
+        const compliance = Math.round(todayEvts.length / expectedCount * 100);
         detail = `Today: ${todayEvts.length}/${expectedCount} (${compliance}%)`;
       }
     }
@@ -182,97 +182,97 @@ function PressureReliefTile({
         {/* Status + Countdown */}
         <div className="space-y-1">
           <div className={`text-lg font-semibold ${
-            status === 'action' ? 'text-destructive' :
-            status === 'monitor' ? 'text-amber-600' : ''
-          }`}>
+          status === 'action' ? 'text-destructive' :
+          status === 'monitor' ? 'text-amber-600' : ''}`
+          }>
             {statusLabel}
           </div>
 
-          {hasPlan && minutesUntilNext > 0 && (
-            <div className="flex items-center gap-2 text-sm">
+          {hasPlan && minutesUntilNext > 0 &&
+          <div className="flex items-center gap-2 text-sm">
               <Timer className="h-4 w-4 text-primary" />
               <span className="font-medium">Next due in: <span className={`${
-                minutesUntilNext <= 10 ? 'text-destructive font-bold' :
-                minutesUntilNext <= 30 ? 'text-amber-600 font-bold' : 'text-primary'
-              }`}>{formatCountdown(minutesUntilNext)}</span></span>
+              minutesUntilNext <= 10 ? 'text-destructive font-bold' :
+              minutesUntilNext <= 30 ? 'text-amber-600 font-bold' : 'text-primary'}`
+              }>{formatCountdown(minutesUntilNext)}</span></span>
             </div>
-          )}
+          }
 
-          {hasPlan && hasPastDueSlot && (
-            <div className="flex items-center gap-2 text-sm text-destructive font-medium">
+          {hasPlan && hasPastDueSlot &&
+          <div className="flex items-center gap-2 text-sm text-destructive font-medium">
               <Timer className="h-4 w-4" />
               <span>Position change due NOW</span>
             </div>
-          )}
+          }
 
-          {latestEvent && (
-            <p className="text-xs text-muted-foreground">
-              Last: {latestEvent.position_completed}
-              {latestEvent.completed_by_name && ` • by ${latestEvent.completed_by_name}`}
-              {' • '}{formatDistanceToNow(new Date(latestEvent.event_occurred_at), { addSuffix: true })}
-            </p>
-          )}
-          {detail && (
-            <p className="text-xs text-muted-foreground">{detail}</p>
-          )}
+          {latestEvent
+
+
+
+
+
+          }
+          {detail &&
+          <p className="text-xs text-muted-foreground">{detail}</p>
+          }
         </div>
 
         {/* Upcoming Positions Schedule */}
-        {hasPlan && upcomingSlots.length > 0 && (
-          <div className="space-y-1.5">
+        {hasPlan && upcomingSlots.length > 0 &&
+        <div className="space-y-1.5">
             <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
               <Clock className="h-3 w-3" /> Today's Schedule
             </p>
             <div className="space-y-1 max-h-[280px] overflow-y-auto">
               {upcomingSlots.map((slot, i) => {
-                const isPast = slot.dueAt <= now && !slot.completed;
-                const isFuture = slot.dueAt > now;
-                return (
-                  <div
-                    key={i}
-                    className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-xs border ${
-                      slot.completed
-                        ? 'bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800'
-                        : isPast
-                        ? 'bg-destructive/5 border-destructive/20'
-                        : 'bg-muted/50 border-border'
-                    }`}
-                  >
-                    {slot.completed ? (
-                      <CheckCircle2 className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
-                    ) : isPast ? (
-                      <AlertCircle className="h-3.5 w-3.5 text-destructive flex-shrink-0" />
-                    ) : (
-                      <div className="h-3.5 w-3.5 rounded-full border-2 flex-shrink-0 border-muted-foreground/40" />
-                    )}
+              const isPast = slot.dueAt <= now && !slot.completed;
+              const isFuture = slot.dueAt > now;
+              return (
+                <div
+                  key={i}
+                  className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-xs border ${
+                  slot.completed ?
+                  'bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800' :
+                  isPast ?
+                  'bg-destructive/5 border-destructive/20' :
+                  'bg-muted/50 border-border'}`
+                  }>
+                  
+                    {slot.completed ?
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-600 flex-shrink-0" /> :
+                  isPast ?
+                  <AlertCircle className="h-3.5 w-3.5 text-destructive flex-shrink-0" /> :
+
+                  <div className="h-3.5 w-3.5 rounded-full border-2 flex-shrink-0 border-muted-foreground/40" />
+                  }
                     <span className={`flex-1 ${slot.completed ? 'line-through text-muted-foreground' : isPast ? 'text-destructive' : ''}`}>
                       {slot.position}
                     </span>
                     <span className={`text-[10px] whitespace-nowrap ${
-                      slot.completed ? 'text-green-600' :
-                      isPast ? 'text-destructive font-medium' : 'text-muted-foreground'
-                    }`}>
-                      {slot.completed
-                        ? `✓${slot.completedBy ? ` ${slot.completedBy}` : ''}`
-                        : isPast
-                        ? `Missed ${slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                        : slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                      }
+                  slot.completed ? 'text-green-600' :
+                  isPast ? 'text-destructive font-medium' : 'text-muted-foreground'}`
+                  }>
+                      {slot.completed ?
+                    `✓${slot.completedBy ? ` ${slot.completedBy}` : ''}` :
+                    isPast ?
+                    `Missed ${slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` :
+                    slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    }
                     </span>
-                  </div>
-                );
-              })}
+                  </div>);
+
+            })}
             </div>
           </div>
-        )}
+        }
 
         <Button onClick={onLog} className="w-full gap-2" size="sm" disabled={disabled}>
           <RotateCcw className="h-4 w-4" />
           Log Pressure Relief
         </Button>
       </CardContent>
-    </Card>
-  );
+    </Card>);
+
 }
 
 /* ──────────────────────────────────────────────
@@ -281,12 +281,12 @@ function PressureReliefTile({
 function SkinCheckTile({
   clientId,
   onLog,
-  disabled,
-}: {
-  clientId?: string;
-  onLog: () => void;
-  disabled?: boolean;
-}) {
+  disabled
+
+
+
+
+}: {clientId?: string;onLog: () => void;disabled?: boolean;}) {
   const { sessions } = useSkinChecks(clientId);
   const { config } = usePressureAreaConfig(clientId);
   const { plan } = usePressureReliefPlan(clientId);
@@ -305,7 +305,7 @@ function SkinCheckTile({
     let unresolvedRed = 0;
     let unresolvedAmber = 0;
 
-    for (const session of sessions as Array<SkinCheckSession & { skin_finding_markers?: Array<{ location: string; finding_type: string; severity: string }> }>) {
+    for (const session of sessions as Array<SkinCheckSession & {skin_finding_markers?: Array<{location: string;finding_type: string;severity: string;}>;}>) {
       const markers = session.skin_finding_markers || [];
       for (const marker of markers) {
         if (resolvedAreas.has(marker.location)) continue;
@@ -323,7 +323,7 @@ function SkinCheckTile({
     return {
       hasUnresolvedRed: unresolvedRed > 0,
       hasUnresolvedAmber: unresolvedAmber > 0,
-      unresolvedCount: unresolvedRed + unresolvedAmber,
+      unresolvedCount: unresolvedRed + unresolvedAmber
     };
   }, [sessions]);
 
@@ -336,10 +336,10 @@ function SkinCheckTile({
       if (s?.enabled) {
         enabled = true;
         switch (s.frequency) {
-          case 'twice_daily': total += 2; break;
-          case 'three_times_daily': total += 3; break;
-          case 'custom': total += (s.custom_times_per_day || 1); break;
-          default: total += 1; break; // daily
+          case 'twice_daily':total += 2;break;
+          case 'three_times_daily':total += 3;break;
+          case 'custom':total += s.custom_times_per_day || 1;break;
+          default:total += 1;break; // daily
         }
       }
     });
@@ -349,7 +349,7 @@ function SkinCheckTile({
   // Count today's checks
   const todayChecks = useMemo(() => {
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    return sessions.filter(s => new Date(s.event_occurred_at) >= todayStart).length;
+    return sessions.filter((s) => new Date(s.event_occurred_at) >= todayStart).length;
   }, [sessions, now]);
 
   // Calculate time until next check is due
@@ -369,21 +369,21 @@ function SkinCheckTile({
     if (todayChecks >= totalChecksPerDay) return { minutesUntilNext: 0, isOverdue: false };
 
     // Find the latest check time today (if any)
-    const latestCheckTime = sessions.length > 0
-      ? (() => {
-          const todayStartDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-          const todaySession = sessions.find(s => new Date(s.event_occurred_at) >= todayStartDate);
-          return todaySession ? new Date(todaySession.event_occurred_at) : null;
-        })()
-      : null;
+    const latestCheckTime = sessions.length > 0 ?
+    (() => {
+      const todayStartDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const todaySession = sessions.find((s) => new Date(s.event_occurred_at) >= todayStartDate);
+      return todaySession ? new Date(todaySession.event_occurred_at) : null;
+    })() :
+    null;
 
     // Find the next slot that is AFTER the latest check (reset logic)
     // Only that slot can trigger an overdue alert.
     for (let i = 0; i < totalChecksPerDay; i++) {
       const slotTime = addMinutes(todayStart, i * intervalHours * 60);
-      const nextSlotTime = i < totalChecksPerDay - 1
-        ? addMinutes(todayStart, (i + 1) * intervalHours * 60)
-        : todayEnd;
+      const nextSlotTime = i < totalChecksPerDay - 1 ?
+      addMinutes(todayStart, (i + 1) * intervalHours * 60) :
+      todayEnd;
 
       // Skip slots that started before the latest check — they're "reset"
       if (latestCheckTime && slotTime <= latestCheckTime) continue;
@@ -452,9 +452,9 @@ function SkinCheckTile({
     statusMessage = `${todayChecks}/${totalChecksPerDay} checks completed today`;
   }
 
-  const lastTime = latestCheck
-    ? formatDistanceToNow(new Date(latestCheck.event_occurred_at), { addSuffix: true })
-    : null;
+  const lastTime = latestCheck ?
+  formatDistanceToNow(new Date(latestCheck.event_occurred_at), { addSuffix: true }) :
+  null;
 
   return (
     <Card>
@@ -469,41 +469,41 @@ function SkinCheckTile({
 
         <div className="space-y-1">
           <div className={`text-lg font-semibold ${
-            status === 'action' ? 'text-destructive' :
-            status === 'monitor' ? 'text-amber-600' : ''
-          }`}>
+          status === 'action' ? 'text-destructive' :
+          status === 'monitor' ? 'text-amber-600' : ''}`
+          }>
             {statusLabel}
           </div>
 
           {/* Countdown timer */}
-          {skinCheckEnabled && minutesUntilNext > 0 && !isOverdue && (
-            <div className="flex items-center gap-2 text-sm">
+          {skinCheckEnabled && minutesUntilNext > 0 && !isOverdue &&
+          <div className="flex items-center gap-2 text-sm">
               <Timer className="h-4 w-4 text-primary" />
               <span className="font-medium">Next check in: <span className={`${
-                minutesUntilNext <= 30 ? 'text-amber-600 font-bold' : 'text-primary'
-              }`}>{formatCountdown(minutesUntilNext)}</span></span>
+              minutesUntilNext <= 30 ? 'text-amber-600 font-bold' : 'text-primary'}`
+              }>{formatCountdown(minutesUntilNext)}</span></span>
             </div>
-          )}
+          }
 
-          {isOverdue && (
-            <div className="flex items-center gap-2 text-sm text-amber-600 font-medium">
+          {isOverdue &&
+          <div className="flex items-center gap-2 text-sm text-amber-600 font-medium">
               <AlertCircle className="h-4 w-4" />
               <span>Skin check due NOW</span>
             </div>
-          )}
+          }
 
-          {skinCheckEnabled && totalChecksPerDay > 0 && (
-            <p className="text-xs text-muted-foreground">
+          {skinCheckEnabled && totalChecksPerDay > 0 &&
+          <p className="text-xs text-muted-foreground">
               Today: {todayChecks}/{totalChecksPerDay} checks completed
             </p>
-          )}
+          }
 
-          {statusMessage && (
-            <p className="text-xs text-muted-foreground">{statusMessage}</p>
-          )}
-          {lastTime && (
-            <p className="text-xs text-muted-foreground">Last checked: {lastTime}</p>
-          )}
+          {statusMessage &&
+          <p className="text-xs text-muted-foreground">{statusMessage}</p>
+          }
+          {lastTime &&
+          <p className="text-xs text-muted-foreground">Last checked: {lastTime}</p>
+          }
         </div>
 
         <Button onClick={onLog} className="w-full gap-2" size="sm" disabled={disabled}>
@@ -511,8 +511,8 @@ function SkinCheckTile({
           Log Skin Check
         </Button>
       </CardContent>
-    </Card>
-  );
+    </Card>);
+
 }
 
 /* ──────────────────────────────────────────────
@@ -522,6 +522,6 @@ export function PressureAreaStatusCard({ clientId, onLogPressureRelief, onLogSki
   return (
     <div className="space-y-4">
       <PressureReliefTile clientId={clientId} onLog={onLogPressureRelief} disabled={disabled} />
-    </div>
-  );
+    </div>);
+
 }
