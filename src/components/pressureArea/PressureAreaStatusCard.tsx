@@ -134,7 +134,7 @@ function PressureReliefTile({
     minutesUntilNext = nextSlot ? differenceInMinutes(nextSlot.dueAt, now) : 0;
     const hasPastDueSlot = isWithinScheduleWindow && !!pastDueSlot;
 
-    // Status logic
+    // Status logic — based on current schedule adherence
     if (latestEvent) {
       const minsSince = differenceInMinutes(now, new Date(latestEvent.event_occurred_at));
       const overdueRed = (plan?.overdue_red_minutes || 0) + intervalMinutes;
@@ -152,7 +152,8 @@ function PressureReliefTile({
       statusLabel = 'Not yet logged';
     }
 
-    // Compliance
+    // Compliance — always compute for display, but only escalate status
+    // if the person is NOT currently back on track (i.e. already amber/red)
     if (config?.enable_compliance_scoring && events.length > 0) {
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const todayEvts = events.filter(e => new Date(e.event_occurred_at) >= todayStart);
@@ -161,13 +162,6 @@ function PressureReliefTile({
       if (expectedCount > 0) {
         const compliance = Math.round((todayEvts.length / expectedCount) * 100);
         detail = `Today: ${todayEvts.length}/${expectedCount} (${compliance}%)`;
-        if (compliance < 70 && status !== 'action') {
-          status = 'action';
-          statusLabel = 'Low compliance';
-        } else if (compliance < 90 && status === 'stable') {
-          status = 'monitor';
-          statusLabel = 'Monitor compliance';
-        }
       }
     }
 

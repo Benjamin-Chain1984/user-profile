@@ -186,7 +186,7 @@ export function calculatePressureAreaStatus(input: StatusInput): PressureAreaSta
     }
   }
 
-  // All clear
+  // All clear — back on track = GREEN
   const latestEntry = events[0] || skinChecks[0];
   return {
     status: 'ideal',
@@ -194,5 +194,6 @@ export function calculatePressureAreaStatus(input: StatusInput): PressureAreaSta
     lastEntry: latestEntry
       ? `${formatDistanceToNow(new Date(latestEntry.event_occurred_at || latestEntry.created_at), { addSuffix: true })}`
       : 'Not yet logged',
+    compliancePercent,
   };
 }
