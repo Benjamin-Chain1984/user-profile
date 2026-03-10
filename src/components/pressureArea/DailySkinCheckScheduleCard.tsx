@@ -8,9 +8,17 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ideal/StatusBadge';
 import { useSkinChecks, usePressureAreaConfig } from '@/hooks/usePressureArea';
-import { CheckCircle2, AlertCircle, Eye, Clock } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Eye, Clock, Timer } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import type { HealthStatus } from '@/types/ideal';
+
+function formatCountdown(totalMinutes: number): string {
+  if (totalMinutes <= 0) return 'NOW';
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
 
 interface Props {
   clientId?: string;
