@@ -81,7 +81,6 @@ export function PressureAreaConfigSettings({ clientId }: Props) {
   const handleSave = () => {
     saveConfig({
       enable_compliance_scoring: enableCompliance,
-      skin_check_frequency_days: skinCheckDays,
       skin_checks_per_day: checksPerDay,
       skin_check_times: checkTimes.slice(0, checksPerDay),
     });
