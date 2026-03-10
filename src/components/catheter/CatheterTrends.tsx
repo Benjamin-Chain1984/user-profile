@@ -144,10 +144,6 @@ export function CatheterTrends({ clientId }: CatheterTrendsProps) {
     });
   }, [filteredFlushes, showFlush, timeRange]);
 
-  // Insights
-  const insights = useMemo(() => {
-    return generateInsights(changes, flushLogs, stomaChecks, bagChanges, plan, typeConfig);
-  }, [changes, flushLogs, stomaChecks, bagChanges, plan, typeConfig]);
 
   const PIE_COLORS = [
     'hsl(var(--chart-1))',
