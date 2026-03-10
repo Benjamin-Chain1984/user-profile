@@ -154,8 +154,12 @@ export function PressureAreaDashboard({ clientId }: Props) {
         disabled={isMonitoringPaused}
       />
 
-      {/* Daily Skin Check Schedule */}
-      <DailySkinCheckScheduleCard clientId={clientId} onLogSkinCheck={() => setShowSkinCheck(true)} disabled={isMonitoringPaused} />
+      {/* Daily Skin Check Schedule — replaces old Skin Check status tile */}
+      <DailySkinCheckScheduleCard
+        clientId={clientId}
+        onLogSkinCheck={() => setShowSkinCheck(true)}
+        disabled={isMonitoringPaused}
+      />
 
       {/* Tabs */}
       <Tabs defaultValue="tracking" className="space-y-4">
