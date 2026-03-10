@@ -5,10 +5,10 @@ export type AssessmentFrequency = 'daily' | 'weekly' | 'fortnightly';
 
 export type AssessmentTrigger = AssessmentFrequency | 'staff_concern';
 
-export const ASSESSMENT_FREQUENCY_OPTIONS: { value: AssessmentFrequency; label: string; hours: number }[] = [
-  { value: 'daily', label: 'Daily', hours: 24 },
-  { value: 'weekly', label: 'Weekly', hours: 168 },
-  { value: 'fortnightly', label: 'Fortnightly', hours: 336 },
+export const ASSESSMENT_FREQUENCY_OPTIONS: { value: AssessmentFrequency; label: string; hours: number; displayLabel: string }[] = [
+  { value: 'daily', label: 'Daily', hours: 24, displayLabel: 'every 24 hours' },
+  { value: 'weekly', label: 'Weekly', hours: 168, displayLabel: 'every 7 days' },
+  { value: 'fortnightly', label: 'Fortnightly', hours: 336, displayLabel: 'every 14 days' },
 ];
 
 export const ASSESSMENT_TRIGGER_LABELS: Record<AssessmentTrigger, string> = {

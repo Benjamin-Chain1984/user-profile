@@ -15,7 +15,6 @@ import { Settings, Clock, Save, AlertTriangle, ClipboardList, Brain, CalendarClo
 import { Checkbox } from '@/components/ui/checkbox';
 
 const PREDEFINED_ACTIONS = [
-  { id: 'give_instructions', label: 'Give instructions' },
   { id: 'administer_pain_relief', label: 'Administer Pain Relief medication (if prescribed)' },
   { id: 'recheck_pain', label: 'Recheck pain again' },
   { id: 'reposition', label: 'Reposition' },
@@ -266,7 +265,7 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
                 <Label htmlFor={`freq-${opt.value}`} className="cursor-pointer flex-1">
                   <span className="font-medium">{opt.label}</span>
                   <span className="text-xs text-muted-foreground ml-2">
-                    (every {opt.hours} hours)
+                    ({opt.displayLabel})
                   </span>
                 </Label>
               </div>
