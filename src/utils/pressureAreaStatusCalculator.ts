@@ -130,55 +130,9 @@ export function calculatePressureAreaStatus(input: StatusInput): PressureAreaSta
     }
   }
 
-  // Check scheduled skin check — only flag if the NEXT uncompleted slot is
-  // past its grace window. Once back on track, status clears to green.
-  if (config?.skin_checks_per_day && config.skin_check_times?.length) {
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const todaySessions = skinChecks.filter(s => new Date(s.event_occurred_at) >= todayStart);
-
-    // Find the first uncompleted scheduled slot
-    const sortedTimes = [...config.skin_check_times].sort();
-    const usedSessionIds = new Set<string>();
-
-    for (const time of sortedTimes) {
-      // Exact match
-      let hasMatch = todaySessions.some(s => !usedSessionIds.has(s.id) && (s as any).scheduled_time === time);
-      let matchedSession = hasMatch ? todaySessions.find(s => !usedSessionIds.has(s.id) && (s as any).scheduled_time === time) : null;
-
-      // Fallback: time-proximity match (within ±2 hours)
-      if (!hasMatch) {
-        const [h, m] = time.split(':').map(Number);
-        const scheduledDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
-        matchedSession = todaySessions.find(s => {
-          if (usedSessionIds.has(s.id)) return false;
-          const sessionTime = new Date(s.event_occurred_at);
-          const diffMs = Math.abs(sessionTime.getTime() - scheduledDate.getTime());
-          return diffMs <= 2 * 60 * 60 * 1000;
-        }) || null;
-        hasMatch = !!matchedSession;
-      }
-
-      if (matchedSession) usedSessionIds.add(matchedSession.id);
-      if (hasMatch) continue; // slot completed — skip
-
-      // This is the next uncompleted slot
-      const [h, m] = time.split(':').map(Number);
-      const scheduledDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
-      const graceEnd = new Date(scheduledDate.getTime() + 2 * 60 * 60 * 1000);
-
-      if (now > graceEnd) {
-        return {
-          status: 'monitor' as const,
-          message: `Scheduled skin check missed (${time} check not completed).`,
-          lastEntry: skinChecks[0]
-            ? `Skin check ${formatDistanceToNow(new Date(skinChecks[0].event_occurred_at), { addSuffix: true })}`
-            : 'Not yet logged',
-        };
-      }
-      break; // Only check the next uncompleted slot
-    }
-  }
+  // Skin check status — outcome-based: only flag if no check done at all,
+  // or if there are unresolved findings (handled above). Schedule compliance
+  // is shown informationally on the dashboard card but doesn't block green status.
 
   // Check skin check overdue (legacy day-based) — only when schedule-based mode is NOT active
   if (!config?.skin_checks_per_day || !config.skin_check_times?.length) {

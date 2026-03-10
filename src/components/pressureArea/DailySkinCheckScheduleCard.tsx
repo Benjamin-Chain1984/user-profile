@@ -86,23 +86,32 @@ export function DailySkinCheckScheduleCard({ clientId, onLogSkinCheck, disabled 
   const allComplete = completedCount === slots.length;
   const compliance = Math.round((completedCount / slots.length) * 100);
 
-  // "Back on track" logic: only flag Amber if the NEXT uncompleted slot is
-  // currently missed (past its grace window). Historical misses don't keep
-  // the card Amber once the person is caught up.
-  const nextUncompletedSlot = slots.find(s => !s.completed);
-  const isCurrentlyBehind = nextUncompletedSlot?.isOverdue ?? false;
+  // Get today's sessions to check for findings
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const todaySessions = sessions.filter(s => new Date(s.event_occurred_at) >= todayStart);
+  const hasTodayCheck = todaySessions.length > 0;
 
+  // Check if the LATEST skin check has unresolved findings
+  const latestSession = sessions[0] as any;
+  const latestMarkers = latestSession?.skin_finding_markers || [];
+  const hasRedFinding = latestMarkers.some((m: any) => m.finding_type !== 'ok' && m.finding_type !== 'unable' && m.severity === 'red');
+  const hasAmberFinding = latestMarkers.some((m: any) => m.finding_type !== 'ok' && m.finding_type !== 'unable' && m.severity === 'amber');
+
+  // Status: only flag if issues were reported in last check
   const computedStatus: HealthStatus = (() => {
-    if (allComplete) return 'stable';
-    if (isCurrentlyBehind) return 'monitor';
+    if (hasRedFinding) return 'action';
+    if (hasAmberFinding) return 'monitor';
+    if (!hasTodayCheck) return 'monitor'; // No check done today at all
     return 'stable';
   })();
 
-  const statusLabel = allComplete
-    ? 'IDEAL'
-    : isCurrentlyBehind
-    ? 'Missed'
-    : 'IDEAL';
+  const statusLabel = (() => {
+    if (hasRedFinding) return 'Action Required';
+    if (hasAmberFinding) return 'Monitor';
+    if (!hasTodayCheck) return 'Pending';
+    return 'IDEAL';
+  })();
 
   return (
     <Card>
