@@ -162,6 +162,12 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
       default_tool: enabledTools[0] || 'abbey',
       overdue_alert_enabled: overdueAlertEnabled,
       overdue_threshold_days: overdueThresholdDays,
+      mild_actions: mildActions,
+      moderate_actions: moderateActions,
+      severe_actions: severeActions,
+      mild_custom_actions: mildCustomActions,
+      moderate_custom_actions: moderateCustomActions,
+      severe_custom_actions: severeCustomActions,
     } as any);
     handleSaveNotifications();
     setSaving(false);
