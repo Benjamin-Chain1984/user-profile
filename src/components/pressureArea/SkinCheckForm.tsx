@@ -10,10 +10,11 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
-import { useSkinChecks } from '@/hooks/usePressureArea';
+import { useSkinChecks, usePressureAreaConfig } from '@/hooks/usePressureArea';
 import { HIGH_RISK_AREAS } from '@/types/pressureArea';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { InteractiveBodyMap, type AreaCheckResult } from './InteractiveBodyMap';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Props {
   clientId?: string;
@@ -23,8 +24,13 @@ interface Props {
 
 export function SkinCheckForm({ clientId, open, onOpenChange }: Props) {
   const { logSkinCheck, isLogging } = useSkinChecks(clientId);
+  const { config } = usePressureAreaConfig(clientId);
   const [areaResults, setAreaResults] = useState<Record<string, AreaCheckResult>>({});
   const [notes, setNotes] = useState('');
+  const [selectedScheduledTime, setSelectedScheduledTime] = useState<string>('');
+
+  // Determine next uncompleted scheduled time as default
+  const scheduledTimes = config?.skin_check_times || [];
 
   const handleResultChange = (areaId: string, result: AreaCheckResult) => {
     setAreaResults(prev => ({ ...prev, [areaId]: result }));
@@ -52,11 +58,14 @@ export function SkinCheckForm({ clientId, open, onOpenChange }: Props) {
         overall_status: overallStatus as 'healthy' | 'amber' | 'red',
         notes: notes || null,
         event_occurred_at: new Date().toISOString(),
+        scheduled_time: selectedScheduledTime || null,
       },
       markers,
     });
 
     setAreaResults({});
+    setNotes('');
+    setSelectedScheduledTime('');
     setNotes('');
     onOpenChange(false);
   };
@@ -70,6 +79,23 @@ export function SkinCheckForm({ clientId, open, onOpenChange }: Props) {
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Scheduled Time Selector */}
+          {scheduledTimes.length > 0 && (
+            <div>
+              <Label>Which scheduled skin check is this for?</Label>
+              <Select value={selectedScheduledTime} onValueChange={setSelectedScheduledTime}>
+                <SelectTrigger className="w-48 mt-1">
+                  <SelectValue placeholder="Select time" />
+                </SelectTrigger>
+                <SelectContent>
+                  {scheduledTimes.map(time => (
+                    <SelectItem key={time} value={time}>{time} Skin Check</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {/* Active Pressure Area Warning */}
           {hasRedFinding && (
             <Card className="border-destructive/40 bg-destructive/5">

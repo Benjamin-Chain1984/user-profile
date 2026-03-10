@@ -181,6 +181,7 @@ export interface SkinCheckSession {
   overall_status: 'healthy' | 'amber' | 'red';
   notes: string | null;
   event_occurred_at: string;
+  scheduled_time: string | null;
   created_at: string;
   created_by: string | null;
   edited_at: string | null;
@@ -205,6 +206,8 @@ export interface PressureAreaConfig {
   client_id: string | null;
   enable_compliance_scoring: boolean;
   skin_check_frequency_days: number;
+  skin_checks_per_day: number;
+  skin_check_times: string[];
   escalation_recipients: string[];
   created_at: string;
   created_by: string | null;

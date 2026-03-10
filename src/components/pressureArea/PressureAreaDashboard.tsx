@@ -22,6 +22,7 @@ import { PressureAreaTrends } from './PressureAreaTrends';
 import { PressureAreaConfigSettings } from './PressureAreaConfigSettings';
 import { PressureAreaExportReports } from './PressureAreaExportReports';
 import { SkinCheckComplianceCard } from './SkinCheckComplianceCard';
+import { DailySkinCheckScheduleCard } from './DailySkinCheckScheduleCard';
 import {
   Settings, BarChart3, Clock, AlertCircle, FileDown,
   FileText, AlertTriangle, Activity,
@@ -154,7 +155,10 @@ export function PressureAreaDashboard({ clientId }: Props) {
         disabled={isMonitoringPaused}
       />
 
-      {/* Skin Check Compliance */}
+      {/* Daily Skin Check Schedule */}
+      <DailySkinCheckScheduleCard clientId={clientId} onLogSkinCheck={() => setShowSkinCheck(true)} disabled={isMonitoringPaused} />
+
+      {/* Skin Check Compliance (area-level) */}
       <SkinCheckComplianceCard clientId={clientId} />
 
       {/* Tabs */}

@@ -4420,6 +4420,8 @@ export type Database = {
           escalation_recipients: string[] | null
           id: string
           skin_check_frequency_days: number | null
+          skin_check_times: string[]
+          skin_checks_per_day: number
           updated_at: string
           updated_by: string | null
         }
@@ -4431,6 +4433,8 @@ export type Database = {
           escalation_recipients?: string[] | null
           id?: string
           skin_check_frequency_days?: number | null
+          skin_check_times?: string[]
+          skin_checks_per_day?: number
           updated_at?: string
           updated_by?: string | null
         }
@@ -4442,6 +4446,8 @@ export type Database = {
           escalation_recipients?: string[] | null
           id?: string
           skin_check_frequency_days?: number | null
+          skin_check_times?: string[]
+          skin_checks_per_day?: number
           updated_at?: string
           updated_by?: string | null
         }
@@ -5058,6 +5064,7 @@ export type Database = {
           id: string
           notes: string | null
           overall_status: string
+          scheduled_time: string | null
         }
         Insert: {
           client_id?: string | null
@@ -5070,6 +5077,7 @@ export type Database = {
           id?: string
           notes?: string | null
           overall_status?: string
+          scheduled_time?: string | null
         }
         Update: {
           client_id?: string | null
@@ -5082,6 +5090,7 @@ export type Database = {
           id?: string
           notes?: string | null
           overall_status?: string
+          scheduled_time?: string | null
         }
         Relationships: [
           {

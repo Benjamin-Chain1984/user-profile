@@ -9,3 +9,4 @@ export { PressureAreaTrends } from './PressureAreaTrends';
 export { PressureAreaConfigSettings } from './PressureAreaConfigSettings';
 export { PressureAreaExportReports } from './PressureAreaExportReports';
 export { SkinCheckComplianceCard } from './SkinCheckComplianceCard';
+export { DailySkinCheckScheduleCard } from './DailySkinCheckScheduleCard';

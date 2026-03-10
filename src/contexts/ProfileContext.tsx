@@ -885,8 +885,10 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         config: configData ? {
           skin_check_frequency_days: configData.skin_check_frequency_days ?? 7,
           enable_compliance_scoring: configData.enable_compliance_scoring ?? false,
+          skin_checks_per_day: (configData as any).skin_checks_per_day ?? 0,
+          skin_check_times: (configData as any).skin_check_times ?? [],
         } : null,
-        planAcknowledged: true, // Simplified - full check happens in module
+        planAcknowledged: true,
       });
 
       const moduleStatus = statusResult.status === 'ideal' ? 'stable' : statusResult.status;

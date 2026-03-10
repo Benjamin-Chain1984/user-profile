@@ -158,6 +158,7 @@ export function useSkinChecks(clientId?: string) {
           overall_status: entry.session.overall_status || 'healthy',
           notes: entry.session.notes || null,
           event_occurred_at: entry.session.event_occurred_at || new Date().toISOString(),
+          scheduled_time: entry.session.scheduled_time || null,
           created_by: user.id,
         })
         .select()
