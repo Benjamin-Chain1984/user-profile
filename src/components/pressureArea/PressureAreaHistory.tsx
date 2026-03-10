@@ -117,6 +117,12 @@ export function PressureAreaHistory({ clientId }: Props) {
                       <span className="font-medium">{event.position_completed}</span>
                       <span className="text-xs text-muted-foreground">{formatDateTime(event.event_occurred_at)}</span>
                     </div>
+                    {(event as any).created_by_name && (
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                        <User className="h-3.5 w-3.5" />
+                        <span>Logged by: <span className="font-medium text-foreground">{(event as any).created_by_name}</span></span>
+                      </div>
+                    )}
                     {event.issues && event.issues.length > 0 && (
                       <div className="flex gap-1 flex-wrap mt-1">
                         {event.issues.map((issue, i) => (

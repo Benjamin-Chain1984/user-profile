@@ -78,7 +78,24 @@ export function usePressureReliefEvents(clientId?: string) {
       if (clientId) query = query.eq('client_id', clientId);
       const { data, error } = await query;
       if (error) throw error;
-      return (data || []) as PressureReliefEvent[];
+
+      // Fetch profile names for created_by user IDs
+      const userIds = [...new Set((data || []).map(e => e.created_by).filter(Boolean))];
+      let profileMap: Record<string, string> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', userIds);
+        if (profiles) {
+          profileMap = Object.fromEntries(profiles.map(p => [p.id, p.full_name || 'Unknown']));
+        }
+      }
+
+      return (data || []).map(e => ({
+        ...e,
+        created_by_name: e.created_by ? (profileMap[e.created_by] || 'Unknown') : null,
+      })) as (PressureReliefEvent & { created_by_name?: string | null })[];
     },
   });
 
