@@ -24,8 +24,13 @@ interface Props {
 
 export function SkinCheckForm({ clientId, open, onOpenChange }: Props) {
   const { logSkinCheck, isLogging } = useSkinChecks(clientId);
+  const { config } = usePressureAreaConfig(clientId);
   const [areaResults, setAreaResults] = useState<Record<string, AreaCheckResult>>({});
   const [notes, setNotes] = useState('');
+  const [selectedScheduledTime, setSelectedScheduledTime] = useState<string>('');
+
+  // Determine next uncompleted scheduled time as default
+  const scheduledTimes = config?.skin_check_times || [];
 
   const handleResultChange = (areaId: string, result: AreaCheckResult) => {
     setAreaResults(prev => ({ ...prev, [areaId]: result }));
