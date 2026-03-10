@@ -72,21 +72,14 @@ export function DailySkinCheckScheduleCard({ clientId, onLogSkinCheck, disabled 
   const compliance = Math.round((completedCount / slots.length) * 100);
 
   // Derive status to match PressureReliefTile pattern
-  let status: HealthStatus = 'stable';
-  let statusLabel = 'IDEAL';
+  const computedStatus: HealthStatus = (() => {
+    if (allComplete) return 'stable';
+    if (hasMissed) return 'monitor';
+    if (completedCount === 0) return 'monitor';
+    return 'stable';
+  })();
 
-  if (!allComplete) {
-    if (hasMissed) {
-      status = 'monitor';
-      statusLabel = 'Missed';
-    } else if (completedCount === 0) {
-      status = 'monitor';
-      statusLabel = 'Pending';
-    } else {
-      status = 'stable';
-      statusLabel = 'On track';
-    }
-  }
+  const statusLabel = allComplete ? 'IDEAL' : hasMissed ? 'Missed' : completedCount === 0 ? 'Pending' : 'On track';
 
   return (
     <Card>
