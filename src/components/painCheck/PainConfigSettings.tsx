@@ -11,7 +11,19 @@ import { AssessmentFrequency, ASSESSMENT_FREQUENCY_OPTIONS } from '@/types/painA
 import { ModuleNotificationsCard, type ModuleNotificationSettings } from '@/components/module';
 import { useModuleAlertRecipients, useSetModuleAlertRecipients } from '@/hooks/useNotificationContacts';
 import type { AlertSeverity } from '@/types/notificationContacts';
-import { Settings, Clock, Save, AlertTriangle, ClipboardList, Brain, CalendarClock, Bell } from 'lucide-react';
+import { Settings, Clock, Save, AlertTriangle, ClipboardList, Brain, CalendarClock, Bell, ListChecks, Plus, X } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+
+const PREDEFINED_ACTIONS = [
+  { id: 'give_instructions', label: 'Give instructions' },
+  { id: 'administer_pain_relief', label: 'Administer Pain Relief medication (if prescribed)' },
+  { id: 'recheck_pain', label: 'Recheck pain again' },
+  { id: 'reposition', label: 'Reposition' },
+  { id: 'contact_gp', label: 'Contact GP' },
+  { id: 'call_ambulance', label: 'Call Ambulance' },
+] as const;
+
+type PredefinedActionId = typeof PREDEFINED_ACTIONS[number]['id'];
 
 interface PainConfigSettingsProps {
   clientId?: string;
