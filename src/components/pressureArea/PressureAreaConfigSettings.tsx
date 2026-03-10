@@ -112,10 +112,6 @@ export function PressureAreaConfigSettings({ clientId }: Props) {
               </div>
               <Switch checked={enableCompliance} onCheckedChange={setEnableCompliance} />
             </div>
-            <div>
-              <Label>Skin Check Frequency (days)</Label>
-              <Input type="number" value={skinCheckDays} onChange={e => setSkinCheckDays(Number(e.target.value))} min={1} className="w-32" />
-            </div>
           </CardContent>
         </Card>
       </RestrictedSection>
