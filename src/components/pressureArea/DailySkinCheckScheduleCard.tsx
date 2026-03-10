@@ -81,15 +81,20 @@ export function DailySkinCheckScheduleCard({ clientId, onLogSkinCheck, disabled 
             <Clock className="h-4 w-4 text-primary" />
             Daily Skin Checks
           </CardTitle>
-          <Badge
-            variant="outline"
-            className={allComplete
-              ? 'bg-green-50 text-green-700 border-green-200'
-              : 'bg-amber-50 text-amber-700 border-amber-200'
-            }
-          >
-            {completedCount} completed / {remainingCount} remaining
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge
+              variant="outline"
+              className={allComplete
+                ? 'bg-green-50 text-green-700 border-green-200'
+                : 'bg-amber-50 text-amber-700 border-amber-200'
+              }
+            >
+              {completedCount}/{slots.length} complete
+            </Badge>
+            <Badge variant="outline" className="bg-muted/50 text-muted-foreground border-border">
+              {Math.round((completedCount / slots.length) * 100)}%
+            </Badge>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-2">
@@ -124,7 +129,7 @@ export function DailySkinCheckScheduleCard({ clientId, onLogSkinCheck, disabled 
             )}
 
             {slot.isOverdue && (
-              <span className="text-xs text-amber-600 font-medium">Overdue</span>
+              <span className="text-xs text-amber-600 font-medium">Missed</span>
             )}
           </div>
         ))}
@@ -139,7 +144,7 @@ export function DailySkinCheckScheduleCard({ clientId, onLogSkinCheck, disabled 
         {allComplete && (
           <div className="flex items-center gap-2 pt-1 text-sm text-green-700 font-medium">
             <CheckCircle2 className="h-4 w-4" />
-            All scheduled skin checks completed for today
+            IDEAL – All scheduled skin checks completed for today
           </div>
         )}
       </CardContent>

@@ -147,7 +147,7 @@ export function calculatePressureAreaStatus(input: StatusInput): PressureAreaSta
       if (!hasMatch && now > graceEnd) {
         return {
           status: 'monitor' as const,
-          message: `Scheduled skin check overdue (${time} check not completed).`,
+          message: `Scheduled skin check missed (${time} check not completed).`,
           lastEntry: skinChecks[0]
             ? `Skin check ${formatDistanceToNow(new Date(skinChecks[0].event_occurred_at), { addSuffix: true })}`
             : 'Not yet logged',
