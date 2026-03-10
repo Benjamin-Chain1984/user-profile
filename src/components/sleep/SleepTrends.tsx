@@ -51,25 +51,6 @@ export function SleepTrends({ clientId }: SleepTrendsProps) {
 
   return (
     <div className="space-y-4">
-      {/* Insights */}
-      {insights.length > 0 && (
-        <Card className="border-amber-200 bg-amber-50/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Insights</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-1">
-              {insights.map((insight, i) => (
-                <li key={i} className="text-sm text-amber-800 flex gap-2">
-                  <span className="shrink-0">•</span>
-                  {insight}
-                </li>
-              ))}
-            </ul>
-            <p className="text-xs text-muted-foreground mt-2 italic">If concerns persist, consult a GP or health professional.</p>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Sleep Duration Trend */}
       <Card>

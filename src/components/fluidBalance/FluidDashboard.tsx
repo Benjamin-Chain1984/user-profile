@@ -15,7 +15,7 @@ import { IntakeLogForm } from './IntakeLogForm';
 import { OutputLogForm } from './OutputLogForm';
 import { FluidHistory } from './FluidHistory';
 import { FluidTrends } from './FluidTrends';
-import { FluidInsights } from './FluidInsights';
+
 import { SignsAndSymptomsPanel } from './SignsAndSymptomsPanel';
 import { FluidConfigSettings } from './FluidConfigSettings';
 import { FluidExportReports } from './FluidExportReports';

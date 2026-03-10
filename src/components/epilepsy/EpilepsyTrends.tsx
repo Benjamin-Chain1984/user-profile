@@ -195,31 +195,6 @@ export function EpilepsyTrends({ clientId }: EpilepsyTrendsProps) {
         </CardContent>
       </Card>
 
-      {/* Insights */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Lightbulb className="h-5 w-5" />
-            Insights
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {insights.map((insight, i) => (
-            <div key={i} className={`flex items-start gap-3 p-3 rounded-lg ${
-              insight.type === 'warning' ? 'bg-warning/10' :
-              insight.type === 'success' ? 'bg-success/10' : 'bg-muted/50'
-            }`}>
-              {insight.type === 'warning' && <AlertTriangle className="h-4 w-4 text-warning mt-0.5 shrink-0" />}
-              {insight.type === 'success' && <CheckCircle className="h-4 w-4 text-success mt-0.5 shrink-0" />}
-              {insight.type === 'info' && <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />}
-              <p className="text-sm">{insight.message}</p>
-            </div>
-          ))}
-          <p className="text-xs text-muted-foreground italic pt-2">
-            These insights are based on recorded patterns and do not constitute a diagnosis. Always consult a neurologist or GP.
-          </p>
-        </CardContent>
-      </Card>
     </div>
   );
 }

@@ -366,43 +366,6 @@ export function HealthMonitoringTrends({ clientId }: HealthMonitoringTrendsProps
         </CardContent>
       </Card>
 
-      {/* Insights */}
-      {insights.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Insights
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {insights.map((insight, idx) => (
-                <div
-                  key={idx}
-                  className={`flex items-start gap-2 p-3 rounded-lg ${
-                    insight.type === 'warning' ? 'bg-amber-50 text-amber-800 border border-amber-200' :
-                    insight.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' :
-                    'bg-blue-50 text-blue-800 border border-blue-200'
-                  }`}
-                >
-                  {insight.type === 'warning' ? (
-                    <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                  ) : insight.type === 'success' ? (
-                    <CheckCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                  ) : (
-                    <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                  )}
-                  <p className="text-sm">{insight.message}</p>
-                </div>
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground mt-3">
-              These insights are based on pattern analysis and do not replace clinical assessment.
-            </p>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

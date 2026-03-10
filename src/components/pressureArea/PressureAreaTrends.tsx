@@ -76,28 +76,6 @@ export function PressureAreaTrends({ clientId }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* Insights */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            Insights
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-2">
-            {insights.map((insight, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm">
-                <Info className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span>{insight}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-4 text-xs text-muted-foreground italic">
-            This is not medical advice. Follow the person's health plan and seek medical advice if concerned.
-          </p>
-        </CardContent>
-      </Card>
 
       {/* Weekly Repositioning Compliance */}
       <Card>
