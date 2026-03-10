@@ -430,29 +430,6 @@ export function PainCheckDashboard() {
         )}
       </Tabs>
 
-      {/* Clinical Instructions */}
-      <Card className="bg-muted/30 border-muted">
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Info className="h-4 w-4 text-primary" />
-            Assessment Instructions
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {enabledTools.includes('abbey') && (
-            <div>
-              <p className="text-sm font-medium text-success mb-1">Abbey Pain Scale</p>
-              <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">{ABBEY_CLINICAL_INSTRUCTIONS}</p>
-            </div>
-          )}
-          {enabledTools.includes('painad') && (
-            <div>
-              <p className="text-sm font-medium text-primary mb-1">PAINAD Scale</p>
-              <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">{PAINAD_CLINICAL_INSTRUCTIONS}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Footer Citations */}
       <div className="text-xs text-muted-foreground border-t pt-4 space-y-2">
