@@ -1,9 +1,50 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Lightbulb, Loader2, AlertCircle } from 'lucide-react';
+import { Lightbulb, Loader2, AlertCircle, Clock } from 'lucide-react';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useWeeklyInsights } from '@/hooks/useWeeklyInsights';
-import { useMemo } from 'react';
-import { format, parseISO } from 'date-fns';
+import { useMemo, useState, useEffect } from 'react';
+import { format, parseISO, differenceInSeconds } from 'date-fns';
+
+function CountdownTimer({ targetDate }: { targetDate: string }) {
+  const [timeLeft, setTimeLeft] = useState('');
+
+  useEffect(() => {
+    const update = () => {
+      const now = new Date();
+      const target = new Date(targetDate);
+      const totalSeconds = Math.max(0, differenceInSeconds(target, now));
+
+      if (totalSeconds <= 0) {
+        setTimeLeft('Due now');
+        return;
+      }
+
+      const days = Math.floor(totalSeconds / 86400);
+      const hours = Math.floor((totalSeconds % 86400) / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+
+      const parts: string[] = [];
+      if (days > 0) parts.push(`${days}d`);
+      if (hours > 0) parts.push(`${hours}h`);
+      if (minutes > 0) parts.push(`${minutes}m`);
+      parts.push(`${seconds}s`);
+
+      setTimeLeft(parts.join(' '));
+    };
+
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [targetDate]);
+
+  return (
+    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      <Clock className="h-3.5 w-3.5" />
+      <span>Next insight: <span className="font-medium text-foreground">{timeLeft}</span></span>
+    </div>
+  );
+}
 
 export function WeeklyHealthInsights() {
   const { profile, enabledModules } = useProfile();
@@ -32,10 +73,15 @@ export function WeeklyHealthInsights() {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Lightbulb className="h-5 w-5 text-primary" />
-          Weekly Health Insights
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Lightbulb className="h-5 w-5 text-primary" />
+            Weekly Health Insights
+          </CardTitle>
+          {insight?.next_due_at && (
+            <CountdownTimer targetDate={insight.next_due_at} />
+          )}
+        </div>
         <p className="text-sm text-muted-foreground">
           High-level summary of health patterns based on recorded data.
         </p>
