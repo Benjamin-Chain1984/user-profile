@@ -31,6 +31,9 @@ function AppContent() {
         {activeTab === 'home' && (
           <div className="space-y-4 sm:space-y-6 animate-fade-in">
             <ProfileHeader />
+
+            {/* Weekly Health Insights - Global Panel */}
+            <WeeklyHealthInsights />
             
             {/* Pause/Resume Button */}
             <div className="flex justify-end">
