@@ -2,7 +2,7 @@
  * Skin Check Form with Interactive Body Map
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -31,6 +31,18 @@ export function SkinCheckForm({ clientId, open, onOpenChange }: Props) {
 
   // Determine next uncompleted scheduled time as default
   const scheduledTimes = config?.skin_check_times || [];
+
+  // Auto-select the next due scheduled time when form opens
+  useEffect(() => {
+    if (open && scheduledTimes.length > 0 && !selectedScheduledTime) {
+      const now = new Date();
+      const nextTime = scheduledTimes.find(time => {
+        const [h, m] = time.split(':').map(Number);
+        return h > now.getHours() || (h === now.getHours() && m > now.getMinutes());
+      }) || scheduledTimes[0];
+      if (nextTime) setSelectedScheduledTime(nextTime);
+    }
+  }, [open, scheduledTimes]);
 
   const handleResultChange = (areaId: string, result: AreaCheckResult) => {
     setAreaResults(prev => ({ ...prev, [areaId]: result }));

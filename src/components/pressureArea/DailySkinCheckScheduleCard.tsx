@@ -44,11 +44,27 @@ export function DailySkinCheckScheduleCard({ clientId, onLogSkinCheck, disabled 
       .filter(s => new Date(s.event_occurred_at) >= todayStart)
       .sort((a, b) => new Date(a.event_occurred_at).getTime() - new Date(b.event_occurred_at).getTime());
 
+    // Track which sessions have already been matched to avoid double-counting
+    const usedSessionIds = new Set<string>();
+
     return scheduledTimes.slice(0, checksPerDay).map((time) => {
       const [h, m] = time.split(':').map(Number);
       const scheduledDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
 
-      const matchingSession = todaySessions.find(s => (s as any).scheduled_time === time);
+      // 1. Exact match on scheduled_time field
+      let matchingSession = todaySessions.find(s => !usedSessionIds.has(s.id) && (s as any).scheduled_time === time);
+
+      // 2. Fallback: time-proximity match (session within ±2 hours of scheduled time)
+      if (!matchingSession) {
+        matchingSession = todaySessions.find(s => {
+          if (usedSessionIds.has(s.id)) return false;
+          const sessionTime = new Date(s.event_occurred_at);
+          const diffMs = Math.abs(sessionTime.getTime() - scheduledDate.getTime());
+          return diffMs <= 2 * 60 * 60 * 1000; // 2 hour window
+        });
+      }
+
+      if (matchingSession) usedSessionIds.add(matchingSession.id);
 
       const graceEnd = new Date(scheduledDate.getTime() + 2 * 60 * 60 * 1000);
       const isOverdue = !matchingSession && now > graceEnd;

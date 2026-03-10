@@ -139,8 +139,27 @@ export function calculatePressureAreaStatus(input: StatusInput): PressureAreaSta
 
     // Find the first uncompleted scheduled slot
     const sortedTimes = [...config.skin_check_times].sort();
+    const usedSessionIds = new Set<string>();
+
     for (const time of sortedTimes) {
-      const hasMatch = todaySessions.some(s => (s as any).scheduled_time === time);
+      // Exact match
+      let hasMatch = todaySessions.some(s => !usedSessionIds.has(s.id) && (s as any).scheduled_time === time);
+      let matchedSession = hasMatch ? todaySessions.find(s => !usedSessionIds.has(s.id) && (s as any).scheduled_time === time) : null;
+
+      // Fallback: time-proximity match (within ±2 hours)
+      if (!hasMatch) {
+        const [h, m] = time.split(':').map(Number);
+        const scheduledDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
+        matchedSession = todaySessions.find(s => {
+          if (usedSessionIds.has(s.id)) return false;
+          const sessionTime = new Date(s.event_occurred_at);
+          const diffMs = Math.abs(sessionTime.getTime() - scheduledDate.getTime());
+          return diffMs <= 2 * 60 * 60 * 1000;
+        }) || null;
+        hasMatch = !!matchedSession;
+      }
+
+      if (matchedSession) usedSessionIds.add(matchedSession.id);
       if (hasMatch) continue; // slot completed — skip
 
       // This is the next uncompleted slot
