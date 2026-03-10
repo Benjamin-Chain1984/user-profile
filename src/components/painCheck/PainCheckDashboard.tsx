@@ -217,6 +217,10 @@ export function PainCheckDashboard() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowInstructions(!showInstructions)}>
+            <Info className="h-4 w-4 mr-2" />
+            {showInstructions ? 'Hide Instructions' : 'Assessment Instructions'}
+          </Button>
           <Button variant="outline" onClick={() => setShowExport(true)}>
             <FileDown className="h-4 w-4 mr-2" />
             Export
@@ -227,6 +231,26 @@ export function PainCheckDashboard() {
           </Button>
         </div>
       </div>
+
+      {/* Collapsible Assessment Instructions */}
+      {showInstructions && (
+        <Card className="bg-muted/30 border-muted">
+          <CardContent className="pt-4 space-y-4">
+            {enabledTools.includes('abbey') && (
+              <div>
+                <p className="text-sm font-medium text-success mb-1">Abbey Pain Scale</p>
+                <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">{ABBEY_CLINICAL_INSTRUCTIONS}</p>
+              </div>
+            )}
+            {enabledTools.includes('painad') && (
+              <div>
+                <p className="text-sm font-medium text-primary mb-1">PAINAD Scale</p>
+                <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">{PAINAD_CLINICAL_INSTRUCTIONS}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Monitoring Paused Banner */}
       {isMonitoringPaused && monitoringStatus && (
