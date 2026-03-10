@@ -189,12 +189,6 @@ export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
             outputEntries={outputEntries}
             config={config}
           />
-          <FluidInsights
-            intakeEntries={intakeEntries}
-            outputEntries={outputEntries}
-            symptomChecks={symptomChecks}
-            config={config}
-          />
         </TabsContent>
         
         <TabsContent value="export">
