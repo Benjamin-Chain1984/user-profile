@@ -310,6 +310,50 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
         </CardContent>
       </Card>
 
+      {/* Overdue Alert Threshold */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <CalendarClock className="w-4 h-4" />
+            Overdue Assessment Alert
+          </CardTitle>
+          <CardDescription>
+            Flag an amber alert when no pain assessment has been completed within the configured threshold.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between p-3 rounded-lg border">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              <div>
+                <p className="font-medium text-sm">Enable Overdue Alert</p>
+                <p className="text-xs text-muted-foreground">Show amber status when assessment is overdue</p>
+              </div>
+            </div>
+            <Switch
+              checked={overdueAlertEnabled}
+              onCheckedChange={setOverdueAlertEnabled}
+            />
+          </div>
+          {overdueAlertEnabled && (
+            <div className="space-y-2 pl-3">
+              <Label>Flag as overdue after</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min={1}
+                  max={30}
+                  value={overdueThresholdDays}
+                  onChange={(e) => setOverdueThresholdDays(parseInt(e.target.value) || 1)}
+                  className="w-20"
+                />
+                <span className="text-sm text-muted-foreground">day(s) without an assessment</span>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Alert Recipients - Centralized */}
       <ModuleNotificationsCard
         moduleName={MODULE_NAME}

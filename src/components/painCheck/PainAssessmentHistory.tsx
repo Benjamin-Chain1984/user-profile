@@ -304,7 +304,7 @@ export function PainAssessmentHistory({ assessments, painadAssessments = [], loa
       </div>
 
       <div className="space-y-3">
-        {sorted.map((assessment) => {
+        {(showAll ? sorted : sorted.slice(0, INITIAL_DISPLAY_COUNT)).map((assessment) => {
           if (assessment.tool === 'abbey') {
             return (
               <AbbeyAssessmentCard
@@ -324,6 +324,20 @@ export function PainAssessmentHistory({ assessments, painadAssessments = [], loa
           );
         })}
       </div>
+
+      {sorted.length > INITIAL_DISPLAY_COUNT && (
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => setShowAll(!showAll)}
+        >
+          {showAll
+            ? `Show Less`
+            : `Show ${sorted.length - INITIAL_DISPLAY_COUNT} More Assessment${sorted.length - INITIAL_DISPLAY_COUNT !== 1 ? 's' : ''}`
+          }
+          {showAll ? <ChevronUp className="w-4 h-4 ml-2" /> : <ChevronDown className="w-4 h-4 ml-2" />}
+        </Button>
+      )}
     </div>
   );
 }
