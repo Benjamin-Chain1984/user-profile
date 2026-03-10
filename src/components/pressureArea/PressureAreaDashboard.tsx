@@ -22,6 +22,7 @@ import { PressureAreaTrends } from './PressureAreaTrends';
 import { PressureAreaConfigSettings } from './PressureAreaConfigSettings';
 import { PressureAreaExportReports } from './PressureAreaExportReports';
 import { SkinCheckComplianceCard } from './SkinCheckComplianceCard';
+import { DailySkinCheckScheduleCard } from './DailySkinCheckScheduleCard';
 import {
   Settings, BarChart3, Clock, AlertCircle, FileDown,
   FileText, AlertTriangle, Activity,
