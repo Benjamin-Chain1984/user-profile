@@ -10,10 +10,11 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
-import { useSkinChecks } from '@/hooks/usePressureArea';
+import { useSkinChecks, usePressureAreaConfig } from '@/hooks/usePressureArea';
 import { HIGH_RISK_AREAS } from '@/types/pressureArea';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { InteractiveBodyMap, type AreaCheckResult } from './InteractiveBodyMap';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Props {
   clientId?: string;
