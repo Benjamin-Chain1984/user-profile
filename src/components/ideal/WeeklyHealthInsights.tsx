@@ -59,6 +59,15 @@ export function WeeklyHealthInsights() {
     enabledModuleIds
   );
 
+  // Compute the retrospective period label
+  const periodLabel = useMemo(() => {
+    if (!insight?.generated_at) return null;
+    const endDate = parseISO(insight.generated_at);
+    const startDate = new Date(endDate);
+    startDate.setDate(startDate.getDate() - 7);
+    return `${format(startDate, 'dd MMM')} – ${format(endDate, 'dd MMM yyyy')}`;
+  }, [insight?.generated_at]);
+
   if (enabledModuleIds.length === 0) return null;
 
   const bullets = insight?.insight_summary
@@ -83,7 +92,9 @@ export function WeeklyHealthInsights() {
           )}
         </div>
         <p className="text-sm text-muted-foreground">
-          High-level summary of health patterns based on recorded data.
+          {periodLabel
+            ? `Retrospective summary for ${periodLabel}, based on recorded data.`
+            : 'High-level summary of health patterns based on recorded data.'}
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
