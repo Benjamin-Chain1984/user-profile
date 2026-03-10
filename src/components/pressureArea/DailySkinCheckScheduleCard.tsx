@@ -150,9 +150,6 @@ export function DailySkinCheckScheduleCard({ clientId, onLogSkinCheck, disabled 
           }`}>
             {statusLabel}
           </div>
-          <p className="text-xs text-muted-foreground">
-            Today: {completedCount}/{slots.length} ({compliance}%)
-          </p>
 
           {!allComplete && minutesUntilNext > 0 && (
             <div className="flex items-center gap-2 text-sm">
@@ -163,6 +160,10 @@ export function DailySkinCheckScheduleCard({ clientId, onLogSkinCheck, disabled 
               }`}>{formatCountdown(minutesUntilNext)}</span></span>
             </div>
           )}
+
+          <p className="text-xs text-muted-foreground">
+            Today: {completedCount}/{slots.length} ({compliance}%)
+          </p>
         </div>
 
         {/* Schedule slots — matches PressureReliefTile row style */}
