@@ -107,48 +107,6 @@ export function BowelCareTrends({ clientId }: BowelCareTrendsProps) {
     ].filter((d) => d.value > 0);
   }, [logs]);
 
-  // AI Insights
-  const insights = useMemo(() => {
-    const recentLogs = logs.slice(0, 14);
-    const messages: string[] = [];
-
-    // Days since last BM
-    const lastBm = recentLogs.find(l => l.bristol_type > 0);
-    if (lastBm) {
-      const daysSince = Math.floor(
-        (Date.now() - new Date(lastBm.entry_time).getTime()) / (1000 * 60 * 60 * 24)
-      );
-      if (daysSince >= 3) {
-        messages.push(`No bowel motion for ${daysSince} days – constipation risk.`);
-      }
-    } else if (logs.length > 0) {
-      messages.push('No bowel movements recorded in recent logs.');
-    }
-
-    // Check for hard stools trend
-    const hardStools = recentLogs.filter(l => l.bristol_type === 1 || l.bristol_type === 2);
-    if (hardStools.length >= 3) {
-      messages.push('More hard stools lately. Consider hydration and fibre.');
-    }
-
-    // Check for loose stools trend
-    const looseStools = recentLogs.filter(l => l.bristol_type === 6 || l.bristol_type === 7);
-    if (looseStools.length >= 3) {
-      messages.push('Frequent loose stools. Monitor for diarrhoea and ensure hydration.');
-    }
-
-    // Regularity
-    const totalBms = weeklyData.reduce((sum, d) => sum + d.count, 0);
-    if (totalBms >= 5) {
-      messages.push('Good bowel regularity this week.');
-    }
-
-    if (messages.length === 0) {
-      messages.push('Bowel pattern appears regular. Continue monitoring.');
-    }
-
-    return messages;
-  }, [logs, weeklyData]);
 
   const chartConfig = {
     count: { label: 'Bowel Movements', color: 'hsl(var(--chart-1))' },
