@@ -49,7 +49,6 @@ export function PressureAreaConfigSettings({ clientId }: Props) {
 
   const [enableCompliance, setEnableCompliance] = useState(true);
   const [checksPerDay, setChecksPerDay] = useState(1);
-  const [checksPerDay, setChecksPerDay] = useState(1);
   const [checkTimes, setCheckTimes] = useState<string[]>(['08:00']);
   const [notificationSettings, setNotificationSettings] = useState<ModuleNotificationSettings>({
     enableNotifications: false,
