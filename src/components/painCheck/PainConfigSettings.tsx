@@ -382,6 +382,84 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
         </CardContent>
       </Card>
 
+      {/* Action Plan per Severity */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <ListChecks className="w-4 h-4" />
+            Action Plan by Severity
+          </CardTitle>
+          <CardDescription>
+            Configure which actions are presented to staff based on the assessment outcome. These will appear under Actions when pain is detected.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {([
+            { label: 'Mild Pain', dotClass: 'bg-orange-400', actions: mildActions, setActions: setMildActions, customActions: mildCustomActions, setCustomActions: setMildCustomActions },
+            { label: 'Moderate Pain', dotClass: 'bg-orange-600', actions: moderateActions, setActions: setModerateActions, customActions: moderateCustomActions, setCustomActions: setModerateCustomActions },
+            { label: 'Severe Pain', dotClass: 'bg-destructive', actions: severeActions, setActions: setSevereActions, customActions: severeCustomActions, setCustomActions: setSevereCustomActions },
+          ] as const).map((group) => (
+            <div key={group.label} className="space-y-3">
+              <Label className="flex items-center gap-2 text-sm font-semibold">
+                <div className={`w-3 h-3 rounded-full ${group.dotClass}`} />
+                {group.label}
+              </Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-5">
+                {PREDEFINED_ACTIONS.map((action) => (
+                  <div key={action.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`${group.label}-${action.id}`}
+                      checked={group.actions.includes(action.id)}
+                      onCheckedChange={(checked) => {
+                        group.setActions(prev =>
+                          checked ? [...prev, action.id] : prev.filter(a => a !== action.id)
+                        );
+                      }}
+                    />
+                    <Label htmlFor={`${group.label}-${action.id}`} className="text-sm cursor-pointer">
+                      {action.label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+              {/* Custom "Other" actions */}
+              <div className="pl-5 space-y-2">
+                {group.customActions.map((custom, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <Input
+                      value={custom}
+                      onChange={(e) => {
+                        const updated = [...group.customActions];
+                        updated[idx] = e.target.value;
+                        group.setCustomActions(updated);
+                      }}
+                      placeholder="Other action..."
+                      className="flex-1 text-sm"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={() => group.setCustomActions(prev => prev.filter((_, i) => i !== idx))}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => group.setCustomActions(prev => [...prev, ''])}
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Add Other
+                </Button>
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
       {/* Alert Recipients - Centralized */}
       <ModuleNotificationsCard
         moduleName={MODULE_NAME}
