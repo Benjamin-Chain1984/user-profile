@@ -29,9 +29,6 @@ const SEVERITY_STYLES: Record<string, { color: string; bgColor: string; borderCo
 export function PainActiveActionPlan({ severity, tool, score, maxScore }: PainActiveActionPlanProps) {
   const { config } = usePainConfig();
 
-  const style = SEVERITY_STYLES[severity];
-  if (!style) return null; // no_pain — no action plan needed
-
   const actionSteps = useMemo(() => {
     const cfg = config as any;
     let configuredActions: string[] = [];
