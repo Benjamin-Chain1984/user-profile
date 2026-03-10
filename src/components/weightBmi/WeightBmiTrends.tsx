@@ -32,10 +32,6 @@ export function WeightBmiTrends({ clientId }: WeightBmiTrendsProps) {
   const { entries, config, alerts, loading } = useWeightBmi(clientId);
   const [timeRange, setTimeRange] = useState<TimeRange>('3m');
 
-  // Generate insights
-  const insights = useMemo(() => {
-    return generateInsights(entries, config, alerts);
-  }, [entries, config, alerts]);
 
   if (loading) {
     return (
