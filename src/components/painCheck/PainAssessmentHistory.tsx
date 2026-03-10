@@ -189,12 +189,15 @@ function PainadAssessmentCard({ assessment, createdByName }: { assessment: Paina
   );
 }
 
+const INITIAL_DISPLAY_COUNT = 3;
+
 export function PainAssessmentHistory({ assessments, painadAssessments = [], loading }: PainAssessmentHistoryProps) {
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [filterTool, setFilterTool] = useState<'all' | 'abbey' | 'painad'>('all');
   const [actionsMap, setActionsMap] = useState<Record<string, PainActionRecord[]>>({});
   const [profilesMap, setProfilesMap] = useState<Record<string, string>>({});
   const [loadingActions, setLoadingActions] = useState(true);
+  const [showAll, setShowAll] = useState(false);
 
   const combined: CombinedAssessment[] = [
     ...assessments.map(a => ({ ...a, tool: 'abbey' as const })),
