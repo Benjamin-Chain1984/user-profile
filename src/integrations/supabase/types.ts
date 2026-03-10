@@ -95,13 +95,19 @@ export type Database = {
           default_tool: string
           enabled_tools: string[]
           id: string
+          mild_actions: string[]
           mild_alert_recipients: string[]
+          mild_custom_actions: string[]
           mild_reassess_hours: number
+          moderate_actions: string[]
           moderate_alert_recipients: string[]
+          moderate_custom_actions: string[]
           moderate_reassess_hours: number
           overdue_alert_enabled: boolean
           overdue_threshold_days: number
+          severe_actions: string[]
           severe_alert_recipients: string[]
+          severe_custom_actions: string[]
           severe_reassess_hours: number
           updated_at: string
           updated_by: string | null
@@ -115,13 +121,19 @@ export type Database = {
           default_tool?: string
           enabled_tools?: string[]
           id?: string
+          mild_actions?: string[]
           mild_alert_recipients?: string[]
+          mild_custom_actions?: string[]
           mild_reassess_hours?: number
+          moderate_actions?: string[]
           moderate_alert_recipients?: string[]
+          moderate_custom_actions?: string[]
           moderate_reassess_hours?: number
           overdue_alert_enabled?: boolean
           overdue_threshold_days?: number
+          severe_actions?: string[]
           severe_alert_recipients?: string[]
+          severe_custom_actions?: string[]
           severe_reassess_hours?: number
           updated_at?: string
           updated_by?: string | null
@@ -135,13 +147,19 @@ export type Database = {
           default_tool?: string
           enabled_tools?: string[]
           id?: string
+          mild_actions?: string[]
           mild_alert_recipients?: string[]
+          mild_custom_actions?: string[]
           mild_reassess_hours?: number
+          moderate_actions?: string[]
           moderate_alert_recipients?: string[]
+          moderate_custom_actions?: string[]
           moderate_reassess_hours?: number
           overdue_alert_enabled?: boolean
           overdue_threshold_days?: number
+          severe_actions?: string[]
           severe_alert_recipients?: string[]
+          severe_custom_actions?: string[]
           severe_reassess_hours?: number
           updated_at?: string
           updated_by?: string | null
