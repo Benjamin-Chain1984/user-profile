@@ -181,6 +181,7 @@ export interface SkinCheckSession {
   overall_status: 'healthy' | 'amber' | 'red';
   notes: string | null;
   event_occurred_at: string;
+  scheduled_time: string | null;
   created_at: string;
   created_by: string | null;
   edited_at: string | null;
