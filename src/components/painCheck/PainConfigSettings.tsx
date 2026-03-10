@@ -88,9 +88,12 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
       const freq = (config.assessment_triggers.find(t => ['daily', 'weekly', 'fortnightly'].includes(t)) || 'daily') as AssessmentFrequency;
       setFrequency(freq);
       setSituationalEnabled(config.assessment_triggers.includes('staff_concern'));
-      setMildHours(config.mild_reassess_hours);
-      setModerateHours(config.moderate_reassess_hours);
-      setSevereHours(config.severe_reassess_hours);
+      const m = toUnitAndValue(config.mild_reassess_hours);
+      setMildValue(m.value); setMildUnit(m.unit);
+      const mod = toUnitAndValue(config.moderate_reassess_hours);
+      setModerateValue(mod.value); setModerateUnit(mod.unit);
+      const s = toUnitAndValue(config.severe_reassess_hours);
+      setSevereValue(s.value); setSevereUnit(s.unit);
       setEnabledTools(config.enabled_tools || ['abbey', 'painad']);
       setOverdueAlertEnabled((config as any).overdue_alert_enabled ?? true);
       setOverdueThresholdDays((config as any).overdue_threshold_days ?? 1);
