@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -6,49 +6,79 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getSeverityLabel, getSeverityColor, getSeverityDotColor, PainSeverity, SEVERITY_ACTION_PROMPTS } from '@/types/painAssessment';
+import { usePainConfig } from '@/hooks/usePainConfig';
 import { AlertTriangle, Check } from 'lucide-react';
 
 interface PainActionFormProps {
   score: number;
   severity: PainSeverity;
+  maxScore?: number;
   onSubmit: (actionTaken: string) => void;
   onCancel: () => void;
 }
 
-// Default suggested actions based on pain severity
-const DEFAULT_ACTIONS = [
-  { id: 'prn', label: 'PRN pain medication administered (if prescribed)' },
-  { id: 'gp', label: 'GP contacted / review requested' },
-  { id: 'nurse', label: 'Nurse notified' },
-  { id: 'supervisor', label: 'Supervisor / Team Leader notified' },
-  { id: 'family', label: 'Family / Next of Kin informed' },
-  { id: 'monitor', label: 'Monitor closely' },
-  { id: 'reposition', label: 'Repositioning / comfort measures' },
-  { id: 'no_action', label: 'No action taken (reason required)' },
-];
+const PREDEFINED_ACTION_LABELS: Record<string, string> = {
+  give_instructions: 'Give instructions',
+  administer_pain_relief: 'Administer Pain Relief medication (if prescribed)',
+  recheck_pain: 'Recheck pain again',
+  reposition: 'Reposition',
+  contact_gp: 'Contact GP',
+  call_ambulance: 'Call Ambulance',
+};
 
-export function PainActionForm({ score, severity, onSubmit, onCancel }: PainActionFormProps) {
+export function PainActionForm({ score, severity, maxScore = 18, onSubmit, onCancel }: PainActionFormProps) {
+  const { config } = usePainConfig();
   const [selectedActions, setSelectedActions] = useState<string[]>([]);
   const [noActionReason, setNoActionReason] = useState('');
   const [additionalNotes, setAdditionalNotes] = useState('');
+
+  // Build action list from config based on severity
+  const actionOptions = useMemo(() => {
+    const cfg = config as any;
+    let configuredActions: string[] = [];
+    let customActions: string[] = [];
+
+    if (severity === 'mild') {
+      configuredActions = cfg?.mild_actions ?? ['reposition', 'recheck_pain'];
+      customActions = (cfg?.mild_custom_actions ?? []).filter((s: string) => s.trim());
+    } else if (severity === 'moderate') {
+      configuredActions = cfg?.moderate_actions ?? ['administer_pain_relief', 'recheck_pain', 'contact_gp'];
+      customActions = (cfg?.moderate_custom_actions ?? []).filter((s: string) => s.trim());
+    } else if (severity === 'severe') {
+      configuredActions = cfg?.severe_actions ?? ['administer_pain_relief', 'contact_gp', 'call_ambulance'];
+      customActions = (cfg?.severe_custom_actions ?? []).filter((s: string) => s.trim());
+    }
+
+    const actions = configuredActions.map(id => ({
+      id,
+      label: PREDEFINED_ACTION_LABELS[id] || id,
+    }));
+
+    customActions.forEach((label, idx) => {
+      actions.push({ id: `custom_${idx}`, label });
+    });
+
+    // Always add "No action taken" as last option
+    actions.push({ id: 'no_action', label: 'No action taken (reason required)' });
+
+    return actions;
+  }, [config, severity]);
 
   const handleActionToggle = (actionId: string) => {
     setSelectedActions(prev => {
       if (prev.includes(actionId)) {
         return prev.filter(a => a !== actionId);
       }
-      // If selecting "no_action", clear other selections
       if (actionId === 'no_action') {
         return ['no_action'];
       }
-      // If selecting any other action, remove "no_action"
       return [...prev.filter(a => a !== 'no_action'), actionId];
     });
   };
 
   const handleSubmit = () => {
     const actionLabels = selectedActions.map(id => {
-      const action = DEFAULT_ACTIONS.find(a => a.id === id);
+      const action = actionOptions.find(a => a.id === id);
       return action?.label || id;
     });
 
@@ -70,7 +100,6 @@ export function PainActionForm({ score, severity, onSubmit, onCancel }: PainActi
   const isNoActionSelected = selectedActions.includes('no_action');
   const canSubmit = selectedActions.length > 0 && (!isNoActionSelected || noActionReason.trim());
 
-  // Get severity-specific prompts
   const severityPrompts = SEVERITY_ACTION_PROMPTS[severity] || [];
 
   return (
@@ -96,7 +125,7 @@ export function PainActionForm({ score, severity, onSubmit, onCancel }: PainActi
           <div className="flex items-center justify-center gap-2">
             <div className={`w-4 h-4 rounded-full ${getSeverityDotColor(severity)}`} />
             <p className={`text-2xl font-bold ${getSeverityColor(severity)}`}>
-              Score: {score}/18
+              Score: {score}/{maxScore}
             </p>
           </div>
           <p className={`text-sm font-medium ${getSeverityColor(severity)}`}>
@@ -116,11 +145,11 @@ export function PainActionForm({ score, severity, onSubmit, onCancel }: PainActi
           </div>
         )}
 
-        {/* Action Selection */}
+        {/* Action Selection - driven by config */}
         <div className="space-y-2">
           <Label>Select Actions Taken *</Label>
           <div className="grid grid-cols-1 gap-2">
-            {DEFAULT_ACTIONS.map((action) => (
+            {actionOptions.map((action) => (
               <div 
                 key={action.id} 
                 className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors ${
