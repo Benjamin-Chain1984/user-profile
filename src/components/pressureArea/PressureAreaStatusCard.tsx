@@ -205,12 +205,12 @@ function PressureReliefTile({
             </div>
           }
 
-          {latestEvent && (
-            <p className="text-xs text-muted-foreground">
-              Last: {formatDistanceToNow(new Date(latestEvent.event_occurred_at), { addSuffix: true })}
-              {latestEvent.created_by_name ? ` by ${latestEvent.created_by_name}` : ''}
-            </p>
-          )}
+          {latestEvent
+
+
+
+
+          }
           {detail &&
           <p className="text-xs text-muted-foreground">{detail}</p>
           }
