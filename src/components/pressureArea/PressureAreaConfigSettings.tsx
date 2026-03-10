@@ -60,7 +60,6 @@ export function PressureAreaConfigSettings({ clientId }: Props) {
   useEffect(() => {
     if (config) {
       setEnableCompliance(config.enable_compliance_scoring);
-      setSkinCheckDays(config.skin_check_frequency_days);
       setChecksPerDay(config.skin_checks_per_day || 1);
       setCheckTimes(config.skin_check_times?.length ? config.skin_check_times : DEFAULT_TIMES[1]);
     }
