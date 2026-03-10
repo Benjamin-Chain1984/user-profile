@@ -8,9 +8,17 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ideal/StatusBadge';
 import { useSkinChecks, usePressureAreaConfig } from '@/hooks/usePressureArea';
-import { CheckCircle2, AlertCircle, Eye, Clock } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Eye, Clock, Timer } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import type { HealthStatus } from '@/types/ideal';
+
+function formatCountdown(totalMinutes: number): string {
+  if (totalMinutes <= 0) return 'NOW';
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
 
 interface Props {
   clientId?: string;
@@ -80,15 +88,25 @@ export function DailySkinCheckScheduleCard({ clientId, onLogSkinCheck, disabled 
     });
   }, [scheduledTimes, checksPerDay, sessions]);
 
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  // Compute minutes until next uncompleted slot
+  const minutesUntilNext = useMemo(() => {
+    const nextSlot = slots.find(s => !s.completed && !s.isOverdue);
+    if (!nextSlot) return 0;
+    const [h, m] = nextSlot.time.split(':').map(Number);
+    const n = new Date();
+    const slotDate = new Date(n.getFullYear(), n.getMonth(), n.getDate(), h, m);
+    return Math.max(0, Math.round((slotDate.getTime() - n.getTime()) / 60000));
+  }, [slots]);
+
   if (checksPerDay === 0 || scheduledTimes.length === 0) return null;
 
   const completedCount = slots.filter(s => s.completed).length;
   const allComplete = completedCount === slots.length;
   const compliance = Math.round((completedCount / slots.length) * 100);
 
-  // Get today's sessions to check for findings
-  const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const todaySessions = sessions.filter(s => new Date(s.event_occurred_at) >= todayStart);
   const hasTodayCheck = todaySessions.length > 0;
 
@@ -135,6 +153,16 @@ export function DailySkinCheckScheduleCard({ clientId, onLogSkinCheck, disabled 
           <p className="text-xs text-muted-foreground">
             Today: {completedCount}/{slots.length} ({compliance}%)
           </p>
+
+          {!allComplete && minutesUntilNext > 0 && (
+            <div className="flex items-center gap-2 text-sm">
+              <Timer className="h-4 w-4 text-primary" />
+              <span className="font-medium">Next due in: <span className={`${
+                minutesUntilNext <= 10 ? 'text-destructive font-bold' :
+                minutesUntilNext <= 30 ? 'text-amber-600 font-bold' : 'text-primary'
+              }`}>{formatCountdown(minutesUntilNext)}</span></span>
+            </div>
+          )}
         </div>
 
         {/* Schedule slots — matches PressureReliefTile row style */}
