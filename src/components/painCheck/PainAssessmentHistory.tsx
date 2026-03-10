@@ -189,12 +189,15 @@ function PainadAssessmentCard({ assessment, createdByName }: { assessment: Paina
   );
 }
 
+const INITIAL_DISPLAY_COUNT = 3;
+
 export function PainAssessmentHistory({ assessments, painadAssessments = [], loading }: PainAssessmentHistoryProps) {
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [filterTool, setFilterTool] = useState<'all' | 'abbey' | 'painad'>('all');
   const [actionsMap, setActionsMap] = useState<Record<string, PainActionRecord[]>>({});
   const [profilesMap, setProfilesMap] = useState<Record<string, string>>({});
   const [loadingActions, setLoadingActions] = useState(true);
+  const [showAll, setShowAll] = useState(false);
 
   const combined: CombinedAssessment[] = [
     ...assessments.map(a => ({ ...a, tool: 'abbey' as const })),
@@ -301,7 +304,7 @@ export function PainAssessmentHistory({ assessments, painadAssessments = [], loa
       </div>
 
       <div className="space-y-3">
-        {sorted.map((assessment) => {
+        {(showAll ? sorted : sorted.slice(0, INITIAL_DISPLAY_COUNT)).map((assessment) => {
           if (assessment.tool === 'abbey') {
             return (
               <AbbeyAssessmentCard
@@ -321,6 +324,20 @@ export function PainAssessmentHistory({ assessments, painadAssessments = [], loa
           );
         })}
       </div>
+
+      {sorted.length > INITIAL_DISPLAY_COUNT && (
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => setShowAll(!showAll)}
+        >
+          {showAll
+            ? `Show Less`
+            : `Show ${sorted.length - INITIAL_DISPLAY_COUNT} More Assessment${sorted.length - INITIAL_DISPLAY_COUNT !== 1 ? 's' : ''}`
+          }
+          {showAll ? <ChevronUp className="w-4 h-4 ml-2" /> : <ChevronDown className="w-4 h-4 ml-2" />}
+        </Button>
+      )}
     </div>
   );
 }

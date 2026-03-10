@@ -99,6 +99,8 @@ export type Database = {
           mild_reassess_hours: number
           moderate_alert_recipients: string[]
           moderate_reassess_hours: number
+          overdue_alert_enabled: boolean
+          overdue_threshold_days: number
           severe_alert_recipients: string[]
           severe_reassess_hours: number
           updated_at: string
@@ -117,6 +119,8 @@ export type Database = {
           mild_reassess_hours?: number
           moderate_alert_recipients?: string[]
           moderate_reassess_hours?: number
+          overdue_alert_enabled?: boolean
+          overdue_threshold_days?: number
           severe_alert_recipients?: string[]
           severe_reassess_hours?: number
           updated_at?: string
@@ -135,6 +139,8 @@ export type Database = {
           mild_reassess_hours?: number
           moderate_alert_recipients?: string[]
           moderate_reassess_hours?: number
+          overdue_alert_enabled?: boolean
+          overdue_threshold_days?: number
           severe_alert_recipients?: string[]
           severe_reassess_hours?: number
           updated_at?: string
