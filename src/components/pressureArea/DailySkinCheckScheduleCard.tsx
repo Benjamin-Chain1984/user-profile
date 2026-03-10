@@ -110,7 +110,7 @@ export function DailySkinCheckScheduleCard({ clientId, onLogSkinCheck, disabled 
     if (hasRedFinding) return 'Action Required';
     if (hasAmberFinding) return 'Monitor';
     if (!hasTodayCheck) return 'Pending';
-    return 'IDEAL';
+    return 'On track';
   })();
 
   return (
