@@ -79,6 +79,23 @@ export function SkinCheckForm({ clientId, open, onOpenChange }: Props) {
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Scheduled Time Selector */}
+          {scheduledTimes.length > 0 && (
+            <div>
+              <Label>Which scheduled skin check is this for?</Label>
+              <Select value={selectedScheduledTime} onValueChange={setSelectedScheduledTime}>
+                <SelectTrigger className="w-48 mt-1">
+                  <SelectValue placeholder="Select time" />
+                </SelectTrigger>
+                <SelectContent>
+                  {scheduledTimes.map(time => (
+                    <SelectItem key={time} value={time}>{time} Skin Check</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {/* Active Pressure Area Warning */}
           {hasRedFinding && (
             <Card className="border-destructive/40 bg-destructive/5">
