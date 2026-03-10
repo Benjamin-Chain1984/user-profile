@@ -241,34 +241,6 @@ export function WeightBmiTrends({ clientId }: WeightBmiTrendsProps) {
         </Card>
       )}
 
-      {/* Insights */}
-      {insights.length > 0 && (
-        <Card>
-          <CardContent className="pt-6 space-y-2">
-            <h4 className="text-sm font-semibold flex items-center gap-1.5">
-              <Info className="h-4 w-4 text-muted-foreground" />
-              Insights
-            </h4>
-            {insights.map((insight, idx) => {
-              const Icon = insight.type === 'success' ? CheckCircle 
-                : insight.type === 'warning' ? AlertTriangle 
-                : Clock;
-              const colorClass = insight.type === 'success' ? 'text-green-600' 
-                : insight.type === 'warning' ? 'text-amber-600' 
-                : 'text-muted-foreground';
-              return (
-                <div key={idx} className="flex items-start gap-2 text-sm">
-                  <Icon className={`h-4 w-4 mt-0.5 shrink-0 ${colorClass}`} />
-                  <span>{insight.text}</span>
-                </div>
-              );
-            })}
-            <p className="text-[11px] text-muted-foreground italic mt-2">
-              These insights are generated from recorded data and do not constitute medical advice. Always refer to the individual's health plan and consult a qualified health professional.
-            </p>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
