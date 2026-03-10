@@ -115,6 +115,8 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
       severe_alert_recipients: [],
       enabled_tools: enabledTools,
       default_tool: enabledTools[0] || 'abbey',
+      overdue_alert_enabled: overdueAlertEnabled,
+      overdue_threshold_days: overdueThresholdDays,
     } as any);
     handleSaveNotifications();
     setSaving(false);
