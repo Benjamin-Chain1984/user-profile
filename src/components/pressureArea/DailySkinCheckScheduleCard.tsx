@@ -92,7 +92,15 @@ export function DailySkinCheckScheduleCard({ clientId, onLogSkinCheck, disabled 
 
   const completedCount = slots.filter(s => s.completed).length;
   const allComplete = completedCount === slots.length;
-  const compliance = Math.round((completedCount / slots.length) * 100);
+  // Compute minutes until next uncompleted slot
+  const minutesUntilNext = useMemo(() => {
+    const nextSlot = slots.find(s => !s.completed && !s.isOverdue);
+    if (!nextSlot) return 0;
+    const [h, m] = nextSlot.time.split(':').map(Number);
+    const slotDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
+    return Math.max(0, Math.round((slotDate.getTime() - now.getTime()) / 60000));
+  }, [slots, now]);
+
 
   // Get today's sessions to check for findings
   const now = new Date();
