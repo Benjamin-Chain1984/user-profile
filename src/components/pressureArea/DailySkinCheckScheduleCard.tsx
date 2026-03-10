@@ -68,18 +68,25 @@ export function DailySkinCheckScheduleCard({ clientId, onLogSkinCheck, disabled 
 
   const completedCount = slots.filter(s => s.completed).length;
   const allComplete = completedCount === slots.length;
-  const hasMissed = slots.some(s => s.isOverdue);
   const compliance = Math.round((completedCount / slots.length) * 100);
 
-  // Derive status to match PressureReliefTile pattern
+  // "Back on track" logic: only flag Amber if the NEXT uncompleted slot is
+  // currently missed (past its grace window). Historical misses don't keep
+  // the card Amber once the person is caught up.
+  const nextUncompletedSlot = slots.find(s => !s.completed);
+  const isCurrentlyBehind = nextUncompletedSlot?.isOverdue ?? false;
+
   const computedStatus: HealthStatus = (() => {
     if (allComplete) return 'stable';
-    if (hasMissed) return 'monitor';
-    if (completedCount === 0) return 'monitor';
+    if (isCurrentlyBehind) return 'monitor';
     return 'stable';
   })();
 
-  const statusLabel = allComplete ? 'IDEAL' : hasMissed ? 'Missed' : completedCount === 0 ? 'Pending' : 'On track';
+  const statusLabel = allComplete
+    ? 'IDEAL'
+    : isCurrentlyBehind
+    ? 'Missed'
+    : 'IDEAL';
 
   return (
     <Card>
