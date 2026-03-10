@@ -265,7 +265,7 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
                 <Label htmlFor={`freq-${opt.value}`} className="cursor-pointer flex-1">
                   <span className="font-medium">{opt.label}</span>
                   <span className="text-xs text-muted-foreground ml-2">
-                    (every {opt.hours} hours)
+                    ({opt.displayLabel})
                   </span>
                 </Label>
               </div>

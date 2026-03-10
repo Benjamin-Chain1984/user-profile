@@ -12,7 +12,6 @@ interface PainActiveActionPlanProps {
 }
 
 const PREDEFINED_ACTION_LABELS: Record<string, string> = {
-  give_instructions: 'Give instructions to the person/staff',
   administer_pain_relief: 'Administer Pain Relief medication (if prescribed)',
   recheck_pain: 'Recheck pain again at next scheduled time',
   reposition: 'Reposition the person',
