@@ -38,20 +38,6 @@ export function SleepTrends({ clientId }: SleepTrendsProps) {
   });
   const assistanceData = Object.entries(assistanceCounts).map(([type, count]) => ({ type, count }));
 
-  // Insights
-  const insights: string[] = [];
-  const recentWeek = entries.slice(0, 7);
-  const prolongedNights = recentWeek.filter(e => countProlongedAwakenings(e) > 0).length;
-  if (prolongedNights >= 3) insights.push('Multiple prolonged awakenings (>30 mins) recorded this week.');
-  const toiletNights = recentWeek.filter(e => {
-    const reasons = e.awakening_events?.map(ae => ae.reason) || [];
-    return reasons.includes('toilet');
-  }).length;
-  if (toiletNights >= 5) insights.push('Frequent night toileting — consider continence review.');
-  const excessiveNights = recentWeek.filter(e => Number(e.estimated_hours_slept) > (config.max_sleep_threshold_hours ?? 12)).length;
-  if (excessiveNights >= 2) insights.push(`Sleep duration high for ${excessiveNights} nights this week.`);
-  const disruptedNights = recentWeek.filter(e => getAwakeningCount(e) >= (config.disruption_threshold ?? 3)).length;
-  if (disruptedNights >= 3) insights.push(`Sleep disrupted more than ${disruptedNights} nights this week.`);
 
   if (entries.length === 0) {
     return (
