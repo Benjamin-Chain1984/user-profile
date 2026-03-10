@@ -48,7 +48,6 @@ export function PressureAreaConfigSettings({ clientId }: Props) {
   const { config, saveConfig, isSaving } = usePressureAreaConfig(clientId);
 
   const [enableCompliance, setEnableCompliance] = useState(true);
-  const [skinCheckDays, setSkinCheckDays] = useState(7);
   const [checksPerDay, setChecksPerDay] = useState(1);
   const [checkTimes, setCheckTimes] = useState<string[]>(['08:00']);
   const [notificationSettings, setNotificationSettings] = useState<ModuleNotificationSettings>({
@@ -60,7 +59,6 @@ export function PressureAreaConfigSettings({ clientId }: Props) {
   useEffect(() => {
     if (config) {
       setEnableCompliance(config.enable_compliance_scoring);
-      setSkinCheckDays(config.skin_check_frequency_days);
       setChecksPerDay(config.skin_checks_per_day || 1);
       setCheckTimes(config.skin_check_times?.length ? config.skin_check_times : DEFAULT_TIMES[1]);
     }
@@ -82,7 +80,6 @@ export function PressureAreaConfigSettings({ clientId }: Props) {
   const handleSave = () => {
     saveConfig({
       enable_compliance_scoring: enableCompliance,
-      skin_check_frequency_days: skinCheckDays,
       skin_checks_per_day: checksPerDay,
       skin_check_times: checkTimes.slice(0, checksPerDay),
     });
@@ -111,10 +108,6 @@ export function PressureAreaConfigSettings({ clientId }: Props) {
                 <p className="text-xs text-muted-foreground">Track daily repositioning compliance against the plan</p>
               </div>
               <Switch checked={enableCompliance} onCheckedChange={setEnableCompliance} />
-            </div>
-            <div>
-              <Label>Skin Check Frequency (days)</Label>
-              <Input type="number" value={skinCheckDays} onChange={e => setSkinCheckDays(Number(e.target.value))} min={1} className="w-32" />
             </div>
           </CardContent>
         </Card>
