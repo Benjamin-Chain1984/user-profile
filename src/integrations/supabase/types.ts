@@ -5915,6 +5915,44 @@ export type Database = {
           },
         ]
       }
+      weekly_health_insights: {
+        Row: {
+          client_id: string
+          created_by: string | null
+          enabled_modules: string[]
+          generated_at: string
+          id: string
+          insight_summary: string
+          next_due_at: string
+        }
+        Insert: {
+          client_id: string
+          created_by?: string | null
+          enabled_modules?: string[]
+          generated_at?: string
+          id?: string
+          insight_summary: string
+          next_due_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_by?: string | null
+          enabled_modules?: string[]
+          generated_at?: string
+          id?: string
+          insight_summary?: string
+          next_due_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_health_insights_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       weight_bmi_alerts: {
         Row: {
           acknowledged_at: string | null
