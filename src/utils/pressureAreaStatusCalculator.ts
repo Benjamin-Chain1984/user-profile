@@ -14,6 +14,8 @@ interface StatusInput {
   config: {
     skin_check_frequency_days: number;
     enable_compliance_scoring: boolean;
+    skin_checks_per_day?: number;
+    skin_check_times?: string[];
   } | null;
   planAcknowledged: boolean;
 }
