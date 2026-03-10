@@ -526,9 +526,8 @@ function SkinCheckTile({
  * ────────────────────────────────────────────── */
 export function PressureAreaStatusCard({ clientId, onLogPressureRelief, onLogSkinCheck, disabled }: Props) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div className="space-y-4">
       <PressureReliefTile clientId={clientId} onLog={onLogPressureRelief} disabled={disabled} />
-      <SkinCheckTile clientId={clientId} onLog={onLogSkinCheck} disabled={disabled} />
     </div>
   );
 }
