@@ -103,7 +103,7 @@ export function DailySkinCheckScheduleCard({ clientId, onLogSkinCheck, disabled 
         {/* Status + compliance */}
         <div className="space-y-1">
           <div className={`text-lg font-semibold ${
-            status === 'action' ? 'text-destructive' :
+            status === 'monitor' ? 'text-amber-600' :
             status === 'monitor' ? 'text-amber-600' : ''
           }`}>
             {statusLabel}
