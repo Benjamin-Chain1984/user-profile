@@ -130,15 +130,41 @@ export function calculatePressureAreaStatus(input: StatusInput): PressureAreaSta
     }
   }
 
-  // Check skin check overdue
-  const latestSkinCheck = skinChecks[0];
-  if (config && latestSkinCheck) {
-    const daysSince = differenceInDays(new Date(), new Date(latestSkinCheck.event_occurred_at));
+  // Check scheduled skin check overdue (2-hour grace window)
+  if (config?.skin_checks_per_day && config.skin_check_times?.length) {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todaySessions = skinChecks.filter(s => new Date(s.event_occurred_at) >= todayStart);
+
+    for (const time of config.skin_check_times) {
+      const [h, m] = time.split(':').map(Number);
+      const scheduledDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
+      const graceEnd = new Date(scheduledDate.getTime() + 2 * 60 * 60 * 1000);
+
+      // Check if this scheduled time has a matching session
+      const hasMatch = todaySessions.some(s => (s as any).scheduled_time === time);
+
+      if (!hasMatch && now > graceEnd) {
+        return {
+          status: 'monitor' as const,
+          message: `Scheduled skin check overdue (${time} check not completed).`,
+          lastEntry: latestSkinCheck
+            ? `Skin check ${formatDistanceToNow(new Date(latestSkinCheck.event_occurred_at), { addSuffix: true })}`
+            : 'Not yet logged',
+        };
+      }
+    }
+  }
+
+  // Check skin check overdue (legacy day-based)
+  const latestSkinCheckForDays = skinChecks[0];
+  if (config && latestSkinCheckForDays) {
+    const daysSince = differenceInDays(new Date(), new Date(latestSkinCheckForDays.event_occurred_at));
     if (daysSince > config.skin_check_frequency_days) {
       return {
         status: 'monitor',
         message: `Skin check overdue – last completed ${daysSince} days ago.`,
-        lastEntry: `Skin check ${formatDistanceToNow(new Date(latestSkinCheck.event_occurred_at), { addSuffix: true })}`,
+        lastEntry: `Skin check ${formatDistanceToNow(new Date(latestSkinCheckForDays.event_occurred_at), { addSuffix: true })}`,
       };
     }
   }
