@@ -60,9 +60,24 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
   
   const [frequency, setFrequency] = useState<AssessmentFrequency>(initialFrequency);
   const [situationalEnabled, setSituationalEnabled] = useState(initialSituational);
-  const [mildHours, setMildHours] = useState(effectiveConfig.mild_reassess_hours);
-  const [moderateHours, setModerateHours] = useState(effectiveConfig.moderate_reassess_hours);
-  const [severeHours, setSevereHours] = useState(effectiveConfig.severe_reassess_hours);
+  // Helper to determine if a value is better expressed in days
+  const toUnitAndValue = (hours: number): { value: number; unit: 'hours' | 'days' } => {
+    if (hours >= 24 && hours % 24 === 0) return { value: hours / 24, unit: 'days' };
+    return { value: hours, unit: 'hours' };
+  };
+
+  const initMild = toUnitAndValue(effectiveConfig.mild_reassess_hours);
+  const initModerate = toUnitAndValue(effectiveConfig.moderate_reassess_hours);
+  const initSevere = toUnitAndValue(effectiveConfig.severe_reassess_hours);
+
+  const [mildValue, setMildValue] = useState(initMild.value);
+  const [mildUnit, setMildUnit] = useState<'hours' | 'days'>(initMild.unit);
+  const [moderateValue, setModerateValue] = useState(initModerate.value);
+  const [moderateUnit, setModerateUnit] = useState<'hours' | 'days'>(initModerate.unit);
+  const [severeValue, setSevereValue] = useState(initSevere.value);
+  const [severeUnit, setSevereUnit] = useState<'hours' | 'days'>(initSevere.unit);
+
+  const toHours = (value: number, unit: 'hours' | 'days') => unit === 'days' ? value * 24 : value;
   const [enabledTools, setEnabledTools] = useState<string[]>(effectiveConfig.enabled_tools || ['abbey', 'painad']);
   const [overdueAlertEnabled, setOverdueAlertEnabled] = useState((effectiveConfig as any).overdue_alert_enabled ?? true);
   const [overdueThresholdDays, setOverdueThresholdDays] = useState((effectiveConfig as any).overdue_threshold_days ?? 1);
