@@ -130,21 +130,25 @@ export function calculatePressureAreaStatus(input: StatusInput): PressureAreaSta
     }
   }
 
-  // Check scheduled skin check overdue (2-hour grace window)
+  // Check scheduled skin check — only flag if the NEXT uncompleted slot is
+  // past its grace window. Once back on track, status clears to green.
   if (config?.skin_checks_per_day && config.skin_check_times?.length) {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const todaySessions = skinChecks.filter(s => new Date(s.event_occurred_at) >= todayStart);
 
-    for (const time of config.skin_check_times) {
+    // Find the first uncompleted scheduled slot
+    const sortedTimes = [...config.skin_check_times].sort();
+    for (const time of sortedTimes) {
+      const hasMatch = todaySessions.some(s => (s as any).scheduled_time === time);
+      if (hasMatch) continue; // slot completed — skip
+
+      // This is the next uncompleted slot
       const [h, m] = time.split(':').map(Number);
       const scheduledDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
       const graceEnd = new Date(scheduledDate.getTime() + 2 * 60 * 60 * 1000);
 
-      // Check if this scheduled time has a matching session
-      const hasMatch = todaySessions.some(s => (s as any).scheduled_time === time);
-
-      if (!hasMatch && now > graceEnd) {
+      if (now > graceEnd) {
         return {
           status: 'monitor' as const,
           message: `Scheduled skin check missed (${time} check not completed).`,
@@ -153,6 +157,7 @@ export function calculatePressureAreaStatus(input: StatusInput): PressureAreaSta
             : 'Not yet logged',
         };
       }
+      break; // Only check the next uncompleted slot
     }
   }
 
