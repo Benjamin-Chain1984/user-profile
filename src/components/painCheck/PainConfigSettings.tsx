@@ -77,6 +77,8 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
       setModerateHours(config.moderate_reassess_hours);
       setSevereHours(config.severe_reassess_hours);
       setEnabledTools(config.enabled_tools || ['abbey', 'painad']);
+      setOverdueAlertEnabled((config as any).overdue_alert_enabled ?? true);
+      setOverdueThresholdDays((config as any).overdue_threshold_days ?? 1);
     }
   }, [config]);
 
