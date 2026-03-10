@@ -205,6 +205,8 @@ export interface PressureAreaConfig {
   client_id: string | null;
   enable_compliance_scoring: boolean;
   skin_check_frequency_days: number;
+  skin_checks_per_day: number;
+  skin_check_times: string[];
   escalation_recipients: string[];
   created_at: string;
   created_by: string | null;
