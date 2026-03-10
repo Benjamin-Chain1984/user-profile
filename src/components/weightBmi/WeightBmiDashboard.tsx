@@ -133,6 +133,85 @@ export function WeightBmiDashboard({ clientId }: WeightBmiDashboardProps) {
           <div className="space-y-6">
             <WeightHistory clientId={clientId} />
 
+            {/* Symptoms to Be Aware Of */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-destructive" />
+                  Symptoms to Be Aware Of and Seek Advice
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="grid sm:grid-cols-2 gap-2">
+                  {SYMPTOMS_TO_WATCH.map((symptom, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <span className="text-destructive mt-1">•</span>
+                      <span className="text-sm text-muted-foreground">{symptom}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+
+            {/* Healthy Weight Tips */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <HeartPulse className="h-5 w-5 text-green-500" />
+                  Healthy Weight Tips
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {HEALTHY_WEIGHT_TIPS.map((tip, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <span className="text-green-500 mt-1">✓</span>
+                      <span className="text-sm text-muted-foreground">{tip}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+
+            {/* BMI Classification Reference */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">BMI Classification Reference</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="p-3 bg-amber-50 rounded-md text-center">
+                    <p className="text-xs text-muted-foreground">Underweight</p>
+                    <p className="font-bold text-amber-600">&lt; 18.5</p>
+                  </div>
+                  <div className="p-3 bg-green-50 rounded-md text-center">
+                    <p className="text-xs text-muted-foreground">Normal</p>
+                    <p className="font-bold text-green-600">18.5 - 24.9</p>
+                  </div>
+                  <div className="p-3 bg-amber-50 rounded-md text-center">
+                    <p className="text-xs text-muted-foreground">Overweight</p>
+                    <p className="font-bold text-amber-600">25 - 29.9</p>
+                  </div>
+                  <div className="p-3 bg-red-50 rounded-md text-center">
+                    <p className="text-xs text-muted-foreground">Obese</p>
+                    <p className="font-bold text-red-600">≥ 30</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-3">
+                  BMI should be interpreted with caution, especially when height is estimated or for individuals with high muscle mass, amputations, or mobility limitations.
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Citation */}
+            <div className="text-xs text-muted-foreground border-t pt-4 space-y-1">
+              <p className="font-medium">BMI Classification</p>
+              <p>World Health Organization (WHO) BMI Classification for Adults.</p>
+              <p className="italic">
+                WHO Expert Committee. Physical Status: The Use and Interpretation of Anthropometry. 
+                WHO Technical Report Series 854. Geneva: WHO, 1995.
+              </p>
+            </div>
           </div>
         </TabsContent>
 
@@ -145,87 +224,6 @@ export function WeightBmiDashboard({ clientId }: WeightBmiDashboardProps) {
             <WeightBmiConfigSettings clientId={clientId} />
           </TabsContent>
         )}
-      </Tabs>
-
-      {/* Symptoms to Be Aware Of */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-red-500" />
-            Symptoms to Be Aware Of and Seek Advice
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="grid sm:grid-cols-2 gap-2">
-            {SYMPTOMS_TO_WATCH.map((symptom, index) => (
-              <li key={index} className="flex items-start gap-2">
-                <span className="text-red-500 mt-1">•</span>
-                <span className="text-sm text-muted-foreground">{symptom}</span>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
-
-      {/* Healthy Weight Tips */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <HeartPulse className="h-5 w-5 text-green-500" />
-            Healthy Weight Tips
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-2">
-            {HEALTHY_WEIGHT_TIPS.map((tip, index) => (
-              <li key={index} className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
-                <span className="text-sm text-muted-foreground">{tip}</span>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
-
-      {/* BMI Classification Reference */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">BMI Classification Reference</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="p-3 bg-amber-50 rounded-md text-center">
-              <p className="text-xs text-muted-foreground">Underweight</p>
-              <p className="font-bold text-amber-600">&lt; 18.5</p>
-            </div>
-            <div className="p-3 bg-green-50 rounded-md text-center">
-              <p className="text-xs text-muted-foreground">Normal</p>
-              <p className="font-bold text-green-600">18.5 - 24.9</p>
-            </div>
-            <div className="p-3 bg-amber-50 rounded-md text-center">
-              <p className="text-xs text-muted-foreground">Overweight</p>
-              <p className="font-bold text-amber-600">25 - 29.9</p>
-            </div>
-            <div className="p-3 bg-red-50 rounded-md text-center">
-              <p className="text-xs text-muted-foreground">Obese</p>
-              <p className="font-bold text-red-600">≥ 30</p>
-            </div>
-          </div>
-          <p className="text-xs text-muted-foreground mt-3">
-            BMI should be interpreted with caution, especially when height is estimated or for individuals with high muscle mass, amputations, or mobility limitations.
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Citation */}
-      <div className="text-xs text-muted-foreground border-t pt-4 space-y-1">
-        <p className="font-medium">BMI Classification</p>
-        <p>World Health Organization (WHO) BMI Classification for Adults.</p>
-        <p className="italic">
-          WHO Expert Committee. Physical Status: The Use and Interpretation of Anthropometry. 
-          WHO Technical Report Series 854. Geneva: WHO, 1995.
-        </p>
-      </div>
 
       {/* Log Weight Dialog */}
       <WeightLogForm
