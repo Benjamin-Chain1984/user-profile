@@ -80,57 +80,6 @@ export function EpilepsyTrends({ clientId }: EpilepsyTrendsProps) {
       }));
   }, [filteredEvents]);
 
-  // Insights
-  const insights = useMemo(() => {
-    if (filteredEvents.length === 0) return [];
-    const results: { type: 'info' | 'warning' | 'success'; message: string }[] = [];
-
-    // Frequency comparison
-    const last7 = filteredEvents.filter(e => differenceInDays(new Date(), new Date(e.event_occurred_at)) <= 7);
-    const prev7 = filteredEvents.filter(e => {
-      const d = differenceInDays(new Date(), new Date(e.event_occurred_at));
-      return d > 7 && d <= 14;
-    });
-    if (last7.length > prev7.length && last7.length > 1) {
-      results.push({ type: 'warning', message: `Seizures are occurring more frequently this week (${last7.length}) compared to last week (${prev7.length}).` });
-    } else if (last7.length < prev7.length && prev7.length > 0) {
-      results.push({ type: 'success', message: `Seizure frequency has decreased this week (${last7.length}) compared to last week (${prev7.length}).` });
-    }
-
-    // Common triggers
-    const triggerCounts: Record<string, number> = {};
-    filteredEvents.forEach(e => e.triggers.forEach(t => { triggerCounts[t] = (triggerCounts[t] || 0) + 1; }));
-    const topTrigger = Object.entries(triggerCounts).sort((a, b) => b[1] - a[1])[0];
-    if (topTrigger && topTrigger[1] >= 3) {
-      results.push({ type: 'info', message: `Most events follow "${topTrigger[0]}" (${topTrigger[1]} occurrences).` });
-    }
-
-    // Cluster detection
-    const clusterCount = config?.cluster_seizure_count ?? 2;
-    const clusterHours = config?.cluster_seizure_hours ?? 24;
-    const sorted = [...filteredEvents].sort((a, b) => new Date(a.event_occurred_at).getTime() - new Date(b.event_occurred_at).getTime());
-    for (let i = 0; i < sorted.length - 1; i++) {
-      const hoursDiff = (new Date(sorted[i + 1].event_occurred_at).getTime() - new Date(sorted[i].event_occurred_at).getTime()) / (1000 * 60 * 60);
-      if (hoursDiff <= clusterHours) {
-        results.push({ type: 'warning', message: 'Cluster pattern detected – multiple seizures occurring within a short timeframe.' });
-        break;
-      }
-    }
-
-    // Sleep correlation
-    const sleepTriggerCount = filteredEvents.filter(e => e.triggers.includes('Lack of sleep')).length;
-    if (sleepTriggerCount >= 2) {
-      results.push({ type: 'info', message: `Events often follow poor sleep (${sleepTriggerCount} occurrences).` });
-    }
-
-    if (results.length === 0) {
-      results.push({ type: 'success', message: 'No concerning patterns detected in the selected period.' });
-    }
-
-    results.push({ type: 'info', message: 'Accurate records can assist neurologists in adjusting treatment plans.' });
-
-    return results;
-  }, [filteredEvents, config]);
 
   return (
     <div className="space-y-6">
@@ -246,31 +195,6 @@ export function EpilepsyTrends({ clientId }: EpilepsyTrendsProps) {
         </CardContent>
       </Card>
 
-      {/* Insights */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Lightbulb className="h-5 w-5" />
-            Insights
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {insights.map((insight, i) => (
-            <div key={i} className={`flex items-start gap-3 p-3 rounded-lg ${
-              insight.type === 'warning' ? 'bg-warning/10' :
-              insight.type === 'success' ? 'bg-success/10' : 'bg-muted/50'
-            }`}>
-              {insight.type === 'warning' && <AlertTriangle className="h-4 w-4 text-warning mt-0.5 shrink-0" />}
-              {insight.type === 'success' && <CheckCircle className="h-4 w-4 text-success mt-0.5 shrink-0" />}
-              {insight.type === 'info' && <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />}
-              <p className="text-sm">{insight.message}</p>
-            </div>
-          ))}
-          <p className="text-xs text-muted-foreground italic pt-2">
-            These insights are based on recorded patterns and do not constitute a diagnosis. Always consult a neurologist or GP.
-          </p>
-        </CardContent>
-      </Card>
     </div>
   );
 }

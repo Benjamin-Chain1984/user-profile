@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { WeeklyHealthInsights } from '@/components/ideal/WeeklyHealthInsights';
 import { Navigation } from '@/components/ideal/Navigation';
 import { ProfileHeader } from '@/components/ideal/ProfileHeader';
 import { AlertDashboard } from '@/components/ideal/AlertDashboard';
@@ -30,6 +31,9 @@ function AppContent() {
         {activeTab === 'home' && (
           <div className="space-y-4 sm:space-y-6 animate-fade-in">
             <ProfileHeader />
+
+            {/* Weekly Health Insights - Global Panel */}
+            <WeeklyHealthInsights />
             
             {/* Pause/Resume Button */}
             <div className="flex justify-end">
