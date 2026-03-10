@@ -139,7 +139,7 @@ export function DailySkinCheckScheduleCard({ clientId, onLogSkinCheck, disabled 
         {allComplete && (
           <div className="flex items-center gap-2 pt-1 text-sm text-green-700 font-medium">
             <CheckCircle2 className="h-4 w-4" />
-            All scheduled skin checks completed for today
+            IDEAL – All scheduled skin checks completed for today
           </div>
         )}
       </CardContent>
