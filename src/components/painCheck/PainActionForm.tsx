@@ -5,9 +5,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { getSeverityLabel, getSeverityColor, getSeverityDotColor, PainSeverity, SEVERITY_ACTION_PROMPTS } from '@/types/painAssessment';
+import { getSeverityLabel, getSeverityColor, getSeverityDotColor, PainSeverity } from '@/types/painAssessment';
 import { usePainConfig } from '@/hooks/usePainConfig';
-import { AlertTriangle, Check } from 'lucide-react';
+import { AlertTriangle, Check, ClipboardCheck, ArrowRight } from 'lucide-react';
 
 interface PainActionFormProps {
   score: number;
@@ -18,22 +18,30 @@ interface PainActionFormProps {
 }
 
 const PREDEFINED_ACTION_LABELS: Record<string, string> = {
-  give_instructions: 'Give instructions',
+  give_instructions: 'Give instructions to the person/staff',
   administer_pain_relief: 'Administer Pain Relief medication (if prescribed)',
-  recheck_pain: 'Recheck pain again',
-  reposition: 'Reposition',
-  contact_gp: 'Contact GP',
-  call_ambulance: 'Call Ambulance',
+  recheck_pain: 'Recheck pain again at next scheduled time',
+  reposition: 'Reposition the person',
+  contact_gp: 'Contact the GP',
+  call_ambulance: 'Call Ambulance (000)',
+};
+
+const SEVERITY_URGENCY: Record<string, { label: string; color: string; bgColor: string; borderColor: string }> = {
+  mild: { label: 'Monitor & Respond', color: 'text-amber-700', bgColor: 'bg-amber-50', borderColor: 'border-amber-300' },
+  moderate: { label: 'Action Required', color: 'text-orange-700', bgColor: 'bg-orange-50', borderColor: 'border-orange-400' },
+  severe: { label: 'Urgent — Escalate Immediately', color: 'text-destructive', bgColor: 'bg-destructive/5', borderColor: 'border-destructive/40' },
 };
 
 export function PainActionForm({ score, severity, maxScore = 18, onSubmit, onCancel }: PainActionFormProps) {
   const { config } = usePainConfig();
-  const [selectedActions, setSelectedActions] = useState<string[]>([]);
+  const [completedActions, setCompletedActions] = useState<string[]>([]);
   const [noActionReason, setNoActionReason] = useState('');
   const [additionalNotes, setAdditionalNotes] = useState('');
 
-  // Build action list from config based on severity
-  const actionOptions = useMemo(() => {
+  const urgency = SEVERITY_URGENCY[severity] || SEVERITY_URGENCY.mild;
+
+  // Build action steps from config based on severity
+  const actionSteps = useMemo(() => {
     const cfg = config as any;
     let configuredActions: string[] = [];
     let customActions: string[] = [];
@@ -49,45 +57,41 @@ export function PainActionForm({ score, severity, maxScore = 18, onSubmit, onCan
       customActions = (cfg?.severe_custom_actions ?? []).filter((s: string) => s.trim());
     }
 
-    const actions = configuredActions.map(id => ({
+    const steps = configuredActions.map((id, idx) => ({
       id,
+      stepNumber: idx + 1,
       label: PREDEFINED_ACTION_LABELS[id] || id,
     }));
 
     customActions.forEach((label, idx) => {
-      actions.push({ id: `custom_${idx}`, label });
+      steps.push({ id: `custom_${idx}`, stepNumber: steps.length + 1, label });
     });
 
-    // Always add "No action taken" as last option
-    actions.push({ id: 'no_action', label: 'No action taken (reason required)' });
-
-    return actions;
+    return steps;
   }, [config, severity]);
 
   const handleActionToggle = (actionId: string) => {
-    setSelectedActions(prev => {
-      if (prev.includes(actionId)) {
-        return prev.filter(a => a !== actionId);
-      }
+    setCompletedActions(prev => {
       if (actionId === 'no_action') {
-        return ['no_action'];
+        return prev.includes('no_action') ? [] : ['no_action'];
       }
-      return [...prev.filter(a => a !== 'no_action'), actionId];
+      const without = prev.filter(a => a !== 'no_action');
+      return without.includes(actionId) ? without.filter(a => a !== actionId) : [...without, actionId];
     });
   };
 
   const handleSubmit = () => {
-    const actionLabels = selectedActions.map(id => {
-      const action = actionOptions.find(a => a.id === id);
-      return action?.label || id;
+    if (isNoActionSelected) {
+      onSubmit(`No action taken - Reason: ${noActionReason}${additionalNotes ? `. Notes: ${additionalNotes}` : ''}`);
+      return;
+    }
+
+    const actionLabels = completedActions.map(id => {
+      const step = actionSteps.find(a => a.id === id);
+      return step?.label || id;
     });
 
     let finalAction = actionLabels.join('; ');
-    
-    if (selectedActions.includes('no_action') && noActionReason) {
-      finalAction = `No action taken - Reason: ${noActionReason}`;
-    }
-    
     if (additionalNotes) {
       finalAction += `. Additional notes: ${additionalNotes}`;
     }
@@ -97,84 +101,95 @@ export function PainActionForm({ score, severity, maxScore = 18, onSubmit, onCan
     }
   };
 
-  const isNoActionSelected = selectedActions.includes('no_action');
-  const canSubmit = selectedActions.length > 0 && (!isNoActionSelected || noActionReason.trim());
-
-  const severityPrompts = SEVERITY_ACTION_PROMPTS[severity] || [];
+  const isNoActionSelected = completedActions.includes('no_action');
+  const canSubmit = completedActions.length > 0 && (!isNoActionSelected || noActionReason.trim());
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className={`border-2 ${urgency.borderColor}`}>
+      <CardHeader className={`${urgency.bgColor} rounded-t-lg`}>
         <div className="flex items-start gap-3">
-          <AlertTriangle className="w-6 h-6 text-warning shrink-0" />
+          <ClipboardCheck className={`w-6 h-6 ${urgency.color} shrink-0`} />
           <div>
-            <CardTitle className="text-lg">Action Required</CardTitle>
+            <CardTitle className={`text-lg ${urgency.color}`}>
+              {urgency.label}
+            </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Pain score of {score} ({getSeverityLabel(severity)}) requires documenting actions taken
+              Assessment result: <strong>{getSeverityLabel(severity)}</strong> (Score: {score}/{maxScore})
             </p>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Score Display */}
-        <div className={`p-4 rounded-lg text-center ${
-          severity === 'mild' ? 'bg-orange-400/10' :
-          severity === 'moderate' ? 'bg-orange-600/10' :
-          'bg-destructive/10'
-        }`}>
-          <div className="flex items-center justify-center gap-2">
-            <div className={`w-4 h-4 rounded-full ${getSeverityDotColor(severity)}`} />
-            <p className={`text-2xl font-bold ${getSeverityColor(severity)}`}>
-              Score: {score}/{maxScore}
+      <CardContent className="space-y-5 pt-5">
+        {/* Protocol Steps — Clear instructional guidance */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <ArrowRight className={`h-4 w-4 ${urgency.color}`} />
+            <p className={`text-sm font-semibold ${urgency.color}`}>
+              Follow these steps for {getSeverityLabel(severity).toLowerCase()}:
             </p>
           </div>
-          <p className={`text-sm font-medium ${getSeverityColor(severity)}`}>
-            {getSeverityLabel(severity)}
-          </p>
-        </div>
-
-        {/* Severity-specific action prompts */}
-        {severityPrompts.length > 0 && (
-          <div className="p-3 bg-muted/50 rounded-lg">
-            <p className="text-sm font-medium mb-2">Recommended actions for {getSeverityLabel(severity).toLowerCase()}:</p>
-            <ul className="text-sm text-muted-foreground space-y-1">
-              {severityPrompts.map((prompt, idx) => (
-                <li key={idx}>• {prompt}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Action Selection - driven by config */}
-        <div className="space-y-2">
-          <Label>Select Actions Taken *</Label>
-          <div className="grid grid-cols-1 gap-2">
-            {actionOptions.map((action) => (
-              <div 
-                key={action.id} 
-                className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors ${
-                  selectedActions.includes(action.id)
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border hover:border-primary/50'
+          <div className="space-y-2">
+            {actionSteps.map((step) => (
+              <div
+                key={step.id}
+                className={`flex items-start gap-3 p-3 rounded-lg border transition-all ${
+                  completedActions.includes(step.id)
+                    ? 'border-success bg-success/5'
+                    : `${urgency.bgColor} ${urgency.borderColor}`
                 }`}
               >
                 <Checkbox
-                  id={`action-${action.id}`}
-                  checked={selectedActions.includes(action.id)}
-                  onCheckedChange={() => handleActionToggle(action.id)}
+                  id={`step-${step.id}`}
+                  checked={completedActions.includes(step.id)}
+                  onCheckedChange={() => handleActionToggle(step.id)}
+                  disabled={isNoActionSelected}
+                  className="mt-0.5"
                 />
-                <Label 
-                  htmlFor={`action-${action.id}`} 
-                  className="flex-1 cursor-pointer text-sm"
+                <Label
+                  htmlFor={`step-${step.id}`}
+                  className="flex-1 cursor-pointer text-sm leading-relaxed"
                 >
-                  {action.label}
+                  <span className={`font-semibold mr-2 ${urgency.color}`}>
+                    Step {step.stepNumber}:
+                  </span>
+                  {step.label}
                 </Label>
+                {completedActions.includes(step.id) && (
+                  <Check className="h-4 w-4 text-success shrink-0 mt-0.5" />
+                )}
               </div>
             ))}
           </div>
         </div>
 
-        {/* No Action Reason */}
+        {/* Completion summary */}
+        {actionSteps.length > 0 && !isNoActionSelected && (
+          <div className="text-xs text-muted-foreground text-center">
+            {completedActions.length} of {actionSteps.length} steps confirmed
+          </div>
+        )}
+
+        {/* Divider */}
+        <div className="border-t" />
+
+        {/* No action option */}
+        <div
+          className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+            isNoActionSelected
+              ? 'border-warning bg-warning/5'
+              : 'border-border hover:border-warning/50'
+          }`}
+        >
+          <Checkbox
+            id="step-no-action"
+            checked={isNoActionSelected}
+            onCheckedChange={() => handleActionToggle('no_action')}
+          />
+          <Label htmlFor="step-no-action" className="flex-1 cursor-pointer text-sm text-warning">
+            No action taken (reason required)
+          </Label>
+        </div>
+
         {isNoActionSelected && (
           <div className="space-y-2">
             <Label className="text-warning">Reason for No Action *</Label>
@@ -194,7 +209,7 @@ export function PainActionForm({ score, severity, maxScore = 18, onSubmit, onCan
           <Textarea
             value={additionalNotes}
             onChange={(e) => setAdditionalNotes(e.target.value)}
-            placeholder="Any additional details about the action taken..."
+            placeholder="Any additional details about the actions completed..."
             rows={2}
           />
         </div>
@@ -213,7 +228,7 @@ export function PainActionForm({ score, severity, maxScore = 18, onSubmit, onCan
         </Button>
         <Button onClick={handleSubmit} disabled={!canSubmit}>
           <Check className="w-4 h-4 mr-2" />
-          Save Action
+          Confirm Actions
         </Button>
       </CardFooter>
     </Card>
