@@ -124,7 +124,7 @@ export function DailySkinCheckScheduleCard({ clientId, onLogSkinCheck, disabled 
             )}
 
             {slot.isOverdue && (
-              <span className="text-xs text-amber-600 font-medium">Overdue</span>
+              <span className="text-xs text-amber-600 font-medium">Missed</span>
             )}
           </div>
         ))}
