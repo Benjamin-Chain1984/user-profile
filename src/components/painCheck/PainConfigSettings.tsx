@@ -125,9 +125,9 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
     const success = await saveConfig({
       assessment_triggers: triggers,
       custom_trigger_text: null,
-      mild_reassess_hours: mildHours,
-      moderate_reassess_hours: moderateHours,
-      severe_reassess_hours: severeHours,
+      mild_reassess_hours: toHours(mildValue, mildUnit),
+      moderate_reassess_hours: toHours(moderateValue, moderateUnit),
+      severe_reassess_hours: toHours(severeValue, severeUnit),
       mild_alert_recipients: [],
       moderate_alert_recipients: [],
       severe_alert_recipients: [],
