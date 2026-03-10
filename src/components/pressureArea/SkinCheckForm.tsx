@@ -33,18 +33,16 @@ export function SkinCheckForm({ clientId, open, onOpenChange }: Props) {
   const scheduledTimes = config?.skin_check_times || [];
 
   // Auto-select the next due scheduled time when form opens
-  useState(() => {
-    if (scheduledTimes.length > 0 && !selectedScheduledTime) {
+  useEffect(() => {
+    if (open && scheduledTimes.length > 0 && !selectedScheduledTime) {
       const now = new Date();
-      const todayStr = now.toISOString().slice(0, 10);
-      // Find the next scheduled time that hasn't passed yet, or the first one
       const nextTime = scheduledTimes.find(time => {
         const [h, m] = time.split(':').map(Number);
         return h > now.getHours() || (h === now.getHours() && m > now.getMinutes());
       }) || scheduledTimes[0];
       if (nextTime) setSelectedScheduledTime(nextTime);
     }
-  });
+  }, [open, scheduledTimes]);
 
   const handleResultChange = (areaId: string, result: AreaCheckResult) => {
     setAreaResults(prev => ({ ...prev, [areaId]: result }));
