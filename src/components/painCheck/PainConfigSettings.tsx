@@ -118,6 +118,12 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
       setEnabledTools(config.enabled_tools || ['abbey', 'painad']);
       setOverdueAlertEnabled((config as any).overdue_alert_enabled ?? true);
       setOverdueThresholdDays((config as any).overdue_threshold_days ?? 1);
+      setMildActions((config as any).mild_actions ?? ['reposition', 'recheck_pain']);
+      setModerateActions((config as any).moderate_actions ?? ['administer_pain_relief', 'recheck_pain', 'contact_gp']);
+      setSevereActions((config as any).severe_actions ?? ['administer_pain_relief', 'contact_gp', 'call_ambulance']);
+      setMildCustomActions((config as any).mild_custom_actions ?? []);
+      setModerateCustomActions((config as any).moderate_custom_actions ?? []);
+      setSevereCustomActions((config as any).severe_custom_actions ?? []);
     }
   }, [config]);
 
