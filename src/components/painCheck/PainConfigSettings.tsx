@@ -93,6 +93,15 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
   const [enabledTools, setEnabledTools] = useState<string[]>(effectiveConfig.enabled_tools || ['abbey', 'painad']);
   const [overdueAlertEnabled, setOverdueAlertEnabled] = useState((effectiveConfig as any).overdue_alert_enabled ?? true);
   const [overdueThresholdDays, setOverdueThresholdDays] = useState((effectiveConfig as any).overdue_threshold_days ?? 1);
+
+  // Action plan state
+  const [mildActions, setMildActions] = useState<string[]>((effectiveConfig as any).mild_actions ?? ['reposition', 'recheck_pain']);
+  const [moderateActions, setModerateActions] = useState<string[]>((effectiveConfig as any).moderate_actions ?? ['administer_pain_relief', 'recheck_pain', 'contact_gp']);
+  const [severeActions, setSevereActions] = useState<string[]>((effectiveConfig as any).severe_actions ?? ['administer_pain_relief', 'contact_gp', 'call_ambulance']);
+  const [mildCustomActions, setMildCustomActions] = useState<string[]>((effectiveConfig as any).mild_custom_actions ?? []);
+  const [moderateCustomActions, setModerateCustomActions] = useState<string[]>((effectiveConfig as any).moderate_custom_actions ?? []);
+  const [severeCustomActions, setSevereCustomActions] = useState<string[]>((effectiveConfig as any).severe_custom_actions ?? []);
+
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
