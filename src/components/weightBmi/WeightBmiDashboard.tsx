@@ -130,7 +130,10 @@ export function WeightBmiDashboard({ clientId }: WeightBmiDashboardProps) {
         </TabsList>
 
         <TabsContent value="tracking">
-          <WeightHistory clientId={clientId} />
+          <div className="space-y-6">
+            <WeightHistory clientId={clientId} />
+
+          </div>
         </TabsContent>
 
         <TabsContent value="trends">
