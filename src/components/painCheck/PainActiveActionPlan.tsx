@@ -61,6 +61,8 @@ export function PainActiveActionPlan({ severity, tool, score, maxScore }: PainAc
   if (!style) return null;
 
   if (actionSteps.length === 0) return null;
+
+  const toolLabel = tool === 'abbey' ? 'Abbey Pain Scale' : 'PAINAD';
   return (
     <Card className={`border-2 ${style.borderColor}`}>
       <CardHeader className={`${style.bgColor} pb-3`}>
