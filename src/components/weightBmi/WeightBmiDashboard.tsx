@@ -224,6 +224,7 @@ export function WeightBmiDashboard({ clientId }: WeightBmiDashboardProps) {
             <WeightBmiConfigSettings clientId={clientId} />
           </TabsContent>
         )}
+      </Tabs>
 
       {/* Log Weight Dialog */}
       <WeightLogForm
