@@ -88,23 +88,25 @@ export function DailySkinCheckScheduleCard({ clientId, onLogSkinCheck, disabled 
     });
   }, [scheduledTimes, checksPerDay, sessions]);
 
-  if (checksPerDay === 0 || scheduledTimes.length === 0) return null;
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  const completedCount = slots.filter(s => s.completed).length;
-  const allComplete = completedCount === slots.length;
   // Compute minutes until next uncompleted slot
   const minutesUntilNext = useMemo(() => {
     const nextSlot = slots.find(s => !s.completed && !s.isOverdue);
     if (!nextSlot) return 0;
     const [h, m] = nextSlot.time.split(':').map(Number);
-    const slotDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
-    return Math.max(0, Math.round((slotDate.getTime() - now.getTime()) / 60000));
-  }, [slots, now]);
+    const n = new Date();
+    const slotDate = new Date(n.getFullYear(), n.getMonth(), n.getDate(), h, m);
+    return Math.max(0, Math.round((slotDate.getTime() - n.getTime()) / 60000));
+  }, [slots]);
 
+  if (checksPerDay === 0 || scheduledTimes.length === 0) return null;
 
-  // Get today's sessions to check for findings
-  const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const completedCount = slots.filter(s => s.completed).length;
+  const allComplete = completedCount === slots.length;
+  const compliance = Math.round((completedCount / slots.length) * 100);
+
   const todaySessions = sessions.filter(s => new Date(s.event_occurred_at) >= todayStart);
   const hasTodayCheck = todaySessions.length > 0;
 
