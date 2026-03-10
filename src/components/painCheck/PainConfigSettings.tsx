@@ -60,9 +60,24 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
   
   const [frequency, setFrequency] = useState<AssessmentFrequency>(initialFrequency);
   const [situationalEnabled, setSituationalEnabled] = useState(initialSituational);
-  const [mildHours, setMildHours] = useState(effectiveConfig.mild_reassess_hours);
-  const [moderateHours, setModerateHours] = useState(effectiveConfig.moderate_reassess_hours);
-  const [severeHours, setSevereHours] = useState(effectiveConfig.severe_reassess_hours);
+  // Helper to determine if a value is better expressed in days
+  const toUnitAndValue = (hours: number): { value: number; unit: 'hours' | 'days' } => {
+    if (hours >= 24 && hours % 24 === 0) return { value: hours / 24, unit: 'days' };
+    return { value: hours, unit: 'hours' };
+  };
+
+  const initMild = toUnitAndValue(effectiveConfig.mild_reassess_hours);
+  const initModerate = toUnitAndValue(effectiveConfig.moderate_reassess_hours);
+  const initSevere = toUnitAndValue(effectiveConfig.severe_reassess_hours);
+
+  const [mildValue, setMildValue] = useState(initMild.value);
+  const [mildUnit, setMildUnit] = useState<'hours' | 'days'>(initMild.unit);
+  const [moderateValue, setModerateValue] = useState(initModerate.value);
+  const [moderateUnit, setModerateUnit] = useState<'hours' | 'days'>(initModerate.unit);
+  const [severeValue, setSevereValue] = useState(initSevere.value);
+  const [severeUnit, setSevereUnit] = useState<'hours' | 'days'>(initSevere.unit);
+
+  const toHours = (value: number, unit: 'hours' | 'days') => unit === 'days' ? value * 24 : value;
   const [enabledTools, setEnabledTools] = useState<string[]>(effectiveConfig.enabled_tools || ['abbey', 'painad']);
   const [overdueAlertEnabled, setOverdueAlertEnabled] = useState((effectiveConfig as any).overdue_alert_enabled ?? true);
   const [overdueThresholdDays, setOverdueThresholdDays] = useState((effectiveConfig as any).overdue_threshold_days ?? 1);
@@ -73,9 +88,12 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
       const freq = (config.assessment_triggers.find(t => ['daily', 'weekly', 'fortnightly'].includes(t)) || 'daily') as AssessmentFrequency;
       setFrequency(freq);
       setSituationalEnabled(config.assessment_triggers.includes('staff_concern'));
-      setMildHours(config.mild_reassess_hours);
-      setModerateHours(config.moderate_reassess_hours);
-      setSevereHours(config.severe_reassess_hours);
+      const m = toUnitAndValue(config.mild_reassess_hours);
+      setMildValue(m.value); setMildUnit(m.unit);
+      const mod = toUnitAndValue(config.moderate_reassess_hours);
+      setModerateValue(mod.value); setModerateUnit(mod.unit);
+      const s = toUnitAndValue(config.severe_reassess_hours);
+      setSevereValue(s.value); setSevereUnit(s.unit);
       setEnabledTools(config.enabled_tools || ['abbey', 'painad']);
       setOverdueAlertEnabled((config as any).overdue_alert_enabled ?? true);
       setOverdueThresholdDays((config as any).overdue_threshold_days ?? 1);
@@ -107,9 +125,9 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
     const success = await saveConfig({
       assessment_triggers: triggers,
       custom_trigger_text: null,
-      mild_reassess_hours: mildHours,
-      moderate_reassess_hours: moderateHours,
-      severe_reassess_hours: severeHours,
+      mild_reassess_hours: toHours(mildValue, mildUnit),
+      moderate_reassess_hours: toHours(moderateValue, moderateUnit),
+      severe_reassess_hours: toHours(severeValue, severeUnit),
       mild_alert_recipients: [],
       moderate_alert_recipients: [],
       severe_alert_recipients: [],
@@ -253,59 +271,36 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-orange-400" />
-                Mild Pain
-              </Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  min={1}
-                  max={24}
-                  value={mildHours}
-                  onChange={(e) => setMildHours(parseInt(e.target.value) || 4)}
-                  className="w-20"
-                />
-                <span className="text-sm text-muted-foreground">hours</span>
+            {([
+              { label: 'Mild Pain', dotClass: 'bg-orange-400', value: mildValue, unit: mildUnit, setValue: setMildValue, setUnit: setMildUnit, defaultVal: 4 },
+              { label: 'Moderate Pain', dotClass: 'bg-orange-600', value: moderateValue, unit: moderateUnit, setValue: setModerateValue, setUnit: setModerateUnit, defaultVal: 2 },
+              { label: 'Severe Pain', dotClass: 'bg-destructive', value: severeValue, unit: severeUnit, setValue: setSevereValue, setUnit: setSevereUnit, defaultVal: 1 },
+            ] as const).map((item) => (
+              <div key={item.label} className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${item.dotClass}`} />
+                  {item.label}
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={item.unit === 'days' ? 30 : 720}
+                    value={item.value}
+                    onChange={(e) => item.setValue(parseInt(e.target.value) || item.defaultVal)}
+                    className="w-20"
+                  />
+                  <select
+                    value={item.unit}
+                    onChange={(e) => item.setUnit(e.target.value as 'hours' | 'days')}
+                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="hours">hours</option>
+                    <option value="days">days</option>
+                  </select>
+                </div>
               </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-orange-600" />
-                Moderate Pain
-              </Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  min={1}
-                  max={24}
-                  value={moderateHours}
-                  onChange={(e) => setModerateHours(parseInt(e.target.value) || 2)}
-                  className="w-20"
-                />
-                <span className="text-sm text-muted-foreground">hours</span>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-destructive" />
-                Severe Pain
-              </Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  min={1}
-                  max={24}
-                  value={severeHours}
-                  onChange={(e) => setSevereHours(parseInt(e.target.value) || 1)}
-                  className="w-20"
-                />
-                <span className="text-sm text-muted-foreground">hours</span>
-              </div>
-            </div>
+            ))}
           </div>
         </CardContent>
       </Card>
