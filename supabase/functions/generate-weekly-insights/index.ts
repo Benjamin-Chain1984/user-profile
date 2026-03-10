@@ -93,11 +93,20 @@ serve(async (req) => {
     const moduleQueries: Record<string, () => Promise<string | null>> = {
       constipation: async () => {
         const { data } = await clientFilter(
-          supabase.from("bowel_log_entries").select("bristol_type, entry_time").gte("entry_time", sevenDaysAgo)
+          supabase.from("bowel_log_entries").select("bristol_type, entry_time, stool_size, observed_status").gte("entry_time", sevenDaysAgo)
         );
-        if (!data?.length) return "Bowel Care: No entries this week.";
-        const types = data.map((d: any) => d.bristol_type);
-        return `Bowel Care: ${data.length} entries this week. Bristol types: ${types.join(", ")}.`;
+        const { data: alerts } = await clientFilter(
+          supabase.from("bowel_care_alerts").select("alert_type, severity, message").gte("created_at", sevenDaysAgo).is("resolved_at", null)
+        );
+        if (!data?.length && !alerts?.length) return "Bowel Care: No entries this week — monitoring gap.";
+        const types = data?.map((d: any) => d.bristol_type) || [];
+        const hardStools = types.filter((t: number) => t <= 2).length;
+        const looseStools = types.filter((t: number) => t >= 6).length;
+        let summary = `Bowel Care: ${data?.length || 0} entries. Bristol types: ${types.join(", ")}.`;
+        if (hardStools > 0) summary += ` ${hardStools} hard stool(s) (Type 1-2).`;
+        if (looseStools > 0) summary += ` ${looseStools} loose stool(s) (Type 6-7).`;
+        if (alerts?.length) summary += ` ${alerts.length} active alert(s): ${alerts.map((a: any) => a.message).join("; ")}.`;
+        return summary;
       },
       "fluid-balance": async () => {
         const { data: intake } = await clientFilter(
@@ -108,35 +117,70 @@ serve(async (req) => {
           .select("target_daily_intake_ml")
           .or(`client_id.eq.${client_id},client_id.is.null`)
           .single();
-        if (!intake?.length) return "Fluid Balance: No intake logged this week.";
+        const { data: symptoms } = await clientFilter(
+          supabase.from("fluid_symptom_checks").select("symptoms").gte("created_at", sevenDaysAgo)
+        );
+        if (!intake?.length) return "Fluid Balance: No intake logged this week — monitoring gap.";
         const totalMl = intake.reduce((s: number, e: any) => s + (e.volume_ml || 0), 0);
         const days = new Set(intake.map((e: any) => e.entry_date)).size;
         const target = config?.target_daily_intake_ml || 0;
-        return `Fluid Balance: ${totalMl}ml total over ${days} days. Daily target: ${target}ml. Average: ${Math.round(totalMl / days)}ml/day.`;
+        const avgDaily = Math.round(totalMl / days);
+        let summary = `Fluid Balance: ${totalMl}ml over ${days} days. Average: ${avgDaily}ml/day. Target: ${target}ml.`;
+        if (target > 0 && avgDaily < target) summary += ` BELOW TARGET on average.`;
+        const belowDays = target > 0 ? intake.reduce((acc: any, e: any) => { acc[e.entry_date] = (acc[e.entry_date] || 0) + (e.volume_ml || 0); return acc; }, {} as Record<string, number>) : {};
+        const daysBelow = Object.values(belowDays).filter((v: any) => v < target).length;
+        if (daysBelow > 0) summary += ` Below target on ${daysBelow} of ${days} days.`;
+        if (symptoms?.length) summary += ` ${symptoms.length} symptom check(s) logged.`;
+        return summary;
       },
       weight: async () => {
         const { data } = await clientFilter(
-          supabase.from("weight_entries").select("weight_kg, bmi_value, bmi_category, event_occurred_at").order("event_occurred_at", { ascending: false }).limit(3)
+          supabase.from("weight_entries").select("weight_kg, bmi_value, bmi_category, event_occurred_at").order("event_occurred_at", { ascending: false }).limit(5)
+        );
+        const { data: alerts } = await clientFilter(
+          supabase.from("weight_bmi_alerts").select("alert_type, severity").gte("created_at", sevenDaysAgo).is("resolved_at", null)
         );
         if (!data?.length) return "Weight: No entries recorded recently.";
         const latest = data[0];
-        return `Weight: Latest ${latest.weight_kg}kg (BMI: ${latest.bmi_value || "N/A"}, ${latest.bmi_category || "N/A"}). ${data.length} recent entries.`;
+        let summary = `Weight: Latest ${latest.weight_kg}kg (BMI: ${latest.bmi_value || "N/A"}, ${latest.bmi_category || "N/A"}).`;
+        if (data.length >= 2) {
+          const change = (latest.weight_kg - data[data.length - 1].weight_kg).toFixed(1);
+          summary += ` Change: ${Number(change) > 0 ? "+" : ""}${change}kg over recent entries.`;
+        }
+        if (alerts?.length) summary += ` ${alerts.length} active weight alert(s).`;
+        return summary;
       },
       sleep: async () => {
         const { data } = await clientFilter(
-          supabase.from("sleep_entries").select("estimated_hours_slept, number_of_awakenings, event_occurred_at").gte("event_occurred_at", sevenDaysAgo)
+          supabase.from("sleep_entries").select("estimated_hours_slept, number_of_awakenings, restlessness, event_occurred_at").gte("event_occurred_at", sevenDaysAgo)
         );
-        if (!data?.length) return "Sleep: No entries this week.";
+        if (!data?.length) return "Sleep: No entries this week — monitoring gap.";
         const avgHours = (data.reduce((s: number, e: any) => s + Number(e.estimated_hours_slept || 0), 0) / data.length).toFixed(1);
         const disrupted = data.filter((e: any) => (e.number_of_awakenings || 0) >= 3).length;
-        return `Sleep: ${data.length} nights logged. Average ${avgHours} hours. ${disrupted} disrupted nights.`;
+        const restless = data.filter((e: any) => e.restlessness).length;
+        let summary = `Sleep: ${data.length} nights logged. Average ${avgHours} hours.`;
+        if (disrupted > 0) summary += ` ${disrupted} nights with 3+ awakenings.`;
+        if (restless > 0) summary += ` ${restless} restless nights.`;
+        if (Number(avgHours) < 6) summary += ` CONCERN: Average sleep below 6 hours.`;
+        return summary;
       },
       epilepsy: async () => {
         const { data } = await clientFilter(
-          supabase.from("seizure_events").select("id, event_occurred_at").gte("event_occurred_at", sevenDaysAgo)
+          supabase.from("seizure_events").select("id, seizure_type, duration_seconds, emergency_medication_given, event_occurred_at").gte("event_occurred_at", sevenDaysAgo)
         );
-        if (!data?.length) return "Seizures: No events this week.";
-        return `Seizures: ${data.length} event(s) recorded this week.`;
+        const { data: alerts } = await clientFilter(
+          supabase.from("epilepsy_alerts").select("alert_type, severity").gte("created_at", sevenDaysAgo).is("resolved_at", null)
+        );
+        if (!data?.length && !alerts?.length) return "Seizures: No events this week.";
+        let summary = `Seizures: ${data?.length || 0} event(s) this week.`;
+        if (data?.length) {
+          const emergencyMeds = data.filter((d: any) => d.emergency_medication_given).length;
+          if (emergencyMeds > 0) summary += ` CONCERN: Emergency medication given ${emergencyMeds} time(s).`;
+          const types = [...new Set(data.map((d: any) => d.seizure_type).filter(Boolean))];
+          if (types.length) summary += ` Types: ${types.join(", ")}.`;
+        }
+        if (alerts?.length) summary += ` ${alerts.length} active alert(s).`;
+        return summary;
       },
       "pressure-area": async () => {
         const { data: checks } = await clientFilter(
@@ -146,57 +190,146 @@ serve(async (req) => {
           supabase.from("pressure_relief_events").select("id").gte("event_occurred_at", sevenDaysAgo)
         );
         const redChecks = checks?.filter((c: any) => c.overall_status === "red").length || 0;
-        return `Pressure Areas: ${checks?.length || 0} skin checks, ${events?.length || 0} repositioning events. ${redChecks} red findings.`;
+        const amberChecks = checks?.filter((c: any) => c.overall_status === "amber").length || 0;
+        let summary = `Pressure Areas: ${checks?.length || 0} skin checks, ${events?.length || 0} repositioning events.`;
+        if (redChecks > 0) summary += ` CONCERN: ${redChecks} red finding(s).`;
+        if (amberChecks > 0) summary += ` ${amberChecks} amber finding(s).`;
+        if (!checks?.length) summary += ` No skin checks recorded — monitoring gap.`;
+        return summary;
       },
       "pain-check": async () => {
         const { data } = await clientFilter(
-          supabase.from("abbey_pain_assessments").select("severity, total_score").gte("created_at", sevenDaysAgo)
+          supabase.from("abbey_pain_assessments").select("severity, total_score, pain_type").gte("created_at", sevenDaysAgo)
         );
         if (!data?.length) return "Pain: No assessments this week.";
         const severe = data.filter((d: any) => d.severity === "severe").length;
-        return `Pain: ${data.length} assessments. ${severe} severe.`;
+        const moderate = data.filter((d: any) => d.severity === "moderate").length;
+        let summary = `Pain: ${data.length} assessments.`;
+        if (severe > 0) summary += ` CONCERN: ${severe} severe.`;
+        if (moderate > 0) summary += ` ${moderate} moderate.`;
+        const avgScore = (data.reduce((s: number, d: any) => s + d.total_score, 0) / data.length).toFixed(1);
+        summary += ` Average score: ${avgScore}.`;
+        return summary;
       },
       enteral: async () => {
         const { data } = await clientFilter(
           supabase.from("enteral_feed_logs").select("total_volume_ml, feed_date").gte("feed_date", sevenDaysAgo.split("T")[0])
         );
-        if (!data?.length) return "Enteral Nutrition: No feeds logged this week.";
-        return `Enteral Nutrition: ${data.length} feed logs this week.`;
+        const { data: stomaChecks } = await clientFilter(
+          supabase.from("enteral_stoma_checks").select("status_level, findings").gte("event_occurred_at", sevenDaysAgo)
+        );
+        if (!data?.length) return "Enteral Nutrition: No feeds logged this week — monitoring gap.";
+        let summary = `Enteral Nutrition: ${data.length} feed logs.`;
+        if (stomaChecks?.length) {
+          const concerns = stomaChecks.filter((s: any) => s.status_level !== "green");
+          if (concerns.length) summary += ` CONCERN: ${concerns.length} stoma check(s) with issues.`;
+        }
+        return summary;
       },
       continence: async () => {
         const { data } = await clientFilter(
           supabase.from("continence_pad_changes").select("pad_condition, event_occurred_at").gte("event_occurred_at", sevenDaysAgo)
         );
+        const { data: skinChecks } = await clientFilter(
+          supabase.from("continence_skin_checks").select("skin_condition, escalated_to_clinician").gte("event_occurred_at", sevenDaysAgo)
+        );
+        const { data: utiTests } = await clientFilter(
+          supabase.from("continence_uti_tests").select("test_result, symptoms").gte("test_date", sevenDaysAgo.split("T")[0])
+        );
         if (!data?.length) return "Continence: No pad changes logged this week.";
-        return `Continence: ${data.length} pad changes this week.`;
+        const soaked = data.filter((d: any) => d.pad_condition === "soaked").length;
+        let summary = `Continence: ${data.length} pad changes.`;
+        if (soaked > 0) summary += ` ${soaked} soaked pad(s).`;
+        if (skinChecks?.length) {
+          const escalated = skinChecks.filter((s: any) => s.escalated_to_clinician).length;
+          const poorSkin = skinChecks.filter((s: any) => s.skin_condition !== "healthy" && s.skin_condition !== "intact").length;
+          if (poorSkin > 0) summary += ` CONCERN: ${poorSkin} skin check(s) with issues.`;
+          if (escalated > 0) summary += ` ${escalated} escalated to clinician.`;
+        }
+        if (utiTests?.length) {
+          const positive = utiTests.filter((u: any) => u.test_result === "positive").length;
+          if (positive > 0) summary += ` CONCERN: ${positive} positive UTI test(s).`;
+        }
+        return summary;
       },
       "health-monitoring": async () => {
         const { data } = await clientFilter(
           supabase.from("vital_sign_entries").select("overall_status, event_occurred_at").gte("event_occurred_at", sevenDaysAgo)
         );
-        if (!data?.length) return "Health Monitoring: No vital signs recorded this week.";
+        if (!data?.length) return "Health Monitoring: No vital signs recorded this week — monitoring gap.";
         const red = data.filter((d: any) => d.overall_status === "red").length;
         const amber = data.filter((d: any) => d.overall_status === "amber").length;
-        return `Health Monitoring: ${data.length} readings. ${red} red, ${amber} amber.`;
+        let summary = `Health Monitoring: ${data.length} readings.`;
+        if (red > 0) summary += ` CONCERN: ${red} red reading(s).`;
+        if (amber > 0) summary += ` ${amber} amber reading(s).`;
+        if (red === 0 && amber === 0) summary += ` All within normal range.`;
+        return summary;
       },
       "health-prevention": async () => {
-        return null;
+        const { data: screenings } = await clientFilter(
+          supabase.from("cancer_screening_records").select("screening_type, status, next_due_date").order("created_at", { ascending: false })
+        );
+        const { data: vaccinations } = await clientFilter(
+          supabase.from("vaccination_records").select("vaccine_name, status, next_due_date").order("created_at", { ascending: false })
+        );
+        const { data: assessments } = await clientFilter(
+          supabase.from("annual_health_assessment_records").select("next_due_date, date_completed").order("date_completed", { ascending: false }).limit(1)
+        );
+        const now = new Date();
+        const overdue: string[] = [];
+        screenings?.forEach((s: any) => { if (s.next_due_date && new Date(s.next_due_date) < now) overdue.push(`${s.screening_type} screening`); });
+        vaccinations?.forEach((v: any) => { if (v.next_due_date && new Date(v.next_due_date) < now) overdue.push(`${v.vaccine_name} vaccination`); });
+        if (assessments?.[0]?.next_due_date && new Date(assessments[0].next_due_date) < now) overdue.push("annual health assessment");
+        if (overdue.length) return `Health Prevention: CONCERN: ${overdue.length} overdue item(s): ${overdue.join(", ")}.`;
+        if (!screenings?.length && !vaccinations?.length && !assessments?.length) return null;
+        return `Health Prevention: All screenings and vaccinations up to date.`;
       },
       catheter: async () => {
         const { data: changes } = await clientFilter(
           supabase.from("catheter_change_logs").select("id").gte("event_occurred_at", sevenDaysAgo)
         );
         const { data: flushes } = await clientFilter(
-          supabase.from("catheter_flush_logs").select("id, escalation_required").gte("event_occurred_at", sevenDaysAgo)
+          supabase.from("catheter_flush_logs").select("id, escalation_required, urine_appearance").gte("event_occurred_at", sevenDaysAgo)
         );
-        return `Catheter: ${changes?.length || 0} changes, ${flushes?.length || 0} flushes this week.`;
+        const { data: stomaChecks } = await clientFilter(
+          supabase.from("catheter_stoma_checks").select("status_level, escalated_to_clinician").gte("event_occurred_at", sevenDaysAgo)
+        );
+        const { data: alerts } = await clientFilter(
+          supabase.from("catheter_alerts").select("alert_type, severity").gte("created_at", sevenDaysAgo).is("resolved_at", null)
+        );
+        let summary = `Catheter: ${changes?.length || 0} changes, ${flushes?.length || 0} flushes.`;
+        const escalations = flushes?.filter((f: any) => f.escalation_required).length || 0;
+        const bloodUrine = flushes?.filter((f: any) => f.urine_appearance === "blood").length || 0;
+        if (escalations > 0) summary += ` CONCERN: ${escalations} flush escalation(s).`;
+        if (bloodUrine > 0) summary += ` CONCERN: Blood in urine noted ${bloodUrine} time(s).`;
+        if (stomaChecks?.length) {
+          const issues = stomaChecks.filter((s: any) => s.status_level !== "green").length;
+          if (issues > 0) summary += ` ${issues} stoma check(s) with concerns.`;
+        }
+        if (alerts?.length) summary += ` ${alerts.length} active alert(s).`;
+        return summary;
       },
       "oral-health": async () => {
         const { data } = await clientFilter(
           supabase.from("oral_health_assessments").select("overall_status").gte("created_at", sevenDaysAgo)
         );
         if (!data?.length) return null;
-        return `Oral Health: ${data.length} assessments this week. Statuses: ${data.map((d: any) => d.overall_status).join(", ")}.`;
+        const concerns = data.filter((d: any) => d.overall_status !== "healthy" && d.overall_status !== "green").length;
+        let summary = `Oral Health: ${data.length} assessments.`;
+        if (concerns > 0) summary += ` CONCERN: ${concerns} with issues.`;
+        return summary;
+      },
+      iddsi: async () => {
+        const { data } = await clientFilter(
+          supabase.from("mealtime_observations").select("severity, event_occurred_at, signs_observed").gte("event_occurred_at", sevenDaysAgo)
+        );
+        if (!data?.length) return "IDDSI: No mealtime observations this week.";
+        const redObs = data.filter((d: any) => d.severity === "red").length;
+        const amberObs = data.filter((d: any) => d.severity === "amber").length;
+        let summary = `IDDSI: ${data.length} mealtime observations.`;
+        if (redObs > 0) summary += ` CONCERN: ${redObs} red observation(s) — swallowing safety risk.`;
+        if (amberObs > 0) summary += ` ${amberObs} amber observation(s).`;
+        return summary;
       },
     };
 
@@ -237,14 +370,15 @@ serve(async (req) => {
             content: `You are a health data summariser for disability support workers. Generate a brief weekly health summary as bullet points (using • character). 
 
 Rules:
-- Use simple, non-clinical language
+- PRIORITISE issues, concerns, and anything marked "CONCERN" — these must appear first
+- Highlight monitoring gaps (modules with no data logged)
+- Use simple, non-clinical language a support worker would understand
 - Each bullet should be one short sentence
-- Focus on patterns, trends, and notable observations
 - Do NOT diagnose or prescribe
 - Do NOT use medical jargon
-- Maximum 6 bullet points
-- If data looks stable, say so positively
-- Highlight anything that changed or needs attention
+- Maximum 8 bullet points
+- Only mention stable/positive items briefly at the end if space allows
+- If multiple concerns exist, list each one separately
 - Start each bullet with • character
 - Return ONLY the bullet points, nothing else`,
           },
