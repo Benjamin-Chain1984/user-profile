@@ -416,6 +416,23 @@ export function PainCheckDashboard() {
         </TabsList>
 
         <TabsContent value="tracking" className="space-y-4">
+          {/* Active Action Plan — shown when pain detected */}
+          {latestAbbey && latestAbbey.severity !== 'no_pain' && (
+            <PainActiveActionPlan
+              severity={latestAbbey.severity}
+              tool="abbey"
+              score={latestAbbey.total_score}
+              maxScore={18}
+            />
+          )}
+          {latestPainad && latestPainad.severity !== 'no_pain' && (
+            <PainActiveActionPlan
+              severity={latestPainad.severity as any}
+              tool="painad"
+              score={latestPainad.total_score}
+              maxScore={10}
+            />
+          )}
           {/* Assessment History */}
           <PainAssessmentHistory assessments={abbeyAssessments} painadAssessments={painadAssessments} loading={loading} />
         </TabsContent>
