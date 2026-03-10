@@ -46,6 +46,7 @@ export function PainCheckDashboard() {
   const [showAbbeyForm, setShowAbbeyForm] = useState(false);
   const [showPainadForm, setShowPainadForm] = useState(false);
   const [showExport, setShowExport] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
   const { assessments: abbeyAssessments, loading: abbeyLoading, getLatestAssessment: getLatestAbbey, getTrendDirection: getAbbeyTrend, refresh: refreshAbbey } = usePainAssessments();
   const { assessments: painadAssessments, loading: painadLoading, getLatestAssessment: getLatestPainad, getTrendDirection: getPainadTrend, refresh: refreshPainad } = usePainadAssessments();
   const { config: painConfig, loading: configLoading } = usePainConfig();
