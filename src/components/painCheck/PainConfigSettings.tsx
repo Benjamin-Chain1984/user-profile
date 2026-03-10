@@ -15,7 +15,6 @@ import { Settings, Clock, Save, AlertTriangle, ClipboardList, Brain, CalendarClo
 import { Checkbox } from '@/components/ui/checkbox';
 
 const PREDEFINED_ACTIONS = [
-  { id: 'give_instructions', label: 'Give instructions' },
   { id: 'administer_pain_relief', label: 'Administer Pain Relief medication (if prescribed)' },
   { id: 'recheck_pain', label: 'Recheck pain again' },
   { id: 'reposition', label: 'Reposition' },
