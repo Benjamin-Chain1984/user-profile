@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { WeeklyHealthInsights } from '@/components/ideal/WeeklyHealthInsights';
 import { Navigation } from '@/components/ideal/Navigation';
 import { ProfileHeader } from '@/components/ideal/ProfileHeader';
 import { AlertDashboard } from '@/components/ideal/AlertDashboard';
