@@ -11,7 +11,19 @@ import { AssessmentFrequency, ASSESSMENT_FREQUENCY_OPTIONS } from '@/types/painA
 import { ModuleNotificationsCard, type ModuleNotificationSettings } from '@/components/module';
 import { useModuleAlertRecipients, useSetModuleAlertRecipients } from '@/hooks/useNotificationContacts';
 import type { AlertSeverity } from '@/types/notificationContacts';
-import { Settings, Clock, Save, AlertTriangle, ClipboardList, Brain, CalendarClock, Bell } from 'lucide-react';
+import { Settings, Clock, Save, AlertTriangle, ClipboardList, Brain, CalendarClock, Bell, ListChecks, Plus, X } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+
+const PREDEFINED_ACTIONS = [
+  { id: 'give_instructions', label: 'Give instructions' },
+  { id: 'administer_pain_relief', label: 'Administer Pain Relief medication (if prescribed)' },
+  { id: 'recheck_pain', label: 'Recheck pain again' },
+  { id: 'reposition', label: 'Reposition' },
+  { id: 'contact_gp', label: 'Contact GP' },
+  { id: 'call_ambulance', label: 'Call Ambulance' },
+] as const;
+
+type PredefinedActionId = typeof PREDEFINED_ACTIONS[number]['id'];
 
 interface PainConfigSettingsProps {
   clientId?: string;
@@ -81,6 +93,15 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
   const [enabledTools, setEnabledTools] = useState<string[]>(effectiveConfig.enabled_tools || ['abbey', 'painad']);
   const [overdueAlertEnabled, setOverdueAlertEnabled] = useState((effectiveConfig as any).overdue_alert_enabled ?? true);
   const [overdueThresholdDays, setOverdueThresholdDays] = useState((effectiveConfig as any).overdue_threshold_days ?? 1);
+
+  // Action plan state
+  const [mildActions, setMildActions] = useState<string[]>((effectiveConfig as any).mild_actions ?? ['reposition', 'recheck_pain']);
+  const [moderateActions, setModerateActions] = useState<string[]>((effectiveConfig as any).moderate_actions ?? ['administer_pain_relief', 'recheck_pain', 'contact_gp']);
+  const [severeActions, setSevereActions] = useState<string[]>((effectiveConfig as any).severe_actions ?? ['administer_pain_relief', 'contact_gp', 'call_ambulance']);
+  const [mildCustomActions, setMildCustomActions] = useState<string[]>((effectiveConfig as any).mild_custom_actions ?? []);
+  const [moderateCustomActions, setModerateCustomActions] = useState<string[]>((effectiveConfig as any).moderate_custom_actions ?? []);
+  const [severeCustomActions, setSevereCustomActions] = useState<string[]>((effectiveConfig as any).severe_custom_actions ?? []);
+
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -97,6 +118,12 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
       setEnabledTools(config.enabled_tools || ['abbey', 'painad']);
       setOverdueAlertEnabled((config as any).overdue_alert_enabled ?? true);
       setOverdueThresholdDays((config as any).overdue_threshold_days ?? 1);
+      setMildActions((config as any).mild_actions ?? ['reposition', 'recheck_pain']);
+      setModerateActions((config as any).moderate_actions ?? ['administer_pain_relief', 'recheck_pain', 'contact_gp']);
+      setSevereActions((config as any).severe_actions ?? ['administer_pain_relief', 'contact_gp', 'call_ambulance']);
+      setMildCustomActions((config as any).mild_custom_actions ?? []);
+      setModerateCustomActions((config as any).moderate_custom_actions ?? []);
+      setSevereCustomActions((config as any).severe_custom_actions ?? []);
     }
   }, [config]);
 
@@ -135,6 +162,12 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
       default_tool: enabledTools[0] || 'abbey',
       overdue_alert_enabled: overdueAlertEnabled,
       overdue_threshold_days: overdueThresholdDays,
+      mild_actions: mildActions,
+      moderate_actions: moderateActions,
+      severe_actions: severeActions,
+      mild_custom_actions: mildCustomActions,
+      moderate_custom_actions: moderateCustomActions,
+      severe_custom_actions: severeCustomActions,
     } as any);
     handleSaveNotifications();
     setSaving(false);
@@ -346,6 +379,84 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Action Plan per Severity */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <ListChecks className="w-4 h-4" />
+            Action Plan by Severity
+          </CardTitle>
+          <CardDescription>
+            Configure which actions are presented to staff based on the assessment outcome. These will appear under Actions when pain is detected.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {([
+            { label: 'Mild Pain', dotClass: 'bg-orange-400', actions: mildActions, setActions: setMildActions, customActions: mildCustomActions, setCustomActions: setMildCustomActions },
+            { label: 'Moderate Pain', dotClass: 'bg-orange-600', actions: moderateActions, setActions: setModerateActions, customActions: moderateCustomActions, setCustomActions: setModerateCustomActions },
+            { label: 'Severe Pain', dotClass: 'bg-destructive', actions: severeActions, setActions: setSevereActions, customActions: severeCustomActions, setCustomActions: setSevereCustomActions },
+          ] as const).map((group) => (
+            <div key={group.label} className="space-y-3">
+              <Label className="flex items-center gap-2 text-sm font-semibold">
+                <div className={`w-3 h-3 rounded-full ${group.dotClass}`} />
+                {group.label}
+              </Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-5">
+                {PREDEFINED_ACTIONS.map((action) => (
+                  <div key={action.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`${group.label}-${action.id}`}
+                      checked={group.actions.includes(action.id)}
+                      onCheckedChange={(checked) => {
+                        group.setActions(prev =>
+                          checked ? [...prev, action.id] : prev.filter(a => a !== action.id)
+                        );
+                      }}
+                    />
+                    <Label htmlFor={`${group.label}-${action.id}`} className="text-sm cursor-pointer">
+                      {action.label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+              {/* Custom "Other" actions */}
+              <div className="pl-5 space-y-2">
+                {group.customActions.map((custom, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <Input
+                      value={custom}
+                      onChange={(e) => {
+                        const updated = [...group.customActions];
+                        updated[idx] = e.target.value;
+                        group.setCustomActions(updated);
+                      }}
+                      placeholder="Other action..."
+                      className="flex-1 text-sm"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={() => group.setCustomActions(prev => prev.filter((_, i) => i !== idx))}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => group.setCustomActions(prev => [...prev, ''])}
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Add Other
+                </Button>
+              </div>
+            </div>
+          ))}
         </CardContent>
       </Card>
 
