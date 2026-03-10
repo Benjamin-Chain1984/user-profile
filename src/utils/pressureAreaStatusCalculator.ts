@@ -156,16 +156,18 @@ export function calculatePressureAreaStatus(input: StatusInput): PressureAreaSta
     }
   }
 
-  // Check skin check overdue (legacy day-based)
-  const latestSkinCheckForDays = skinChecks[0];
-  if (config && latestSkinCheckForDays) {
-    const daysSince = differenceInDays(new Date(), new Date(latestSkinCheckForDays.event_occurred_at));
-    if (daysSince > config.skin_check_frequency_days) {
-      return {
-        status: 'monitor',
-        message: `Skin check overdue – last completed ${daysSince} days ago.`,
-        lastEntry: `Skin check ${formatDistanceToNow(new Date(latestSkinCheckForDays.event_occurred_at), { addSuffix: true })}`,
-      };
+  // Check skin check overdue (legacy day-based) — only when schedule-based mode is NOT active
+  if (!config?.skin_checks_per_day || !config.skin_check_times?.length) {
+    const latestSkinCheckForDays = skinChecks[0];
+    if (config && latestSkinCheckForDays) {
+      const daysSince = differenceInDays(new Date(), new Date(latestSkinCheckForDays.event_occurred_at));
+      if (daysSince > config.skin_check_frequency_days) {
+        return {
+          status: 'monitor',
+          message: `Skin check overdue – last completed ${daysSince} days ago.`,
+          lastEntry: `Skin check ${formatDistanceToNow(new Date(latestSkinCheckForDays.event_occurred_at), { addSuffix: true })}`,
+        };
+      }
     }
   }
 
