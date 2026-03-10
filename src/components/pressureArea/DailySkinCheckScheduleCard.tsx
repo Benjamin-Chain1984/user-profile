@@ -90,14 +90,13 @@ export function DailySkinCheckScheduleCard({ clientId, onLogSkinCheck, disabled 
             <Clock className="h-4 w-4 text-primary" />
             Daily Skin Checks
           </div>
-          <StatusBadge status={status} size="sm" />
+          <StatusBadge status={computedStatus} size="sm" />
         </div>
 
         {/* Status + compliance */}
         <div className="space-y-1">
           <div className={`text-lg font-semibold ${
-            status === 'monitor' ? 'text-amber-600' :
-            status === 'monitor' ? 'text-amber-600' : ''
+            computedStatus === 'monitor' ? 'text-amber-600' : ''
           }`}>
             {statusLabel}
           </div>
