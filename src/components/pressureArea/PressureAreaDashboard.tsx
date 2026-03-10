@@ -146,20 +146,20 @@ export function PressureAreaDashboard({ clientId }: Props) {
       </Card>
 
 
-      {/* Status Tiles */}
-      <PressureAreaStatusCard
-        clientId={clientId}
-        onLogPressureRelief={() => setShowLogForm(true)}
-        onLogSkinCheck={() => setShowSkinCheck(true)}
-        disabled={isMonitoringPaused}
-      />
-
-      {/* Daily Skin Check Schedule — replaces old Skin Check status tile */}
-      <DailySkinCheckScheduleCard
-        clientId={clientId}
-        onLogSkinCheck={() => setShowSkinCheck(true)}
-        disabled={isMonitoringPaused}
-      />
+      {/* Status Tiles — side by side */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <PressureAreaStatusCard
+          clientId={clientId}
+          onLogPressureRelief={() => setShowLogForm(true)}
+          onLogSkinCheck={() => setShowSkinCheck(true)}
+          disabled={isMonitoringPaused}
+        />
+        <DailySkinCheckScheduleCard
+          clientId={clientId}
+          onLogSkinCheck={() => setShowSkinCheck(true)}
+          disabled={isMonitoringPaused}
+        />
+      </div>
 
       {/* Tabs */}
       <Tabs defaultValue="tracking" className="space-y-4">
