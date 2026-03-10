@@ -64,6 +64,8 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
   const [moderateHours, setModerateHours] = useState(effectiveConfig.moderate_reassess_hours);
   const [severeHours, setSevereHours] = useState(effectiveConfig.severe_reassess_hours);
   const [enabledTools, setEnabledTools] = useState<string[]>(effectiveConfig.enabled_tools || ['abbey', 'painad']);
+  const [overdueAlertEnabled, setOverdueAlertEnabled] = useState((effectiveConfig as any).overdue_alert_enabled ?? true);
+  const [overdueThresholdDays, setOverdueThresholdDays] = useState((effectiveConfig as any).overdue_threshold_days ?? 1);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
