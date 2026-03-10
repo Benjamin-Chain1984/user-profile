@@ -271,59 +271,36 @@ export function PainConfigSettings({ clientId, onClose }: PainConfigSettingsProp
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-orange-400" />
-                Mild Pain
-              </Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  min={1}
-                  max={24}
-                  value={mildHours}
-                  onChange={(e) => setMildHours(parseInt(e.target.value) || 4)}
-                  className="w-20"
-                />
-                <span className="text-sm text-muted-foreground">hours</span>
+            {([
+              { label: 'Mild Pain', dotClass: 'bg-orange-400', value: mildValue, unit: mildUnit, setValue: setMildValue, setUnit: setMildUnit, defaultVal: 4 },
+              { label: 'Moderate Pain', dotClass: 'bg-orange-600', value: moderateValue, unit: moderateUnit, setValue: setModerateValue, setUnit: setModerateUnit, defaultVal: 2 },
+              { label: 'Severe Pain', dotClass: 'bg-destructive', value: severeValue, unit: severeUnit, setValue: setSevereValue, setUnit: setSevereUnit, defaultVal: 1 },
+            ] as const).map((item) => (
+              <div key={item.label} className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${item.dotClass}`} />
+                  {item.label}
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={item.unit === 'days' ? 30 : 720}
+                    value={item.value}
+                    onChange={(e) => item.setValue(parseInt(e.target.value) || item.defaultVal)}
+                    className="w-20"
+                  />
+                  <select
+                    value={item.unit}
+                    onChange={(e) => item.setUnit(e.target.value as 'hours' | 'days')}
+                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="hours">hours</option>
+                    <option value="days">days</option>
+                  </select>
+                </div>
               </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-orange-600" />
-                Moderate Pain
-              </Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  min={1}
-                  max={24}
-                  value={moderateHours}
-                  onChange={(e) => setModerateHours(parseInt(e.target.value) || 2)}
-                  className="w-20"
-                />
-                <span className="text-sm text-muted-foreground">hours</span>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-destructive" />
-                Severe Pain
-              </Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  min={1}
-                  max={24}
-                  value={severeHours}
-                  onChange={(e) => setSevereHours(parseInt(e.target.value) || 1)}
-                  className="w-20"
-                />
-                <span className="text-sm text-muted-foreground">hours</span>
-              </div>
-            </div>
+            ))}
           </div>
         </CardContent>
       </Card>
