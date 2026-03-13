@@ -61,7 +61,7 @@ export function QRPosterSection() {
     if (stored) {
       const storedHash = await hashToken(stored);
       const { data } = await supabase
-        .from('profiles')
+        .from('clients')
         .select('poster_qr_token_hash')
         .eq('id', profileId)
         .single();
