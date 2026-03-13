@@ -5,6 +5,39 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { authService, type AuthSession, type AuthUser, type AppRole } from '@/services/auth';
 
+const PHONE_SESSION_KEY = 'ideal_phone_session';
+
+interface PhoneSession {
+  userId: string;
+  userName: string;
+  roles: string[];
+  deviceId: string;
+  verifiedAt: string;
+}
+
+function loadPhoneSession(): PhoneSession | null {
+  try {
+    const raw = localStorage.getItem(PHONE_SESSION_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function phoneSessionToAuthSession(ps: PhoneSession): AuthSession {
+  return {
+    accessToken: `phone-session-${ps.deviceId}`,
+    expiresAt: Date.now() + 90 * 24 * 60 * 60 * 1000,
+    user: {
+      id: ps.userId,
+      fullName: ps.userName,
+      isActive: true,
+      roles: ps.roles as AppRole[],
+    },
+  };
+}
+
 interface AuthContextType {
   session: AuthSession | null;
   user: AuthUser | null;
@@ -25,10 +58,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshSession = useCallback(async () => {
     try {
       const currentSession = await authService.getSession();
-      setSession(currentSession);
+      if (currentSession) {
+        setSession(currentSession);
+      } else {
+        // Fallback: check for phone-auth session from QR scan flow
+        const phoneSession = loadPhoneSession();
+        if (phoneSession) {
+          setSession(phoneSessionToAuthSession(phoneSession));
+        } else {
+          setSession(null);
+        }
+      }
     } catch (err) {
       console.error('Error refreshing session:', err);
-      setSession(null);
+      // Still check phone session on error
+      const phoneSession = loadPhoneSession();
+      if (phoneSession) {
+        setSession(phoneSessionToAuthSession(phoneSession));
+      } else {
+        setSession(null);
+      }
     }
   }, []);
 
@@ -38,7 +87,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Set up auth state listener first
     const unsubscribe = authService.onAuthStateChange((newSession, rolesLoaded) => {
       if (mounted) {
-        setSession(newSession);
+        if (newSession) {
+          setSession(newSession);
+        } else {
+          // Fallback to phone session if Supabase session is null
+          const phoneSession = loadPhoneSession();
+          setSession(phoneSession ? phoneSessionToAuthSession(phoneSession) : null);
+        }
         // Only stop loading once roles are fully loaded
         if (rolesLoaded) {
           setIsLoading(false);
@@ -74,6 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = useCallback(async () => {
     await authService.signOut();
+    localStorage.removeItem(PHONE_SESSION_KEY);
     setSession(null);
   }, []);
 
