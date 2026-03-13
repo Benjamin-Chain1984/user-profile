@@ -18,6 +18,62 @@ export function QRPosterSection() {
   const [isGenerating, setIsGenerating] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
 
+  const profileId = profile?.id;
+  const profileName = profile?.fullName;
+  const storageKey = `${TOKEN_STORAGE_PREFIX}${profileId || ''}`;
+
+  const qrCodeValue = qrToken
+    ? `${window.location.origin}/c/${qrToken}`
+    : '';
+
+  // Load or generate token when QR is shown
+  const generateNewToken = useCallback(async () => {
+    if (!profileId) return;
+    setIsGenerating(true);
+    try {
+      const token = generateSecureToken();
+      const tokenHash = await hashToken(token);
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ poster_qr_token_hash: tokenHash } as any)
+        .eq('id', profileId);
+
+      if (error) throw error;
+
+      localStorage.setItem(storageKey, token);
+      setQrToken(token);
+    } catch (err) {
+      console.error('Failed to generate QR token:', err);
+      toast.error('Failed to generate QR code');
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [profileId, storageKey]);
+
+  const ensureToken = useCallback(async () => {
+    if (!profileId) return;
+    
+    // Check localStorage first
+    const stored = localStorage.getItem(storageKey);
+    if (stored) {
+      const storedHash = await hashToken(stored);
+      const { data } = await supabase
+        .from('profiles')
+        .select('poster_qr_token_hash')
+        .eq('id', profileId)
+        .single();
+
+      if (data?.poster_qr_token_hash === storedHash) {
+        setQrToken(stored);
+        return;
+      }
+      localStorage.removeItem(storageKey);
+    }
+
+    await generateNewToken();
+  }, [profileId, storageKey, generateNewToken]);
+
   if (!profile) return null;
 
   const storageKey = `${TOKEN_STORAGE_PREFIX}${profile.id}`;
