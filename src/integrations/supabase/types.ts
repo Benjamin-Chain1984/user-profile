@@ -4831,6 +4831,8 @@ export type Database = {
           full_name: string | null
           id: string
           is_active: boolean
+          last_mfa_verified_at: string | null
+          next_mfa_due_at: string | null
           phone_verified_at: string | null
           updated_at: string
           verified_phone: string | null
@@ -4840,6 +4842,8 @@ export type Database = {
           full_name?: string | null
           id: string
           is_active?: boolean
+          last_mfa_verified_at?: string | null
+          next_mfa_due_at?: string | null
           phone_verified_at?: string | null
           updated_at?: string
           verified_phone?: string | null
@@ -4849,11 +4853,48 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_active?: boolean
+          last_mfa_verified_at?: string | null
+          next_mfa_due_at?: string | null
           phone_verified_at?: string | null
           updated_at?: string
           verified_phone?: string | null
         }
         Relationships: []
+      }
+      qr_access_logs: {
+        Row: {
+          access_method: string
+          accessed_at: string
+          client_id: string | null
+          device_id: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          access_method?: string
+          accessed_at?: string
+          client_id?: string | null
+          device_id?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          access_method?: string
+          accessed_at?: string
+          client_id?: string | null
+          device_id?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_access_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rate_limits: {
         Row: {
@@ -5443,6 +5484,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      trusted_devices: {
+        Row: {
+          device_id: string
+          device_name: string | null
+          expires_at: string
+          id: string
+          is_active: boolean
+          last_seen_at: string
+          revoked_at: string | null
+          trusted_at: string
+          user_id: string
+        }
+        Insert: {
+          device_id: string
+          device_name?: string | null
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          last_seen_at?: string
+          revoked_at?: string | null
+          trusted_at?: string
+          user_id: string
+        }
+        Update: {
+          device_id?: string
+          device_name?: string | null
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          last_seen_at?: string
+          revoked_at?: string | null
+          trusted_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
