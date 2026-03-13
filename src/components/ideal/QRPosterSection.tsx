@@ -30,10 +30,10 @@ export function QRPosterSection() {
       const token = generateSecureToken();
       const tokenHash = await hashToken(token);
 
-      console.log('[QR] Storing token hash for profile:', profileId);
+      console.log('[QR] Storing token hash for client:', profileId);
 
       const { error, data } = await supabase
-        .from('profiles')
+        .from('clients')
         .update({ poster_qr_token_hash: tokenHash } as any)
         .eq('id', profileId)
         .select('id')
@@ -44,7 +44,7 @@ export function QRPosterSection() {
         throw error;
       }
 
-      console.log('[QR] Token stored successfully, profile:', data?.id);
+      console.log('[QR] Token stored successfully, client:', data?.id);
       localStorage.setItem(storageKey, token);
       setQrToken(token);
     } catch (err) {
@@ -61,7 +61,7 @@ export function QRPosterSection() {
     if (stored) {
       const storedHash = await hashToken(stored);
       const { data } = await supabase
-        .from('profiles')
+        .from('clients')
         .select('poster_qr_token_hash')
         .eq('id', profileId)
         .single();
