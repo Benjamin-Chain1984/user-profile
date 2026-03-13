@@ -129,6 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = useCallback(async () => {
     await authService.signOut();
+    localStorage.removeItem(PHONE_SESSION_KEY);
     setSession(null);
   }, []);
 
