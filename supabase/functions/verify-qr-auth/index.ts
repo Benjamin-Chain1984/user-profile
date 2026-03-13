@@ -1,7 +1,8 @@
 /**
  * Verify QR Auth OTP Edge Function
- * Validates OTP for QR-based client access
- * Also handles token-only validation for pre-authenticated users
+ * Validates OTP for QR-based client access.
+ * On successful verification, registers device as trusted and sets 90-day MFA window.
+ * Also handles token-only validation for pre-authenticated users.
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -11,7 +12,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Format phone to E.164 if needed
+const MFA_VALIDITY_DAYS = 90;
+
 function formatPhoneE164(phone: string): string {
   const digits = phone.replace(/\D/g, '');
   if (digits.startsWith('0')) {
@@ -23,7 +25,6 @@ function formatPhoneE164(phone: string): string {
   return phone;
 }
 
-// Hash token for lookup
 async function hashToken(token: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(token);
@@ -32,8 +33,63 @@ async function hashToken(token: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+async function resolveClient(supabase: any, clientToken: string) {
+  const tokenHash = await hashToken(clientToken);
+  const { data: clientData, error: clientError } = await supabase
+    .from('clients')
+    .select('id, preferred_name, short_bio, photo_url, status')
+    .eq('poster_qr_token_hash', tokenHash)
+    .eq('status', 'active')
+    .maybeSingle();
+
+  if (clientError || !clientData) return null;
+  
+  return {
+    id: clientData.id,
+    preferredName: clientData.preferred_name,
+    shortBio: clientData.short_bio,
+    photoUrl: clientData.photo_url,
+    status: clientData.status
+  };
+}
+
+async function registerTrustedDevice(
+  supabase: any, 
+  userId: string, 
+  deviceId: string, 
+  deviceName?: string
+) {
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + MFA_VALIDITY_DAYS * 24 * 60 * 60 * 1000);
+  const nextMfaDue = expiresAt.toISOString();
+
+  // Upsert trusted device
+  await supabase
+    .from('trusted_devices')
+    .upsert({
+      user_id: userId,
+      device_id: deviceId,
+      device_name: deviceName || 'Unknown Device',
+      is_active: true,
+      trusted_at: now.toISOString(),
+      last_seen_at: now.toISOString(),
+      expires_at: nextMfaDue,
+      revoked_at: null
+    }, { onConflict: 'user_id,device_id' });
+
+  // Update profile MFA fields
+  await supabase
+    .from('profiles')
+    .update({
+      last_mfa_verified_at: now.toISOString(),
+      next_mfa_due_at: nextMfaDue
+    })
+    .eq('id', userId);
+
+  return { expiresAt: nextMfaDue };
+}
+
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -45,13 +101,12 @@ Deno.serve(async (req) => {
     );
 
     const body = await req.json();
-    const { phone, otp, clientToken, userId, action } = body;
+    const { phone, otp, clientToken, userId, action, deviceId, deviceName } = body;
 
     // Handle token-only validation for pre-authenticated users
     if (action === 'validate_token') {
       console.log('Validating token for pre-authenticated user');
       
-      // Get user from auth header
       const authHeader = req.headers.get('Authorization');
       let currentUserId: string | null = null;
       let currentUserName: string | null = null;
@@ -64,7 +119,6 @@ Deno.serve(async (req) => {
         if (!claimsError && claims.user) {
           currentUserId = claims.user.id;
           
-          // Get user profile
           const { data: profile } = await supabase
             .from('profiles')
             .select('full_name')
@@ -73,7 +127,6 @@ Deno.serve(async (req) => {
           
           currentUserName = profile?.full_name || claims.user.email || null;
           
-          // Get user roles
           const { data: roles } = await supabase
             .from('user_roles')
             .select('role')
@@ -90,27 +143,13 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Check if user has staff role
       if (currentUserRoles.length === 0) {
-        await supabase.rpc('log_audit_event', {
-          p_actor_user_id: currentUserId,
-          p_action: 'CLIENT_ACCESS_DENIED',
-          p_metadata_json: { 
-            reason: 'no_staff_role',
-            tokenPrefix: clientToken?.slice(0, 8) + '...'
-          }
-        });
-
         return new Response(
-          JSON.stringify({ 
-            error: 'You do not have permission to access client records.',
-            code: 'NO_ROLE'
-          }),
+          JSON.stringify({ error: 'You do not have permission to access client records.', code: 'NO_ROLE' }),
           { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      // Validate the client token
       if (!clientToken) {
         return new Response(
           JSON.stringify({ error: 'Client token is required' }),
@@ -118,64 +157,31 @@ Deno.serve(async (req) => {
         );
       }
 
-      const tokenHash = await hashToken(clientToken);
-      
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('id, preferred_name, short_bio, photo_url, status')
-        .eq('poster_qr_token_hash', tokenHash)
-        .eq('status', 'active')
-        .maybeSingle();
-
-      if (clientError || !clientData) {
-        console.log('Invalid or expired client token');
-        
+      const client = await resolveClient(supabase, clientToken);
+      if (!client) {
         await supabase.rpc('log_audit_event', {
           p_actor_user_id: currentUserId,
           p_action: 'QR_TOKEN_INVALID',
-          p_metadata_json: { 
-            tokenPrefix: clientToken?.slice(0, 8) + '...',
-            reason: 'token_not_found_or_rotated'
-          }
+          p_metadata_json: { tokenPrefix: clientToken?.slice(0, 8) + '...' }
         });
-
         return new Response(
-          JSON.stringify({ 
-            error: 'This QR code is invalid or has been replaced. Please contact your administrator.',
-            invalidToken: true,
-            code: 'INVALID_CLIENT_TOKEN'
-          }),
+          JSON.stringify({ error: 'This QR code is invalid or has been replaced.', invalidToken: true }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      const client = {
-        id: clientData.id,
-        preferredName: clientData.preferred_name,
-        shortBio: clientData.short_bio,
-        photoUrl: clientData.photo_url,
-        status: clientData.status
-      };
-
-      // Log successful access
       await supabase.rpc('log_audit_event', {
         p_actor_user_id: currentUserId,
         p_action: 'CLIENT_ACCESS_GRANTED',
         p_client_id: client.id,
-        p_metadata_json: { 
-          method: 'pre_authenticated',
-          clientName: client.preferredName
-        }
+        p_metadata_json: { method: 'pre_authenticated', clientName: client.preferredName }
       });
 
       return new Response(
         JSON.stringify({ 
-          success: true,
-          message: 'Access granted',
-          userId: currentUserId,
-          userName: currentUserName,
-          roles: currentUserRoles,
-          client
+          success: true, message: 'Access granted',
+          userId: currentUserId, userName: currentUserName,
+          roles: currentUserRoles, client
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -203,10 +209,7 @@ Deno.serve(async (req) => {
     if (rateLimit) {
       if (rateLimit.locked_until && new Date(rateLimit.locked_until) > new Date()) {
         return new Response(
-          JSON.stringify({ 
-            error: 'Too many failed attempts. Please try again later.',
-            rateLimited: true
-          }),
+          JSON.stringify({ error: 'Too many failed attempts. Please try again later.', rateLimited: true }),
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -214,16 +217,9 @@ Deno.serve(async (req) => {
       const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
       if (new Date(rateLimit.first_attempt_at) > tenMinutesAgo && rateLimit.attempt_count >= 5) {
         const lockUntil = new Date(Date.now() + 30 * 60 * 1000).toISOString();
-        await supabase
-          .from('rate_limits')
-          .update({ locked_until: lockUntil })
-          .eq('id', rateLimit.id);
-
+        await supabase.from('rate_limits').update({ locked_until: lockUntil }).eq('id', rateLimit.id);
         return new Response(
-          JSON.stringify({ 
-            error: 'Too many failed attempts. Locked for 30 minutes.',
-            rateLimited: true
-          }),
+          JSON.stringify({ error: 'Too many failed attempts. Locked for 30 minutes.', rateLimited: true }),
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -237,7 +233,6 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (otpError || !storedOtp) {
-      console.error('OTP not found:', otpError);
       return new Response(
         JSON.stringify({ error: 'No verification code found. Please request a new code.' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -246,17 +241,6 @@ Deno.serve(async (req) => {
 
     // Check expiry
     if (new Date(storedOtp.expires_at) < new Date()) {
-      console.log('OTP expired');
-      await supabase.rpc('log_audit_event', {
-        p_actor_user_id: userId || null,
-        p_action: 'OTP_VERIFY_FAIL',
-        p_metadata_json: { 
-          phone: formattedPhone.slice(0, 6) + '****', 
-          reason: 'expired',
-          method: 'qr_auth'
-        }
-      });
-
       return new Response(
         JSON.stringify({ error: 'Code has expired. Please request a new one.' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -265,33 +249,19 @@ Deno.serve(async (req) => {
 
     // Verify OTP
     if (storedOtp.otp_hash !== otp) {
-      console.log('Invalid OTP');
-
-      // Track failed attempt
       if (rateLimit) {
-        await supabase
-          .from('rate_limits')
-          .update({ attempt_count: rateLimit.attempt_count + 1 })
-          .eq('id', rateLimit.id);
+        await supabase.from('rate_limits').update({ attempt_count: rateLimit.attempt_count + 1 }).eq('id', rateLimit.id);
       } else {
-        await supabase
-          .from('rate_limits')
-          .insert({
-            identifier: formattedPhone,
-            action: 'qr_verify',
-            attempt_count: 1,
-            first_attempt_at: new Date().toISOString()
-          });
+        await supabase.from('rate_limits').insert({
+          identifier: formattedPhone, action: 'qr_verify',
+          attempt_count: 1, first_attempt_at: new Date().toISOString()
+        });
       }
 
       await supabase.rpc('log_audit_event', {
         p_actor_user_id: userId || null,
         p_action: 'OTP_VERIFY_FAIL',
-        p_metadata_json: { 
-          phone: formattedPhone.slice(0, 6) + '****', 
-          reason: 'invalid_code',
-          method: 'qr_auth'
-        }
+        p_metadata_json: { phone: formattedPhone.slice(0, 6) + '****', reason: 'invalid_code', method: 'qr_auth' }
       });
 
       return new Response(
@@ -300,108 +270,77 @@ Deno.serve(async (req) => {
       );
     }
 
-    // OTP is valid! Mark as used
+    // OTP is valid!
     console.log('QR auth OTP verified successfully');
 
-    await supabase
-      .from('phone_otps')
-      .update({ verified: true })
-      .eq('phone', formattedPhone);
+    await supabase.from('phone_otps').update({ verified: true }).eq('phone', formattedPhone);
 
-    // Validate the client token if provided
+    // Register trusted device if deviceId provided
+    let mfaExpiresAt: string | undefined;
+    if (deviceId && storedOtp.user_id) {
+      const result = await registerTrustedDevice(supabase, storedOtp.user_id, deviceId, deviceName);
+      mfaExpiresAt = result.expiresAt;
+      console.log(`Trusted device registered, MFA valid until: ${mfaExpiresAt}`);
+    }
+
+    // Validate client token
     let client = null;
     if (clientToken) {
-      const tokenHash = await hashToken(clientToken);
-      
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('id, preferred_name, short_bio, photo_url, status')
-        .eq('poster_qr_token_hash', tokenHash)
-        .eq('status', 'active')
-        .maybeSingle();
-
-      if (clientError || !clientData) {
-        console.log('Invalid or expired client token');
-        
-        await supabase.rpc('log_audit_event', {
-          p_actor_user_id: storedOtp.user_id,
-          p_action: 'QR_TOKEN_INVALID',
-          p_metadata_json: { 
-            tokenPrefix: clientToken?.slice(0, 8) + '...',
-            reason: 'token_not_found_or_rotated',
-            phone: formattedPhone.slice(0, 6) + '****'
-          }
-        });
-
+      client = await resolveClient(supabase, clientToken);
+      if (!client) {
         return new Response(
-          JSON.stringify({ 
-            error: 'This QR code is invalid or has been replaced. Please contact your administrator.',
-            invalidToken: true,
-            code: 'INVALID_CLIENT_TOKEN'
-          }),
+          JSON.stringify({ error: 'This QR code is invalid or has been replaced.', invalidToken: true }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      client = {
-        id: clientData.id,
-        preferredName: clientData.preferred_name,
-        shortBio: clientData.short_bio,
-        photoUrl: clientData.photo_url,
-        status: clientData.status
-      };
+      // Log access
+      await supabase.from('qr_access_logs').insert({
+        user_id: storedOtp.user_id,
+        client_id: client.id,
+        device_id: deviceId || null,
+        access_method: 'otp'
+      });
 
-      // Log successful access
       await supabase.rpc('log_audit_event', {
         p_actor_user_id: storedOtp.user_id,
         p_action: 'CLIENT_ACCESS_GRANTED',
         p_client_id: client.id,
         p_metadata_json: { 
           phone: formattedPhone.slice(0, 6) + '****',
-          method: 'qr_auth_otp',
-          clientName: client.preferredName
+          method: 'qr_auth_otp', clientName: client.preferredName,
+          deviceTrusted: !!deviceId
         }
       });
     }
 
-    // Log successful login
     await supabase.rpc('log_audit_event', {
       p_actor_user_id: storedOtp.user_id,
       p_action: 'LOGIN_SUCCESS',
       p_metadata_json: { 
         phone: formattedPhone.slice(0, 6) + '****',
-        method: 'qr_auth'
+        method: 'qr_auth', deviceTrusted: !!deviceId
       }
     });
 
     // Clear rate limits
-    await supabase
-      .from('rate_limits')
-      .delete()
+    await supabase.from('rate_limits').delete()
       .eq('identifier', formattedPhone)
       .in('action', ['qr_auth', 'qr_verify']);
 
-    // Get user roles
+    // Get user info
     const { data: userRoles } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', storedOtp.user_id);
-
-    // Get user profile
+      .from('user_roles').select('role').eq('user_id', storedOtp.user_id);
     const { data: profile } = await supabase
-      .from('profiles')
-      .select('full_name')
-      .eq('id', storedOtp.user_id)
-      .single();
+      .from('profiles').select('full_name').eq('id', storedOtp.user_id).single();
 
     return new Response(
       JSON.stringify({ 
-        success: true,
-        message: 'Access granted',
-        userId: storedOtp.user_id,
-        userName: profile?.full_name,
+        success: true, message: 'Access granted',
+        userId: storedOtp.user_id, userName: profile?.full_name,
         roles: userRoles?.map(r => r.role) || [],
-        client
+        client, mfaExpiresAt,
+        deviceTrusted: !!deviceId
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

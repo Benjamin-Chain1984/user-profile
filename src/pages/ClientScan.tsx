@@ -1,12 +1,12 @@
 /**
  * Client Scan Page - /c/:token
  * 
- * Handles QR code scan flow with SMS OTP authentication:
+ * Handles QR code scan flow with trusted device + MFA logic:
  * 1. User scans QR code on client poster
- * 2. Validates token exists (no client data shown yet)
- * 3. Shows neutral auth prompt if not authenticated
- * 4. Stores token in sessionStorage for redirect after login
- * 5. After auth, resolves client and enforces authorization
+ * 2. If logged in + trusted device + MFA current → seamless access (no OTP)
+ * 3. If logged in but MFA expired → prompt SMS OTP, then re-trust device
+ * 4. If not logged in → show login options (email or phone OTP)
+ * 5. After OTP verification, device is registered as trusted for 90 days
  */
 
 import { useEffect, useState } from 'react';
@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import { getDeviceId, getDeviceName } from '@/utils/deviceFingerprint';
 import { 
   Loader2, 
   AlertTriangle, 
@@ -27,11 +28,12 @@ import {
   Send,
   CheckCircle,
   Shield,
-  LogIn
+  LogIn,
+  ShieldCheck,
+  Smartphone
 } from 'lucide-react';
-const idealLogo = '/logo-design-new.png';
 
-// Session storage key for QR redirect
+const idealLogo = '/logo-design-new.png';
 const QR_REDIRECT_KEY = 'ideal_qr_redirect';
 
 interface Client {
@@ -48,7 +50,16 @@ interface AuthState {
   roles?: string[];
 }
 
-type Step = 'checking' | 'login_prompt' | 'phone' | 'otp' | 'validating' | 'success' | 'error';
+type Step = 
+  | 'checking' 
+  | 'checking_device' 
+  | 'login_prompt' 
+  | 'mfa_required' 
+  | 'phone' 
+  | 'otp' 
+  | 'validating' 
+  | 'success' 
+  | 'error';
 
 interface ErrorState {
   title: string;
@@ -60,7 +71,7 @@ export default function ClientScanPage() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, isLoading: authLoading, isStaff } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, isStaff, user } = useAuth();
   
   const [step, setStep] = useState<Step>('checking');
   const [phone, setPhone] = useState('');
@@ -71,16 +82,14 @@ export default function ClientScanPage() {
   const [client, setClient] = useState<Client | null>(null);
   const [authState, setAuthState] = useState<AuthState | null>(null);
   const [countdown, setCountdown] = useState(0);
+  const [mfaExpiresAt, setMfaExpiresAt] = useState<string | null>(null);
+  const [accessMethod, setAccessMethod] = useState<string>('otp');
 
   // Log QR scan attempt on mount
   useEffect(() => {
     if (token) {
-      // Log QR scan attempt (anonymously - just that a scan happened)
       supabase.functions.invoke('qr-auth', {
-        body: { 
-          action: 'scan_attempt',
-          clientToken: token 
-        }
+        body: { action: 'scan_attempt', clientToken: token }
       }).catch(console.error);
     }
   }, [token]);
@@ -107,22 +116,74 @@ export default function ClientScanPage() {
     }
 
     if (isAuthenticated && isStaff) {
-      // User is already authenticated and has staff role - validate token and grant access
-      validateTokenAndGrantAccess();
+      // Check trusted device first
+      checkTrustedDevice();
     } else if (isAuthenticated && !isStaff) {
-      // Authenticated but not staff - show error
       setErrorState({
         title: 'Access Denied',
         message: 'You do not have permission to access client records. Please contact your administrator.',
       });
       setStep('error');
     } else {
-      // Not authenticated - show neutral login prompt
-      // Store token for redirect after login
       sessionStorage.setItem(QR_REDIRECT_KEY, token);
       setStep('login_prompt');
     }
   }, [authLoading, isAuthenticated, isStaff, token]);
+
+  const checkTrustedDevice = async () => {
+    setStep('checking_device');
+    
+    try {
+      const deviceId = getDeviceId();
+      
+      const { data, error: fnError } = await supabase.functions.invoke('qr-auth', {
+        body: { 
+          action: 'check_trusted_device',
+          clientToken: token,
+          deviceId
+        }
+      });
+
+      if (fnError) throw fnError;
+
+      if (data.trusted && data.success) {
+        // Device is trusted, MFA is current — seamless access!
+        setClient(data.client);
+        setAuthState({
+          userId: data.userId,
+          userName: data.userName,
+          roles: data.roles
+        });
+        setMfaExpiresAt(data.mfaExpiresAt);
+        setAccessMethod('trusted_device');
+        setStep('success');
+        sessionStorage.removeItem(QR_REDIRECT_KEY);
+        return;
+      }
+
+      if (data.invalidToken) {
+        setErrorState({
+          title: 'QR Code Replaced',
+          message: 'This QR code has been replaced or is no longer valid. Please ask an admin to print the latest poster.',
+          isTokenInvalid: true,
+        });
+        setStep('error');
+        return;
+      }
+
+      // Device not trusted or MFA expired
+      if (data.reason === 'mfa_expired') {
+        setStep('mfa_required');
+      } else {
+        // Device not trusted — need OTP
+        setStep('mfa_required');
+      }
+    } catch (err: any) {
+      console.error('Trusted device check failed:', err);
+      // Fallback to standard validation
+      validateTokenAndGrantAccess();
+    }
+  };
 
   const validateTokenAndGrantAccess = async () => {
     setStep('validating');
@@ -154,8 +215,8 @@ export default function ClientScanPage() {
           userName: data.userName,
           roles: data.roles
         });
+        setAccessMethod('pre_authenticated');
         setStep('success');
-        // Clear the redirect storage
         sessionStorage.removeItem(QR_REDIRECT_KEY);
       } else {
         setErrorState({
@@ -175,7 +236,6 @@ export default function ClientScanPage() {
   };
 
   const handleGoToLogin = () => {
-    // Store the full path for redirect after login
     navigate('/auth', { 
       state: { from: location },
       replace: true 
@@ -183,6 +243,11 @@ export default function ClientScanPage() {
   };
 
   const handleUsePhoneAuth = () => {
+    setStep('phone');
+  };
+
+  const handleMfaRefresh = () => {
+    // Pre-fill phone if user is authenticated and has a verified phone
     setStep('phone');
   };
 
@@ -251,12 +316,17 @@ export default function ClientScanPage() {
     setError(null);
 
     try {
+      const deviceId = getDeviceId();
+      const deviceName = getDeviceName();
+
       const { data, error: fnError } = await supabase.functions.invoke('verify-qr-auth', {
         body: { 
           phone, 
           otp, 
           clientToken: token,
-          userId: authState?.userId
+          userId: authState?.userId,
+          deviceId,
+          deviceName
         }
       });
 
@@ -284,6 +354,8 @@ export default function ClientScanPage() {
           userName: data.userName,
           roles: data.roles
         });
+        setMfaExpiresAt(data.mfaExpiresAt);
+        setAccessMethod(data.deviceTrusted ? 'otp_device_trusted' : 'otp');
         setStep('success');
         sessionStorage.removeItem(QR_REDIRECT_KEY);
       } else {
@@ -305,8 +377,10 @@ export default function ClientScanPage() {
     handleSendOtp();
   };
 
+  // === RENDER STEPS ===
+
   // Checking auth state
-  if (step === 'checking' || authLoading) {
+  if (step === 'checking' || step === 'checking_device' || authLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
         <div className="w-full max-w-md space-y-6 text-center">
@@ -315,8 +389,65 @@ export default function ClientScanPage() {
           </div>
           <div className="space-y-2">
             <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
-            <p className="text-muted-foreground">Verifying access...</p>
+            <p className="text-muted-foreground">
+              {step === 'checking_device' ? 'Checking your device…' : 'Verifying access…'}
+            </p>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // MFA Required - device not trusted or MFA expired
+  if (step === 'mfa_required') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+        <div className="w-full max-w-md space-y-6">
+          <div className="flex justify-center">
+            <img src={idealLogo} alt="IDEAL" className="h-14 w-auto" />
+          </div>
+
+          <Card className="border-border shadow-lg">
+            <CardHeader className="text-center">
+              <div className="mx-auto w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mb-4">
+                <ShieldCheck className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+              </div>
+              <CardTitle>Security Check Required</CardTitle>
+              <CardDescription>
+                Your verification has expired or this is a new device. Please verify by text message to continue.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {user?.fullName && (
+                <div className="p-3 bg-muted rounded-lg text-center">
+                  <p className="text-sm text-muted-foreground">Signed in as</p>
+                  <p className="font-medium text-foreground">{user.fullName}</p>
+                </div>
+              )}
+
+              <div className="p-3 bg-primary/5 border border-primary/10 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <Smartphone className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                  <p className="text-sm text-muted-foreground">
+                    After verification, this device will stay verified for <strong>3 months</strong> — no repeat codes needed.
+                  </p>
+                </div>
+              </div>
+
+              <Button 
+                onClick={handleMfaRefresh}
+                className="w-full"
+                size="lg"
+              >
+                <Phone className="w-4 h-4 mr-2" />
+                Verify by Text Message
+              </Button>
+
+              <p className="text-xs text-center text-muted-foreground">
+                Only authorized staff with a verified phone number can access client records.
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -438,7 +569,7 @@ export default function ClientScanPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Sending...
+                    Sending…
                   </>
                 ) : (
                   <>
@@ -538,7 +669,7 @@ export default function ClientScanPage() {
                   {isLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Verifying...
+                      Verifying…
                     </>
                   ) : (
                     'Verify'
@@ -574,7 +705,7 @@ export default function ClientScanPage() {
           </div>
           <div className="space-y-2">
             <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
-            <p className="text-muted-foreground">Accessing client record...</p>
+            <p className="text-muted-foreground">Accessing client record…</p>
           </div>
         </div>
       </div>
@@ -633,6 +764,12 @@ export default function ClientScanPage() {
 
   // Success - show client overview
   if (step === 'success' && client) {
+    const formatMfaExpiry = () => {
+      if (!mfaExpiresAt) return null;
+      const date = new Date(mfaExpiresAt);
+      return date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+    };
+
     return (
       <div className="min-h-screen bg-background p-4">
         <div className="max-w-2xl mx-auto space-y-6">
@@ -651,14 +788,29 @@ export default function ClientScanPage() {
 
           {/* Access Granted Banner */}
           <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-            <CheckCircle className="w-5 h-5 text-green-600" />
-            <div>
+            <CheckCircle className="w-5 h-5 text-green-600 shrink-0" />
+            <div className="flex-1">
               <p className="font-medium text-green-800 dark:text-green-200">Access Granted</p>
               <p className="text-sm text-green-600 dark:text-green-400">
-                Authenticated via SMS verification
+                {accessMethod === 'trusted_device' 
+                  ? 'Authenticated via trusted device' 
+                  : 'Authenticated via SMS verification'}
               </p>
             </div>
+            {accessMethod === 'trusted_device' && (
+              <ShieldCheck className="w-5 h-5 text-green-600" />
+            )}
           </div>
+
+          {/* Device trust info */}
+          {mfaExpiresAt && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg">
+              <Smartphone className="w-4 h-4 text-muted-foreground shrink-0" />
+              <p className="text-xs text-muted-foreground">
+                This device is verified until <strong>{formatMfaExpiry()}</strong>. No repeat codes needed until then.
+              </p>
+            </div>
+          )}
 
           {/* Client Card */}
           <Card className="border-border shadow-lg">
