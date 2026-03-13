@@ -58,10 +58,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshSession = useCallback(async () => {
     try {
       const currentSession = await authService.getSession();
-      setSession(currentSession);
+      if (currentSession) {
+        setSession(currentSession);
+      } else {
+        // Fallback: check for phone-auth session from QR scan flow
+        const phoneSession = loadPhoneSession();
+        if (phoneSession) {
+          setSession(phoneSessionToAuthSession(phoneSession));
+        } else {
+          setSession(null);
+        }
+      }
     } catch (err) {
       console.error('Error refreshing session:', err);
-      setSession(null);
+      // Still check phone session on error
+      const phoneSession = loadPhoneSession();
+      if (phoneSession) {
+        setSession(phoneSessionToAuthSession(phoneSession));
+      } else {
+        setSession(null);
+      }
     }
   }, []);
 
