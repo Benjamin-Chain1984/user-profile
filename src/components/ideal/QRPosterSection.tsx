@@ -1,22 +1,22 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useProfile } from '@/contexts/ProfileContext';
 import { QRCodeSVG } from 'qrcode.react';
 import { QrCode, FileText, Download, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+import jsPDF from 'jspdf';
 
 export function QRPosterSection() {
   const { profile, enabledModules } = useProfile();
   const [showQR, setShowQR] = useState(false);
+  const qrRef = useRef<HTMLDivElement>(null);
 
   if (!profile) return null;
 
-  const qrCodeValue = JSON.stringify({
-    type: 'ideal-quick-log',
-    profileId: profile.fullName.toLowerCase().replace(/\s+/g, '-'),
-    name: profile.fullName,
-    enabledModules: enabledModules.filter(m => m.enabled).map(m => m.id),
-  });
+  // Encode the app URL so scanning opens the IDEAL app
+  const appOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+  const qrCodeValue = `${appOrigin}/`;
 
   return (
     <Card>
