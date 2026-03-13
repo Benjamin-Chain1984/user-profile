@@ -87,7 +87,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Set up auth state listener first
     const unsubscribe = authService.onAuthStateChange((newSession, rolesLoaded) => {
       if (mounted) {
-        setSession(newSession);
+        if (newSession) {
+          setSession(newSession);
+        } else {
+          // Fallback to phone session if Supabase session is null
+          const phoneSession = loadPhoneSession();
+          setSession(phoneSession ? phoneSessionToAuthSession(phoneSession) : null);
+        }
         // Only stop loading once roles are fully loaded
         if (rolesLoaded) {
           setIsLoading(false);
