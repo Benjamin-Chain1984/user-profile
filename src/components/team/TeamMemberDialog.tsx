@@ -178,75 +178,119 @@ export function TeamMemberDialog({ open, onOpenChange, member, onSaved }: TeamMe
           <DialogTitle>{isEditing ? 'Edit Team Member' : 'Add Team Member'}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="fullName">Full Name</Label>
-            <Input
-              id="fullName"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="Enter full name"
-              className="mt-1.5"
-              required
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="phone">Mobile Number (E.164)</Label>
-            <Input
-              id="phone"
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+61 400 000 000"
-              className="mt-1.5"
-              required
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Must be verified before QR access is allowed
-            </p>
-          </div>
-
-          <div>
-            <Label htmlFor="role">Role</Label>
-            <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
-              <SelectTrigger className="mt-1.5">
-                <SelectValue placeholder="Select role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="worker">Support Worker</SelectItem>
-                <SelectItem value="team_leader">Team Leader</SelectItem>
-                <SelectItem value="clinician">Clinician</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {isEditing && (
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <div>
-                <Label htmlFor="isActive" className="text-sm font-medium">Account Status</Label>
-                <p className="text-xs text-muted-foreground">
-                  {isActive ? 'Active - can access the system' : 'Inactive - access disabled'}
-                </p>
+        {showCredentials ? (
+          <div className="space-y-4">
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg dark:bg-green-950 dark:border-green-800">
+              <p className="text-sm font-medium text-green-800 dark:text-green-200 mb-2">
+                Team member created successfully!
+              </p>
+              <p className="text-xs text-muted-foreground mb-3">
+                Share these credentials securely. The member should change their password on first login.
+              </p>
+              <div className="space-y-2">
+                <div>
+                  <Label className="text-xs">Email</Label>
+                  <Input value={email} readOnly className="mt-1 text-sm bg-muted" />
+                </div>
+                <div>
+                  <Label className="text-xs">Temporary Password</Label>
+                  <Input value={tempPassword} readOnly className="mt-1 text-sm bg-muted font-mono" />
+                </div>
               </div>
-              <Switch
-                id="isActive"
-                checked={isActive}
-                onCheckedChange={setIsActive}
+            </div>
+            <Button onClick={() => { onSaved(); onOpenChange(false); }} className="w-full">
+              Done
+            </Button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="fullName">Full Name</Label>
+              <Input
+                id="fullName"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Enter full name"
+                className="mt-1.5"
+                required
               />
             </div>
-          )}
 
-          <div className="flex gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isLoading} className="flex-1">
-              {isLoading ? 'Saving...' : isEditing ? 'Save Changes' : 'Add Member'}
-            </Button>
-          </div>
-        </form>
+            {!isEditing && (
+              <div>
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="staff@example.com"
+                  className="mt-1.5"
+                  required
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Used for login. A temporary password will be generated.
+                </p>
+              </div>
+            )}
+
+            <div>
+              <Label htmlFor="phone">Mobile Number (E.164)</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+61 400 000 000"
+                className="mt-1.5"
+                required
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Must be verified before QR access is allowed
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="role">Role</Label>
+              <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="worker">Support Worker</SelectItem>
+                  <SelectItem value="team_leader">Team Leader</SelectItem>
+                  <SelectItem value="clinician">Clinician</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {isEditing && (
+              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                <div>
+                  <Label htmlFor="isActive" className="text-sm font-medium">Account Status</Label>
+                  <p className="text-xs text-muted-foreground">
+                    {isActive ? 'Active - can access the system' : 'Inactive - access disabled'}
+                  </p>
+                </div>
+                <Switch
+                  id="isActive"
+                  checked={isActive}
+                  onCheckedChange={setIsActive}
+                />
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-4">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isLoading} className="flex-1">
+                {isLoading ? 'Saving...' : isEditing ? 'Save Changes' : 'Add Member'}
+              </Button>
+            </div>
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   );
