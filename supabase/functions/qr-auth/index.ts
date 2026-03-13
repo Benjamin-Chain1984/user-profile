@@ -158,6 +158,8 @@ Deno.serve(async (req) => {
       let client = null;
       if (clientToken) {
         const tokenHash = await hashToken(clientToken);
+        
+        // Check clients table first
         const { data: clientData } = await supabase
           .from('clients')
           .select('id, preferred_name, short_bio, photo_url, status')
@@ -165,7 +167,34 @@ Deno.serve(async (req) => {
           .eq('status', 'active')
           .maybeSingle();
 
-        if (!clientData) {
+        if (clientData) {
+          client = {
+            id: clientData.id,
+            preferredName: clientData.preferred_name,
+            shortBio: clientData.short_bio,
+            photoUrl: clientData.photo_url,
+            status: clientData.status
+          };
+        } else {
+          // Check profiles table (profile-page QR codes)
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('id, full_name')
+            .eq('poster_qr_token_hash', tokenHash)
+            .maybeSingle();
+
+          if (profileData) {
+            client = {
+              id: profileData.id,
+              preferredName: profileData.full_name,
+              shortBio: null,
+              photoUrl: null,
+              status: 'active'
+            };
+          }
+        }
+
+        if (!client) {
           return new Response(
             JSON.stringify({ 
               error: 'This QR code is invalid or has been replaced.',
@@ -173,15 +202,6 @@ Deno.serve(async (req) => {
             }),
             { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
-        }
-
-        client = {
-          id: clientData.id,
-          preferredName: clientData.preferred_name,
-          shortBio: clientData.short_bio,
-          photoUrl: clientData.photo_url,
-          status: clientData.status
-        };
 
         // Log access
         await supabase.from('qr_access_logs').insert({
