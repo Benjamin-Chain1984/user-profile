@@ -4834,6 +4834,7 @@ export type Database = {
           last_mfa_verified_at: string | null
           next_mfa_due_at: string | null
           phone_verified_at: string | null
+          poster_qr_token_hash: string | null
           updated_at: string
           verified_phone: string | null
         }
@@ -4845,6 +4846,7 @@ export type Database = {
           last_mfa_verified_at?: string | null
           next_mfa_due_at?: string | null
           phone_verified_at?: string | null
+          poster_qr_token_hash?: string | null
           updated_at?: string
           verified_phone?: string | null
         }
@@ -4856,6 +4858,7 @@ export type Database = {
           last_mfa_verified_at?: string | null
           next_mfa_due_at?: string | null
           phone_verified_at?: string | null
+          poster_qr_token_hash?: string | null
           updated_at?: string
           verified_phone?: string | null
         }
