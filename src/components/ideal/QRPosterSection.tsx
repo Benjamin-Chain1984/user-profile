@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useProfile } from '@/contexts/ProfileContext';
 import { QRCodeSVG } from 'qrcode.react';
 import { QrCode, FileText, Download, Printer, RefreshCw, Loader2 } from 'lucide-react';
