@@ -33,9 +33,12 @@ interface TeamMemberDialogProps {
 export function TeamMemberDialog({ open, onOpenChange, member, onSaved }: TeamMemberDialogProps) {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [role, setRole] = useState<AppRole>('worker');
   const [isActive, setIsActive] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [tempPassword, setTempPassword] = useState('');
+  const [showCredentials, setShowCredentials] = useState(false);
 
   const isEditing = !!member;
 
