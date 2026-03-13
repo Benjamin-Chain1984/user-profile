@@ -5,6 +5,39 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { authService, type AuthSession, type AuthUser, type AppRole } from '@/services/auth';
 
+const PHONE_SESSION_KEY = 'ideal_phone_session';
+
+interface PhoneSession {
+  userId: string;
+  userName: string;
+  roles: string[];
+  deviceId: string;
+  verifiedAt: string;
+}
+
+function loadPhoneSession(): PhoneSession | null {
+  try {
+    const raw = localStorage.getItem(PHONE_SESSION_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function phoneSessionToAuthSession(ps: PhoneSession): AuthSession {
+  return {
+    accessToken: `phone-session-${ps.deviceId}`,
+    expiresAt: Date.now() + 90 * 24 * 60 * 60 * 1000,
+    user: {
+      id: ps.userId,
+      fullName: ps.userName,
+      isActive: true,
+      roles: ps.roles as AppRole[],
+    },
+  };
+}
+
 interface AuthContextType {
   session: AuthSession | null;
   user: AuthUser | null;
