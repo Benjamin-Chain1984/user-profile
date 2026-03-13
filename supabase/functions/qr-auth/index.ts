@@ -1,7 +1,8 @@
 /**
  * QR Auth Edge Function
- * Validates a user's phone is verified in the system and sends OTP for QR-based access
- * Also handles scan attempt logging
+ * Validates a user's phone is verified in the system and sends OTP for QR-based access.
+ * Supports trusted device checks to skip OTP when MFA is still current.
+ * Also handles scan attempt logging.
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -11,12 +12,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Generate a random 6-digit OTP
 function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Format phone to E.164 if needed
 function formatPhoneE164(phone: string): string {
   const digits = phone.replace(/\D/g, '');
   if (digits.startsWith('0')) {
@@ -28,8 +27,15 @@ function formatPhoneE164(phone: string): string {
   return phone;
 }
 
+async function hashToken(token: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(token);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -41,9 +47,9 @@ Deno.serve(async (req) => {
     );
 
     const body = await req.json();
-    const { phone, clientToken, action } = body;
+    const { phone, clientToken, action, deviceId, deviceName } = body;
 
-    // Handle scan attempt logging (anonymous - just logs that a scan occurred)
+    // Handle scan attempt logging
     if (action === 'scan_attempt') {
       console.log('QR scan attempt logged');
       await supabase.rpc('log_audit_event', {
@@ -62,6 +68,156 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Handle trusted device check (pre-authenticated user with device ID)
+    if (action === 'check_trusted_device') {
+      console.log('Checking trusted device for pre-authenticated user');
+      
+      const authHeader = req.headers.get('Authorization');
+      let currentUserId: string | null = null;
+
+      if (authHeader?.startsWith('Bearer ')) {
+        const token = authHeader.replace('Bearer ', '');
+        const { data: claims, error: claimsError } = await supabase.auth.getUser(token);
+        if (!claimsError && claims.user) {
+          currentUserId = claims.user.id;
+        }
+      }
+
+      if (!currentUserId) {
+        return new Response(
+          JSON.stringify({ error: 'Authentication required' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!deviceId) {
+        return new Response(
+          JSON.stringify({ trusted: false, reason: 'no_device_id' }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Check if user has staff role
+      const { data: userRoles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', currentUserId);
+
+      if (!userRoles?.length) {
+        return new Response(
+          JSON.stringify({ error: 'No staff role assigned', code: 'NO_ROLE' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Check trusted device
+      const { data: device } = await supabase
+        .from('trusted_devices')
+        .select('*')
+        .eq('user_id', currentUserId)
+        .eq('device_id', deviceId)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (!device) {
+        return new Response(
+          JSON.stringify({ trusted: false, reason: 'device_not_trusted' }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Check if device trust has expired
+      if (new Date(device.expires_at) < new Date()) {
+        return new Response(
+          JSON.stringify({ trusted: false, reason: 'mfa_expired', expiredAt: device.expires_at }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Check MFA dates on profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('last_mfa_verified_at, next_mfa_due_at, full_name')
+        .eq('id', currentUserId)
+        .single();
+
+      if (profile?.next_mfa_due_at && new Date(profile.next_mfa_due_at) < new Date()) {
+        return new Response(
+          JSON.stringify({ trusted: false, reason: 'mfa_expired', expiredAt: profile.next_mfa_due_at }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Device is trusted and MFA is current - update last_seen
+      await supabase
+        .from('trusted_devices')
+        .update({ last_seen_at: new Date().toISOString() })
+        .eq('id', device.id);
+
+      // Validate client token if provided
+      let client = null;
+      if (clientToken) {
+        const tokenHash = await hashToken(clientToken);
+        const { data: clientData } = await supabase
+          .from('clients')
+          .select('id, preferred_name, short_bio, photo_url, status')
+          .eq('poster_qr_token_hash', tokenHash)
+          .eq('status', 'active')
+          .maybeSingle();
+
+        if (!clientData) {
+          return new Response(
+            JSON.stringify({ 
+              error: 'This QR code is invalid or has been replaced.',
+              invalidToken: true 
+            }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        client = {
+          id: clientData.id,
+          preferredName: clientData.preferred_name,
+          shortBio: clientData.short_bio,
+          photoUrl: clientData.photo_url,
+          status: clientData.status
+        };
+
+        // Log access
+        await supabase.from('qr_access_logs').insert({
+          user_id: currentUserId,
+          client_id: client.id,
+          device_id: deviceId,
+          access_method: 'trusted_device'
+        });
+
+        await supabase.rpc('log_audit_event', {
+          p_actor_user_id: currentUserId,
+          p_action: 'CLIENT_ACCESS_GRANTED',
+          p_client_id: client.id,
+          p_metadata_json: { 
+            method: 'trusted_device',
+            clientName: client.preferredName,
+            deviceId: deviceId.slice(0, 8) + '...'
+          }
+        });
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          trusted: true,
+          success: true,
+          userId: currentUserId,
+          userName: profile?.full_name,
+          roles: userRoles.map(r => r.role),
+          client,
+          mfaExpiresAt: profile?.next_mfa_due_at
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Standard phone OTP flow
     if (!phone) {
       return new Response(
         JSON.stringify({ error: 'Phone number is required' }),
@@ -72,7 +228,6 @@ Deno.serve(async (req) => {
     const formattedPhone = formatPhoneE164(phone);
     console.log(`QR Auth request for phone: ${formattedPhone.slice(0, 6)}****`);
 
-    // Log that login was required from QR
     await supabase.rpc('log_audit_event', {
       p_actor_user_id: null,
       p_action: 'LOGIN_REQUIRED_FROM_QR',
@@ -82,7 +237,7 @@ Deno.serve(async (req) => {
       }
     });
 
-    // Step 1: Check if phone is verified in the system
+    // Check if phone is verified
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id, full_name, is_active, verified_phone, phone_verified_at')
@@ -98,8 +253,6 @@ Deno.serve(async (req) => {
     }
 
     if (!profile) {
-      console.log('Phone not found in verified profiles');
-      // Log failed access attempt
       await supabase.rpc('log_audit_event', {
         p_actor_user_id: null,
         p_action: 'CLIENT_ACCESS_DENIED',
@@ -109,7 +262,6 @@ Deno.serve(async (req) => {
           tokenPrefix: clientToken?.slice(0, 8) + '...'
         }
       });
-
       return new Response(
         JSON.stringify({ 
           error: 'This phone number is not registered in the system. Please contact your administrator.',
@@ -120,16 +272,6 @@ Deno.serve(async (req) => {
     }
 
     if (!profile.phone_verified_at) {
-      console.log('Phone not verified');
-      await supabase.rpc('log_audit_event', {
-        p_actor_user_id: profile.id,
-        p_action: 'CLIENT_ACCESS_DENIED',
-        p_metadata_json: { 
-          phone: formattedPhone.slice(0, 6) + '****',
-          reason: 'phone_not_verified'
-        }
-      });
-
       return new Response(
         JSON.stringify({ 
           error: 'Your phone number has not been verified. Please contact your administrator.',
@@ -140,16 +282,6 @@ Deno.serve(async (req) => {
     }
 
     if (!profile.is_active) {
-      console.log('User account inactive');
-      await supabase.rpc('log_audit_event', {
-        p_actor_user_id: profile.id,
-        p_action: 'CLIENT_ACCESS_DENIED',
-        p_metadata_json: { 
-          phone: formattedPhone.slice(0, 6) + '****',
-          reason: 'account_inactive'
-        }
-      });
-
       return new Response(
         JSON.stringify({ 
           error: 'Your account is inactive. Please contact your administrator.',
@@ -159,23 +291,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Step 2: Check user has a valid role
+    // Check user has a valid role
     const { data: userRoles, error: rolesError } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', profile.id);
 
     if (rolesError || !userRoles?.length) {
-      console.log('User has no roles');
-      await supabase.rpc('log_audit_event', {
-        p_actor_user_id: profile.id,
-        p_action: 'CLIENT_ACCESS_DENIED',
-        p_metadata_json: { 
-          phone: formattedPhone.slice(0, 6) + '****',
-          reason: 'no_role_assigned'
-        }
-      });
-
       return new Response(
         JSON.stringify({ 
           error: 'You do not have permission to access client records. Please contact your administrator.',
@@ -185,7 +307,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Step 3: Check rate limiting
+    // Check rate limiting
     const { data: rateLimit } = await supabase
       .from('rate_limits')
       .select('*')
@@ -195,7 +317,6 @@ Deno.serve(async (req) => {
 
     if (rateLimit) {
       if (rateLimit.locked_until && new Date(rateLimit.locked_until) > new Date()) {
-        console.log('Rate limited - locked until:', rateLimit.locked_until);
         return new Response(
           JSON.stringify({ 
             error: 'Too many attempts. Please try again later.',
@@ -213,7 +334,6 @@ Deno.serve(async (req) => {
           .from('rate_limits')
           .update({ locked_until: lockUntil })
           .eq('id', rateLimit.id);
-
         return new Response(
           JSON.stringify({ 
             error: 'Too many attempts. Locked for 15 minutes.',
@@ -239,11 +359,10 @@ Deno.serve(async (req) => {
         });
     }
 
-    // Step 4: Generate and send OTP
+    // Generate and send OTP
     const otp = generateOTP();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-    // Store OTP
     await supabase
       .from('phone_otps')
       .upsert({
@@ -260,7 +379,6 @@ Deno.serve(async (req) => {
     const twilioPhone = Deno.env.get('TWILIO_PHONE_NUMBER');
 
     if (!twilioAccountSid || !twilioAuthToken || !twilioPhone) {
-      console.error('Twilio credentials not configured');
       return new Response(
         JSON.stringify({ error: 'SMS service not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -269,10 +387,8 @@ Deno.serve(async (req) => {
 
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
     const twilioAuth = btoa(`${twilioAccountSid}:${twilioAuthToken}`);
-
     const smsBody = `Your IDEAL access code is: ${otp}. This code expires in 5 minutes. Do not share this code.`;
 
-    console.log('Sending QR auth OTP via Twilio...');
     const twilioResponse = await fetch(twilioUrl, {
       method: 'POST',
       headers: {
@@ -295,9 +411,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('OTP sent successfully');
-
-    // Log audit event
     await supabase.rpc('log_audit_event', {
       p_actor_user_id: profile.id,
       p_action: 'OTP_SENT',
