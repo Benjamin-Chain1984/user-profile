@@ -144,23 +144,11 @@ export function QRPosterSection() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Button
-          variant="outline"
-          className="w-full flex items-center justify-center gap-2 py-2.5 sm:py-3 touch-manipulation active:scale-[0.98]"
-          onClick={handleToggleQR}
-          disabled={isGenerating}
-        >
-          {isGenerating ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <QrCode className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-          )}
-          <span className="text-xs sm:text-sm font-medium">
-            {isGenerating ? 'Generating…' : showQR ? 'Hide QR Code' : 'Show QR Code for Quick Logging'}
-          </span>
-        </Button>
-
-        {showQR && qrToken && (
+        {!hasCheckedStorage ? (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+          </div>
+        ) : qrToken ? (
           <div className="flex flex-col items-center animate-fade-in" ref={qrRef}>
             <div className="p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl shadow-inner border border-border">
               <QRCodeSVG
@@ -186,13 +174,18 @@ export function QRPosterSection() {
               Regenerate QR Code
             </Button>
           </div>
-        )}
-
-        {showQR && !qrToken && !isGenerating && (
+        ) : (
           <div className="text-center py-4">
-            <p className="text-sm text-muted-foreground mb-2">Unable to load QR code.</p>
-            <Button variant="outline" size="sm" onClick={ensureToken}>
-              Try Again
+            <p className="text-sm text-muted-foreground mb-2">No QR code generated yet.</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={generateNewToken}
+              disabled={isGenerating}
+              className="gap-2"
+            >
+              {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <QrCode className="w-4 h-4" />}
+              Generate QR Code
             </Button>
           </div>
         )}
