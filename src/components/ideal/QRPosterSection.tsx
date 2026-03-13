@@ -70,11 +70,11 @@ export function QRPosterSection() {
             Generate a bedside poster with QR code and care instructions.
           </p>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="flex-1 gap-2">
+            <Button variant="outline" size="sm" className="flex-1 gap-2" onClick={handleDownloadPDF}>
               <Download className="w-4 h-4" />
               Download PDF
             </Button>
-            <Button variant="outline" size="sm" className="flex-1 gap-2">
+            <Button variant="outline" size="sm" className="flex-1 gap-2" onClick={handlePrint}>
               <Printer className="w-4 h-4" />
               Print
             </Button>
