@@ -29,15 +29,26 @@ export function QRPosterSection() {
     try {
       const token = generateSecureToken();
       const tokenHash = await hashToken(token);
-      const { error } = await supabase
+
+      console.log('[QR] Storing token hash for profile:', profileId);
+
+      const { error, data } = await supabase
         .from('profiles')
         .update({ poster_qr_token_hash: tokenHash } as any)
-        .eq('id', profileId);
-      if (error) throw error;
+        .eq('id', profileId)
+        .select('id')
+        .single();
+
+      if (error) {
+        console.error('[QR] Update error:', JSON.stringify(error));
+        throw error;
+      }
+
+      console.log('[QR] Token stored successfully, profile:', data?.id);
       localStorage.setItem(storageKey, token);
       setQrToken(token);
     } catch (err) {
-      console.error('Failed to generate QR token:', err);
+      console.error('[QR] Failed to generate QR token:', err);
       toast.error('Failed to generate QR code');
     } finally {
       setIsGenerating(false);
