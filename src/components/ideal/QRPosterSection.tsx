@@ -13,9 +13,9 @@ const TOKEN_STORAGE_PREFIX = 'ideal_profile_qr_token_';
 
 export function QRPosterSection() {
   const { profile } = useProfile();
-  const [showQR, setShowQR] = useState(false);
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [hasCheckedStorage, setHasCheckedStorage] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
 
   const profileId = profile?.id;
@@ -30,9 +30,7 @@ export function QRPosterSection() {
       const token = generateSecureToken();
       const tokenHash = await hashToken(token);
 
-      console.log('[QR] Storing token hash for client:', profileId);
-
-      const { error, data } = await supabase
+      const { error } = await supabase
         .from('clients')
         .update({ poster_qr_token_hash: tokenHash } as any)
         .eq('id', profileId)
@@ -44,7 +42,6 @@ export function QRPosterSection() {
         throw error;
       }
 
-      console.log('[QR] Token stored successfully, client:', data?.id);
       localStorage.setItem(storageKey, token);
       setQrToken(token);
     } catch (err) {
@@ -55,35 +52,17 @@ export function QRPosterSection() {
     }
   }, [profileId, storageKey]);
 
-  const ensureToken = useCallback(async () => {
+  // Load existing token from localStorage on mount — never auto-generate
+  useEffect(() => {
     if (!profileId) return;
     const stored = localStorage.getItem(storageKey);
     if (stored) {
-      const storedHash = await hashToken(stored);
-      const { data } = await supabase
-        .from('clients')
-        .select('poster_qr_token_hash')
-        .eq('id', profileId)
-        .single();
-      if (data?.poster_qr_token_hash === storedHash) {
-        setQrToken(stored);
-        return;
-      }
-      localStorage.removeItem(storageKey);
+      setQrToken(stored);
     }
-    await generateNewToken();
-  }, [profileId, storageKey, generateNewToken]);
+    setHasCheckedStorage(true);
+  }, [profileId, storageKey]);
 
   if (!profile) return null;
-
-  const handleToggleQR = async () => {
-    if (!showQR) {
-      setShowQR(true);
-      if (!qrToken) await ensureToken();
-    } else {
-      setShowQR(false);
-    }
-  };
 
   const handleRegenerate = async () => {
     localStorage.removeItem(storageKey);
