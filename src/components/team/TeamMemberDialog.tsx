@@ -129,9 +129,29 @@ export function TeamMemberDialog({ open, onOpenChange, member, onSaved }: TeamMe
 
         toast.success('Team member updated');
       } else {
-        // For new team members, we need to create them via auth
-        // This requires admin functions - for now, just show a message
-        toast.info('New team members must register through the auth flow. You can then assign their role here.');
+        // Create new team member via edge function
+        if (!email.trim()) {
+          toast.error('Email is required to add a new team member');
+          setIsLoading(false);
+          return;
+        }
+
+        const { data, error } = await supabase.functions.invoke('invite-team-member', {
+          body: { email, fullName, role, phone: formattedPhone },
+        });
+
+        if (error) throw error;
+
+        if (data.error) {
+          toast.error(data.error);
+          setIsLoading(false);
+          return;
+        }
+
+        // Show temporary password to admin
+        setTempPassword(data.tempPassword);
+        setShowCredentials(true);
+        toast.success(`Team member ${fullName} added successfully`);
       }
 
       onSaved();
