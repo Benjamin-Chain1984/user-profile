@@ -5,7 +5,7 @@
  * 1. User scans QR code on client poster
  * 2. If logged in + trusted device + MFA current → seamless access (no OTP)
  * 3. If logged in but MFA expired → prompt SMS OTP, then re-trust device
- * 4. If not logged in → show login options (email or phone OTP)
+ * 4. If not logged in → check for phone-auth session → or show login options
  * 5. After OTP verification, device is registered as trusted for 90 days
  */
 
@@ -35,6 +35,7 @@ import {
 
 const idealLogo = '/logo-design-new.png';
 const QR_REDIRECT_KEY = 'ideal_qr_redirect';
+const PHONE_SESSION_KEY = 'ideal_phone_session';
 
 interface Client {
   id: string;
@@ -48,6 +49,14 @@ interface AuthState {
   userId?: string;
   userName?: string;
   roles?: string[];
+}
+
+interface PhoneSession {
+  userId: string;
+  userName: string;
+  roles: string[];
+  deviceId: string;
+  verifiedAt: string;
 }
 
 type Step = 
@@ -65,6 +74,37 @@ interface ErrorState {
   title: string;
   message: string;
   isTokenInvalid?: boolean;
+}
+
+/**
+ * Save phone-auth session after successful OTP verification
+ */
+function savePhoneSession(session: PhoneSession): void {
+  try {
+    localStorage.setItem(PHONE_SESSION_KEY, JSON.stringify(session));
+  } catch (e) {
+    console.warn('[QR] Failed to save phone session:', e);
+  }
+}
+
+/**
+ * Load saved phone-auth session (if any)
+ */
+function loadPhoneSession(): PhoneSession | null {
+  try {
+    const raw = localStorage.getItem(PHONE_SESSION_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Clear phone-auth session
+ */
+function clearPhoneSession(): void {
+  localStorage.removeItem(PHONE_SESSION_KEY);
 }
 
 export default function ClientScanPage() {
@@ -116,7 +156,7 @@ export default function ClientScanPage() {
     }
 
     if (isAuthenticated && isStaff) {
-      // Check trusted device first
+      // Supabase-authenticated staff — check trusted device
       checkTrustedDevice();
     } else if (isAuthenticated && !isStaff) {
       setErrorState({
@@ -125,8 +165,15 @@ export default function ClientScanPage() {
       });
       setStep('error');
     } else {
-      sessionStorage.setItem(QR_REDIRECT_KEY, token);
-      setStep('login_prompt');
+      // Not Supabase-authenticated — check for saved phone session
+      const phoneSession = loadPhoneSession();
+      if (phoneSession) {
+        console.log('[QR] Found saved phone session, checking trusted device...');
+        checkTrustedDeviceWithSession(phoneSession);
+      } else {
+        sessionStorage.setItem(QR_REDIRECT_KEY, token);
+        setStep('login_prompt');
+      }
     }
   }, [authLoading, isAuthenticated, isStaff, token]);
 
@@ -147,7 +194,6 @@ export default function ClientScanPage() {
       if (fnError) throw fnError;
 
       if (data.trusted && data.success) {
-        // Device is trusted, MFA is current — seamless access!
         setClient(data.client);
         setAuthState({
           userId: data.userId,
@@ -172,16 +218,80 @@ export default function ClientScanPage() {
       }
 
       // Device not trusted or MFA expired
-      if (data.reason === 'mfa_expired') {
-        setStep('mfa_required');
-      } else {
-        // Device not trusted — need OTP
-        setStep('mfa_required');
-      }
+      setStep('mfa_required');
     } catch (err: any) {
       console.error('Trusted device check failed:', err);
-      // Fallback to standard validation
       validateTokenAndGrantAccess();
+    }
+  };
+
+  /**
+   * Check trusted device using a saved phone session (no Supabase Auth).
+   * Passes userId in the request body instead of relying on auth header.
+   */
+  const checkTrustedDeviceWithSession = async (session: PhoneSession) => {
+    setStep('checking_device');
+    
+    try {
+      const deviceId = getDeviceId();
+      
+      // If device ID changed, session is invalid
+      if (deviceId !== session.deviceId) {
+        console.log('[QR] Device ID mismatch, clearing phone session');
+        clearPhoneSession();
+        sessionStorage.setItem(QR_REDIRECT_KEY, token!);
+        setStep('login_prompt');
+        return;
+      }
+      
+      const { data, error: fnError } = await supabase.functions.invoke('qr-auth', {
+        body: { 
+          action: 'check_trusted_device',
+          clientToken: token,
+          deviceId,
+          userId: session.userId
+        }
+      });
+
+      if (fnError) throw fnError;
+
+      if (data.trusted && data.success) {
+        setClient(data.client);
+        setAuthState({
+          userId: data.userId,
+          userName: data.userName,
+          roles: data.roles
+        });
+        setMfaExpiresAt(data.mfaExpiresAt);
+        setAccessMethod('trusted_device');
+        setStep('success');
+        sessionStorage.removeItem(QR_REDIRECT_KEY);
+        return;
+      }
+
+      if (data.invalidToken) {
+        setErrorState({
+          title: 'QR Code Replaced',
+          message: 'This QR code has been replaced or is no longer valid. Please ask an admin to print the latest poster.',
+          isTokenInvalid: true,
+        });
+        setStep('error');
+        return;
+      }
+
+      // Device trust expired — need re-verification
+      // Pre-fill auth state from session
+      setAuthState({
+        userId: session.userId,
+        userName: session.userName,
+        roles: session.roles
+      });
+      setStep('mfa_required');
+    } catch (err: any) {
+      console.error('Phone session device check failed:', err);
+      clearPhoneSession();
+      sessionStorage.setItem(QR_REDIRECT_KEY, token!);
+      setStep('login_prompt');
     }
   };
 
@@ -247,7 +357,6 @@ export default function ClientScanPage() {
   };
 
   const handleMfaRefresh = () => {
-    // Pre-fill phone if user is authenticated and has a verified phone
     setStep('phone');
   };
 
@@ -358,6 +467,18 @@ export default function ClientScanPage() {
         setAccessMethod(data.deviceTrusted ? 'otp_device_trusted' : 'otp');
         setStep('success');
         sessionStorage.removeItem(QR_REDIRECT_KEY);
+
+        // Save phone session so the 3-month trusted device window works on re-scan
+        if (data.userId && data.deviceTrusted) {
+          savePhoneSession({
+            userId: data.userId,
+            userName: data.userName || '',
+            roles: data.roles || [],
+            deviceId,
+            verifiedAt: new Date().toISOString()
+          });
+          console.log('[QR] Phone session saved for trusted device reuse');
+        }
       } else {
         setError(data.error || 'Invalid verification code');
         setOtp('');
@@ -418,10 +539,10 @@ export default function ClientScanPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {user?.fullName && (
+              {(user?.fullName || authState?.userName) && (
                 <div className="p-3 bg-muted rounded-lg text-center">
                   <p className="text-sm text-muted-foreground">Signed in as</p>
-                  <p className="font-medium text-foreground">{user.fullName}</p>
+                  <p className="font-medium text-foreground">{user?.fullName || authState?.userName}</p>
                 </div>
               )}
 
@@ -762,7 +883,7 @@ export default function ClientScanPage() {
     );
   }
 
-  // Success - show client overview
+  // Success - show client overview with working navigation
   if (step === 'success' && client) {
     const formatMfaExpiry = () => {
       if (!mfaExpiresAt) return null;
@@ -843,23 +964,15 @@ export default function ClientScanPage() {
               <div className="grid grid-cols-2 gap-3">
                 <Button 
                   className="h-auto py-4 flex flex-col items-center gap-2"
-                  onClick={() => navigate(`/clients/${client.id}/log`)}
-                >
-                  <span className="text-lg">📝</span>
-                  <span>New Entry</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-auto py-4 flex flex-col items-center gap-2"
-                  onClick={() => navigate(`/clients/${client.id}/bowel`)}
+                  onClick={() => navigate('/module/constipation')}
                 >
                   <span className="text-lg">🚽</span>
-                  <span>Bowel</span>
+                  <span>Bowel Care</span>
                 </Button>
                 <Button 
                   variant="outline" 
                   className="h-auto py-4 flex flex-col items-center gap-2"
-                  onClick={() => navigate(`/clients/${client.id}/vitals`)}
+                  onClick={() => navigate('/module/health-monitoring')}
                 >
                   <span className="text-lg">❤️</span>
                   <span>Vitals</span>
@@ -867,19 +980,27 @@ export default function ClientScanPage() {
                 <Button 
                   variant="outline" 
                   className="h-auto py-4 flex flex-col items-center gap-2"
-                  onClick={() => navigate(`/clients/${client.id}/wounds`)}
+                  onClick={() => navigate('/module/pressure-area')}
                 >
                   <span className="text-lg">🩹</span>
-                  <span>Wounds</span>
+                  <span>Pressure Area</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="h-auto py-4 flex flex-col items-center gap-2"
+                  onClick={() => navigate('/module/fluid-balance')}
+                >
+                  <span className="text-lg">💧</span>
+                  <span>Fluids</span>
                 </Button>
               </div>
 
               <Button 
                 variant="secondary" 
                 className="w-full mt-4"
-                onClick={() => navigate(`/clients/${client.id}`)}
+                onClick={() => navigate('/')}
               >
-                View Full Profile
+                Go to Dashboard
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </CardContent>

@@ -35,6 +35,47 @@ async function hashToken(token: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+async function resolveClient(supabase: any, clientToken: string) {
+  const tokenHash = await hashToken(clientToken);
+
+  // Check clients table first
+  const { data: clientData } = await supabase
+    .from('clients')
+    .select('id, preferred_name, short_bio, photo_url, status')
+    .eq('poster_qr_token_hash', tokenHash)
+    .eq('status', 'active')
+    .maybeSingle();
+
+  if (clientData) {
+    return {
+      id: clientData.id,
+      preferredName: clientData.preferred_name,
+      shortBio: clientData.short_bio,
+      photoUrl: clientData.photo_url,
+      status: clientData.status
+    };
+  }
+
+  // Check profiles table (profile-page QR codes)
+  const { data: profileData } = await supabase
+    .from('profiles')
+    .select('id, full_name')
+    .eq('poster_qr_token_hash', tokenHash)
+    .maybeSingle();
+
+  if (profileData) {
+    return {
+      id: profileData.id,
+      preferredName: profileData.full_name,
+      shortBio: null,
+      photoUrl: null,
+      status: 'active'
+    };
+  }
+
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -47,7 +88,7 @@ Deno.serve(async (req) => {
     );
 
     const body = await req.json();
-    const { phone, clientToken, action, deviceId, deviceName } = body;
+    const { phone, clientToken, action, deviceId, deviceName, userId: bodyUserId } = body;
 
     // Handle scan attempt logging
     if (action === 'scan_attempt') {
@@ -70,17 +111,24 @@ Deno.serve(async (req) => {
 
     // Handle trusted device check (pre-authenticated user with device ID)
     if (action === 'check_trusted_device') {
-      console.log('Checking trusted device for pre-authenticated user');
+      console.log('Checking trusted device');
       
-      const authHeader = req.headers.get('Authorization');
+      // Resolve user ID from auth header OR from request body (phone-session flow)
       let currentUserId: string | null = null;
 
+      const authHeader = req.headers.get('Authorization');
       if (authHeader?.startsWith('Bearer ')) {
         const token = authHeader.replace('Bearer ', '');
         const { data: claims, error: claimsError } = await supabase.auth.getUser(token);
         if (!claimsError && claims.user) {
           currentUserId = claims.user.id;
         }
+      }
+
+      // Fallback: use userId from body (phone-auth session flow)
+      if (!currentUserId && bodyUserId) {
+        currentUserId = bodyUserId;
+        console.log('Using userId from phone session');
       }
 
       if (!currentUserId) {
@@ -157,42 +205,7 @@ Deno.serve(async (req) => {
       // Validate client token if provided
       let client = null;
       if (clientToken) {
-        const tokenHash = await hashToken(clientToken);
-        
-        // Check clients table first
-        const { data: clientData } = await supabase
-          .from('clients')
-          .select('id, preferred_name, short_bio, photo_url, status')
-          .eq('poster_qr_token_hash', tokenHash)
-          .eq('status', 'active')
-          .maybeSingle();
-
-        if (clientData) {
-          client = {
-            id: clientData.id,
-            preferredName: clientData.preferred_name,
-            shortBio: clientData.short_bio,
-            photoUrl: clientData.photo_url,
-            status: clientData.status
-          };
-        } else {
-          // Check profiles table (profile-page QR codes)
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('id, full_name')
-            .eq('poster_qr_token_hash', tokenHash)
-            .maybeSingle();
-
-          if (profileData) {
-            client = {
-              id: profileData.id,
-              preferredName: profileData.full_name,
-              shortBio: null,
-              photoUrl: null,
-              status: 'active'
-            };
-          }
-        }
+        client = await resolveClient(supabase, clientToken);
 
         if (!client) {
           return new Response(
@@ -202,6 +215,7 @@ Deno.serve(async (req) => {
             }),
             { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
+        }
 
         // Log access
         await supabase.from('qr_access_logs').insert({
@@ -229,7 +243,7 @@ Deno.serve(async (req) => {
           success: true,
           userId: currentUserId,
           userName: profile?.full_name,
-          roles: userRoles.map(r => r.role),
+          roles: userRoles.map((r: any) => r.role),
           client,
           mfaExpiresAt: profile?.next_mfa_due_at
         }),
@@ -409,6 +423,8 @@ Deno.serve(async (req) => {
     const twilioAuth = btoa(`${twilioAccountSid}:${twilioAuthToken}`);
     const smsBody = `Your IDEAL access code is: ${otp}. This code expires in 5 minutes. Do not share this code.`;
 
+    console.log('Sending QR auth OTP via Twilio...');
+
     const twilioResponse = await fetch(twilioUrl, {
       method: 'POST',
       headers: {
@@ -431,6 +447,8 @@ Deno.serve(async (req) => {
       );
     }
 
+    console.log('OTP sent successfully');
+
     await supabase.rpc('log_audit_event', {
       p_actor_user_id: profile.id,
       p_action: 'OTP_SENT',
@@ -448,7 +466,7 @@ Deno.serve(async (req) => {
         expiresAt: expiresAt.toISOString(),
         userId: profile.id,
         userName: profile.full_name,
-        roles: userRoles.map(r => r.role)
+        roles: userRoles.map((r: any) => r.role)
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
