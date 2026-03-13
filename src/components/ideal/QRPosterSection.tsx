@@ -1,26 +1,90 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useProfile } from '@/contexts/ProfileContext';
 import { QRCodeSVG } from 'qrcode.react';
-import { QrCode, FileText, Download, Printer } from 'lucide-react';
+import { QrCode, FileText, Download, Printer, RefreshCw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
+import { supabase } from '@/integrations/supabase/client';
+import { generateSecureToken, hashToken } from '@/services/clientToken';
+
+const TOKEN_STORAGE_PREFIX = 'ideal_profile_qr_token_';
 
 export function QRPosterSection() {
-  const { profile, enabledModules } = useProfile();
+  const { profile } = useProfile();
   const [showQR, setShowQR] = useState(false);
+  const [qrToken, setQrToken] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
+
+  const profileId = profile?.id;
+  const profileName = profile?.fullName ?? '';
+  const storageKey = `${TOKEN_STORAGE_PREFIX}${profileId || ''}`;
+  const qrCodeValue = qrToken ? `${window.location.origin}/c/${qrToken}` : '';
+
+  const generateNewToken = useCallback(async () => {
+    if (!profileId) return;
+    setIsGenerating(true);
+    try {
+      const token = generateSecureToken();
+      const tokenHash = await hashToken(token);
+      const { error } = await supabase
+        .from('profiles')
+        .update({ poster_qr_token_hash: tokenHash } as any)
+        .eq('id', profileId);
+      if (error) throw error;
+      localStorage.setItem(storageKey, token);
+      setQrToken(token);
+    } catch (err) {
+      console.error('Failed to generate QR token:', err);
+      toast.error('Failed to generate QR code');
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [profileId, storageKey]);
+
+  const ensureToken = useCallback(async () => {
+    if (!profileId) return;
+    const stored = localStorage.getItem(storageKey);
+    if (stored) {
+      const storedHash = await hashToken(stored);
+      const { data } = await supabase
+        .from('profiles')
+        .select('poster_qr_token_hash')
+        .eq('id', profileId)
+        .single();
+      if (data?.poster_qr_token_hash === storedHash) {
+        setQrToken(stored);
+        return;
+      }
+      localStorage.removeItem(storageKey);
+    }
+    await generateNewToken();
+  }, [profileId, storageKey, generateNewToken]);
 
   if (!profile) return null;
 
-  // Encode the app URL so scanning opens the IDEAL app
-  const appOrigin = typeof window !== 'undefined' ? window.location.origin : '';
-  const qrCodeValue = `${appOrigin}/`;
+  const handleToggleQR = async () => {
+    if (!showQR) {
+      setShowQR(true);
+      if (!qrToken) await ensureToken();
+    } else {
+      setShowQR(false);
+    }
+  };
+
+  const handleRegenerate = async () => {
+    localStorage.removeItem(storageKey);
+    setQrToken(null);
+    await generateNewToken();
+    toast.success('QR code regenerated. Previous QR codes are now invalid.');
+  };
 
   const handlePrint = () => window.print();
 
   const handleDownloadPDF = async () => {
+    if (!qrToken) return;
     try {
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pageWidth = doc.internal.pageSize.getWidth();
@@ -31,11 +95,10 @@ export function QRPosterSection() {
       doc.setTextColor(100);
       doc.text('IDEAL Health Monitoring', margin, 20);
       doc.text('Staff Use Only', pageWidth - margin, 20, { align: 'right' });
-
       doc.setFontSize(28);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(0);
-      doc.text(profile.fullName, pageWidth / 2, y + 20, { align: 'center' });
+      doc.text(profileName, pageWidth / 2, y + 20, { align: 'center' });
       y += 35;
 
       const svgElement = qrRef.current?.querySelector('svg');
@@ -71,8 +134,7 @@ export function QRPosterSection() {
       doc.setFontSize(8);
       doc.setTextColor(150);
       doc.text('This poster is for authorized staff only.', pageWidth / 2, y, { align: 'center' });
-
-      doc.save(`ideal-poster-${profile.fullName.replace(/\s+/g, '-').toLowerCase()}.pdf`);
+      doc.save(`ideal-poster-${profileName.replace(/\s+/g, '-').toLowerCase()}.pdf`);
       toast.success('Poster PDF downloaded');
     } catch (err) {
       console.error('PDF generation error:', err);
@@ -92,22 +154,26 @@ export function QRPosterSection() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* QR Code Toggle */}
         <Button
           variant="outline"
           className="w-full flex items-center justify-center gap-2 py-2.5 sm:py-3 touch-manipulation active:scale-[0.98]"
-          onClick={() => setShowQR(!showQR)}
+          onClick={handleToggleQR}
+          disabled={isGenerating}
         >
-          <QrCode className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+          {isGenerating ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <QrCode className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+          )}
           <span className="text-xs sm:text-sm font-medium">
-            {showQR ? 'Hide QR Code' : 'Show QR Code for Quick Logging'}
+            {isGenerating ? 'Generating…' : showQR ? 'Hide QR Code' : 'Show QR Code for Quick Logging'}
           </span>
         </Button>
-        
-        {showQR && (
+
+        {showQR && qrToken && (
           <div className="flex flex-col items-center animate-fade-in" ref={qrRef}>
             <div className="p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl shadow-inner border border-border">
-              <QRCodeSVG 
+              <QRCodeSVG
                 value={qrCodeValue}
                 size={180}
                 level="M"
@@ -117,12 +183,30 @@ export function QRPosterSection() {
               />
             </div>
             <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-muted-foreground text-center px-4">
-              Scan to open IDEAL for {profile.fullName}
+              Scan to open IDEAL for {profileName}
             </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-1 text-xs text-muted-foreground"
+              onClick={handleRegenerate}
+              disabled={isGenerating}
+            >
+              <RefreshCw className="w-3 h-3 mr-1" />
+              Regenerate QR Code
+            </Button>
           </div>
         )}
 
-        {/* Poster Actions */}
+        {showQR && !qrToken && !isGenerating && (
+          <div className="text-center py-4">
+            <p className="text-sm text-muted-foreground mb-2">Unable to load QR code.</p>
+            <Button variant="outline" size="sm" onClick={ensureToken}>
+              Try Again
+            </Button>
+          </div>
+        )}
+
         <div className="pt-4 border-t border-border space-y-3">
           <div className="flex items-center gap-2 mb-2">
             <FileText className="w-4 h-4 text-primary" />
@@ -132,7 +216,7 @@ export function QRPosterSection() {
             Generate a bedside poster with QR code and care instructions.
           </p>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="flex-1 gap-2" onClick={handleDownloadPDF}>
+            <Button variant="outline" size="sm" className="flex-1 gap-2" onClick={handleDownloadPDF} disabled={!qrToken}>
               <Download className="w-4 h-4" />
               Download PDF
             </Button>

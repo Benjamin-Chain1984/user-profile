@@ -35,6 +35,8 @@ async function hashToken(token: string): Promise<string> {
 
 async function resolveClient(supabase: any, clientToken: string) {
   const tokenHash = await hashToken(clientToken);
+  
+  // Check clients table first
   const { data: clientData, error: clientError } = await supabase
     .from('clients')
     .select('id, preferred_name, short_bio, photo_url, status')
@@ -42,15 +44,34 @@ async function resolveClient(supabase: any, clientToken: string) {
     .eq('status', 'active')
     .maybeSingle();
 
-  if (clientError || !clientData) return null;
-  
-  return {
-    id: clientData.id,
-    preferredName: clientData.preferred_name,
-    shortBio: clientData.short_bio,
-    photoUrl: clientData.photo_url,
-    status: clientData.status
-  };
+  if (!clientError && clientData) {
+    return {
+      id: clientData.id,
+      preferredName: clientData.preferred_name,
+      shortBio: clientData.short_bio,
+      photoUrl: clientData.photo_url,
+      status: clientData.status
+    };
+  }
+
+  // Check profiles table (profile-page QR codes)
+  const { data: profileData, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, full_name')
+    .eq('poster_qr_token_hash', tokenHash)
+    .maybeSingle();
+
+  if (!profileError && profileData) {
+    return {
+      id: profileData.id,
+      preferredName: profileData.full_name,
+      shortBio: null,
+      photoUrl: null,
+      status: 'active'
+    };
+  }
+
+  return null;
 }
 
 async function registerTrustedDevice(
