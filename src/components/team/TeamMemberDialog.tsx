@@ -46,14 +46,18 @@ export function TeamMemberDialog({ open, onOpenChange, member, onSaved }: TeamMe
     if (member) {
       setFullName(member.full_name || '');
       setPhone(member.verified_phone || '');
+      setEmail('');
       setRole(member.role || 'worker');
       setIsActive(member.is_active);
     } else {
       setFullName('');
       setPhone('');
+      setEmail('');
       setRole('worker');
       setIsActive(true);
     }
+    setTempPassword('');
+    setShowCredentials(false);
   }, [member, open]);
 
   const formatPhoneToE164 = (phone: string): string => {
