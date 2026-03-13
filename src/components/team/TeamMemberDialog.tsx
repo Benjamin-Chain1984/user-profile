@@ -159,6 +159,9 @@ export function TeamMemberDialog({ open, onOpenChange, member, onSaved }: TeamMe
         setTempPassword(data.tempPassword);
         setShowCredentials(true);
         toast.success(`Team member ${fullName} added successfully`);
+        // Don't close - show credentials screen
+        setIsLoading(false);
+        return;
       }
 
       onSaved();
