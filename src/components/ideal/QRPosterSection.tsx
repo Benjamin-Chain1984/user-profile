@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useProfile } from '@/contexts/ProfileContext';
 import { QRCodeSVG } from 'qrcode.react';
 import { QrCode, FileText, Download, Printer, RefreshCw, Loader2 } from 'lucide-react';
@@ -13,9 +13,9 @@ const TOKEN_STORAGE_PREFIX = 'ideal_profile_qr_token_';
 
 export function QRPosterSection() {
   const { profile } = useProfile();
-  const [showQR, setShowQR] = useState(false);
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [hasCheckedStorage, setHasCheckedStorage] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
 
   const profileId = profile?.id;
@@ -30,9 +30,7 @@ export function QRPosterSection() {
       const token = generateSecureToken();
       const tokenHash = await hashToken(token);
 
-      console.log('[QR] Storing token hash for client:', profileId);
-
-      const { error, data } = await supabase
+      const { error } = await supabase
         .from('clients')
         .update({ poster_qr_token_hash: tokenHash } as any)
         .eq('id', profileId)
@@ -44,7 +42,6 @@ export function QRPosterSection() {
         throw error;
       }
 
-      console.log('[QR] Token stored successfully, client:', data?.id);
       localStorage.setItem(storageKey, token);
       setQrToken(token);
     } catch (err) {
@@ -55,35 +52,17 @@ export function QRPosterSection() {
     }
   }, [profileId, storageKey]);
 
-  const ensureToken = useCallback(async () => {
+  // Load existing token from localStorage on mount — never auto-generate
+  useEffect(() => {
     if (!profileId) return;
     const stored = localStorage.getItem(storageKey);
     if (stored) {
-      const storedHash = await hashToken(stored);
-      const { data } = await supabase
-        .from('clients')
-        .select('poster_qr_token_hash')
-        .eq('id', profileId)
-        .single();
-      if (data?.poster_qr_token_hash === storedHash) {
-        setQrToken(stored);
-        return;
-      }
-      localStorage.removeItem(storageKey);
+      setQrToken(stored);
     }
-    await generateNewToken();
-  }, [profileId, storageKey, generateNewToken]);
+    setHasCheckedStorage(true);
+  }, [profileId, storageKey]);
 
   if (!profile) return null;
-
-  const handleToggleQR = async () => {
-    if (!showQR) {
-      setShowQR(true);
-      if (!qrToken) await ensureToken();
-    } else {
-      setShowQR(false);
-    }
-  };
 
   const handleRegenerate = async () => {
     localStorage.removeItem(storageKey);
@@ -165,23 +144,11 @@ export function QRPosterSection() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Button
-          variant="outline"
-          className="w-full flex items-center justify-center gap-2 py-2.5 sm:py-3 touch-manipulation active:scale-[0.98]"
-          onClick={handleToggleQR}
-          disabled={isGenerating}
-        >
-          {isGenerating ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <QrCode className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-          )}
-          <span className="text-xs sm:text-sm font-medium">
-            {isGenerating ? 'Generating…' : showQR ? 'Hide QR Code' : 'Show QR Code for Quick Logging'}
-          </span>
-        </Button>
-
-        {showQR && qrToken && (
+        {!hasCheckedStorage ? (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+          </div>
+        ) : qrToken ? (
           <div className="flex flex-col items-center animate-fade-in" ref={qrRef}>
             <div className="p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl shadow-inner border border-border">
               <QRCodeSVG
@@ -207,13 +174,18 @@ export function QRPosterSection() {
               Regenerate QR Code
             </Button>
           </div>
-        )}
-
-        {showQR && !qrToken && !isGenerating && (
+        ) : (
           <div className="text-center py-4">
-            <p className="text-sm text-muted-foreground mb-2">Unable to load QR code.</p>
-            <Button variant="outline" size="sm" onClick={ensureToken}>
-              Try Again
+            <p className="text-sm text-muted-foreground mb-2">No QR code generated yet.</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={generateNewToken}
+              disabled={isGenerating}
+              className="gap-2"
+            >
+              {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <QrCode className="w-4 h-4" />}
+              Generate QR Code
             </Button>
           </div>
         )}
