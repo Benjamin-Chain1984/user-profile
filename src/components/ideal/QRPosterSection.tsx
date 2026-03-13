@@ -18,6 +18,68 @@ export function QRPosterSection() {
   const appOrigin = typeof window !== 'undefined' ? window.location.origin : '';
   const qrCodeValue = `${appOrigin}/`;
 
+  const handlePrint = () => window.print();
+
+  const handleDownloadPDF = async () => {
+    try {
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 20;
+      let y = 30;
+
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text('IDEAL Health Monitoring', margin, 20);
+      doc.text('Staff Use Only', pageWidth - margin, 20, { align: 'right' });
+
+      doc.setFontSize(28);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0);
+      doc.text(profile.fullName, pageWidth / 2, y + 20, { align: 'center' });
+      y += 35;
+
+      const svgElement = qrRef.current?.querySelector('svg');
+      if (svgElement) {
+        const qrCanvas = document.createElement('canvas');
+        qrCanvas.width = 200;
+        qrCanvas.height = 200;
+        const svgData = new XMLSerializer().serializeToString(svgElement);
+        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(svgBlob);
+        const img = new Image();
+        await new Promise<void>((resolve) => {
+          img.onload = () => {
+            const ctx = qrCanvas.getContext('2d');
+            if (ctx) { ctx.fillStyle = 'white'; ctx.fillRect(0, 0, 200, 200); ctx.drawImage(img, 0, 0, 200, 200); }
+            URL.revokeObjectURL(url);
+            resolve();
+          };
+          img.onerror = () => { URL.revokeObjectURL(url); resolve(); };
+          img.src = url;
+        });
+        const qrDataUrl = qrCanvas.toDataURL('image/png');
+        const qrPdfSize = 60;
+        doc.addImage(qrDataUrl, 'PNG', (pageWidth - qrPdfSize) / 2, y, qrPdfSize, qrPdfSize);
+        y += qrPdfSize + 10;
+      }
+
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(60);
+      doc.text('Scan to open IDEAL', pageWidth / 2, y, { align: 'center' });
+      y += 15;
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text('This poster is for authorized staff only.', pageWidth / 2, y, { align: 'center' });
+
+      doc.save(`ideal-poster-${profile.fullName.replace(/\s+/g, '-').toLowerCase()}.pdf`);
+      toast.success('Poster PDF downloaded');
+    } catch (err) {
+      console.error('PDF generation error:', err);
+      toast.error('Failed to generate PDF');
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
