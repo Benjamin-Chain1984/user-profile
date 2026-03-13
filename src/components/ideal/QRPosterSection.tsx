@@ -43,7 +43,7 @@ export function QRPosterSection() {
         </Button>
         
         {showQR && (
-          <div className="flex flex-col items-center animate-fade-in">
+          <div className="flex flex-col items-center animate-fade-in" ref={qrRef}>
             <div className="p-3 sm:p-4 bg-white rounded-lg sm:rounded-xl shadow-inner border border-border">
               <QRCodeSVG 
                 value={qrCodeValue}
@@ -55,7 +55,7 @@ export function QRPosterSection() {
               />
             </div>
             <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-muted-foreground text-center px-4">
-              Scan to quickly log data for {profile.fullName}
+              Scan to open IDEAL for {profile.fullName}
             </p>
           </div>
         )}
