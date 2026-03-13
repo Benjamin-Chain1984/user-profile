@@ -183,11 +183,15 @@ export default function ClientScanPage() {
     try {
       const deviceId = getDeviceId();
       
+      // Include userId from auth context or phone session for non-Supabase auth flows
+      const currentUserId = user?.id || loadPhoneSession()?.userId;
+      
       const { data, error: fnError } = await supabase.functions.invoke('qr-auth', {
         body: { 
           action: 'check_trusted_device',
           clientToken: token,
-          deviceId
+          deviceId,
+          userId: currentUserId
         }
       });
 
