@@ -21,6 +21,7 @@ import { tubeRequiresStomaCheck, TUBE_TYPES } from '@/types/enteral';
 import { EnteralFeedLogForm } from './EnteralFeedLogForm';
 import { EnteralStomaCheckForm } from './EnteralStomaCheckForm';
 import { EnteralMedicationLogForm } from './EnteralMedicationLogForm';
+import { EnteralFlushLogForm } from './EnteralFlushLogForm';
 import { EnteralConfigSettings } from './EnteralConfigSettings';
 import { EnteralHistory } from './EnteralHistory';
 import { EnteralLevelInfographic } from './EnteralLevelInfographic';
