@@ -104,7 +104,6 @@ export function EnteralFlushLogForm({ clientId, config, open, onOpenChange }: En
               </Select>
             </div>
           )}
-          </div>
 
           {/* Flush Reason */}
           <div className="space-y-2">
