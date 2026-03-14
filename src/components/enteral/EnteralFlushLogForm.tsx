@@ -2,7 +2,7 @@
  * Enteral Flush Log Form - Separate form for logging flushes
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +38,23 @@ export function EnteralFlushLogForm({ clientId, config, open, onOpenChange }: En
   const [flushReason, setFlushReason] = useState('');
   const [flushVolume, setFlushVolume] = useState('');
   const [notes, setNotes] = useState('');
+
+  // Derive all unique times from the feeding schedule configured in settings
+  const scheduleTimes = useMemo(() => {
+    const times = new Set<string>();
+    if (Array.isArray(config?.feeding_schedule)) {
+      for (const entry of config.feeding_schedule) {
+        if ((entry as any).time) times.add((entry as any).time);
+      }
+    }
+    // Fallback to legacy feed_schedule_times if feeding_schedule is empty
+    if (times.size === 0 && Array.isArray(config?.feed_schedule_times)) {
+      for (const t of config.feed_schedule_times) {
+        times.add(t);
+      }
+    }
+    return Array.from(times).sort();
+  }, [config?.feeding_schedule, config?.feed_schedule_times]);
 
   // Set default volume based on reason and config
   const handleReasonChange = (reason: string) => {
@@ -91,13 +108,13 @@ export function EnteralFlushLogForm({ clientId, config, open, onOpenChange }: En
           </div>
 
           {/* Scheduled Time */}
-          {config?.feed_schedule_times && config.feed_schedule_times.length > 0 && (
+          {scheduleTimes.length > 0 && (
             <div className="space-y-2">
               <Label>Scheduled Time</Label>
               <Select value={scheduledTime} onValueChange={setScheduledTime}>
                 <SelectTrigger><SelectValue placeholder="Select scheduled time" /></SelectTrigger>
                 <SelectContent>
-                  {config.feed_schedule_times.map(t => (
+                  {scheduleTimes.map(t => (
                     <SelectItem key={t} value={t}>{t}</SelectItem>
                   ))}
                 </SelectContent>
