@@ -56,6 +56,7 @@ export function EnteralFlushLogForm({ clientId, config, open, onOpenChange }: En
   };
 
   const resetForm = () => {
+    setScheduledTime('');
     setFlushReason('');
     setFlushVolume('');
     setNotes('');
