@@ -111,7 +111,7 @@ export default function ClientScanPage() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, isLoading: authLoading, isStaff, user } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, isStaff, user, refreshSession } = useAuth();
   
   const [step, setStep] = useState<Step>('checking');
   const [phone, setPhone] = useState('');
