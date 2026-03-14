@@ -111,7 +111,7 @@ export default function ClientScanPage() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, isLoading: authLoading, isStaff, user } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, isStaff, user, refreshSession } = useAuth();
   
   const [step, setStep] = useState<Step>('checking');
   const [phone, setPhone] = useState('');
@@ -469,7 +469,6 @@ export default function ClientScanPage() {
         });
         setMfaExpiresAt(data.mfaExpiresAt);
         setAccessMethod(data.deviceTrusted ? 'otp_device_trusted' : 'otp');
-        setStep('success');
         sessionStorage.removeItem(QR_REDIRECT_KEY);
 
         // Save phone session so the 3-month trusted device window works on re-scan
@@ -481,8 +480,12 @@ export default function ClientScanPage() {
             deviceId,
             verifiedAt: new Date().toISOString()
           });
+          // Sync AuthContext immediately so protected routes don't redirect to /auth
+          await refreshSession();
           console.log('[QR] Phone session saved for trusted device reuse');
         }
+
+        setStep('success');
       } else {
         setError(data.error || 'Invalid verification code');
         setOtp('');
