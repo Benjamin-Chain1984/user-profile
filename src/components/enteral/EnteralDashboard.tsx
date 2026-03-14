@@ -58,7 +58,7 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
     stomaChecks,
     medLogs,
   }), [config, feedLogs, flushLogs, stomaChecks, medLogs]);
-  }), [config, feedLogs, stomaChecks, medLogs]);
+  
 
   const showStomaSection = config?.enable_stoma_checks && tubeRequiresStomaCheck(config?.tube_type as any);
   const showMedSection = config?.enable_medication_logging && medications.length > 0;
