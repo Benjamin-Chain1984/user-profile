@@ -6,9 +6,15 @@ import { differenceInDays, differenceInHours, parseISO, isToday, addMinutes } fr
 import type { EnteralConfig, EnteralFeedLog, EnteralStomaCheck, EnteralMedicationLog } from '@/types/enteral';
 import { calculateEnteralStomaStatus, tubeRequiresStomaCheck } from '@/types/enteral';
 
+interface FlushLog {
+  event_occurred_at: string;
+  flush_volume_ml: number;
+}
+
 interface EnteralStatusInput {
   config: EnteralConfig | null;
   feedLogs: EnteralFeedLog[];
+  flushLogs?: FlushLog[];
   stomaChecks: EnteralStomaCheck[];
   medLogs: EnteralMedicationLog[];
 }
