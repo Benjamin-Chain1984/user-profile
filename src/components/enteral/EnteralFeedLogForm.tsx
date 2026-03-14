@@ -2,7 +2,7 @@
  * Enteral Feed Log Form
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Info } from 'lucide-react';
 import { useLogEnteralFeed } from '@/hooks/useEnteral';
 import { useCurrentStaff } from '@/hooks/useCurrentStaff';
 import { FEED_METHODS, type EnteralConfig } from '@/types/enteral';
@@ -30,9 +30,6 @@ export function EnteralFeedLogForm({ clientId, config, open, onOpenChange }: Ent
   const [scheduledTime, setScheduledTime] = useState('');
   const [feedVolume, setFeedVolume] = useState('');
   const [rate, setRate] = useState('');
-  const [flushGiven, setFlushGiven] = useState(
-    String((config?.flush_before_feed_ml || 0) + (config?.flush_after_feed_ml || 0))
-  );
   const [notes, setNotes] = useState('');
   const [positionConfirmed, setPositionConfirmed] = useState(false);
 
@@ -40,11 +37,27 @@ export function EnteralFeedLogForm({ clientId, config, open, onOpenChange }: Ent
   const configMethod = config?.feeding_type || null;
   const methodLabel = FEED_METHODS.find(m => m.value === configMethod)?.label || configMethod;
 
+  // Get recommended feed amount from feeding schedule
+  const recommendedAmount = useMemo(() => {
+    if (!config?.feeding_schedule || !Array.isArray(config.feeding_schedule)) return null;
+    const formulaFeeds = config.feeding_schedule.filter(
+      (e: any) => e.activity === 'formula_feed'
+    );
+    if (formulaFeeds.length === 0) return null;
+    // If a scheduled time is selected, find the matching schedule entry
+    if (scheduledTime) {
+      const match = formulaFeeds.find((e: any) => e.time === scheduledTime);
+      if (match) return (match as any).amount_ml;
+    }
+    // Otherwise show the most common amount
+    const amounts = formulaFeeds.map((e: any) => (e as any).amount_ml);
+    return amounts[0] || null;
+  }, [config?.feeding_schedule, scheduledTime]);
+
   const resetForm = () => {
     setScheduledTime('');
     setFeedVolume('');
     setRate('');
-    setFlushGiven(String((config?.flush_before_feed_ml || 0) + (config?.flush_after_feed_ml || 0)));
     setNotes('');
     setPositionConfirmed(false);
   };
@@ -56,7 +69,7 @@ export function EnteralFeedLogForm({ clientId, config, open, onOpenChange }: Ent
       scheduled_time: scheduledTime || null,
       feed_volume_ml: parseInt(feedVolume),
       rate_ml_per_hour: rate ? parseInt(rate) : null,
-      flush_given_ml: parseInt(flushGiven) || 0,
+      flush_given_ml: 0,
       method: (configMethod || null) as any,
       position_confirmed: positionConfirmed,
       position_angle: null,
@@ -121,10 +134,27 @@ export function EnteralFeedLogForm({ clientId, config, open, onOpenChange }: Ent
             </div>
           )}
 
+          {/* Recommended Feed Amount */}
+          {recommendedAmount && (
+            <div className="flex items-start gap-2 rounded-lg border border-primary/20 bg-primary/5 p-3">
+              <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+              <div className="text-sm">
+                <span className="font-medium text-primary">Recommended: {recommendedAmount} mL</span>
+                <p className="text-xs text-muted-foreground mt-0.5">Based on feeding schedule</p>
+              </div>
+            </div>
+          )}
+
           {/* Feed Volume */}
           <div className="space-y-2">
             <Label>Feed Volume (mL) *</Label>
-            <Input type="number" min={0} value={feedVolume} onChange={e => setFeedVolume(e.target.value)} placeholder="e.g. 250" />
+            <Input
+              type="number"
+              min={0}
+              value={feedVolume}
+              onChange={e => setFeedVolume(e.target.value)}
+              placeholder={recommendedAmount ? `e.g. ${recommendedAmount}` : 'e.g. 250'}
+            />
           </div>
 
           {/* Rate - only for continuous/pump */}
@@ -134,17 +164,6 @@ export function EnteralFeedLogForm({ clientId, config, open, onOpenChange }: Ent
               <Input type="number" min={0} value={rate} onChange={e => setRate(e.target.value)} placeholder="e.g. 100" />
             </div>
           )}
-
-          {/* Flush */}
-          <div className="space-y-2">
-            <Label>Flush Given (mL)</Label>
-            <Input type="number" min={0} value={flushGiven} onChange={e => setFlushGiven(e.target.value)} />
-            {config && (
-              <p className="text-xs text-muted-foreground">
-                Prescribed: {config.flush_before_feed_ml}ml before + {config.flush_after_feed_ml}ml after
-              </p>
-            )}
-          </div>
 
           {/* Method - read-only from config */}
           {configMethod && (

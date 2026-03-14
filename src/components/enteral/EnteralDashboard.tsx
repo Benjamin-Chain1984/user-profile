@@ -289,6 +289,13 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
         />
       )}
 
+      <EnteralFlushLogForm
+        clientId={clientId}
+        config={config || undefined}
+        open={showFlushForm}
+        onOpenChange={setShowFlushForm}
+      />
+
       {showMedSection && (
         <EnteralMedicationLogForm
           clientId={clientId}
