@@ -134,6 +134,7 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
         <EnteralDailySchedule
           schedule={schedule}
           feedLogs={feedLogs}
+          flushLogs={flushLogs}
           graceMinutes={graceMinutes}
         />
       )}
