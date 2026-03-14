@@ -39,6 +39,23 @@ export function EnteralFlushLogForm({ clientId, config, open, onOpenChange }: En
   const [flushVolume, setFlushVolume] = useState('');
   const [notes, setNotes] = useState('');
 
+  // Derive all unique times from the feeding schedule configured in settings
+  const scheduleTimes = useMemo(() => {
+    const times = new Set<string>();
+    if (Array.isArray(config?.feeding_schedule)) {
+      for (const entry of config.feeding_schedule) {
+        if ((entry as any).time) times.add((entry as any).time);
+      }
+    }
+    // Fallback to legacy feed_schedule_times if feeding_schedule is empty
+    if (times.size === 0 && Array.isArray(config?.feed_schedule_times)) {
+      for (const t of config.feed_schedule_times) {
+        times.add(t);
+      }
+    }
+    return Array.from(times).sort();
+  }, [config?.feeding_schedule, config?.feed_schedule_times]);
+
   // Set default volume based on reason and config
   const handleReasonChange = (reason: string) => {
     setFlushReason(reason);
