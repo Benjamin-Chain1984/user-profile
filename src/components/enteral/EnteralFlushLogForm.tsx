@@ -90,6 +90,22 @@ export function EnteralFlushLogForm({ clientId, config, open, onOpenChange }: En
             Logged by: <strong>{staffName}</strong>
           </div>
 
+          {/* Scheduled Time */}
+          {config?.feed_schedule_times && config.feed_schedule_times.length > 0 && (
+            <div className="space-y-2">
+              <Label>Scheduled Time</Label>
+              <Select value={scheduledTime} onValueChange={setScheduledTime}>
+                <SelectTrigger><SelectValue placeholder="Select scheduled time" /></SelectTrigger>
+                <SelectContent>
+                  {config.feed_schedule_times.map(t => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          </div>
+
           {/* Flush Reason */}
           <div className="space-y-2">
             <Label>Flush Reason *</Label>
