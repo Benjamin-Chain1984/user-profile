@@ -35,32 +35,45 @@ interface EnteralStatusResult {
 }
 
 export function calculateEnteralStatus(input: EnteralStatusInput): EnteralStatusResult {
-  const { config, feedLogs, stomaChecks, medLogs } = input;
+  const { config, feedLogs, flushLogs = [], stomaChecks, medLogs } = input;
   const now = new Date();
 
   // Today's logs
   const todayFeeds = feedLogs.filter(l => isToday(new Date(l.event_occurred_at)));
   const todayMeds = medLogs.filter(l => isToday(new Date(l.event_occurred_at)));
+  const todayFlushes = flushLogs.filter(l => isToday(new Date(l.event_occurred_at)));
 
   const todayFeedVolume = todayFeeds.reduce((s, l) => s + l.feed_volume_ml, 0);
-  const todayFlushVolume = todayFeeds.reduce((s, l) => s + l.flush_given_ml, 0);
+  // Flush volume from dedicated flush logs
+  const todayFlushVolume = todayFlushes.reduce((s, l) => s + l.flush_volume_ml, 0);
   const todayMedFlushVolume = todayMeds.reduce((s, l) => s + l.flush_before_ml + l.flush_after_ml, 0);
   const todayTotalEnteral = todayFeedVolume + todayFlushVolume + todayMedFlushVolume;
 
-  const feedsScheduled = config?.feed_schedule_times?.length ?? 0;
+  // Derive scheduled formula feed times from feeding_schedule (primary) or legacy feed_schedule_times
+  let formulaScheduleTimes: string[] = [];
+  if (Array.isArray(config?.feeding_schedule) && config.feeding_schedule.length > 0) {
+    formulaScheduleTimes = config.feeding_schedule
+      .filter((e: any) => e.activity === 'formula_feed')
+      .map((e: any) => e.time);
+  } else if (config?.feed_schedule_times) {
+    formulaScheduleTimes = config.feed_schedule_times;
+  }
+
+  const feedsScheduled = formulaScheduleTimes.length;
   const feedsToday = todayFeeds.length;
 
-  // Count missed feeds (past grace window, no matching log)
+  // Count missed formula feeds (past grace window, no matching log)
   let missedFeeds = 0;
-  if (config?.feed_schedule_times) {
-    const graceMinutes = config.grace_window_mins || 60;
-    const todayStr = now.toISOString().split('T')[0];
-    for (const time of config.feed_schedule_times) {
+  if (formulaScheduleTimes.length > 0) {
+    const graceMinutes = config?.grace_window_mins || 60;
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    for (const time of formulaScheduleTimes) {
       const scheduledAt = new Date(`${todayStr}T${time}:00`);
       const deadline = addMinutes(scheduledAt, graceMinutes);
       if (now > deadline) {
-        // Check if any feed logged within window
+        // Match by scheduled_time field or time proximity
         const hasFeed = todayFeeds.some(f => {
+          if (f.scheduled_time === time) return true;
           const ft = new Date(f.event_occurred_at);
           return Math.abs(ft.getTime() - scheduledAt.getTime()) <= graceMinutes * 60 * 1000;
         });
