@@ -984,12 +984,14 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     try {
       const { data: configData } = await supabase.from('enteral_config').select('*').limit(1).maybeSingle();
       const { data: feedLogs } = await supabase.from('enteral_feed_logs').select('*').order('event_occurred_at', { ascending: false }).limit(100);
+      const { data: flushLogs } = await supabase.from('enteral_flush_logs').select('*').order('event_occurred_at', { ascending: false }).limit(100);
       const { data: stomaChecks } = await supabase.from('enteral_stoma_checks').select('*').order('event_occurred_at', { ascending: false }).limit(10);
       const { data: medLogs } = await supabase.from('enteral_medication_logs').select('*').order('event_occurred_at', { ascending: false }).limit(50);
 
       const result = calculateEnteralStatus({
         config: configData as any,
         feedLogs: (feedLogs || []) as any,
+        flushLogs: (flushLogs || []) as any,
         stomaChecks: (stomaChecks || []) as any,
         medLogs: (medLogs || []) as any,
       });
@@ -1090,6 +1092,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
     const enteralChannel = supabase.channel('enteral-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'enteral_feed_logs' }, () => fetchEnteralStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'enteral_flush_logs' }, () => fetchEnteralStatus())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'enteral_stoma_checks' }, () => fetchEnteralStatus())
       .subscribe();
 
