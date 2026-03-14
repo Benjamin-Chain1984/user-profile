@@ -54,9 +54,14 @@ export function EnteralDailySchedule({ schedule, feedLogs, flushLogs = [], grace
     // Today's flush logs
     const todayFlushLogs = flushLogs.filter(l => getLocalDateStr(new Date(l.event_occurred_at)) === todayStr);
 
+    // Sort flush logs chronologically for ordered matching to schedule slots
+    const sortedFlushLogs = [...todayFlushLogs].sort(
+      (a, b) => new Date(a.event_occurred_at).getTime() - new Date(b.event_occurred_at).getTime()
+    );
+
     // Track which logs have already been matched so each log only satisfies one slot
     const usedFeedLogIds = new Set<number>();
-    const usedFlushLogIds = new Set<number>();
+    const usedFlushLogIdx = new Set<number>();
 
     return schedule.map(entry => {
       const dueAt = new Date(`${todayStr}T${entry.time}:00`);
@@ -64,13 +69,11 @@ export function EnteralDailySchedule({ schedule, feedLogs, flushLogs = [], grace
       let matchedTime: Date | undefined;
 
       if (entry.activity === 'formula_feed') {
-        // Match from feed logs
+        // Match from feed logs — by scheduled_time field or grace window
         const idx = todayFeedLogs.findIndex((log, i) => {
           if (usedFeedLogIds.has(i)) return false;
-          const logTime = new Date(log.event_occurred_at);
-          // Allow matching even if logged late — any feed log referencing this scheduled time,
-          // or within the grace window of the due time
           if (log.scheduled_time === entry.time) return true;
+          const logTime = new Date(log.event_occurred_at);
           return Math.abs(logTime.getTime() - dueAt.getTime()) <= graceMs && log.feed_volume_ml > 0;
         });
         if (idx !== -1) {
@@ -78,26 +81,15 @@ export function EnteralDailySchedule({ schedule, feedLogs, flushLogs = [], grace
           matchedTime = new Date(todayFeedLogs[idx].event_occurred_at);
         }
       } else {
-        // water_flush — match from dedicated flush logs first, then fall back to feed log flush
-        const flushIdx = todayFlushLogs.findIndex((log, i) => {
-          if (usedFlushLogIds.has(i)) return false;
-          const logTime = new Date(log.event_occurred_at);
-          return Math.abs(logTime.getTime() - dueAt.getTime()) <= graceMs && log.flush_volume_ml > 0;
+        // water_flush — match next available flush log (in chronological order)
+        // This allows late-logged flushes to still satisfy earlier schedule slots
+        const flushIdx = sortedFlushLogs.findIndex((log, i) => {
+          if (usedFlushLogIdx.has(i)) return false;
+          return log.flush_volume_ml > 0;
         });
         if (flushIdx !== -1) {
-          usedFlushLogIds.add(flushIdx);
-          matchedTime = new Date(todayFlushLogs[flushIdx].event_occurred_at);
-        } else {
-          // Fallback: check feed logs with flush_given_ml
-          const feedIdx = todayFeedLogs.findIndex((log, i) => {
-            if (usedFeedLogIds.has(i)) return false;
-            const logTime = new Date(log.event_occurred_at);
-            return Math.abs(logTime.getTime() - dueAt.getTime()) <= graceMs && log.flush_given_ml > 0;
-          });
-          if (feedIdx !== -1) {
-            usedFeedLogIds.add(feedIdx);
-            matchedTime = new Date(todayFeedLogs[feedIdx].event_occurred_at);
-          }
+          usedFlushLogIdx.add(flushIdx);
+          matchedTime = new Date(sortedFlushLogs[flushIdx].event_occurred_at);
         }
       }
 
