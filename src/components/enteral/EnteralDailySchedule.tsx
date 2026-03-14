@@ -10,18 +10,25 @@ import { CheckCircle2, AlertCircle, Clock, Droplets, Apple } from 'lucide-react'
 import type { FeedingScheduleEntry } from './EnteralFeedingSchedule';
 import type { EnteralFeedLog } from '@/types/enteral';
 
+interface FlushLog {
+  event_occurred_at: string;
+  flush_volume_ml: number;
+  flush_reason?: string;
+}
+
 interface ScheduleSlot {
   entry: FeedingScheduleEntry;
   dueAt: Date;
   completed: boolean;
-  late: boolean;       // past due by < 1 hour (amber)
-  missed: boolean;     // past due by >= 1 hour
+  late: boolean;
+  missed: boolean;
   completedAt?: Date;
 }
 
 interface EnteralDailyScheduleProps {
   schedule: FeedingScheduleEntry[];
   feedLogs: EnteralFeedLog[];
+  flushLogs?: FlushLog[];
   graceMinutes?: number;
 }
 
@@ -30,36 +37,71 @@ const ACTIVITY_META: Record<string, { label: string; icon: typeof Droplets; colo
   formula_feed: { label: 'Formula Feed', icon: Apple, colorClass: 'text-amber-600' },
 };
 
-export function EnteralDailySchedule({ schedule, feedLogs, graceMinutes = 60 }: EnteralDailyScheduleProps) {
+function getLocalDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+export function EnteralDailySchedule({ schedule, feedLogs, flushLogs = [], graceMinutes = 60 }: EnteralDailyScheduleProps) {
   const now = new Date();
-  const todayStr = now.toISOString().split('T')[0];
+  const todayStr = getLocalDateStr(now);
 
   const slots: ScheduleSlot[] = useMemo(() => {
-    // Build today's feed logs for matching
-    const todayLogs = feedLogs.filter(l => {
-      const d = new Date(l.event_occurred_at);
-      return d.toISOString().split('T')[0] === todayStr;
-    });
+    const graceMs = graceMinutes * 60 * 1000;
+
+    // Today's feed logs
+    const todayFeedLogs = feedLogs.filter(l => getLocalDateStr(new Date(l.event_occurred_at)) === todayStr);
+
+    // Today's flush logs
+    const todayFlushLogs = flushLogs.filter(l => getLocalDateStr(new Date(l.event_occurred_at)) === todayStr);
+
+    // Track which logs have already been matched so each log only satisfies one slot
+    const usedFeedLogIds = new Set<number>();
+    const usedFlushLogIds = new Set<number>();
 
     return schedule.map(entry => {
       const dueAt = new Date(`${todayStr}T${entry.time}:00`);
-      const graceMs = graceMinutes * 60 * 1000;
 
-      // Match: a feed log within ±grace window of the scheduled time
-      // For formula_feed, match feed logs; for water_flush, match flush volume
-      const matchedLog = todayLogs.find(log => {
-        const logTime = new Date(log.event_occurred_at);
-        const timeDiff = Math.abs(logTime.getTime() - dueAt.getTime());
-        if (timeDiff > graceMs) return false;
+      let matchedTime: Date | undefined;
 
-        if (entry.activity === 'formula_feed') {
-          return log.feed_volume_ml > 0;
-        } else {
-          return log.flush_given_ml > 0;
+      if (entry.activity === 'formula_feed') {
+        // Match from feed logs
+        const idx = todayFeedLogs.findIndex((log, i) => {
+          if (usedFeedLogIds.has(i)) return false;
+          const logTime = new Date(log.event_occurred_at);
+          // Allow matching even if logged late — any feed log referencing this scheduled time,
+          // or within the grace window of the due time
+          if (log.scheduled_time === entry.time) return true;
+          return Math.abs(logTime.getTime() - dueAt.getTime()) <= graceMs && log.feed_volume_ml > 0;
+        });
+        if (idx !== -1) {
+          usedFeedLogIds.add(idx);
+          matchedTime = new Date(todayFeedLogs[idx].event_occurred_at);
         }
-      });
+      } else {
+        // water_flush — match from dedicated flush logs first, then fall back to feed log flush
+        const flushIdx = todayFlushLogs.findIndex((log, i) => {
+          if (usedFlushLogIds.has(i)) return false;
+          const logTime = new Date(log.event_occurred_at);
+          return Math.abs(logTime.getTime() - dueAt.getTime()) <= graceMs && log.flush_volume_ml > 0;
+        });
+        if (flushIdx !== -1) {
+          usedFlushLogIds.add(flushIdx);
+          matchedTime = new Date(todayFlushLogs[flushIdx].event_occurred_at);
+        } else {
+          // Fallback: check feed logs with flush_given_ml
+          const feedIdx = todayFeedLogs.findIndex((log, i) => {
+            if (usedFeedLogIds.has(i)) return false;
+            const logTime = new Date(log.event_occurred_at);
+            return Math.abs(logTime.getTime() - dueAt.getTime()) <= graceMs && log.flush_given_ml > 0;
+          });
+          if (feedIdx !== -1) {
+            usedFeedLogIds.add(feedIdx);
+            matchedTime = new Date(todayFeedLogs[feedIdx].event_occurred_at);
+          }
+        }
+      }
 
-      const completed = !!matchedLog;
+      const completed = !!matchedTime;
       const isPastDue = now > dueAt && !completed;
       const minutesOverdue = isPastDue ? (now.getTime() - dueAt.getTime()) / (60 * 1000) : 0;
 
@@ -69,10 +111,10 @@ export function EnteralDailySchedule({ schedule, feedLogs, graceMinutes = 60 }: 
         completed,
         late: isPastDue && minutesOverdue < graceMinutes,
         missed: isPastDue && minutesOverdue >= graceMinutes,
-        completedAt: matchedLog ? new Date(matchedLog.event_occurred_at) : undefined,
+        completedAt: matchedTime,
       };
     });
-  }, [schedule, feedLogs, todayStr, graceMinutes, now]);
+  }, [schedule, feedLogs, flushLogs, todayStr, graceMinutes, now]);
 
   const completedCount = slots.filter(s => s.completed).length;
   const missedCount = slots.filter(s => s.missed).length;
@@ -112,7 +154,6 @@ export function EnteralDailySchedule({ schedule, feedLogs, graceMinutes = 60 }: 
           {slots.map((slot, i) => {
             const meta = ACTIVITY_META[slot.entry.activity] || ACTIVITY_META.water_flush;
             const Icon = meta.icon;
-            const isFuture = slot.dueAt > now && !slot.completed;
 
             return (
               <div
@@ -166,7 +207,7 @@ export function EnteralDailySchedule({ schedule, feedLogs, graceMinutes = 60 }: 
                     : 'text-muted-foreground'
                 }`}>
                   {slot.completed
-                    ? `✓ ${slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                    ? `✓ ${slot.completedAt!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (due ${slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`
                     : slot.missed
                     ? `Missed ${slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
                     : slot.late
