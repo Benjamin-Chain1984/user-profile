@@ -14,7 +14,7 @@ import { useProfile } from '@/contexts/ProfileContext';
 import { MonitoringPausedBanner } from '@/components/monitoring';
 import { RoleTabsTrigger } from '@/components/ui/role-tabs-trigger';
 import { StatusBadge } from '@/components/ideal/StatusBadge';
-import { useEnteralConfig, useEnteralFeedLogs, useEnteralMedicationLogs, useEnteralStomaChecks, useEnteralMedications } from '@/hooks/useEnteral';
+import { useEnteralConfig, useEnteralFeedLogs, useEnteralMedicationLogs, useEnteralStomaChecks, useEnteralMedications, useEnteralFlushLogs } from '@/hooks/useEnteral';
 import { calculateEnteralStatus } from '@/utils/enteralStatusCalculator';
 import { tubeRequiresStomaCheck, TUBE_TYPES } from '@/types/enteral';
 
