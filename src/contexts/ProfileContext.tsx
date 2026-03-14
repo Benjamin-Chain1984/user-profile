@@ -1092,6 +1092,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
     const enteralChannel = supabase.channel('enteral-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'enteral_feed_logs' }, () => fetchEnteralStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'enteral_flush_logs' }, () => fetchEnteralStatus())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'enteral_stoma_checks' }, () => fetchEnteralStatus())
       .subscribe();
 
