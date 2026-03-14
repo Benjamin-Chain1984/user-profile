@@ -34,6 +34,7 @@ export function EnteralFlushLogForm({ clientId, config, open, onOpenChange }: En
   const { staffName } = useCurrentStaff();
   const logFlush = useLogEnteralFlush(clientId);
 
+  const [scheduledTime, setScheduledTime] = useState('');
   const [flushReason, setFlushReason] = useState('');
   const [flushVolume, setFlushVolume] = useState('');
   const [notes, setNotes] = useState('');
@@ -55,6 +56,7 @@ export function EnteralFlushLogForm({ clientId, config, open, onOpenChange }: En
   };
 
   const resetForm = () => {
+    setScheduledTime('');
     setFlushReason('');
     setFlushVolume('');
     setNotes('');
@@ -87,6 +89,21 @@ export function EnteralFlushLogForm({ clientId, config, open, onOpenChange }: En
           <div className="text-sm text-muted-foreground">
             Logged by: <strong>{staffName}</strong>
           </div>
+
+          {/* Scheduled Time */}
+          {config?.feed_schedule_times && config.feed_schedule_times.length > 0 && (
+            <div className="space-y-2">
+              <Label>Scheduled Time</Label>
+              <Select value={scheduledTime} onValueChange={setScheduledTime}>
+                <SelectTrigger><SelectValue placeholder="Select scheduled time" /></SelectTrigger>
+                <SelectContent>
+                  {config.feed_schedule_times.map(t => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Flush Reason */}
           <div className="space-y-2">
