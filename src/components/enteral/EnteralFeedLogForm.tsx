@@ -37,6 +37,22 @@ export function EnteralFeedLogForm({ clientId, config, open, onOpenChange }: Ent
   const configMethod = config?.feeding_type || null;
   const methodLabel = FEED_METHODS.find(m => m.value === configMethod)?.label || configMethod;
 
+  // Derive all unique times from the feeding schedule configured in settings
+  const scheduleTimes = useMemo(() => {
+    const times = new Set<string>();
+    if (Array.isArray(config?.feeding_schedule)) {
+      for (const entry of config.feeding_schedule) {
+        if ((entry as any).time) times.add((entry as any).time);
+      }
+    }
+    if (times.size === 0 && Array.isArray(config?.feed_schedule_times)) {
+      for (const t of config.feed_schedule_times) {
+        times.add(t);
+      }
+    }
+    return Array.from(times).sort();
+  }, [config?.feeding_schedule, config?.feed_schedule_times]);
+
   // Get recommended feed amount from feeding schedule
   const recommendedAmount = useMemo(() => {
     if (!config?.feeding_schedule || !Array.isArray(config.feeding_schedule)) return null;
@@ -44,12 +60,10 @@ export function EnteralFeedLogForm({ clientId, config, open, onOpenChange }: Ent
       (e: any) => e.activity === 'formula_feed'
     );
     if (formulaFeeds.length === 0) return null;
-    // If a scheduled time is selected, find the matching schedule entry
     if (scheduledTime) {
       const match = formulaFeeds.find((e: any) => e.time === scheduledTime);
       if (match) return (match as any).amount_ml;
     }
-    // Otherwise show the most common amount
     const amounts = formulaFeeds.map((e: any) => (e as any).amount_ml);
     return amounts[0] || null;
   }, [config?.feeding_schedule, scheduledTime]);
