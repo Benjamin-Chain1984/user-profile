@@ -54,8 +54,10 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
   const statusResult = useMemo(() => calculateEnteralStatus({
     config: config || null,
     feedLogs,
+    flushLogs,
     stomaChecks,
     medLogs,
+  }), [config, feedLogs, flushLogs, stomaChecks, medLogs]);
   }), [config, feedLogs, stomaChecks, medLogs]);
 
   const showStomaSection = config?.enable_stoma_checks && tubeRequiresStomaCheck(config?.tube_type as any);
