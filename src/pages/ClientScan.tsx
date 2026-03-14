@@ -469,7 +469,6 @@ export default function ClientScanPage() {
         });
         setMfaExpiresAt(data.mfaExpiresAt);
         setAccessMethod(data.deviceTrusted ? 'otp_device_trusted' : 'otp');
-        setStep('success');
         sessionStorage.removeItem(QR_REDIRECT_KEY);
 
         // Save phone session so the 3-month trusted device window works on re-scan
@@ -485,6 +484,8 @@ export default function ClientScanPage() {
           await refreshSession();
           console.log('[QR] Phone session saved for trusted device reuse');
         }
+
+        setStep('success');
       } else {
         setError(data.error || 'Invalid verification code');
         setOtp('');
