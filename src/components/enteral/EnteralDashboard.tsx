@@ -39,6 +39,7 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
   const { isMonitoringPaused, monitoringStatus } = useProfile();
 
   const [showFeedForm, setShowFeedForm] = useState(false);
+  const [showFlushForm, setShowFlushForm] = useState(false);
   const [showStomaForm, setShowStomaForm] = useState(false);
   const [showMedForm, setShowMedForm] = useState(false);
   const [showPositioning, setShowPositioning] = useState(false);
