@@ -481,6 +481,8 @@ export default function ClientScanPage() {
             deviceId,
             verifiedAt: new Date().toISOString()
           });
+          // Sync AuthContext immediately so protected routes don't redirect to /auth
+          await refreshSession();
           console.log('[QR] Phone session saved for trusted device reuse');
         }
       } else {
