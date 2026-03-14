@@ -34,6 +34,7 @@ export function EnteralFlushLogForm({ clientId, config, open, onOpenChange }: En
   const { staffName } = useCurrentStaff();
   const logFlush = useLogEnteralFlush(clientId);
 
+  const [scheduledTime, setScheduledTime] = useState('');
   const [flushReason, setFlushReason] = useState('');
   const [flushVolume, setFlushVolume] = useState('');
   const [notes, setNotes] = useState('');
