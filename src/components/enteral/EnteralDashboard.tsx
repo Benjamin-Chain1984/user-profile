@@ -49,6 +49,7 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
   const { data: medLogs = [] } = useEnteralMedicationLogs(clientId);
   const { data: stomaChecks = [] } = useEnteralStomaChecks(clientId);
   const { data: medications = [] } = useEnteralMedications(clientId);
+  const { data: flushLogs = [] } = useEnteralFlushLogs(clientId);
 
   const statusResult = useMemo(() => calculateEnteralStatus({
     config: config || null,
