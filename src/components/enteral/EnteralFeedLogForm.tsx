@@ -134,13 +134,13 @@ export function EnteralFeedLogForm({ clientId, config, open, onOpenChange }: Ent
           </div>
 
           {/* Scheduled Time */}
-          {config?.feed_schedule_times && config.feed_schedule_times.length > 0 && (
+          {scheduleTimes.length > 0 && (
             <div className="space-y-2">
               <Label>Scheduled Time</Label>
               <Select value={scheduledTime} onValueChange={setScheduledTime}>
                 <SelectTrigger><SelectValue placeholder="Select scheduled time" /></SelectTrigger>
                 <SelectContent>
-                  {config.feed_schedule_times.map(t => (
+                  {scheduleTimes.map(t => (
                     <SelectItem key={t} value={t}>{t}</SelectItem>
                   ))}
                 </SelectContent>
