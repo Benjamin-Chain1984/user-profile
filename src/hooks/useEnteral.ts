@@ -190,6 +190,44 @@ export function useLogEnteralMedication(clientId?: string) {
   });
 }
 
+// ── Flush Logs ──────────────────────────────────────────────────
+export function useEnteralFlushLogs(clientId?: string) {
+  return useQuery({
+    queryKey: ['enteral-flush-logs', clientId],
+    queryFn: async () => {
+      let query = supabase.from('enteral_flush_logs').select('*').order('event_occurred_at', { ascending: false }).limit(100);
+      if (clientId) query = query.eq('client_id', clientId);
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+}
+
+export function useLogEnteralFlush(clientId?: string) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (entry: { flush_reason: string; flush_volume_ml: number; notes: string | null }) => {
+      const { error } = await supabase.from('enteral_flush_logs').insert({
+        ...entry,
+        client_id: clientId || null,
+        created_by: user?.id || null,
+      } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['enteral-flush-logs'] });
+      toast({ title: 'Flush logged', description: 'Flush entry recorded successfully.' });
+    },
+    onError: (err: any) => {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    },
+  });
+}
+
 // ── Stoma Checks ────────────────────────────────────────────────
 export function useEnteralStomaChecks(clientId?: string) {
   return useQuery({

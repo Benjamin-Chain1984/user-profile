@@ -8,19 +8,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertTriangle, Clock, TrendingUp, Settings, Plus, Droplets, Pill, CheckCircle2, Armchair } from 'lucide-react';
+import { AlertTriangle, Clock, TrendingUp, Settings, Plus, Droplets, Pill, CheckCircle2, Armchair, Waves } from 'lucide-react';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { useProfile } from '@/contexts/ProfileContext';
 import { MonitoringPausedBanner } from '@/components/monitoring';
 import { RoleTabsTrigger } from '@/components/ui/role-tabs-trigger';
 import { StatusBadge } from '@/components/ideal/StatusBadge';
-import { useEnteralConfig, useEnteralFeedLogs, useEnteralMedicationLogs, useEnteralStomaChecks, useEnteralMedications } from '@/hooks/useEnteral';
+import { useEnteralConfig, useEnteralFeedLogs, useEnteralMedicationLogs, useEnteralStomaChecks, useEnteralMedications, useEnteralFlushLogs } from '@/hooks/useEnteral';
 import { calculateEnteralStatus } from '@/utils/enteralStatusCalculator';
 import { tubeRequiresStomaCheck, TUBE_TYPES } from '@/types/enteral';
 
 import { EnteralFeedLogForm } from './EnteralFeedLogForm';
 import { EnteralStomaCheckForm } from './EnteralStomaCheckForm';
 import { EnteralMedicationLogForm } from './EnteralMedicationLogForm';
+import { EnteralFlushLogForm } from './EnteralFlushLogForm';
 import { EnteralConfigSettings } from './EnteralConfigSettings';
 import { EnteralHistory } from './EnteralHistory';
 import { EnteralLevelInfographic } from './EnteralLevelInfographic';
@@ -38,6 +39,7 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
   const { isMonitoringPaused, monitoringStatus } = useProfile();
 
   const [showFeedForm, setShowFeedForm] = useState(false);
+  const [showFlushForm, setShowFlushForm] = useState(false);
   const [showStomaForm, setShowStomaForm] = useState(false);
   const [showMedForm, setShowMedForm] = useState(false);
   const [showPositioning, setShowPositioning] = useState(false);
@@ -47,6 +49,7 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
   const { data: medLogs = [] } = useEnteralMedicationLogs(clientId);
   const { data: stomaChecks = [] } = useEnteralStomaChecks(clientId);
   const { data: medications = [] } = useEnteralMedications(clientId);
+  const { data: flushLogs = [] } = useEnteralFlushLogs(clientId);
 
   const statusResult = useMemo(() => calculateEnteralStatus({
     config: config || null,
@@ -205,6 +208,9 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
         <Button onClick={() => setShowFeedForm(true)} className="gap-2">
           <Plus className="h-4 w-4" /> Log Feed
         </Button>
+        <Button variant="outline" onClick={() => setShowFlushForm(true)} className="gap-2">
+          <Waves className="h-4 w-4" /> Log Flush
+        </Button>
         <Button variant="outline" onClick={() => setShowPositioning(true)} className="gap-2">
           <Armchair className="h-4 w-4" /> Check Position
         </Button>
@@ -282,6 +288,13 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
           onOpenChange={setShowStomaForm}
         />
       )}
+
+      <EnteralFlushLogForm
+        clientId={clientId}
+        config={config || undefined}
+        open={showFlushForm}
+        onOpenChange={setShowFlushForm}
+      />
 
       {showMedSection && (
         <EnteralMedicationLogForm
