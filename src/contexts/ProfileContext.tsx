@@ -882,59 +882,55 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       const { data: configData } = await supabase.from('catheter_config').select('*').limit(1).maybeSingle();
 
       // Fetch care plan as source of truth, preferring published and falling back to draft
-      let planQuery = supabase
+      let publishedPlanQuery = supabase
         .from('catheter_care_plans')
-        .select('change_interval, flush_prescribed, flush_frequency, flush_custom_interval, status')
+        .select('id, version, status, published_at, next_review_due, change_interval, flush_prescribed, flush_frequency, flush_custom_interval')
         .order('version', { ascending: false })
-        .limit(1);
+        .limit(1)
+        .eq('status', 'published');
+
+      let draftPlanQuery = supabase
+        .from('catheter_care_plans')
+        .select('id, version, status, published_at, next_review_due, change_interval, flush_prescribed, flush_frequency, flush_custom_interval')
+        .order('version', { ascending: false })
+        .limit(1)
+        .eq('status', 'draft');
 
       if (profile?.id && profile.id !== '1') {
-        planQuery = planQuery.eq('client_id', profile.id);
+        publishedPlanQuery = publishedPlanQuery.eq('client_id', profile.id);
+        draftPlanQuery = draftPlanQuery.eq('client_id', profile.id);
       } else {
-        planQuery = planQuery.is('client_id', null);
+        publishedPlanQuery = publishedPlanQuery.is('client_id', null);
+        draftPlanQuery = draftPlanQuery.is('client_id', null);
       }
 
-      const { data: publishedPlan } = await planQuery.eq('status', 'published').maybeSingle();
-
-      let fallbackPlanQuery = supabase
-        .from('catheter_care_plans')
-        .select('change_interval, flush_prescribed, flush_frequency, flush_custom_interval, status')
-        .eq('status', 'draft')
-        .order('version', { ascending: false })
-        .limit(1);
-
-      if (profile?.id && profile.id !== '1') {
-        fallbackPlanQuery = fallbackPlanQuery.eq('client_id', profile.id);
-      } else {
-        fallbackPlanQuery = fallbackPlanQuery.is('client_id', null);
-      }
-
-      const { data: draftPlan } = publishedPlan ? { data: null } : await fallbackPlanQuery.maybeSingle();
+      const { data: publishedPlan } = await publishedPlanQuery.maybeSingle();
+      const { data: draftPlan } = publishedPlan ? { data: null } : await draftPlanQuery.maybeSingle();
       const planData = publishedPlan || draftPlan;
 
-      const { data: changes } = await supabase
-        .from('catheter_change_logs')
-        .select('*')
-        .order('event_occurred_at', { ascending: false })
-        .limit(10);
+      const [changesResult, flushResult, stomaResult, alertsResult] = await Promise.all([
+        supabase.from('catheter_change_logs').select('*').order('event_occurred_at', { ascending: false }).limit(10),
+        supabase.from('catheter_flush_logs').select('*').order('event_occurred_at', { ascending: false }).limit(10),
+        supabase.from('catheter_stoma_checks').select('*').order('event_occurred_at', { ascending: false }).limit(10),
+        supabase.from('catheter_alerts').select('*').is('resolved_at', null).order('created_at', { ascending: false }),
+      ]);
 
-      const { data: flushLogs } = await supabase
-        .from('catheter_flush_logs')
-        .select('*')
-        .order('event_occurred_at', { ascending: false })
-        .limit(10);
+      const changes = changesResult.data;
+      const flushLogs = flushResult.data;
+      const stomaChecks = stomaResult.data;
+      const alerts = alertsResult.data;
 
-      const { data: stomaChecks } = await supabase
-        .from('catheter_stoma_checks')
-        .select('*')
-        .order('event_occurred_at', { ascending: false })
-        .limit(10);
-
-      const { data: alerts } = await supabase
-        .from('catheter_alerts')
-        .select('*')
-        .is('resolved_at', null)
-        .order('created_at', { ascending: false });
+      let hasAcknowledgedPlan = true;
+      if (publishedPlan?.id && publishedPlan?.version && user?.id) {
+        const { data: acknowledgement } = await supabase
+          .from('catheter_care_plan_acknowledgements')
+          .select('id')
+          .eq('plan_id', publishedPlan.id)
+          .eq('plan_version', publishedPlan.version)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        hasAcknowledgedPlan = !!acknowledgement;
+      }
 
       const now = new Date();
       const lastChange = changes?.[0];
@@ -999,42 +995,51 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         isFlushOverdue = nextFlush.getTime() < now.getTime();
       }
 
-      // Stoma concern — use dynamic calculation (same as tile) to account for overdue
-      const hoursSinceStoma = lastStoma
-        ? differenceInHours(now, parseISO(lastStoma.event_occurred_at))
-        : null;
+      const hoursSinceStoma = lastStoma ? differenceInHours(now, parseISO(lastStoma.event_occurred_at)) : null;
       const stomaFindings: StomaFinding[] = (lastStoma?.findings as StomaFinding[]) || [];
       const stomaPainLevel: StomaPainLevel = (lastStoma?.pain_level as StomaPainLevel) || 'none';
-      const dynamicStomaStatus = lastStoma
-        ? calculateStomaStatusLevel(stomaFindings, stomaPainLevel, hoursSinceStoma)
-        : 'green';
+      const dynamicStomaStatus = lastStoma ? calculateStomaStatusLevel(stomaFindings, stomaPainLevel, hoursSinceStoma) : 'green';
 
       const hasRedAlert = activeAlerts.some(alert => alert.severity === 'red');
       const hasAmberAlert = activeAlerts.some(alert => alert.severity === 'amber');
 
-      let status: 'stable' | 'monitor' | 'action' = 'stable';
-      let message = 'Catheter management on track.';
+      let clinicalData: ModuleAlertData = {
+        status: 'stable',
+        message: 'Catheter management on track.',
+        timestamp: lastChange?.event_occurred_at || lastFlush?.event_occurred_at || lastStoma?.event_occurred_at || new Date().toISOString(),
+      };
 
-      // RED hierarchy first
       if (hasRedAlert || isChangeOverdue || isFlushOverdue || dynamicStomaStatus === 'red') {
-        status = 'action';
-        if (hasRedAlert) message = latestActiveAlert?.message || 'Catheter alert requires immediate action.';
-        else if (isChangeOverdue) message = `Catheter change overdue by ${Math.abs(daysUntilChange ?? 0)} days.`;
-        else if (isFlushOverdue) message = 'Catheter flush overdue – action required.';
-        else message = 'Stoma site concern – escalate to clinician.';
-      // AMBER hierarchy second
+        clinicalData = {
+          status: 'action',
+          message: hasRedAlert
+            ? latestActiveAlert?.message || 'Catheter alert requires immediate action.'
+            : isChangeOverdue
+              ? `Catheter change overdue by ${Math.abs(daysUntilChange ?? 0)} days.`
+              : isFlushOverdue
+                ? 'Catheter flush overdue – action required.'
+                : 'Stoma site concern – escalate to clinician.',
+          timestamp: latestActiveAlert?.created_at || lastStoma?.event_occurred_at || lastFlush?.event_occurred_at || lastChange?.event_occurred_at || new Date().toISOString(),
+        };
       } else if (hasAmberAlert || (daysUntilChange !== null && daysUntilChange <= 3) || dynamicStomaStatus === 'amber') {
-        status = 'monitor';
-        if (hasAmberAlert) message = latestActiveAlert?.message || 'Catheter requires follow-up.';
-        else if (dynamicStomaStatus === 'amber') message = 'Stoma site requires monitoring – recheck within 24 hours.';
-        else if (daysUntilChange !== null && daysUntilChange <= 3) message = `Catheter change due in ${daysUntilChange} day(s).`;
+        clinicalData = {
+          status: 'monitor',
+          message: hasAmberAlert
+            ? latestActiveAlert?.message || 'Catheter requires follow-up.'
+            : dynamicStomaStatus === 'amber'
+              ? 'Stoma site requires monitoring – recheck within 24 hours.'
+              : `Catheter change due in ${daysUntilChange} day(s).`,
+          timestamp: latestActiveAlert?.created_at || lastStoma?.event_occurred_at || lastChange?.event_occurred_at || new Date().toISOString(),
+        };
       }
 
-      const latestTimestamp = latestActiveAlert?.created_at || lastStoma?.event_occurred_at || lastFlush?.event_occurred_at || lastChange?.event_occurred_at || new Date().toISOString();
-      setLatestCatheterData({ status, message, timestamp: latestTimestamp });
+      const planAlertData = buildPlanStatusAlert('Urinary Catheter', publishedPlan, hasAcknowledgedPlan);
+      const finalData = getHighestPriorityModuleData(clinicalData, planAlertData) || clinicalData;
 
+      setLatestCatheterData(finalData);
       const timeAgo = lastChange ? formatDistanceToNow(new Date(lastChange.event_occurred_at), { addSuffix: true }) : 'Never';
-      updateModuleStatus('catheter', status, lastChange ? `Last change ${timeAgo}` : 'Not yet logged');
+      const stableLastEntry = lastChange ? `Last change ${timeAgo}` : 'Not yet logged';
+      updateModuleStatus('catheter', finalData.status, finalData.status === 'stable' ? stableLastEntry : finalData.message);
     } catch (err) { console.error('Error in fetchCatheterStatus:', err); }
   };
 
