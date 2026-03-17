@@ -610,9 +610,36 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   // ── Oral Health ──────────────────────────────────────────────
   const fetchOralHealthStatus = async () => {
     try {
-      const { data: configData } = await supabase.from('oral_health_config').select('*').maybeSingle();
-      const { data: assessmentData } = await supabase.from('oral_health_assessments').select('*').order('created_at', { ascending: false }).limit(10);
-      const { data: taskLogData } = await supabase.from('oral_health_task_logs').select('*').order('log_date', { ascending: false }).limit(50);
+      const [configResult, assessmentResult, taskLogResult, planResult] = await Promise.all([
+        supabase.from('oral_health_config').select('*').maybeSingle(),
+        supabase.from('oral_health_assessments').select('*').order('created_at', { ascending: false }).limit(10),
+        supabase.from('oral_health_task_logs').select('*').order('log_date', { ascending: false }).limit(50),
+        (() => {
+          let query = supabase
+            .from('oral_health_plans')
+            .select('id, version, status, published_at, next_review_due')
+            .order('version', { ascending: false })
+            .limit(1);
+          return profile?.id && profile.id !== '1' ? query.eq('client_id', profile.id).maybeSingle() : query.is('client_id', null).maybeSingle();
+        })(),
+      ]);
+
+      const configData = configResult.data;
+      const assessmentData = assessmentResult.data;
+      const taskLogData = taskLogResult.data;
+      const planData = planResult.data;
+
+      let hasAcknowledgedPlan = true;
+      if (planData?.id && planData?.version && user?.id) {
+        const { data: acknowledgement } = await supabase
+          .from('oral_health_plan_acknowledgements')
+          .select('id')
+          .eq('plan_id', planData.id)
+          .eq('plan_version', planData.version)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        hasAcknowledgedPlan = !!acknowledgement;
+      }
 
       const typedAssessments = (assessmentData || []).map((d: any) => ({ ...d, mouth_annotations: (d.mouth_annotations || []) })) as OralHealthAssessment[];
       const typedLogs = (taskLogData || []) as OralHealthTaskLog[];
@@ -622,9 +649,16 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         config: { assessment_frequency: configData?.assessment_frequency ?? 'weekly', enable_compliance_monitoring: configData?.enable_compliance_monitoring ?? false } as Partial<OralHealthConfig>,
       });
 
-      const moduleStatus = statusResult.status === 'ideal' ? 'stable' : statusResult.status;
-      setLatestOralHealthData({ status: moduleStatus, message: statusResult.message, timestamp: typedAssessments[0]?.created_at || new Date().toISOString() });
-      updateModuleStatus('oral-health', moduleStatus, statusResult.lastEntry);
+      const clinicalData: ModuleAlertData = {
+        status: statusResult.status === 'ideal' ? 'stable' : statusResult.status,
+        message: statusResult.message,
+        timestamp: typedAssessments[0]?.created_at || new Date().toISOString(),
+      };
+      const planAlertData = buildPlanStatusAlert('Oral Health', planData, hasAcknowledgedPlan);
+      const finalData = getHighestPriorityModuleData(clinicalData, planAlertData) || clinicalData;
+
+      setLatestOralHealthData(finalData);
+      updateModuleStatus('oral-health', finalData.status, finalData.status === 'stable' ? statusResult.lastEntry : finalData.message);
     } catch (err) { console.error('Error in fetchOralHealthStatus:', err); }
   };
 
