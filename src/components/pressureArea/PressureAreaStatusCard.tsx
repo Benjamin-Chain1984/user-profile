@@ -104,20 +104,44 @@ function PressureReliefTile({
     });
 
     // Generate scheduled slots from the plan's rotation sequence for today
-    const slots: {position: string;dueAt: Date;completed: boolean;completedBy?: string;}[] = [];
+    // Track which events have already been matched to avoid double-counting
+    const usedEventIds = new Set<string>();
+    const slots: {position: string;dueAt: Date;completed: boolean;completedBy?: string;completedAt?: string;}[] = [];
     let cumulativeMinutes = 0;
     for (let i = 0; i < positions.length; i++) {
       const dueAt = addMinutes(todayBase, cumulativeMinutes);
-      const matchingEvent = todayEvents.find((e) => {
-        const eventTime = new Date(e.event_occurred_at);
-        return e.position_completed === positions[i].name &&
-        Math.abs(differenceInMinutes(eventTime, dueAt)) < intervalMinutes / 2;
-      });
+      const timeStr = `${String(dueAt.getHours()).padStart(2, '0')}:${String(dueAt.getMinutes()).padStart(2, '0')}`;
+
+      // 1. Exact match on scheduled_time field (like skin checks)
+      let matchingEvent = todayEvents.find((e) => !usedEventIds.has(e.id) && (e as any).scheduled_time === timeStr);
+
+      // 2. Fallback: position name + time proximity
+      if (!matchingEvent) {
+        matchingEvent = todayEvents.find((e) => {
+          if (usedEventIds.has(e.id)) return false;
+          const eventTime = new Date(e.event_occurred_at);
+          return e.position_completed === positions[i].name &&
+          Math.abs(differenceInMinutes(eventTime, dueAt)) < intervalMinutes / 2;
+        });
+      }
+
+      // 3. Fallback: any event within ±2 hours of the slot (generous matching)
+      if (!matchingEvent) {
+        matchingEvent = todayEvents.find((e) => {
+          if (usedEventIds.has(e.id)) return false;
+          const eventTime = new Date(e.event_occurred_at);
+          return Math.abs(differenceInMinutes(eventTime, dueAt)) <= 120;
+        });
+      }
+
+      if (matchingEvent) usedEventIds.add(matchingEvent.id);
+
       slots.push({
         position: positions[i].name,
         dueAt,
         completed: !!matchingEvent,
-        completedBy: matchingEvent?.completed_by_name || undefined
+        completedBy: matchingEvent?.completed_by_name || undefined,
+        completedAt: matchingEvent?.event_occurred_at || undefined,
       });
       cumulativeMinutes += positions[i].target_duration_minutes || intervalMinutes;
     }
