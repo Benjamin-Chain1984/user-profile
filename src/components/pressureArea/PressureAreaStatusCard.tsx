@@ -70,7 +70,7 @@ function PressureReliefTile({
 
     if (!hasPlan || positions.length === 0) {
       return {
-        upcomingSlots: [] as {position: string;dueAt: Date;completed: boolean;completedBy?: string;}[],
+        upcomingSlots: [] as {position: string;dueAt: Date;completed: boolean;completedBy?: string;completedAt?: string;}[],
         minutesUntilNext: 0,
         hasPastDueSlot: false,
         status: !plan || plan.status === 'draft' ? 'monitor' as HealthStatus : 'stable' as HealthStatus,
