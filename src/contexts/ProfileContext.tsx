@@ -1122,10 +1122,21 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         planAcknowledged: hasAcknowledgedPlan,
       });
 
+      const clinicalTimestamp = (() => {
+        if (statusResult.status === 'action' || statusResult.status === 'monitor') {
+          const latestSkinFindingSession = typedSkinChecks.find((session) =>
+            (session.skin_finding_markers || []).some((marker) => marker.finding_type !== 'ok' && marker.finding_type !== 'unable')
+          );
+          if (latestSkinFindingSession) return latestSkinFindingSession.event_occurred_at;
+        }
+
+        return typedEvents[0]?.event_occurred_at || typedSkinChecks[0]?.event_occurred_at || new Date().toISOString();
+      })();
+
       const clinicalData: ModuleAlertData = {
         status: statusResult.status === 'ideal' ? 'stable' : statusResult.status,
         message: statusResult.message,
-        timestamp: typedEvents[0]?.event_occurred_at || typedSkinChecks[0]?.event_occurred_at || new Date().toISOString(),
+        timestamp: clinicalTimestamp,
       };
       const planAlertData = buildPlanStatusAlert('Pressure Area Prevention', planData, hasAcknowledgedPlan);
       const dailySkinCheckAlert = buildPressureAreaDailySkinCheckAlert(configData as any, typedSkinChecks);
