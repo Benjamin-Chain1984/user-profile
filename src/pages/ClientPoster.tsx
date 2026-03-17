@@ -259,7 +259,7 @@ export default function ClientPosterPage() {
       pdf.setFontSize(7);
       pdf.setTextColor(130);
       pdf.text(
-        'Access is restricted to authorised staff only. Mobile devices are verified before access is granted.',
+        'Access is restricted to authorised staff only.',
         pw / 2, ph - m - 6, { align: 'center' }
       );
       pdf.text(
