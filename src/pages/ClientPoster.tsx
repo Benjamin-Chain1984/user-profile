@@ -421,11 +421,8 @@ export default function ClientPosterPage() {
             <h2 className="text-sm font-bold text-foreground mb-1 text-center uppercase tracking-wide">
               Scan to Access Profile
             </h2>
-            <p className="text-[10px] text-muted-foreground text-center mb-1">
+            <p className="text-[10px] text-muted-foreground text-center mb-4">
               Use your authorised device to scan this QR code to open the individual's IDEAL profile.
-            </p>
-            <p className="text-[9px] text-muted-foreground text-center mb-4">
-              Access may require staff verification.
             </p>
 
             {/* Client identity */}
