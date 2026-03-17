@@ -1055,76 +1055,100 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
     // ── Realtime Subscriptions ────────────────────────────────
     const painChannel = supabase.channel('pain-alerts')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'abbey_pain_assessments' }, () => fetchLatestPainAssessment())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'abbey_pain_assessments' }, () => fetchLatestPainAssessment())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'painad_assessments' }, () => fetchLatestPainAssessment())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'abbey_pain_config' }, () => fetchLatestPainAssessment())
       .subscribe();
 
     const bowelChannel = supabase.channel('bowel-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bowel_log_entries' }, () => fetchBowelCareStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bowel_care_config' }, () => fetchBowelCareStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bowel_care_alerts' }, () => fetchBowelCareStatus())
       .subscribe();
 
     const weightChannel = supabase.channel('weight-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'weight_entries' }, () => fetchWeightStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'weight_bmi_alerts' }, () => fetchWeightStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'weight_bmi_config' }, () => fetchWeightStatus())
       .subscribe();
 
     const fluidChannel = supabase.channel('fluid-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'fluid_intake_entries' }, () => fetchFluidStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'fluid_output_entries' }, () => fetchFluidStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'fluid_config' }, () => fetchFluidStatus())
       .subscribe();
 
     const profileChannel = supabase.channel('profile-updates')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'clients' }, () => fetchProfileFromDb())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, () => fetchProfileFromDb())
       .subscribe();
 
-    const screeningChannel = supabase.channel('screening-alerts')
+    const healthPreventionChannel = supabase.channel('health-prevention-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cancer_screening_records' }, () => fetchHealthPreventionStatus())
-      .subscribe();
-
-    const vaccinationChannel = supabase.channel('vaccination-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'vaccination_records' }, () => fetchHealthPreventionStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'annual_health_assessment_records' }, () => fetchHealthPreventionStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'health_prevention_config' }, () => fetchHealthPreventionStatus())
       .subscribe();
 
     const sleepChannel = supabase.channel('sleep-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'sleep_entries' }, () => fetchSleepStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sleep_config' }, () => fetchSleepStatus())
       .subscribe();
 
     const oralHealthChannel = supabase.channel('oral-health-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'oral_health_assessments' }, () => fetchOralHealthStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'oral_health_task_logs' }, () => fetchOralHealthStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'oral_health_config' }, () => fetchOralHealthStatus())
       .subscribe();
 
     const vitalSignChannel = supabase.channel('vital-sign-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'vital_sign_entries' }, () => fetchHealthMonitoringStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'vital_sign_alerts' }, () => fetchHealthMonitoringStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'vital_sign_altered_criteria' }, () => fetchHealthMonitoringStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'vital_sign_config' }, () => fetchHealthMonitoringStatus())
       .subscribe();
 
-    // New module subscriptions
     const seizureChannel = supabase.channel('seizure-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'seizure_events' }, () => fetchEpilepsyStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'epilepsy_alerts' }, () => fetchEpilepsyStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'epilepsy_config' }, () => fetchEpilepsyStatus())
       .subscribe();
 
-    const padChannel = supabase.channel('pad-alerts')
+    const continenceChannel = supabase.channel('continence-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'continence_pad_changes' }, () => fetchContinenceStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'continence_skin_checks' }, () => fetchContinenceStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'continence_uti_tests' }, () => fetchContinenceStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'continence_consumables_checks' }, () => fetchContinenceStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'continence_config' }, () => fetchContinenceStatus())
       .subscribe();
 
-    const catheterChangeChannel = supabase.channel('catheter-change-alerts')
+    const catheterChannel = supabase.channel('catheter-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'catheter_change_logs' }, () => fetchCatheterStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'catheter_flush_logs' }, () => fetchCatheterStatus())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'catheter_stoma_checks' }, () => fetchCatheterStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'catheter_alerts' }, () => fetchCatheterStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'catheter_config' }, () => fetchCatheterStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'catheter_care_plans' }, () => fetchCatheterStatus())
       .subscribe();
 
     const pressureChannel = supabase.channel('pressure-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'pressure_relief_events' }, () => fetchPressureAreaStatus())
-      .subscribe();
-
-    const skinCheckChannel = supabase.channel('skin-check-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'skin_check_sessions' }, () => fetchPressureAreaStatus())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'skin_finding_markers' }, () => fetchPressureAreaStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pressure_area_config' }, () => fetchPressureAreaStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pressure_relief_plans' }, () => fetchPressureAreaStatus())
       .subscribe();
 
     const mealtimeChannel = supabase.channel('mealtime-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'mealtime_observations' }, () => fetchIddsiStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'iddsi_config' }, () => fetchIddsiStatus())
       .subscribe();
 
     const enteralChannel = supabase.channel('enteral-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'enteral_feed_logs' }, () => fetchEnteralStatus())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'enteral_flush_logs' }, () => fetchEnteralStatus())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'enteral_stoma_checks' }, () => fetchEnteralStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'enteral_medication_logs' }, () => fetchEnteralStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'enteral_config' }, () => fetchEnteralStatus())
       .subscribe();
 
     return () => {
@@ -1133,20 +1157,18 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       supabase.removeChannel(weightChannel);
       supabase.removeChannel(fluidChannel);
       supabase.removeChannel(profileChannel);
-      supabase.removeChannel(screeningChannel);
-      supabase.removeChannel(vaccinationChannel);
+      supabase.removeChannel(healthPreventionChannel);
       supabase.removeChannel(sleepChannel);
       supabase.removeChannel(oralHealthChannel);
       supabase.removeChannel(vitalSignChannel);
       supabase.removeChannel(seizureChannel);
-      supabase.removeChannel(padChannel);
-      supabase.removeChannel(catheterChangeChannel);
+      supabase.removeChannel(continenceChannel);
+      supabase.removeChannel(catheterChannel);
       supabase.removeChannel(pressureChannel);
-      supabase.removeChannel(skinCheckChannel);
       supabase.removeChannel(mealtimeChannel);
       supabase.removeChannel(enteralChannel);
     };
-  }, []);
+  }, [profile?.id]);
 
   // Re-fetch profile-dependent statuses when profile loads from DB
   useEffect(() => {
