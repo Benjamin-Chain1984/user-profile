@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Printer, Download, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { ProfileAvatar } from '@/components/ideal/ProfileAvatar';
 import jsPDF from 'jspdf';
 
 /** Must match the key used by QRPosterSection */
@@ -179,6 +180,39 @@ export default function ClientPosterPage() {
       pdf.setTextColor(40);
       pdf.text('Scan to Access Profile', pw / 2, y, { align: 'center' });
       y += 8;
+
+      // Profile photo in PDF
+      if (client.photo_url) {
+        try {
+          const photoImg = new Image();
+          photoImg.crossOrigin = 'anonymous';
+          await new Promise<void>((resolve) => {
+            photoImg.onload = () => resolve();
+            photoImg.onerror = () => resolve();
+            photoImg.src = client.photo_url!;
+          });
+          if (photoImg.complete && photoImg.naturalWidth > 0) {
+            const photoCanvas = document.createElement('canvas');
+            const photoSize = 300;
+            photoCanvas.width = photoSize;
+            photoCanvas.height = photoSize;
+            const pCtx = photoCanvas.getContext('2d');
+            if (pCtx) {
+              pCtx.beginPath();
+              pCtx.arc(photoSize / 2, photoSize / 2, photoSize / 2, 0, Math.PI * 2);
+              pCtx.clip();
+              const minDim = Math.min(photoImg.naturalWidth, photoImg.naturalHeight);
+              const sx = (photoImg.naturalWidth - minDim) / 2;
+              const sy = (photoImg.naturalHeight - minDim) / 2;
+              pCtx.drawImage(photoImg, sx, sy, minDim, minDim, 0, 0, photoSize, photoSize);
+            }
+            const photoDataUrl = photoCanvas.toDataURL('image/png');
+            const photoPdfSize = 25;
+            pdf.addImage(photoDataUrl, 'PNG', (pw - photoPdfSize) / 2, y, photoPdfSize, photoPdfSize);
+            y += photoPdfSize + 4;
+          }
+        } catch { /* skip photo in PDF */ }
+      }
 
       pdf.setFontSize(16);
       pdf.setFont('helvetica', 'bold');
@@ -354,8 +388,11 @@ export default function ClientPosterPage() {
               Scan to Access Profile
             </h2>
 
-            {/* Client name */}
-            <h3 className="text-xl font-bold text-foreground text-center mb-4">{client.preferred_name}</h3>
+            {/* Client photo + name */}
+            <div className="flex flex-col items-center gap-2 mb-4">
+              <ProfileAvatar name={client.preferred_name} avatarUrl={client.photo_url || undefined} size="lg" />
+              <h3 className="text-xl font-bold text-foreground text-center">{client.preferred_name}</h3>
+            </div>
 
             {qrToken ? (
               <div className="flex flex-col items-center">
