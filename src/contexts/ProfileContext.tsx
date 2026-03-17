@@ -277,6 +277,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     pauseMonitoring,
     resumeMonitoring,
   } = useMonitoringStatus(profile?.id ?? null);
+  const { user } = useAuth();
 
   // Fetch profile from database
   const fetchProfileFromDb = async () => {
