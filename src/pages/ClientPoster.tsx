@@ -157,7 +157,7 @@ export default function ClientPosterPage() {
 
       const modules = [
         'Bowel care', 'Fluid balance', 'Pain', 'Sleep', 'Nutrition',
-        'Vital signs', 'Skin integrity', 'Medication support', 'Preventive health'
+        'Vital signs', 'Skin integrity', 'Preventive health'
       ];
       modules.forEach((mod) => {
         pdf.text(`•  ${mod}`, m + 4, y);
@@ -208,9 +208,7 @@ export default function ClientPosterPage() {
       pdf.setFontSize(9);
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(80);
-      pdf.text('Use your authorised device to scan this QR code.', pw / 2, y, { align: 'center' });
-      y += 4;
-      pdf.text('Access may require staff verification.', pw / 2, y, { align: 'center' });
+      pdf.text('Use your authorised device to scan this QR code to open the individual\'s IDEAL profile.', pw / 2, y, { align: 'center' });
       y += 8;
 
       // Client name + avatar area
@@ -253,20 +251,7 @@ export default function ClientPosterPage() {
         y += qrPdfSize + 6;
       }
 
-      // Instructions
-      const instructions = [
-        '1.  Scan the QR code with your phone camera',
-        '2.  Enter your verified phone number',
-        '3.  Enter the SMS verification code',
-        '4.  Access the individual\'s IDEAL profile',
-      ];
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(60);
-      instructions.forEach((line) => {
-        pdf.text(line, pw / 2, y, { align: 'center' });
-        y += 4.5;
-      });
+      // No step-by-step instructions in PDF
 
       // -- Footer --
       pdf.setDrawColor(200);
@@ -274,7 +259,7 @@ export default function ClientPosterPage() {
       pdf.setFontSize(7);
       pdf.setTextColor(130);
       pdf.text(
-        'Access is restricted to authorised staff only. Mobile devices are verified before access is granted.',
+        'Access is restricted to authorised staff only.',
         pw / 2, ph - m - 6, { align: 'center' }
       );
       pdf.text(
@@ -405,7 +390,7 @@ export default function ClientPosterPage() {
             </p>
             <p className="text-[10px] text-muted-foreground mb-1.5 font-medium">It helps monitor important health areas such as:</p>
             <div className="grid grid-cols-3 gap-x-4 gap-y-0.5 text-[9px] text-muted-foreground">
-              {['Bowel care', 'Fluid balance', 'Pain', 'Sleep', 'Nutrition', 'Vital signs', 'Skin integrity', 'Medication support', 'Preventive health'].map((item) => (
+              {['Bowel care', 'Fluid balance', 'Pain', 'Sleep', 'Nutrition', 'Vital signs', 'Skin integrity', 'Preventive health'].map((item) => (
                 <span key={item}>• {item}</span>
               ))}
             </div>
@@ -436,11 +421,8 @@ export default function ClientPosterPage() {
             <h2 className="text-sm font-bold text-foreground mb-1 text-center uppercase tracking-wide">
               Scan to Access Profile
             </h2>
-            <p className="text-[10px] text-muted-foreground text-center mb-1">
+            <p className="text-[10px] text-muted-foreground text-center mb-4">
               Use your authorised device to scan this QR code to open the individual's IDEAL profile.
-            </p>
-            <p className="text-[9px] text-muted-foreground text-center mb-4">
-              Access may require staff verification.
             </p>
 
             {/* Client identity */}
@@ -471,20 +453,13 @@ export default function ClientPosterPage() {
               </div>
             </div>
 
-            {/* Instructions */}
-            <div className="text-center space-y-0.5 text-[9px] text-muted-foreground mb-2">
-              <p className="font-medium text-foreground text-[10px] mb-1">How to access:</p>
-              <p>1. Scan the QR code with your phone camera</p>
-              <p>2. Enter your verified phone number</p>
-              <p>3. Enter the SMS verification code</p>
-              <p>4. Access the individual's IDEAL profile</p>
-            </div>
+            {/* No step-by-step instructions — kept minimal */}
           </div>
 
           {/* Footer */}
           <div className="border-t border-border pt-3 mt-auto">
             <p className="text-[8px] text-muted-foreground text-center leading-relaxed">
-              Access is restricted to authorised staff only. Mobile devices are verified before access is granted.
+              Access is restricted to authorised staff only.
             </p>
             <p className="text-[8px] text-muted-foreground text-center leading-relaxed">
               Follow organisational policies for privacy and confidentiality.
