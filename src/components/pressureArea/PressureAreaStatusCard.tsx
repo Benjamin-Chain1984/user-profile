@@ -275,11 +275,11 @@ function PressureReliefTile({
                   slot.completed ? 'text-green-600' :
                   isPast ? 'text-destructive font-medium' : 'text-muted-foreground'}`
                   }>
-                      {slot.completed ?
-                    `✓${slot.completedBy ? ` ${slot.completedBy}` : ''}` :
-                    isPast ?
-                    `Missed ${slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` :
-                    slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      {slot.completed && slot.completedAt
+                    ? `✓ ${format(parseISO(slot.completedAt), 'HH:mm')}${slot.completedBy ? ` ${slot.completedBy}` : ''}`
+                    : isPast
+                    ? `Missed ${slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                    : slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                     }
                     </span>
                   </div>);
