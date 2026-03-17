@@ -459,7 +459,7 @@ export default function ClientPosterPage() {
           {/* Footer */}
           <div className="border-t border-border pt-3 mt-auto">
             <p className="text-[8px] text-muted-foreground text-center leading-relaxed">
-              Access is restricted to authorised staff only. Mobile devices are verified before access is granted.
+              Access is restricted to authorised staff only.
             </p>
             <p className="text-[8px] text-muted-foreground text-center leading-relaxed">
               Follow organisational policies for privacy and confidentiality.
