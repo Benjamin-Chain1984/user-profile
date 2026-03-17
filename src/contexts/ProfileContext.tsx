@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useMonitoringStatus } from '@/hooks/useMonitoringStatus';
+import { useAuth } from '@/contexts/AuthContext';
 import type { MonitoringStatus, PauseReason, PauseEndType } from '@/types/monitoringStatus';
 import { 
   IndividualProfile, 
