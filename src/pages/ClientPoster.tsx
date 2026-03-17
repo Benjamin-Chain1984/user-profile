@@ -390,7 +390,7 @@ export default function ClientPosterPage() {
             </p>
             <p className="text-[10px] text-muted-foreground mb-1.5 font-medium">It helps monitor important health areas such as:</p>
             <div className="grid grid-cols-3 gap-x-4 gap-y-0.5 text-[9px] text-muted-foreground">
-              {['Bowel care', 'Fluid balance', 'Pain', 'Sleep', 'Nutrition', 'Vital signs', 'Skin integrity', 'Medication support', 'Preventive health'].map((item) => (
+              {['Bowel care', 'Fluid balance', 'Pain', 'Sleep', 'Nutrition', 'Vital signs', 'Skin integrity', 'Preventive health'].map((item) => (
                 <span key={item}>• {item}</span>
               ))}
             </div>
