@@ -729,14 +729,36 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     try {
       const { data: configData } = await supabase.from('catheter_config').select('*').limit(1).maybeSingle();
 
-      // Fetch care plan as source of truth
-      const { data: planData } = await supabase
+      // Fetch care plan as source of truth, preferring published and falling back to draft
+      let planQuery = supabase
         .from('catheter_care_plans')
-        .select('change_interval, flush_prescribed, flush_frequency, flush_custom_interval')
-        .eq('status', 'published')
+        .select('change_interval, flush_prescribed, flush_frequency, flush_custom_interval, status')
         .order('version', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(1);
+
+      if (profile?.id && profile.id !== '1') {
+        planQuery = planQuery.eq('client_id', profile.id);
+      } else {
+        planQuery = planQuery.is('client_id', null);
+      }
+
+      const { data: publishedPlan } = await planQuery.eq('status', 'published').maybeSingle();
+
+      let fallbackPlanQuery = supabase
+        .from('catheter_care_plans')
+        .select('change_interval, flush_prescribed, flush_frequency, flush_custom_interval, status')
+        .eq('status', 'draft')
+        .order('version', { ascending: false })
+        .limit(1);
+
+      if (profile?.id && profile.id !== '1') {
+        fallbackPlanQuery = fallbackPlanQuery.eq('client_id', profile.id);
+      } else {
+        fallbackPlanQuery = fallbackPlanQuery.is('client_id', null);
+      }
+
+      const { data: draftPlan } = publishedPlan ? { data: null } : await fallbackPlanQuery.maybeSingle();
+      const planData = publishedPlan || draftPlan;
 
       const { data: changes } = await supabase
         .from('catheter_change_logs')
@@ -748,23 +770,26 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         .from('catheter_flush_logs')
         .select('*')
         .order('event_occurred_at', { ascending: false })
-        .limit(5);
+        .limit(10);
 
       const { data: stomaChecks } = await supabase
         .from('catheter_stoma_checks')
         .select('*')
         .order('event_occurred_at', { ascending: false })
-        .limit(5);
+        .limit(10);
 
       const { data: alerts } = await supabase
         .from('catheter_alerts')
         .select('*')
-        .is('resolved_at', null);
+        .is('resolved_at', null)
+        .order('created_at', { ascending: false });
 
       const now = new Date();
       const lastChange = changes?.[0];
       const lastFlush = flushLogs?.[0];
       const lastStoma = stomaChecks?.[0];
+      const activeAlerts = alerts || [];
+      const latestActiveAlert = activeAlerts[0];
 
       // Parse change interval from care plan
       let changeFrequencyDays = configData?.change_frequency_days || 0;
@@ -784,10 +809,10 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       if (lastChange && changeFrequencyDays > 0) {
         const nextChange = addDays(parseISO(lastChange.event_occurred_at), changeFrequencyDays);
         daysUntilChange = differenceInDays(nextChange, now);
-        isChangeOverdue = daysUntilChange < 0;
+        isChangeOverdue = nextChange.getTime() < now.getTime();
       }
 
-      // Parse flush frequency — must match module logic (parseFlushFrequencyToHours)
+      // Parse flush frequency
       let flushFrequencyHours: number | null = null;
       if (planData?.flush_prescribed && planData.flush_frequency) {
         const freq = planData.flush_frequency.toLowerCase();
@@ -811,7 +836,6 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
             }
           }
         }
-        // 'prn' or 'as_needed' alone → no scheduled frequency, leave null
       }
       if (!flushFrequencyHours && configData?.flush_frequency_hours) {
         flushFrequencyHours = configData.flush_frequency_hours;
@@ -820,7 +844,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       let isFlushOverdue = false;
       if (flushFrequencyHours && lastFlush) {
         const nextFlush = addHours(parseISO(lastFlush.event_occurred_at), flushFrequencyHours);
-        isFlushOverdue = differenceInDays(nextFlush, now) < 0;
+        isFlushOverdue = nextFlush.getTime() < now.getTime();
       }
 
       // Stoma concern — use dynamic calculation (same as tile) to account for overdue
@@ -833,23 +857,30 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         ? calculateStomaStatusLevel(stomaFindings, stomaPainLevel, hoursSinceStoma)
         : 'green';
 
+      const hasRedAlert = activeAlerts.some(alert => alert.severity === 'red');
+      const hasAmberAlert = activeAlerts.some(alert => alert.severity === 'amber');
+
       let status: 'stable' | 'monitor' | 'action' = 'stable';
       let message = 'Catheter management on track.';
 
       // RED hierarchy first
-      if (isChangeOverdue || isFlushOverdue || dynamicStomaStatus === 'red') {
+      if (hasRedAlert || isChangeOverdue || isFlushOverdue || dynamicStomaStatus === 'red') {
         status = 'action';
-        if (isChangeOverdue) message = `Catheter change overdue by ${Math.abs(daysUntilChange!)} days.`;
+        if (hasRedAlert) message = latestActiveAlert?.message || 'Catheter alert requires immediate action.';
+        else if (isChangeOverdue) message = `Catheter change overdue by ${Math.abs(daysUntilChange ?? 0)} days.`;
         else if (isFlushOverdue) message = 'Catheter flush overdue – action required.';
         else message = 'Stoma site concern – escalate to clinician.';
       // AMBER hierarchy second
-      } else if ((daysUntilChange !== null && daysUntilChange <= 3) || dynamicStomaStatus === 'amber') {
+      } else if (hasAmberAlert || (daysUntilChange !== null && daysUntilChange <= 3) || dynamicStomaStatus === 'amber') {
         status = 'monitor';
-        if (dynamicStomaStatus === 'amber') message = 'Stoma site requires monitoring – recheck within 24 hours.';
+        if (hasAmberAlert) message = latestActiveAlert?.message || 'Catheter requires follow-up.';
+        else if (dynamicStomaStatus === 'amber') message = 'Stoma site requires monitoring – recheck within 24 hours.';
         else if (daysUntilChange !== null && daysUntilChange <= 3) message = `Catheter change due in ${daysUntilChange} day(s).`;
       }
 
-      setLatestCatheterData({ status, message, timestamp: lastChange?.event_occurred_at || new Date().toISOString() });
+      const latestTimestamp = latestActiveAlert?.created_at || lastStoma?.event_occurred_at || lastFlush?.event_occurred_at || lastChange?.event_occurred_at || new Date().toISOString();
+      setLatestCatheterData({ status, message, timestamp: latestTimestamp });
+
       const timeAgo = lastChange ? formatDistanceToNow(new Date(lastChange.event_occurred_at), { addSuffix: true }) : 'Never';
       updateModuleStatus('catheter', status, lastChange ? `Last change ${timeAgo}` : 'Not yet logged');
     } catch (err) { console.error('Error in fetchCatheterStatus:', err); }
@@ -1024,76 +1055,100 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
     // ── Realtime Subscriptions ────────────────────────────────
     const painChannel = supabase.channel('pain-alerts')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'abbey_pain_assessments' }, () => fetchLatestPainAssessment())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'abbey_pain_assessments' }, () => fetchLatestPainAssessment())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'painad_assessments' }, () => fetchLatestPainAssessment())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'abbey_pain_config' }, () => fetchLatestPainAssessment())
       .subscribe();
 
     const bowelChannel = supabase.channel('bowel-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bowel_log_entries' }, () => fetchBowelCareStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bowel_care_config' }, () => fetchBowelCareStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bowel_care_alerts' }, () => fetchBowelCareStatus())
       .subscribe();
 
     const weightChannel = supabase.channel('weight-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'weight_entries' }, () => fetchWeightStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'weight_bmi_alerts' }, () => fetchWeightStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'weight_bmi_config' }, () => fetchWeightStatus())
       .subscribe();
 
     const fluidChannel = supabase.channel('fluid-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'fluid_intake_entries' }, () => fetchFluidStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'fluid_output_entries' }, () => fetchFluidStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'fluid_config' }, () => fetchFluidStatus())
       .subscribe();
 
     const profileChannel = supabase.channel('profile-updates')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'clients' }, () => fetchProfileFromDb())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, () => fetchProfileFromDb())
       .subscribe();
 
-    const screeningChannel = supabase.channel('screening-alerts')
+    const healthPreventionChannel = supabase.channel('health-prevention-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cancer_screening_records' }, () => fetchHealthPreventionStatus())
-      .subscribe();
-
-    const vaccinationChannel = supabase.channel('vaccination-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'vaccination_records' }, () => fetchHealthPreventionStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'annual_health_assessment_records' }, () => fetchHealthPreventionStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'health_prevention_config' }, () => fetchHealthPreventionStatus())
       .subscribe();
 
     const sleepChannel = supabase.channel('sleep-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'sleep_entries' }, () => fetchSleepStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sleep_config' }, () => fetchSleepStatus())
       .subscribe();
 
     const oralHealthChannel = supabase.channel('oral-health-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'oral_health_assessments' }, () => fetchOralHealthStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'oral_health_task_logs' }, () => fetchOralHealthStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'oral_health_config' }, () => fetchOralHealthStatus())
       .subscribe();
 
     const vitalSignChannel = supabase.channel('vital-sign-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'vital_sign_entries' }, () => fetchHealthMonitoringStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'vital_sign_alerts' }, () => fetchHealthMonitoringStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'vital_sign_altered_criteria' }, () => fetchHealthMonitoringStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'vital_sign_config' }, () => fetchHealthMonitoringStatus())
       .subscribe();
 
-    // New module subscriptions
     const seizureChannel = supabase.channel('seizure-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'seizure_events' }, () => fetchEpilepsyStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'epilepsy_alerts' }, () => fetchEpilepsyStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'epilepsy_config' }, () => fetchEpilepsyStatus())
       .subscribe();
 
-    const padChannel = supabase.channel('pad-alerts')
+    const continenceChannel = supabase.channel('continence-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'continence_pad_changes' }, () => fetchContinenceStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'continence_skin_checks' }, () => fetchContinenceStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'continence_uti_tests' }, () => fetchContinenceStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'continence_consumables_checks' }, () => fetchContinenceStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'continence_config' }, () => fetchContinenceStatus())
       .subscribe();
 
-    const catheterChangeChannel = supabase.channel('catheter-change-alerts')
+    const catheterChannel = supabase.channel('catheter-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'catheter_change_logs' }, () => fetchCatheterStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'catheter_flush_logs' }, () => fetchCatheterStatus())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'catheter_stoma_checks' }, () => fetchCatheterStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'catheter_alerts' }, () => fetchCatheterStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'catheter_config' }, () => fetchCatheterStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'catheter_care_plans' }, () => fetchCatheterStatus())
       .subscribe();
 
     const pressureChannel = supabase.channel('pressure-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'pressure_relief_events' }, () => fetchPressureAreaStatus())
-      .subscribe();
-
-    const skinCheckChannel = supabase.channel('skin-check-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'skin_check_sessions' }, () => fetchPressureAreaStatus())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'skin_finding_markers' }, () => fetchPressureAreaStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pressure_area_config' }, () => fetchPressureAreaStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pressure_relief_plans' }, () => fetchPressureAreaStatus())
       .subscribe();
 
     const mealtimeChannel = supabase.channel('mealtime-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'mealtime_observations' }, () => fetchIddsiStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'iddsi_config' }, () => fetchIddsiStatus())
       .subscribe();
 
     const enteralChannel = supabase.channel('enteral-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'enteral_feed_logs' }, () => fetchEnteralStatus())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'enteral_flush_logs' }, () => fetchEnteralStatus())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'enteral_stoma_checks' }, () => fetchEnteralStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'enteral_medication_logs' }, () => fetchEnteralStatus())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'enteral_config' }, () => fetchEnteralStatus())
       .subscribe();
 
     return () => {
@@ -1102,20 +1157,18 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       supabase.removeChannel(weightChannel);
       supabase.removeChannel(fluidChannel);
       supabase.removeChannel(profileChannel);
-      supabase.removeChannel(screeningChannel);
-      supabase.removeChannel(vaccinationChannel);
+      supabase.removeChannel(healthPreventionChannel);
       supabase.removeChannel(sleepChannel);
       supabase.removeChannel(oralHealthChannel);
       supabase.removeChannel(vitalSignChannel);
       supabase.removeChannel(seizureChannel);
-      supabase.removeChannel(padChannel);
-      supabase.removeChannel(catheterChangeChannel);
+      supabase.removeChannel(continenceChannel);
+      supabase.removeChannel(catheterChannel);
       supabase.removeChannel(pressureChannel);
-      supabase.removeChannel(skinCheckChannel);
       supabase.removeChannel(mealtimeChannel);
       supabase.removeChannel(enteralChannel);
     };
-  }, []);
+  }, [profile?.id]);
 
   // Re-fetch profile-dependent statuses when profile loads from DB
   useEffect(() => {
