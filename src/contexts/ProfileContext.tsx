@@ -1046,19 +1046,47 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   // ── Pressure Area Prevention ─────────────────────────────────
   const fetchPressureAreaStatus = async () => {
     try {
+      const hasActiveClient = Boolean(profile?.id && profile.id !== '1');
+      const activeClientId = hasActiveClient ? profile!.id : null;
+
+      const pressureAreaConfigQuery = (() => {
+        let query = supabase.from('pressure_area_config').select('*').limit(1);
+        return activeClientId ? query.eq('client_id', activeClientId).maybeSingle() : query.is('client_id', null).maybeSingle();
+      })();
+
+      const pressureReliefEventsQuery = (() => {
+        let query = supabase
+          .from('pressure_relief_events')
+          .select('*')
+          .order('event_occurred_at', { ascending: false })
+          .limit(50);
+        return activeClientId ? query.eq('client_id', activeClientId) : query.is('client_id', null);
+      })();
+
+      const skinCheckSessionsQuery = (() => {
+        let query = supabase
+          .from('skin_check_sessions')
+          .select('*, skin_finding_markers(*)')
+          .order('event_occurred_at', { ascending: false })
+          .limit(200);
+        return activeClientId ? query.eq('client_id', activeClientId) : query.is('client_id', null);
+      })();
+
+      const pressureReliefPlanQuery = (() => {
+        let query = supabase
+          .from('pressure_relief_plans')
+          .select('*')
+          .eq('status', 'published')
+          .order('version', { ascending: false })
+          .limit(1);
+        return activeClientId ? query.eq('client_id', activeClientId).maybeSingle() : query.is('client_id', null).maybeSingle();
+      })();
+
       const [configResult, eventsResult, skinChecksResult, planResult] = await Promise.all([
-        supabase.from('pressure_area_config').select('*').limit(1).maybeSingle(),
-        supabase.from('pressure_relief_events').select('*').order('event_occurred_at', { ascending: false }).limit(50),
-        supabase.from('skin_check_sessions').select('*, skin_finding_markers(*)').order('event_occurred_at', { ascending: false }).limit(200),
-        (() => {
-          let query = supabase
-            .from('pressure_relief_plans')
-            .select('*')
-            .eq('status', 'published')
-            .order('version', { ascending: false })
-            .limit(1);
-          return profile?.id && profile.id !== '1' ? query.eq('client_id', profile.id).maybeSingle() : query.is('client_id', null).maybeSingle();
-        })(),
+        pressureAreaConfigQuery,
+        pressureReliefEventsQuery,
+        skinCheckSessionsQuery,
+        pressureReliefPlanQuery,
       ]);
 
       const configData = configResult.data;
