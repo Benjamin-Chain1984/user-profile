@@ -1,0 +1,1 @@
+ALTER TABLE public.pressure_relief_events ADD COLUMN scheduled_time text DEFAULT NULL;

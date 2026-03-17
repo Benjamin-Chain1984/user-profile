@@ -10,7 +10,7 @@ import { StatusBadge } from '@/components/ideal/StatusBadge';
 import { usePressureReliefEvents, useSkinChecks, usePressureAreaConfig } from '@/hooks/usePressureArea';
 import { usePressureReliefPlan } from '@/hooks/usePressureReliefPlan';
 import { RotateCcw, Eye, CheckCircle2, Clock, Timer, AlertCircle } from 'lucide-react';
-import { differenceInMinutes, differenceInDays, formatDistanceToNow, addMinutes } from 'date-fns';
+import { differenceInMinutes, differenceInDays, formatDistanceToNow, addMinutes, format, parseISO } from 'date-fns';
 import type { HealthStatus } from '@/types/ideal';
 import type { RotationPosition, SkinCheckSession } from '@/types/pressureArea';
 import { getPositionsForDay } from '@/types/pressureArea';
@@ -70,7 +70,7 @@ function PressureReliefTile({
 
     if (!hasPlan || positions.length === 0) {
       return {
-        upcomingSlots: [] as {position: string;dueAt: Date;completed: boolean;completedBy?: string;}[],
+        upcomingSlots: [] as {position: string;dueAt: Date;completed: boolean;completedBy?: string;completedAt?: string;}[],
         minutesUntilNext: 0,
         hasPastDueSlot: false,
         status: !plan || plan.status === 'draft' ? 'monitor' as HealthStatus : 'stable' as HealthStatus,
@@ -104,20 +104,44 @@ function PressureReliefTile({
     });
 
     // Generate scheduled slots from the plan's rotation sequence for today
-    const slots: {position: string;dueAt: Date;completed: boolean;completedBy?: string;}[] = [];
+    // Track which events have already been matched to avoid double-counting
+    const usedEventIds = new Set<string>();
+    const slots: {position: string;dueAt: Date;completed: boolean;completedBy?: string;completedAt?: string;}[] = [];
     let cumulativeMinutes = 0;
     for (let i = 0; i < positions.length; i++) {
       const dueAt = addMinutes(todayBase, cumulativeMinutes);
-      const matchingEvent = todayEvents.find((e) => {
-        const eventTime = new Date(e.event_occurred_at);
-        return e.position_completed === positions[i].name &&
-        Math.abs(differenceInMinutes(eventTime, dueAt)) < intervalMinutes / 2;
-      });
+      const timeStr = `${String(dueAt.getHours()).padStart(2, '0')}:${String(dueAt.getMinutes()).padStart(2, '0')}`;
+
+      // 1. Exact match on scheduled_time field (like skin checks)
+      let matchingEvent = todayEvents.find((e) => !usedEventIds.has(e.id) && (e as any).scheduled_time === timeStr);
+
+      // 2. Fallback: position name + time proximity
+      if (!matchingEvent) {
+        matchingEvent = todayEvents.find((e) => {
+          if (usedEventIds.has(e.id)) return false;
+          const eventTime = new Date(e.event_occurred_at);
+          return e.position_completed === positions[i].name &&
+          Math.abs(differenceInMinutes(eventTime, dueAt)) < intervalMinutes / 2;
+        });
+      }
+
+      // 3. Fallback: any event within ±2 hours of the slot (generous matching)
+      if (!matchingEvent) {
+        matchingEvent = todayEvents.find((e) => {
+          if (usedEventIds.has(e.id)) return false;
+          const eventTime = new Date(e.event_occurred_at);
+          return Math.abs(differenceInMinutes(eventTime, dueAt)) <= 120;
+        });
+      }
+
+      if (matchingEvent) usedEventIds.add(matchingEvent.id);
+
       slots.push({
         position: positions[i].name,
         dueAt,
         completed: !!matchingEvent,
-        completedBy: matchingEvent?.completed_by_name || undefined
+        completedBy: matchingEvent?.completed_by_name || undefined,
+        completedAt: matchingEvent?.event_occurred_at || undefined,
       });
       cumulativeMinutes += positions[i].target_duration_minutes || intervalMinutes;
     }
@@ -251,11 +275,11 @@ function PressureReliefTile({
                   slot.completed ? 'text-green-600' :
                   isPast ? 'text-destructive font-medium' : 'text-muted-foreground'}`
                   }>
-                      {slot.completed ?
-                    `✓${slot.completedBy ? ` ${slot.completedBy}` : ''}` :
-                    isPast ?
-                    `Missed ${slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` :
-                    slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      {slot.completed && slot.completedAt
+                    ? `✓ ${format(parseISO(slot.completedAt), 'HH:mm')}${slot.completedBy ? ` ${slot.completedBy}` : ''}`
+                    : isPast
+                    ? `Missed ${slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                    : slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                     }
                     </span>
                   </div>);

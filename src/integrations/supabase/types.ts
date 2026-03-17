@@ -4593,6 +4593,7 @@ export type Database = {
           notes: string | null
           position_completed: string
           position_recommended: string | null
+          scheduled_time: string | null
         }
         Insert: {
           client_id?: string | null
@@ -4612,6 +4613,7 @@ export type Database = {
           notes?: string | null
           position_completed: string
           position_recommended?: string | null
+          scheduled_time?: string | null
         }
         Update: {
           client_id?: string | null
@@ -4631,6 +4633,7 @@ export type Database = {
           notes?: string | null
           position_completed?: string
           position_recommended?: string | null
+          scheduled_time?: string | null
         }
         Relationships: [
           {

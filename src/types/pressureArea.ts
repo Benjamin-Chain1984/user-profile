@@ -161,6 +161,7 @@ export interface PressureReliefEvent {
   position_completed: string;
   position_recommended: string | null;
   event_occurred_at: string;
+  scheduled_time: string | null;
   issues: string[];
   issue_details: string | null;
   escalation_required: boolean;

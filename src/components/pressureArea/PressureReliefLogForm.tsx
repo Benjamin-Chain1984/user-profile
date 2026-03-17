@@ -105,6 +105,7 @@ export function PressureReliefLogForm({ clientId, open, onOpenChange }: Props) {
       position_completed: positionCompleted || recommendedPosition || 'Not specified',
       position_recommended: recommendedPosition || null,
       event_occurred_at: new Date().toISOString(),
+      scheduled_time: selectedScheduledTime && selectedScheduledTime !== 'other' ? selectedScheduledTime : null,
       issues: selectedIssues,
       issue_details: issueDetails || null,
       escalation_required: showEscalation,
