@@ -105,6 +105,91 @@ function getPainAlertMessage(severity: PainSeverity, score: number): string {
   }
 }
 
+const STATUS_PRIORITY: Record<ModuleAlertData['status'], number> = {
+  stable: 0,
+  monitor: 1,
+  action: 2,
+};
+
+function getHighestPriorityModuleData(
+  ...candidates: Array<ModuleAlertData | null | undefined>
+): ModuleAlertData | null {
+  const validCandidates = candidates.filter(Boolean) as ModuleAlertData[];
+  if (validCandidates.length === 0) return null;
+
+  return [...validCandidates].sort((a, b) => {
+    const priorityDiff = STATUS_PRIORITY[b.status] - STATUS_PRIORITY[a.status];
+    if (priorityDiff !== 0) return priorityDiff;
+    return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+  })[0];
+}
+
+function buildPlanStatusAlert(
+  moduleLabel: string,
+  plan: { status?: string | null; published_at?: string | null; next_review_due?: string | null } | null | undefined,
+  hasAcknowledged = true
+): ModuleAlertData | null {
+  if (!plan || plan.status !== 'published') return null;
+
+  const now = new Date();
+  const baseTimestamp = plan.published_at || now.toISOString();
+
+  if (!hasAcknowledged) {
+    return {
+      status: 'monitor',
+      message: `${moduleLabel} plan acknowledgement required.`,
+      timestamp: baseTimestamp,
+    };
+  }
+
+  if (plan.next_review_due) {
+    const reviewDate = new Date(plan.next_review_due);
+    const daysUntilReview = differenceInDays(reviewDate, now);
+
+    if (daysUntilReview < 0) {
+      return {
+        status: 'action',
+        message: `${moduleLabel} plan review is overdue by ${Math.abs(daysUntilReview)} day${Math.abs(daysUntilReview) === 1 ? '' : 's'}.`,
+        timestamp: reviewDate.toISOString(),
+      };
+    }
+
+    if (daysUntilReview <= 30) {
+      return {
+        status: 'monitor',
+        message: `${moduleLabel} plan review due in ${daysUntilReview} day${daysUntilReview === 1 ? '' : 's'}.`,
+        timestamp: reviewDate.toISOString(),
+      };
+    }
+  }
+
+  return null;
+}
+
+function buildPressureAreaDailySkinCheckAlert(
+  config: { skin_check_times?: string[] | null; skin_checks_per_day?: number | null } | null | undefined,
+  skinChecks: Array<{ event_occurred_at: string }>
+): ModuleAlertData | null {
+  const scheduledTimes = config?.skin_check_times || [];
+  const checksPerDay = config?.skin_checks_per_day || 0;
+
+  if (checksPerDay === 0 || scheduledTimes.length === 0) return null;
+
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const hasTodayCheck = skinChecks.some((check) => new Date(check.event_occurred_at) >= todayStart);
+
+  if (!hasTodayCheck) {
+    return {
+      status: 'monitor',
+      message: 'Daily skin check pending – no skin check recorded today.',
+      timestamp: now.toISOString(),
+    };
+  }
+
+  return null;
+}
+
 // ── Module ID → alert data map ────────────────────────────────
 type ModuleAlertMap = Record<string, ModuleAlertData | undefined>;
 
