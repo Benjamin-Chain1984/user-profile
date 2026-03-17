@@ -162,25 +162,6 @@ export function PressureReliefLogForm({ clientId, open, onOpenChange }: Props) {
             </div>
           )}
 
-          <div>
-            <Label>Position Completed</Label>
-            {positions.length > 0 ? (
-              <Select value={positionCompleted} onValueChange={setPositionCompleted}>
-                <SelectTrigger><SelectValue placeholder="Select position" /></SelectTrigger>
-                <SelectContent>
-                  {[...new Map(positions.map(p => [p.name, p])).values()].map((p, i) => (
-                    <SelectItem key={p.id || `pos-${i}`} value={p.name}>{p.name}</SelectItem>
-                  ))}
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            ) : (
-              <Input value={positionCompleted} onChange={e => setPositionCompleted(e.target.value)} placeholder="Position completed" />
-            )}
-            {recommendedPosition && (
-              <p className="text-xs text-muted-foreground mt-1">Recommended: {recommendedPosition}</p>
-            )}
-          </div>
 
           {/* Issues */}
           <div>
