@@ -1046,22 +1046,37 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   // ── Pressure Area Prevention ─────────────────────────────────
   const fetchPressureAreaStatus = async () => {
     try {
-      const { data: configData } = await supabase.from('pressure_area_config').select('*').limit(1).maybeSingle();
-      const { data: events } = await supabase.from('pressure_relief_events').select('*').order('event_occurred_at', { ascending: false }).limit(50);
-      const { data: skinChecks } = await supabase
-        .from('skin_check_sessions')
-        .select('*, skin_finding_markers(*)')
-        .order('event_occurred_at', { ascending: false })
-        .limit(200);
+      const [configResult, eventsResult, skinChecksResult, planResult] = await Promise.all([
+        supabase.from('pressure_area_config').select('*').limit(1).maybeSingle(),
+        supabase.from('pressure_relief_events').select('*').order('event_occurred_at', { ascending: false }).limit(50),
+        supabase.from('skin_check_sessions').select('*, skin_finding_markers(*)').order('event_occurred_at', { ascending: false }).limit(200),
+        (() => {
+          let query = supabase
+            .from('pressure_relief_plans')
+            .select('*')
+            .eq('status', 'published')
+            .order('version', { ascending: false })
+            .limit(1);
+          return profile?.id && profile.id !== '1' ? query.eq('client_id', profile.id).maybeSingle() : query.is('client_id', null).maybeSingle();
+        })(),
+      ]);
 
-      // Fetch published plan
-      const { data: planData } = await supabase
-        .from('pressure_relief_plans')
-        .select('*')
-        .eq('status', 'published')
-        .order('version', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const configData = configResult.data;
+      const events = eventsResult.data;
+      const skinChecks = skinChecksResult.data;
+      const planData = planResult.data;
+
+      let hasAcknowledgedPlan = true;
+      if (planData?.id && planData?.version && user?.id) {
+        const { data: acknowledgement } = await supabase
+          .from('pressure_relief_plan_acknowledgements')
+          .select('id')
+          .eq('plan_id', planData.id)
+          .eq('plan_version', planData.version)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        hasAcknowledgedPlan = !!acknowledgement;
+      }
 
       const typedEvents = (events || []) as unknown as PressureReliefEvent[];
       const typedSkinChecks = (skinChecks || []) as unknown as (SkinCheckSession & { skin_finding_markers?: SkinFindingMarker[] })[];
@@ -1076,12 +1091,20 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           skin_checks_per_day: (configData as any).skin_checks_per_day ?? 0,
           skin_check_times: (configData as any).skin_check_times ?? [],
         } : null,
-        planAcknowledged: true,
+        planAcknowledged: hasAcknowledgedPlan,
       });
 
-      const moduleStatus = statusResult.status === 'ideal' ? 'stable' : statusResult.status;
-      setLatestPressureAreaData({ status: moduleStatus, message: statusResult.message, timestamp: typedEvents[0]?.event_occurred_at || new Date().toISOString() });
-      updateModuleStatus('pressure-area', moduleStatus, statusResult.lastEntry || 'Not yet logged');
+      const clinicalData: ModuleAlertData = {
+        status: statusResult.status === 'ideal' ? 'stable' : statusResult.status,
+        message: statusResult.message,
+        timestamp: typedEvents[0]?.event_occurred_at || typedSkinChecks[0]?.event_occurred_at || new Date().toISOString(),
+      };
+      const planAlertData = buildPlanStatusAlert('Pressure Area Prevention', planData, hasAcknowledgedPlan);
+      const dailySkinCheckAlert = buildPressureAreaDailySkinCheckAlert(configData as any, typedSkinChecks);
+      const finalData = getHighestPriorityModuleData(clinicalData, planAlertData, dailySkinCheckAlert) || clinicalData;
+
+      setLatestPressureAreaData(finalData);
+      updateModuleStatus('pressure-area', finalData.status, finalData.status === 'stable' ? (statusResult.lastEntry || 'Not yet logged') : finalData.message);
     } catch (err) { console.error('Error in fetchPressureAreaStatus:', err); }
   };
 
