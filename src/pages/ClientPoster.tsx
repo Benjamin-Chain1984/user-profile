@@ -251,20 +251,7 @@ export default function ClientPosterPage() {
         y += qrPdfSize + 6;
       }
 
-      // Instructions
-      const instructions = [
-        '1.  Scan the QR code with your phone camera',
-        '2.  Enter your verified phone number',
-        '3.  Enter the SMS verification code',
-        '4.  Access the individual\'s IDEAL profile',
-      ];
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(60);
-      instructions.forEach((line) => {
-        pdf.text(line, pw / 2, y, { align: 'center' });
-        y += 4.5;
-      });
+      // No step-by-step instructions in PDF
 
       // -- Footer --
       pdf.setDrawColor(200);
