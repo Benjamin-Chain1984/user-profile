@@ -96,13 +96,14 @@ export function SkinCheckForm({ clientId, open, onOpenChange }: Props) {
             <div>
               <Label>Which scheduled skin check is this for?</Label>
               <Select value={selectedScheduledTime} onValueChange={setSelectedScheduledTime}>
-                <SelectTrigger className="w-48 mt-1">
+                <SelectTrigger className="w-full mt-1">
                   <SelectValue placeholder="Select time" />
                 </SelectTrigger>
                 <SelectContent>
                   {scheduledTimes.map(time => (
                     <SelectItem key={time} value={time}>{time} Skin Check</SelectItem>
                   ))}
+                  <SelectItem value="other">Other (outside schedule)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
