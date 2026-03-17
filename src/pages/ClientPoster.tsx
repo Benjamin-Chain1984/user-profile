@@ -453,14 +453,7 @@ export default function ClientPosterPage() {
               </div>
             </div>
 
-            {/* Instructions */}
-            <div className="text-center space-y-0.5 text-[9px] text-muted-foreground mb-2">
-              <p className="font-medium text-foreground text-[10px] mb-1">How to access:</p>
-              <p>1. Scan the QR code with your phone camera</p>
-              <p>2. Enter your verified phone number</p>
-              <p>3. Enter the SMS verification code</p>
-              <p>4. Access the individual's IDEAL profile</p>
-            </div>
+            {/* No step-by-step instructions — kept minimal */}
           </div>
 
           {/* Footer */}
