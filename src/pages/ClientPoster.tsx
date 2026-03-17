@@ -370,7 +370,6 @@ export default function ClientPosterPage() {
                 </div>
               </div>
             ) : (
-              /* ── Fallback — no QR available ── */}
               <Card className="mx-auto max-w-sm border-dashed border-2 border-muted-foreground/30">
                 <CardContent className="flex flex-col items-center gap-3 py-6">
                   <AlertTriangle className="h-8 w-8 text-muted-foreground" />
