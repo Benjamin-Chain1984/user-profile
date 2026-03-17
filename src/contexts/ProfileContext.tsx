@@ -729,14 +729,36 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     try {
       const { data: configData } = await supabase.from('catheter_config').select('*').limit(1).maybeSingle();
 
-      // Fetch care plan as source of truth
-      const { data: planData } = await supabase
+      // Fetch care plan as source of truth, preferring published and falling back to draft
+      let planQuery = supabase
         .from('catheter_care_plans')
-        .select('change_interval, flush_prescribed, flush_frequency, flush_custom_interval')
-        .eq('status', 'published')
+        .select('change_interval, flush_prescribed, flush_frequency, flush_custom_interval, status')
         .order('version', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(1);
+
+      if (profile?.id && profile.id !== '1') {
+        planQuery = planQuery.eq('client_id', profile.id);
+      } else {
+        planQuery = planQuery.is('client_id', null);
+      }
+
+      const { data: publishedPlan } = await planQuery.eq('status', 'published').maybeSingle();
+
+      let fallbackPlanQuery = supabase
+        .from('catheter_care_plans')
+        .select('change_interval, flush_prescribed, flush_frequency, flush_custom_interval, status')
+        .eq('status', 'draft')
+        .order('version', { ascending: false })
+        .limit(1);
+
+      if (profile?.id && profile.id !== '1') {
+        fallbackPlanQuery = fallbackPlanQuery.eq('client_id', profile.id);
+      } else {
+        fallbackPlanQuery = fallbackPlanQuery.is('client_id', null);
+      }
+
+      const { data: draftPlan } = publishedPlan ? { data: null } : await fallbackPlanQuery.maybeSingle();
+      const planData = publishedPlan || draftPlan;
 
       const { data: changes } = await supabase
         .from('catheter_change_logs')
@@ -748,23 +770,26 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         .from('catheter_flush_logs')
         .select('*')
         .order('event_occurred_at', { ascending: false })
-        .limit(5);
+        .limit(10);
 
       const { data: stomaChecks } = await supabase
         .from('catheter_stoma_checks')
         .select('*')
         .order('event_occurred_at', { ascending: false })
-        .limit(5);
+        .limit(10);
 
       const { data: alerts } = await supabase
         .from('catheter_alerts')
         .select('*')
-        .is('resolved_at', null);
+        .is('resolved_at', null)
+        .order('created_at', { ascending: false });
 
       const now = new Date();
       const lastChange = changes?.[0];
       const lastFlush = flushLogs?.[0];
       const lastStoma = stomaChecks?.[0];
+      const activeAlerts = alerts || [];
+      const latestActiveAlert = activeAlerts[0];
 
       // Parse change interval from care plan
       let changeFrequencyDays = configData?.change_frequency_days || 0;
@@ -784,10 +809,10 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       if (lastChange && changeFrequencyDays > 0) {
         const nextChange = addDays(parseISO(lastChange.event_occurred_at), changeFrequencyDays);
         daysUntilChange = differenceInDays(nextChange, now);
-        isChangeOverdue = daysUntilChange < 0;
+        isChangeOverdue = nextChange.getTime() < now.getTime();
       }
 
-      // Parse flush frequency — must match module logic (parseFlushFrequencyToHours)
+      // Parse flush frequency
       let flushFrequencyHours: number | null = null;
       if (planData?.flush_prescribed && planData.flush_frequency) {
         const freq = planData.flush_frequency.toLowerCase();
@@ -811,7 +836,6 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
             }
           }
         }
-        // 'prn' or 'as_needed' alone → no scheduled frequency, leave null
       }
       if (!flushFrequencyHours && configData?.flush_frequency_hours) {
         flushFrequencyHours = configData.flush_frequency_hours;
@@ -820,7 +844,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       let isFlushOverdue = false;
       if (flushFrequencyHours && lastFlush) {
         const nextFlush = addHours(parseISO(lastFlush.event_occurred_at), flushFrequencyHours);
-        isFlushOverdue = differenceInDays(nextFlush, now) < 0;
+        isFlushOverdue = nextFlush.getTime() < now.getTime();
       }
 
       // Stoma concern — use dynamic calculation (same as tile) to account for overdue
@@ -833,23 +857,30 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         ? calculateStomaStatusLevel(stomaFindings, stomaPainLevel, hoursSinceStoma)
         : 'green';
 
+      const hasRedAlert = activeAlerts.some(alert => alert.severity === 'red');
+      const hasAmberAlert = activeAlerts.some(alert => alert.severity === 'amber');
+
       let status: 'stable' | 'monitor' | 'action' = 'stable';
       let message = 'Catheter management on track.';
 
       // RED hierarchy first
-      if (isChangeOverdue || isFlushOverdue || dynamicStomaStatus === 'red') {
+      if (hasRedAlert || isChangeOverdue || isFlushOverdue || dynamicStomaStatus === 'red') {
         status = 'action';
-        if (isChangeOverdue) message = `Catheter change overdue by ${Math.abs(daysUntilChange!)} days.`;
+        if (hasRedAlert) message = latestActiveAlert?.message || 'Catheter alert requires immediate action.';
+        else if (isChangeOverdue) message = `Catheter change overdue by ${Math.abs(daysUntilChange ?? 0)} days.`;
         else if (isFlushOverdue) message = 'Catheter flush overdue – action required.';
         else message = 'Stoma site concern – escalate to clinician.';
       // AMBER hierarchy second
-      } else if ((daysUntilChange !== null && daysUntilChange <= 3) || dynamicStomaStatus === 'amber') {
+      } else if (hasAmberAlert || (daysUntilChange !== null && daysUntilChange <= 3) || dynamicStomaStatus === 'amber') {
         status = 'monitor';
-        if (dynamicStomaStatus === 'amber') message = 'Stoma site requires monitoring – recheck within 24 hours.';
+        if (hasAmberAlert) message = latestActiveAlert?.message || 'Catheter requires follow-up.';
+        else if (dynamicStomaStatus === 'amber') message = 'Stoma site requires monitoring – recheck within 24 hours.';
         else if (daysUntilChange !== null && daysUntilChange <= 3) message = `Catheter change due in ${daysUntilChange} day(s).`;
       }
 
-      setLatestCatheterData({ status, message, timestamp: lastChange?.event_occurred_at || new Date().toISOString() });
+      const latestTimestamp = latestActiveAlert?.created_at || lastStoma?.event_occurred_at || lastFlush?.event_occurred_at || lastChange?.event_occurred_at || new Date().toISOString();
+      setLatestCatheterData({ status, message, timestamp: latestTimestamp });
+
       const timeAgo = lastChange ? formatDistanceToNow(new Date(lastChange.event_occurred_at), { addSuffix: true }) : 'Never';
       updateModuleStatus('catheter', status, lastChange ? `Last change ${timeAgo}` : 'Not yet logged');
     } catch (err) { console.error('Error in fetchCatheterStatus:', err); }
