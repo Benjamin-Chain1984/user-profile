@@ -10,7 +10,7 @@ import { StatusBadge } from '@/components/ideal/StatusBadge';
 import { usePressureReliefEvents, useSkinChecks, usePressureAreaConfig } from '@/hooks/usePressureArea';
 import { usePressureReliefPlan } from '@/hooks/usePressureReliefPlan';
 import { RotateCcw, Eye, CheckCircle2, Clock, Timer, AlertCircle } from 'lucide-react';
-import { differenceInMinutes, differenceInDays, formatDistanceToNow, addMinutes } from 'date-fns';
+import { differenceInMinutes, differenceInDays, formatDistanceToNow, addMinutes, format, parseISO } from 'date-fns';
 import type { HealthStatus } from '@/types/ideal';
 import type { RotationPosition, SkinCheckSession } from '@/types/pressureArea';
 import { getPositionsForDay } from '@/types/pressureArea';
