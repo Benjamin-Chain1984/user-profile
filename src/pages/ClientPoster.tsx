@@ -355,8 +355,11 @@ export default function ClientPosterPage() {
               Scan to Access Profile
             </h2>
 
-            {/* Client name */}
-            <h3 className="text-xl font-bold text-foreground text-center mb-4">{client.preferred_name}</h3>
+            {/* Client photo + name */}
+            <div className="flex flex-col items-center gap-2 mb-4">
+              <ProfileAvatar name={client.preferred_name} avatarUrl={client.photo_url || undefined} size="lg" />
+              <h3 className="text-xl font-bold text-foreground text-center">{client.preferred_name}</h3>
+            </div>
 
             {qrToken ? (
               <div className="flex flex-col items-center">
