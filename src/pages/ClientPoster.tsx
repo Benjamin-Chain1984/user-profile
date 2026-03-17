@@ -1,18 +1,20 @@
 /**
- * Client Poster Page
- * Printable page with client profile summary and QR code for data logging
+ * IDEAL Printable Poster Page
+ * Comprehensive A4-optimized poster for display in disability support homes
  */
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { supabase } from '@/integrations/supabase/client';
 import { clientTokenService } from '@/services/clientToken';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Printer, Download, ArrowLeft, User } from 'lucide-react';
+import { ProfileAvatar } from '@/components/ideal/ProfileAvatar';
+import { Printer, Download, ArrowLeft, RefreshCw, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
+
+const idealLogo = '/logo-design-new.png';
 
 interface ClientData {
   id: string;
@@ -20,6 +22,8 @@ interface ClientData {
   short_bio: string | null;
   photo_url: string | null;
   status: string;
+  poster_qr_token_rotated_at: string | null;
+  created_at: string;
 }
 
 export default function ClientPosterPage() {
@@ -28,149 +32,206 @@ export default function ClientPosterPage() {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showName, setShowName] = useState(true);
+  const [regenerating, setRegenerating] = useState(false);
   const posterRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    async function fetchClient() {
-      if (!clientId) {
-        setError('Client ID not provided');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const { data, error: fetchError } = await supabase
-          .from('clients')
-          .select('id, preferred_name, short_bio, photo_url, status')
-          .eq('id', clientId)
-          .single();
-
-        if (fetchError) throw fetchError;
-        if (!data) throw new Error('Client not found');
-
-        setClient(data);
-
-        // Generate a new token for the poster
-        const newToken = clientTokenService.generateSecureToken();
-        setToken(newToken);
-      } catch (err) {
-        console.error('Error fetching client:', err);
-        setError('Unable to load client details');
-      } finally {
-        setLoading(false);
-      }
+  const fetchClient = useCallback(async () => {
+    if (!clientId) {
+      setError('Client ID not provided');
+      setLoading(false);
+      return;
     }
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('clients')
+        .select('id, preferred_name, short_bio, photo_url, status, poster_qr_token_rotated_at, created_at')
+        .eq('id', clientId)
+        .single();
 
-    fetchClient();
+      if (fetchError) throw fetchError;
+      if (!data) throw new Error('Client not found');
+      setClient(data);
+
+      // Get stored token from localStorage or generate new one
+      const storedToken = localStorage.getItem(`poster_token_${clientId}`);
+      if (storedToken) {
+        setToken(storedToken);
+      } else {
+        const result = await clientTokenService.rotateClientToken(clientId);
+        if (result.success && result.newToken) {
+          setToken(result.newToken);
+          localStorage.setItem(`poster_token_${clientId}`, result.newToken);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching client:', err);
+      setError('Unable to load client details');
+    } finally {
+      setLoading(false);
+    }
   }, [clientId]);
+
+  useEffect(() => { fetchClient(); }, [fetchClient]);
+
+  // Realtime subscription for token changes
+  useEffect(() => {
+    if (!clientId) return;
+    const channel = supabase
+      .channel(`poster-${clientId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'clients',
+        filter: `id=eq.${clientId}`,
+      }, () => {
+        // Token was rotated externally — refetch
+        fetchClient();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [clientId, fetchClient]);
 
   const qrUrl = token ? clientTokenService.generatePosterQrUrl(token) : '';
 
-  const handlePrint = () => {
-    window.print();
+  const handleRegenerateToken = async () => {
+    if (!clientId) return;
+    setRegenerating(true);
+    try {
+      const result = await clientTokenService.rotateClientToken(clientId);
+      if (result.success && result.newToken) {
+        setToken(result.newToken);
+        localStorage.setItem(`poster_token_${clientId}`, result.newToken);
+        toast.success('QR token regenerated — poster updated');
+      } else {
+        toast.error(result.error || 'Failed to regenerate token');
+      }
+    } finally {
+      setRegenerating(false);
+    }
   };
+
+  const handlePrint = () => window.print();
 
   const handleDownloadPDF = async () => {
     if (!client || !posterRef.current) return;
-
     try {
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pw = pdf.internal.pageSize.getWidth();
+      const ph = pdf.internal.pageSize.getHeight();
+      const m = 15;
+      const cw = pw - m * 2;
+      let y = m;
 
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 20;
-      const contentWidth = pageWidth - margin * 2;
-
-      // Header
+      // -- Logo placeholder text --
       pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(120, 80, 200);
+      pdf.text('IDEAL', m, y + 5);
+      pdf.setFontSize(7);
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(100);
-      pdf.text('IDEAL Health Monitoring', margin, margin);
-      pdf.text('Staff Use Only', pageWidth - margin, margin, { align: 'right' });
+      pdf.text('Intelligent Data for Everyday Activities & Lifestyle', m + 14, y + 5);
 
-      // Client photo if available
-      let currentY = margin + 20;
-      if (client.photo_url) {
-        try {
-          const photoSize = 40;
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          await new Promise<void>((resolve, reject) => {
-            img.onload = () => {
-              // Create circular crop using canvas
-              const canvas = document.createElement('canvas');
-              canvas.width = 200;
-              canvas.height = 200;
-              const ctx = canvas.getContext('2d');
-              if (ctx) {
-                ctx.beginPath();
-                ctx.arc(100, 100, 100, 0, Math.PI * 2);
-                ctx.closePath();
-                ctx.clip();
-                ctx.drawImage(img, 0, 0, 200, 200);
-              }
-              const photoDataUrl = canvas.toDataURL('image/png');
-              pdf.addImage(
-                photoDataUrl,
-                'PNG',
-                (pageWidth - photoSize) / 2,
-                currentY,
-                photoSize,
-                photoSize
-              );
-              resolve();
-            };
-            img.onerror = () => resolve(); // Continue without photo on error
-            img.src = client.photo_url!;
-          });
-          currentY += photoSize + 10;
-        } catch {
-          // Continue without photo on error
-        }
-      }
+      // -- Divider --
+      y += 12;
+      pdf.setDrawColor(200);
+      pdf.line(m, y, pw - m, y);
+      y += 8;
 
-      // Title
-      pdf.setFontSize(32);
+      // -- Section 1: What IDEAL Is --
+      pdf.setFontSize(13);
       pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(0);
-      pdf.text(client.preferred_name, pageWidth / 2, currentY + 10, { align: 'center' });
-      currentY += 25;
+      pdf.setTextColor(40);
+      pdf.text('What is IDEAL?', m, y);
+      y += 6;
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(60);
+      const descLines = pdf.splitTextToSize(
+        'IDEAL is a smart health monitoring system designed to help support workers, families, and clinicians provide safer, more responsive care. It highlights early warning signs and supports timely action.',
+        cw
+      );
+      pdf.text(descLines, m, y);
+      y += descLines.length * 4 + 4;
 
-      // Bio if present
-      if (client.short_bio) {
-        pdf.setFontSize(14);
-        pdf.setFont('helvetica', 'normal');
-        pdf.setTextColor(80);
-        const bioLines = pdf.splitTextToSize(client.short_bio, contentWidth - 20);
-        pdf.text(bioLines, pageWidth / 2, currentY, { align: 'center' });
-        currentY += bioLines.length * 7 + 10;
+      const modules = [
+        'Bowel care', 'Fluid balance', 'Pain', 'Sleep', 'Nutrition',
+        'Vital signs', 'Skin integrity', 'Medication support', 'Preventive health'
+      ];
+      modules.forEach((mod) => {
+        pdf.text(`•  ${mod}`, m + 4, y);
+        y += 4;
+      });
+      y += 4;
+
+      // -- Section 2: Wearable Alerts --
+      pdf.setDrawColor(220);
+      pdf.line(m, y, pw - m, y);
+      y += 6;
+      pdf.setFontSize(13);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(40);
+      pdf.text('Smart Wearable Alerts', m, y);
+      y += 6;
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(60);
+      const wearableDesc = pdf.splitTextToSize(
+        'The IDEAL wearable device provides immediate visual alerts to staff. Alerts are generated automatically based on the person\'s health data recorded in IDEAL. The wearable helps staff respond quickly without needing to check a device constantly.',
+        cw
+      );
+      pdf.text(wearableDesc, m, y);
+      y += wearableDesc.length * 4 + 4;
+
+      // Amber
+      pdf.setFillColor(255, 165, 0);
+      pdf.circle(m + 3, y - 1, 2, 'F');
+      pdf.setTextColor(60);
+      pdf.text('Amber — Monitor / Action May Be Needed', m + 8, y);
+      y += 5;
+      // Red
+      pdf.setFillColor(220, 38, 38);
+      pdf.circle(m + 3, y - 1, 2, 'F');
+      pdf.text('Red — Urgent Attention Required', m + 8, y);
+      y += 8;
+
+      // -- Section 3 + 4: QR Access --
+      pdf.setDrawColor(220);
+      pdf.line(m, y, pw - m, y);
+      y += 6;
+      pdf.setFontSize(13);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(40);
+      pdf.text('Scan to Access Profile', pw / 2, y, { align: 'center' });
+      y += 6;
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(80);
+      pdf.text('Use your authorised device to scan this QR code.', pw / 2, y, { align: 'center' });
+      y += 4;
+      pdf.text('Access may require staff verification.', pw / 2, y, { align: 'center' });
+      y += 8;
+
+      // Client name + avatar area
+      if (showName) {
+        pdf.setFontSize(20);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(0);
+        pdf.text(client.preferred_name, pw / 2, y, { align: 'center' });
+        y += 8;
       }
 
-      // QR Code section
-      const qrY = Math.max(currentY + 20, pageHeight / 2 - 60);
-      
-      // QR Code background box
-      const boxSize = 100;
-      pdf.setFillColor(248, 250, 252);
-      pdf.setDrawColor(226, 232, 240);
-      pdf.roundedRect((pageWidth - boxSize) / 2, qrY - 10, boxSize, boxSize + 30, 4, 4, 'FD');
-
-      // Get QR code SVG and convert to canvas
+      // QR Code
       const svgElement = posterRef.current?.querySelector('svg');
       if (svgElement) {
         const qrCanvas = document.createElement('canvas');
-        const qrSize = 200;
+        const qrSize = 400;
         qrCanvas.width = qrSize;
         qrCanvas.height = qrSize;
-
         const svgData = new XMLSerializer().serializeToString(svgElement);
         const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
         const url = URL.createObjectURL(svgBlob);
-
         const img = new Image();
         await new Promise<void>((resolve, reject) => {
           img.onload = () => {
@@ -186,60 +247,49 @@ export default function ClientPosterPage() {
           img.onerror = reject;
           img.src = url;
         });
-
         const qrDataUrl = qrCanvas.toDataURL('image/png');
-        const qrPdfSize = 70;
-        pdf.addImage(
-          qrDataUrl,
-          'PNG',
-          (pageWidth - qrPdfSize) / 2,
-          qrY,
-          qrPdfSize,
-          qrPdfSize
-        );
+        const qrPdfSize = 60;
+        pdf.addImage(qrDataUrl, 'PNG', (pw - qrPdfSize) / 2, y, qrPdfSize, qrPdfSize);
+        y += qrPdfSize + 6;
       }
 
-      // Scan instruction
-      pdf.setFontSize(11);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(60);
-      pdf.text('Scan to log health data', pageWidth / 2, qrY + 85, { align: 'center' });
-
-      // Instructions section
-      const instructionY = qrY + 110;
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(100);
-      
+      // Instructions
       const instructions = [
-        '1. Use your phone camera to scan the QR code',
-        '2. Enter your verified phone number',
-        '3. Enter the SMS verification code',
-        '4. Access client record and log data'
+        '1.  Scan the QR code with your phone camera',
+        '2.  Enter your verified phone number',
+        '3.  Enter the SMS verification code',
+        '4.  Access the individual\'s IDEAL profile',
       ];
-      
-      instructions.forEach((instruction, index) => {
-        pdf.text(instruction, pageWidth / 2, instructionY + (index * 6), { align: 'center' });
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(60);
+      instructions.forEach((line) => {
+        pdf.text(line, pw / 2, y, { align: 'center' });
+        y += 4.5;
       });
 
-      // Footer
-      pdf.setFontSize(8);
-      pdf.setTextColor(150);
+      // -- Footer --
+      pdf.setDrawColor(200);
+      pdf.line(m, ph - m - 12, pw - m, ph - m - 12);
+      pdf.setFontSize(7);
+      pdf.setTextColor(130);
       pdf.text(
-        `Generated: ${new Date().toLocaleDateString()} | Client ID: ${client.id.slice(0, 8)}...`,
-        pageWidth / 2,
-        pageHeight - margin - 5,
-        { align: 'center' }
+        'Access is restricted to authorised staff only. Mobile devices are verified before access is granted.',
+        pw / 2, ph - m - 6, { align: 'center' }
       );
       pdf.text(
-        'This poster is for authorized staff only. Do not share publicly.',
-        pageWidth / 2,
-        pageHeight - margin,
-        { align: 'center' }
+        'Follow organisational policies for privacy and confidentiality.',
+        pw / 2, ph - m - 2, { align: 'center' }
+      );
+      pdf.setFontSize(6);
+      pdf.setTextColor(170);
+      pdf.text(
+        `Generated: ${new Date().toLocaleDateString()} | IDEAL Health Monitoring`,
+        pw / 2, ph - m + 2, { align: 'center' }
       );
 
-      pdf.save(`client-poster-${client.preferred_name.replace(/\s+/g, '-').toLowerCase()}.pdf`);
-      toast.success('Poster downloaded successfully');
+      pdf.save(`IDEAL-Poster-${client.preferred_name.replace(/\s+/g, '-')}.pdf`);
+      toast.success('Poster PDF downloaded');
     } catch (err) {
       console.error('Error generating PDF:', err);
       toast.error('Failed to generate PDF');
@@ -249,124 +299,198 @@ export default function ClientPosterPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground">Loading client details...</div>
+        <div className="animate-pulse text-muted-foreground">Loading poster…</div>
       </div>
     );
   }
 
   if (error || !client) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-        <p className="text-destructive mb-4">{error || 'Client not found'}</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 gap-4">
+        <p className="text-destructive">{error || 'Client not found'}</p>
         <Button variant="outline" onClick={() => window.history.back()}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Go Back
+          <ArrowLeft className="h-4 w-4 mr-2" /> Go Back
         </Button>
       </div>
     );
   }
 
+  const lastUpdated = client.poster_qr_token_rotated_at
+    ? new Date(client.poster_qr_token_rotated_at).toLocaleString()
+    : new Date(client.created_at).toLocaleString();
+
   return (
     <>
-      {/* Print-only styles */}
+      {/* Print styles */}
       <style>{`
         @media print {
           .no-print { display: none !important; }
-          body { background: white !important; }
-          .print-container { 
-            box-shadow: none !important; 
+          body { background: white !important; margin: 0 !important; }
+          .poster-page {
+            box-shadow: none !important;
             border: none !important;
+            border-radius: 0 !important;
+            max-width: 100% !important;
             margin: 0 !important;
-            padding: 40px !important;
+            padding: 12mm 15mm !important;
           }
         }
+        @page { size: A4 portrait; margin: 0; }
       `}</style>
 
-      {/* Action buttons - hidden when printing */}
-      <div className="no-print fixed top-4 left-4 right-4 flex justify-between z-50">
-        <Button variant="outline" size="sm" onClick={() => window.history.back()}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
-        </Button>
-        <div className="flex gap-2">
+      {/* Admin toolbar */}
+      <div className="no-print fixed top-0 left-0 right-0 bg-card/95 backdrop-blur border-b border-border z-50 px-4 py-2 flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => window.history.back()}>
+            <ArrowLeft className="h-4 w-4 mr-1" /> Back
+          </Button>
+          <span className="text-xs text-muted-foreground hidden sm:inline">
+            Last updated: {lastUpdated}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowName(!showName)}
+            title={showName ? 'Hide name' : 'Show name'}
+          >
+            {showName ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
+            {showName ? 'Hide Name' : 'Show Name'}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRegenerateToken}
+            disabled={regenerating}
+          >
+            <RefreshCw className={`h-4 w-4 mr-1 ${regenerating ? 'animate-spin' : ''}`} />
+            Regenerate QR
+          </Button>
           <Button variant="outline" size="sm" onClick={handlePrint}>
-            <Printer className="h-4 w-4 mr-2" />
-            Print
+            <Printer className="h-4 w-4 mr-1" /> Print
           </Button>
           <Button size="sm" onClick={handleDownloadPDF}>
-            <Download className="h-4 w-4 mr-2" />
-            Download PDF
+            <Download className="h-4 w-4 mr-1" /> Download PDF
           </Button>
         </div>
       </div>
 
-      {/* Poster content */}
-      <div className="min-h-screen bg-muted/30 flex items-center justify-center p-8 print:p-0 print:bg-white">
+      {/* Poster */}
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center pt-16 pb-8 px-4 print:p-0 print:bg-white print:pt-0">
         <div
           ref={posterRef}
-          className="print-container bg-card w-full max-w-md rounded-xl shadow-lg border border-border p-8 text-center space-y-8"
+          className="poster-page bg-white w-full max-w-[210mm] shadow-xl border border-border rounded-lg"
+          style={{ minHeight: '297mm', padding: '12mm 15mm' }}
         >
-          {/* Header */}
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>IDEAL Health Monitoring</span>
-            <span>Staff Use Only</span>
+          {/* Header with logo */}
+          <div className="flex items-center justify-between border-b border-border pb-3 mb-5">
+            <div className="flex items-center gap-2">
+              <img src={idealLogo} alt="IDEAL" className="h-7 w-auto" />
+              <div>
+                <p className="text-[11px] font-bold text-foreground tracking-wide leading-tight">IDEAL</p>
+                <p className="text-[7px] text-muted-foreground leading-tight">Intelligent Data for Everyday Activities &amp; Lifestyle</p>
+              </div>
+            </div>
+            <span className="text-[8px] text-muted-foreground font-medium uppercase tracking-wider">Staff Use Only</span>
           </div>
 
-          {/* Client Info */}
-          <div className="space-y-4">
-            {/* Client Photo */}
-            <Avatar className="h-24 w-24 mx-auto border-4 border-background shadow-lg">
-              <AvatarImage src={client.photo_url || undefined} alt={client.preferred_name} />
-              <AvatarFallback className="bg-primary/10 text-primary text-2xl">
-                {client.preferred_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || <User className="h-10 w-10" />}
-              </AvatarFallback>
-            </Avatar>
-            
-            <div className="space-y-2">
-              <h1 className="text-4xl font-bold text-foreground tracking-tight">
-                {client.preferred_name}
-              </h1>
+          {/* Section 1 — What IDEAL Is */}
+          <div className="mb-5">
+            <h2 className="text-sm font-bold text-foreground mb-2 uppercase tracking-wide">What is IDEAL?</h2>
+            <p className="text-[10px] text-muted-foreground leading-relaxed mb-3">
+              IDEAL is a smart health monitoring system designed to help support workers, families,
+              and clinicians provide safer, more responsive care. It highlights early warning signs
+              and supports timely action.
+            </p>
+            <p className="text-[10px] text-muted-foreground mb-1.5 font-medium">It helps monitor important health areas such as:</p>
+            <div className="grid grid-cols-3 gap-x-4 gap-y-0.5 text-[9px] text-muted-foreground">
+              {['Bowel care', 'Fluid balance', 'Pain', 'Sleep', 'Nutrition', 'Vital signs', 'Skin integrity', 'Medication support', 'Preventive health'].map((item) => (
+                <span key={item}>• {item}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* Section 2 — Wearable Device */}
+          <div className="border-t border-border pt-4 mb-5">
+            <h2 className="text-sm font-bold text-foreground mb-2 uppercase tracking-wide">Smart Wearable Alerts</h2>
+            <p className="text-[10px] text-muted-foreground leading-relaxed mb-3">
+              The IDEAL wearable device provides immediate visual alerts to staff.
+              Alerts are generated automatically based on the person's health data recorded in IDEAL.
+              The wearable helps staff respond quickly without needing to check a device constantly.
+            </p>
+            <div className="flex gap-6 text-[10px]">
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-4 h-4 rounded-full bg-orange-500 shrink-0" />
+                <span className="text-muted-foreground"><strong className="text-foreground">Amber</strong> — Monitor / Action May Be Needed</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-4 h-4 rounded-full bg-red-600 shrink-0" />
+                <span className="text-muted-foreground"><strong className="text-foreground">Red</strong> — Urgent Attention Required</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3 — QR Access + Dynamic QR */}
+          <div className="border-t border-border pt-5 mb-4">
+            <h2 className="text-sm font-bold text-foreground mb-1 text-center uppercase tracking-wide">
+              Scan to Access Profile
+            </h2>
+            <p className="text-[10px] text-muted-foreground text-center mb-1">
+              Use your authorised device to scan this QR code to open the individual's IDEAL profile.
+            </p>
+            <p className="text-[9px] text-muted-foreground text-center mb-4">
+              Access may require staff verification.
+            </p>
+
+            {/* Client identity */}
+            <div className="flex flex-col items-center gap-2 mb-4">
+              <ProfileAvatar
+                name={client.preferred_name}
+                avatarUrl={client.photo_url || undefined}
+                size="lg"
+              />
+              {showName && (
+                <h3 className="text-xl font-bold text-foreground">{client.preferred_name}</h3>
+              )}
               {client.short_bio && (
-                <p className="text-muted-foreground text-lg leading-relaxed max-w-xs mx-auto">
-                  {client.short_bio}
-                </p>
+                <p className="text-[10px] text-muted-foreground text-center max-w-xs">{client.short_bio}</p>
               )}
             </div>
-          </div>
 
-          {/* QR Code */}
-          <div className="flex justify-center py-6">
-            <div className="bg-slate-50 border border-slate-200 p-6 rounded-xl">
-              <QRCodeSVG 
-                value={qrUrl} 
-                size={160} 
-                level="H"
-                includeMargin={false}
-              />
-              <p className="text-sm font-medium text-slate-700 mt-4">
-                Scan to log health data
-              </p>
+            {/* QR Code - large and centered */}
+            <div className="flex justify-center mb-4">
+              <div className="bg-white border-2 border-border p-5 rounded-xl inline-block">
+                {qrUrl ? (
+                  <QRCodeSVG value={qrUrl} size={180} level="H" includeMargin={false} />
+                ) : (
+                  <div className="w-[180px] h-[180px] flex items-center justify-center text-muted-foreground text-xs">
+                    No QR token
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Instructions */}
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <p className="font-medium text-foreground">How to access:</p>
-            <ol className="space-y-1 text-left max-w-xs mx-auto">
-              <li>1. Scan QR code with your phone camera</li>
-              <li>2. Enter your verified phone number</li>
-              <li>3. Enter the SMS verification code</li>
-              <li>4. Access client record and log data</li>
-            </ol>
+            {/* Instructions */}
+            <div className="text-center space-y-0.5 text-[9px] text-muted-foreground mb-2">
+              <p className="font-medium text-foreground text-[10px] mb-1">How to access:</p>
+              <p>1. Scan the QR code with your phone camera</p>
+              <p>2. Enter your verified phone number</p>
+              <p>3. Enter the SMS verification code</p>
+              <p>4. Access the individual's IDEAL profile</p>
+            </div>
           </div>
 
           {/* Footer */}
-          <div className="pt-4 border-t border-border space-y-1">
-            <p className="text-xs text-muted-foreground">
-              Generated: {new Date().toLocaleDateString()}
+          <div className="border-t border-border pt-3 mt-auto">
+            <p className="text-[8px] text-muted-foreground text-center leading-relaxed">
+              Access is restricted to authorised staff only. Mobile devices are verified before access is granted.
             </p>
-            <p className="text-xs text-muted-foreground/70">
-              This poster is for authorized staff only
+            <p className="text-[8px] text-muted-foreground text-center leading-relaxed">
+              Follow organisational policies for privacy and confidentiality.
+            </p>
+            <p className="text-[7px] text-muted-foreground/60 text-center mt-1">
+              Generated: {new Date().toLocaleDateString()} | IDEAL Health Monitoring
             </p>
           </div>
         </div>
