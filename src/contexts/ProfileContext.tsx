@@ -421,14 +421,37 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   // ── Bowel Care ───────────────────────────────────────────────
   const fetchBowelCareStatus = async () => {
     try {
-      const { data: configData } = await supabase.from('bowel_care_config').select('*').limit(1).maybeSingle();
-      const { data: logs, error } = await supabase
-        .from('bowel_log_entries')
-        .select('*')
-        .order('event_occurred_at', { ascending: false })
-        .limit(50);
+      const [configResult, logsResult, planResult] = await Promise.all([
+        supabase.from('bowel_care_config').select('*').limit(1).maybeSingle(),
+        supabase.from('bowel_log_entries').select('*').order('event_occurred_at', { ascending: false }).limit(50),
+        (() => {
+          let query = supabase
+            .from('bowel_care_plans')
+            .select('id, version, status, published_at, next_review_due')
+            .order('version', { ascending: false })
+            .limit(1);
+          return profile?.id && profile.id !== '1' ? query.eq('client_id', profile.id).maybeSingle() : query.is('client_id', null).maybeSingle();
+        })(),
+      ]);
+
+      const configData = configResult.data;
+      const logs = logsResult.data;
+      const error = logsResult.error;
+      const planData = planResult.data;
 
       if (error) { console.error('Error fetching bowel logs:', error); return; }
+
+      let hasAcknowledgedPlan = true;
+      if (planData?.id && planData?.version && user?.id) {
+        const { data: acknowledgement } = await supabase
+          .from('bowel_care_plan_acknowledgements')
+          .select('id')
+          .eq('plan_id', planData.id)
+          .eq('plan_version', planData.version)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        hasAcknowledgedPlan = !!acknowledgement;
+      }
 
       const calculated = calculateBowelCareStatus(
         (logs || []).map(l => ({
@@ -445,13 +468,21 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         []
       );
 
-      const moduleStatus = calculated.status === 'ideal' ? 'stable' : calculated.status;
-      setLatestBowelData({ status: moduleStatus, message: calculated.message, timestamp: calculated.lastEventTimestamp || new Date().toISOString() });
+      const clinicalData: ModuleAlertData = {
+        status: calculated.status === 'ideal' ? 'stable' : calculated.status,
+        message: calculated.message,
+        timestamp: calculated.lastEventTimestamp || new Date().toISOString(),
+      };
+      const planAlertData = buildPlanStatusAlert('Bowel Care', planData, hasAcknowledgedPlan);
+      const finalData = getHighestPriorityModuleData(clinicalData, planAlertData) || clinicalData;
+
+      setLatestBowelData(finalData);
 
       const lastLog = logs?.[0];
       const timeAgo = lastLog ? formatDistanceToNow(new Date(lastLog.event_occurred_at || lastLog.entry_time), { addSuffix: true }) : 'Never';
       const bristolInfo = calculated.lastBristolType !== null ? BRISTOL_TYPES.find(b => b.type === calculated.lastBristolType) : null;
-      updateModuleStatus('constipation', moduleStatus, bristolInfo?.name ? `${bristolInfo.name} • ${timeAgo}` : `Last logged ${timeAgo}`);
+      const stableLastEntry = bristolInfo?.name ? `${bristolInfo.name} • ${timeAgo}` : `Last logged ${timeAgo}`;
+      updateModuleStatus('constipation', finalData.status, finalData.status === 'stable' ? stableLastEntry : finalData.message);
     } catch (err) { console.error('Error in fetchBowelCareStatus:', err); }
   };
 
