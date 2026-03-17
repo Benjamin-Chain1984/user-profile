@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Printer, Download, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { ProfileAvatar } from '@/components/ideal/ProfileAvatar';
 import jsPDF from 'jspdf';
 
 /** Must match the key used by QRPosterSection */
