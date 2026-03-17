@@ -1348,7 +1348,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       supabase.removeChannel(mealtimeChannel);
       supabase.removeChannel(enteralChannel);
     };
-  }, [profile?.id]);
+  }, [profile?.id, user?.id]);
 
   // Re-fetch profile-dependent statuses when profile loads from DB
   useEffect(() => {
