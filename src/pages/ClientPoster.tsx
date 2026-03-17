@@ -157,7 +157,7 @@ export default function ClientPosterPage() {
 
       const modules = [
         'Bowel care', 'Fluid balance', 'Pain', 'Sleep', 'Nutrition',
-        'Vital signs', 'Skin integrity', 'Medication support', 'Preventive health'
+        'Vital signs', 'Skin integrity', 'Preventive health'
       ];
       modules.forEach((mod) => {
         pdf.text(`•  ${mod}`, m + 4, y);
