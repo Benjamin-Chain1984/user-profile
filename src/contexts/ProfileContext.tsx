@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useMonitoringStatus } from '@/hooks/useMonitoringStatus';
+import { useAuth } from '@/contexts/AuthContext';
 import type { MonitoringStatus, PauseReason, PauseEndType } from '@/types/monitoringStatus';
 import { 
   IndividualProfile, 
@@ -104,6 +105,91 @@ function getPainAlertMessage(severity: PainSeverity, score: number): string {
   }
 }
 
+const STATUS_PRIORITY: Record<ModuleAlertData['status'], number> = {
+  stable: 0,
+  monitor: 1,
+  action: 2,
+};
+
+function getHighestPriorityModuleData(
+  ...candidates: Array<ModuleAlertData | null | undefined>
+): ModuleAlertData | null {
+  const validCandidates = candidates.filter(Boolean) as ModuleAlertData[];
+  if (validCandidates.length === 0) return null;
+
+  return [...validCandidates].sort((a, b) => {
+    const priorityDiff = STATUS_PRIORITY[b.status] - STATUS_PRIORITY[a.status];
+    if (priorityDiff !== 0) return priorityDiff;
+    return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+  })[0];
+}
+
+function buildPlanStatusAlert(
+  moduleLabel: string,
+  plan: { status?: string | null; published_at?: string | null; next_review_due?: string | null } | null | undefined,
+  hasAcknowledged = true
+): ModuleAlertData | null {
+  if (!plan || plan.status !== 'published') return null;
+
+  const now = new Date();
+  const baseTimestamp = plan.published_at || now.toISOString();
+
+  if (!hasAcknowledged) {
+    return {
+      status: 'monitor',
+      message: `${moduleLabel} plan acknowledgement required.`,
+      timestamp: baseTimestamp,
+    };
+  }
+
+  if (plan.next_review_due) {
+    const reviewDate = new Date(plan.next_review_due);
+    const daysUntilReview = differenceInDays(reviewDate, now);
+
+    if (daysUntilReview < 0) {
+      return {
+        status: 'action',
+        message: `${moduleLabel} plan review is overdue by ${Math.abs(daysUntilReview)} day${Math.abs(daysUntilReview) === 1 ? '' : 's'}.`,
+        timestamp: reviewDate.toISOString(),
+      };
+    }
+
+    if (daysUntilReview <= 30) {
+      return {
+        status: 'monitor',
+        message: `${moduleLabel} plan review due in ${daysUntilReview} day${daysUntilReview === 1 ? '' : 's'}.`,
+        timestamp: reviewDate.toISOString(),
+      };
+    }
+  }
+
+  return null;
+}
+
+function buildPressureAreaDailySkinCheckAlert(
+  config: { skin_check_times?: string[] | null; skin_checks_per_day?: number | null } | null | undefined,
+  skinChecks: Array<{ event_occurred_at: string }>
+): ModuleAlertData | null {
+  const scheduledTimes = config?.skin_check_times || [];
+  const checksPerDay = config?.skin_checks_per_day || 0;
+
+  if (checksPerDay === 0 || scheduledTimes.length === 0) return null;
+
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const hasTodayCheck = skinChecks.some((check) => new Date(check.event_occurred_at) >= todayStart);
+
+  if (!hasTodayCheck) {
+    return {
+      status: 'monitor',
+      message: 'Daily skin check pending – no skin check recorded today.',
+      timestamp: now.toISOString(),
+    };
+  }
+
+  return null;
+}
+
 // ── Module ID → alert data map ────────────────────────────────
 type ModuleAlertMap = Record<string, ModuleAlertData | undefined>;
 
@@ -191,6 +277,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     pauseMonitoring,
     resumeMonitoring,
   } = useMonitoringStatus(profile?.id ?? null);
+  const { user } = useAuth();
 
   // Fetch profile from database
   const fetchProfileFromDb = async () => {
@@ -334,14 +421,37 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   // ── Bowel Care ───────────────────────────────────────────────
   const fetchBowelCareStatus = async () => {
     try {
-      const { data: configData } = await supabase.from('bowel_care_config').select('*').limit(1).maybeSingle();
-      const { data: logs, error } = await supabase
-        .from('bowel_log_entries')
-        .select('*')
-        .order('event_occurred_at', { ascending: false })
-        .limit(50);
+      const [configResult, logsResult, planResult] = await Promise.all([
+        supabase.from('bowel_care_config').select('*').limit(1).maybeSingle(),
+        supabase.from('bowel_log_entries').select('*').order('event_occurred_at', { ascending: false }).limit(50),
+        (() => {
+          let query = supabase
+            .from('bowel_care_plans')
+            .select('id, version, status, published_at, next_review_due')
+            .order('version', { ascending: false })
+            .limit(1);
+          return profile?.id && profile.id !== '1' ? query.eq('client_id', profile.id).maybeSingle() : query.is('client_id', null).maybeSingle();
+        })(),
+      ]);
+
+      const configData = configResult.data;
+      const logs = logsResult.data;
+      const error = logsResult.error;
+      const planData = planResult.data;
 
       if (error) { console.error('Error fetching bowel logs:', error); return; }
+
+      let hasAcknowledgedPlan = true;
+      if (planData?.id && planData?.version && user?.id) {
+        const { data: acknowledgement } = await supabase
+          .from('bowel_care_plan_acknowledgements')
+          .select('id')
+          .eq('plan_id', planData.id)
+          .eq('plan_version', planData.version)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        hasAcknowledgedPlan = !!acknowledgement;
+      }
 
       const calculated = calculateBowelCareStatus(
         (logs || []).map(l => ({
@@ -358,13 +468,21 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         []
       );
 
-      const moduleStatus = calculated.status === 'ideal' ? 'stable' : calculated.status;
-      setLatestBowelData({ status: moduleStatus, message: calculated.message, timestamp: calculated.lastEventTimestamp || new Date().toISOString() });
+      const clinicalData: ModuleAlertData = {
+        status: calculated.status === 'ideal' ? 'stable' : calculated.status,
+        message: calculated.message,
+        timestamp: calculated.lastEventTimestamp || new Date().toISOString(),
+      };
+      const planAlertData = buildPlanStatusAlert('Bowel Care', planData, hasAcknowledgedPlan);
+      const finalData = getHighestPriorityModuleData(clinicalData, planAlertData) || clinicalData;
+
+      setLatestBowelData(finalData);
 
       const lastLog = logs?.[0];
       const timeAgo = lastLog ? formatDistanceToNow(new Date(lastLog.event_occurred_at || lastLog.entry_time), { addSuffix: true }) : 'Never';
       const bristolInfo = calculated.lastBristolType !== null ? BRISTOL_TYPES.find(b => b.type === calculated.lastBristolType) : null;
-      updateModuleStatus('constipation', moduleStatus, bristolInfo?.name ? `${bristolInfo.name} • ${timeAgo}` : `Last logged ${timeAgo}`);
+      const stableLastEntry = bristolInfo?.name ? `${bristolInfo.name} • ${timeAgo}` : `Last logged ${timeAgo}`;
+      updateModuleStatus('constipation', finalData.status, finalData.status === 'stable' ? stableLastEntry : finalData.message);
     } catch (err) { console.error('Error in fetchBowelCareStatus:', err); }
   };
 
@@ -492,9 +610,36 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   // ── Oral Health ──────────────────────────────────────────────
   const fetchOralHealthStatus = async () => {
     try {
-      const { data: configData } = await supabase.from('oral_health_config').select('*').maybeSingle();
-      const { data: assessmentData } = await supabase.from('oral_health_assessments').select('*').order('created_at', { ascending: false }).limit(10);
-      const { data: taskLogData } = await supabase.from('oral_health_task_logs').select('*').order('log_date', { ascending: false }).limit(50);
+      const [configResult, assessmentResult, taskLogResult, planResult] = await Promise.all([
+        supabase.from('oral_health_config').select('*').maybeSingle(),
+        supabase.from('oral_health_assessments').select('*').order('created_at', { ascending: false }).limit(10),
+        supabase.from('oral_health_task_logs').select('*').order('log_date', { ascending: false }).limit(50),
+        (() => {
+          let query = supabase
+            .from('oral_health_plans')
+            .select('id, version, status, published_at, next_review_due')
+            .order('version', { ascending: false })
+            .limit(1);
+          return profile?.id && profile.id !== '1' ? query.eq('client_id', profile.id).maybeSingle() : query.is('client_id', null).maybeSingle();
+        })(),
+      ]);
+
+      const configData = configResult.data;
+      const assessmentData = assessmentResult.data;
+      const taskLogData = taskLogResult.data;
+      const planData = planResult.data;
+
+      let hasAcknowledgedPlan = true;
+      if (planData?.id && planData?.version && user?.id) {
+        const { data: acknowledgement } = await supabase
+          .from('oral_health_plan_acknowledgements')
+          .select('id')
+          .eq('plan_id', planData.id)
+          .eq('plan_version', planData.version)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        hasAcknowledgedPlan = !!acknowledgement;
+      }
 
       const typedAssessments = (assessmentData || []).map((d: any) => ({ ...d, mouth_annotations: (d.mouth_annotations || []) })) as OralHealthAssessment[];
       const typedLogs = (taskLogData || []) as OralHealthTaskLog[];
@@ -504,9 +649,16 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         config: { assessment_frequency: configData?.assessment_frequency ?? 'weekly', enable_compliance_monitoring: configData?.enable_compliance_monitoring ?? false } as Partial<OralHealthConfig>,
       });
 
-      const moduleStatus = statusResult.status === 'ideal' ? 'stable' : statusResult.status;
-      setLatestOralHealthData({ status: moduleStatus, message: statusResult.message, timestamp: typedAssessments[0]?.created_at || new Date().toISOString() });
-      updateModuleStatus('oral-health', moduleStatus, statusResult.lastEntry);
+      const clinicalData: ModuleAlertData = {
+        status: statusResult.status === 'ideal' ? 'stable' : statusResult.status,
+        message: statusResult.message,
+        timestamp: typedAssessments[0]?.created_at || new Date().toISOString(),
+      };
+      const planAlertData = buildPlanStatusAlert('Oral Health', planData, hasAcknowledgedPlan);
+      const finalData = getHighestPriorityModuleData(clinicalData, planAlertData) || clinicalData;
+
+      setLatestOralHealthData(finalData);
+      updateModuleStatus('oral-health', finalData.status, finalData.status === 'stable' ? statusResult.lastEntry : finalData.message);
     } catch (err) { console.error('Error in fetchOralHealthStatus:', err); }
   };
 
@@ -730,59 +882,55 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       const { data: configData } = await supabase.from('catheter_config').select('*').limit(1).maybeSingle();
 
       // Fetch care plan as source of truth, preferring published and falling back to draft
-      let planQuery = supabase
+      let publishedPlanQuery = supabase
         .from('catheter_care_plans')
-        .select('change_interval, flush_prescribed, flush_frequency, flush_custom_interval, status')
+        .select('id, version, status, published_at, next_review_due, change_interval, flush_prescribed, flush_frequency, flush_custom_interval')
         .order('version', { ascending: false })
-        .limit(1);
+        .limit(1)
+        .eq('status', 'published');
+
+      let draftPlanQuery = supabase
+        .from('catheter_care_plans')
+        .select('id, version, status, published_at, next_review_due, change_interval, flush_prescribed, flush_frequency, flush_custom_interval')
+        .order('version', { ascending: false })
+        .limit(1)
+        .eq('status', 'draft');
 
       if (profile?.id && profile.id !== '1') {
-        planQuery = planQuery.eq('client_id', profile.id);
+        publishedPlanQuery = publishedPlanQuery.eq('client_id', profile.id);
+        draftPlanQuery = draftPlanQuery.eq('client_id', profile.id);
       } else {
-        planQuery = planQuery.is('client_id', null);
+        publishedPlanQuery = publishedPlanQuery.is('client_id', null);
+        draftPlanQuery = draftPlanQuery.is('client_id', null);
       }
 
-      const { data: publishedPlan } = await planQuery.eq('status', 'published').maybeSingle();
-
-      let fallbackPlanQuery = supabase
-        .from('catheter_care_plans')
-        .select('change_interval, flush_prescribed, flush_frequency, flush_custom_interval, status')
-        .eq('status', 'draft')
-        .order('version', { ascending: false })
-        .limit(1);
-
-      if (profile?.id && profile.id !== '1') {
-        fallbackPlanQuery = fallbackPlanQuery.eq('client_id', profile.id);
-      } else {
-        fallbackPlanQuery = fallbackPlanQuery.is('client_id', null);
-      }
-
-      const { data: draftPlan } = publishedPlan ? { data: null } : await fallbackPlanQuery.maybeSingle();
+      const { data: publishedPlan } = await publishedPlanQuery.maybeSingle();
+      const { data: draftPlan } = publishedPlan ? { data: null } : await draftPlanQuery.maybeSingle();
       const planData = publishedPlan || draftPlan;
 
-      const { data: changes } = await supabase
-        .from('catheter_change_logs')
-        .select('*')
-        .order('event_occurred_at', { ascending: false })
-        .limit(10);
+      const [changesResult, flushResult, stomaResult, alertsResult] = await Promise.all([
+        supabase.from('catheter_change_logs').select('*').order('event_occurred_at', { ascending: false }).limit(10),
+        supabase.from('catheter_flush_logs').select('*').order('event_occurred_at', { ascending: false }).limit(10),
+        supabase.from('catheter_stoma_checks').select('*').order('event_occurred_at', { ascending: false }).limit(10),
+        supabase.from('catheter_alerts').select('*').is('resolved_at', null).order('created_at', { ascending: false }),
+      ]);
 
-      const { data: flushLogs } = await supabase
-        .from('catheter_flush_logs')
-        .select('*')
-        .order('event_occurred_at', { ascending: false })
-        .limit(10);
+      const changes = changesResult.data;
+      const flushLogs = flushResult.data;
+      const stomaChecks = stomaResult.data;
+      const alerts = alertsResult.data;
 
-      const { data: stomaChecks } = await supabase
-        .from('catheter_stoma_checks')
-        .select('*')
-        .order('event_occurred_at', { ascending: false })
-        .limit(10);
-
-      const { data: alerts } = await supabase
-        .from('catheter_alerts')
-        .select('*')
-        .is('resolved_at', null)
-        .order('created_at', { ascending: false });
+      let hasAcknowledgedPlan = true;
+      if (publishedPlan?.id && publishedPlan?.version && user?.id) {
+        const { data: acknowledgement } = await supabase
+          .from('catheter_care_plan_acknowledgements')
+          .select('id')
+          .eq('plan_id', publishedPlan.id)
+          .eq('plan_version', publishedPlan.version)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        hasAcknowledgedPlan = !!acknowledgement;
+      }
 
       const now = new Date();
       const lastChange = changes?.[0];
@@ -847,64 +995,88 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         isFlushOverdue = nextFlush.getTime() < now.getTime();
       }
 
-      // Stoma concern — use dynamic calculation (same as tile) to account for overdue
-      const hoursSinceStoma = lastStoma
-        ? differenceInHours(now, parseISO(lastStoma.event_occurred_at))
-        : null;
+      const hoursSinceStoma = lastStoma ? differenceInHours(now, parseISO(lastStoma.event_occurred_at)) : null;
       const stomaFindings: StomaFinding[] = (lastStoma?.findings as StomaFinding[]) || [];
       const stomaPainLevel: StomaPainLevel = (lastStoma?.pain_level as StomaPainLevel) || 'none';
-      const dynamicStomaStatus = lastStoma
-        ? calculateStomaStatusLevel(stomaFindings, stomaPainLevel, hoursSinceStoma)
-        : 'green';
+      const dynamicStomaStatus = lastStoma ? calculateStomaStatusLevel(stomaFindings, stomaPainLevel, hoursSinceStoma) : 'green';
 
       const hasRedAlert = activeAlerts.some(alert => alert.severity === 'red');
       const hasAmberAlert = activeAlerts.some(alert => alert.severity === 'amber');
 
-      let status: 'stable' | 'monitor' | 'action' = 'stable';
-      let message = 'Catheter management on track.';
+      let clinicalData: ModuleAlertData = {
+        status: 'stable',
+        message: 'Catheter management on track.',
+        timestamp: lastChange?.event_occurred_at || lastFlush?.event_occurred_at || lastStoma?.event_occurred_at || new Date().toISOString(),
+      };
 
-      // RED hierarchy first
       if (hasRedAlert || isChangeOverdue || isFlushOverdue || dynamicStomaStatus === 'red') {
-        status = 'action';
-        if (hasRedAlert) message = latestActiveAlert?.message || 'Catheter alert requires immediate action.';
-        else if (isChangeOverdue) message = `Catheter change overdue by ${Math.abs(daysUntilChange ?? 0)} days.`;
-        else if (isFlushOverdue) message = 'Catheter flush overdue – action required.';
-        else message = 'Stoma site concern – escalate to clinician.';
-      // AMBER hierarchy second
+        clinicalData = {
+          status: 'action',
+          message: hasRedAlert
+            ? latestActiveAlert?.message || 'Catheter alert requires immediate action.'
+            : isChangeOverdue
+              ? `Catheter change overdue by ${Math.abs(daysUntilChange ?? 0)} days.`
+              : isFlushOverdue
+                ? 'Catheter flush overdue – action required.'
+                : 'Stoma site concern – escalate to clinician.',
+          timestamp: latestActiveAlert?.created_at || lastStoma?.event_occurred_at || lastFlush?.event_occurred_at || lastChange?.event_occurred_at || new Date().toISOString(),
+        };
       } else if (hasAmberAlert || (daysUntilChange !== null && daysUntilChange <= 3) || dynamicStomaStatus === 'amber') {
-        status = 'monitor';
-        if (hasAmberAlert) message = latestActiveAlert?.message || 'Catheter requires follow-up.';
-        else if (dynamicStomaStatus === 'amber') message = 'Stoma site requires monitoring – recheck within 24 hours.';
-        else if (daysUntilChange !== null && daysUntilChange <= 3) message = `Catheter change due in ${daysUntilChange} day(s).`;
+        clinicalData = {
+          status: 'monitor',
+          message: hasAmberAlert
+            ? latestActiveAlert?.message || 'Catheter requires follow-up.'
+            : dynamicStomaStatus === 'amber'
+              ? 'Stoma site requires monitoring – recheck within 24 hours.'
+              : `Catheter change due in ${daysUntilChange} day(s).`,
+          timestamp: latestActiveAlert?.created_at || lastStoma?.event_occurred_at || lastChange?.event_occurred_at || new Date().toISOString(),
+        };
       }
 
-      const latestTimestamp = latestActiveAlert?.created_at || lastStoma?.event_occurred_at || lastFlush?.event_occurred_at || lastChange?.event_occurred_at || new Date().toISOString();
-      setLatestCatheterData({ status, message, timestamp: latestTimestamp });
+      const planAlertData = buildPlanStatusAlert('Urinary Catheter', publishedPlan, hasAcknowledgedPlan);
+      const finalData = getHighestPriorityModuleData(clinicalData, planAlertData) || clinicalData;
 
+      setLatestCatheterData(finalData);
       const timeAgo = lastChange ? formatDistanceToNow(new Date(lastChange.event_occurred_at), { addSuffix: true }) : 'Never';
-      updateModuleStatus('catheter', status, lastChange ? `Last change ${timeAgo}` : 'Not yet logged');
+      const stableLastEntry = lastChange ? `Last change ${timeAgo}` : 'Not yet logged';
+      updateModuleStatus('catheter', finalData.status, finalData.status === 'stable' ? stableLastEntry : finalData.message);
     } catch (err) { console.error('Error in fetchCatheterStatus:', err); }
   };
 
   // ── Pressure Area Prevention ─────────────────────────────────
   const fetchPressureAreaStatus = async () => {
     try {
-      const { data: configData } = await supabase.from('pressure_area_config').select('*').limit(1).maybeSingle();
-      const { data: events } = await supabase.from('pressure_relief_events').select('*').order('event_occurred_at', { ascending: false }).limit(50);
-      const { data: skinChecks } = await supabase
-        .from('skin_check_sessions')
-        .select('*, skin_finding_markers(*)')
-        .order('event_occurred_at', { ascending: false })
-        .limit(200);
+      const [configResult, eventsResult, skinChecksResult, planResult] = await Promise.all([
+        supabase.from('pressure_area_config').select('*').limit(1).maybeSingle(),
+        supabase.from('pressure_relief_events').select('*').order('event_occurred_at', { ascending: false }).limit(50),
+        supabase.from('skin_check_sessions').select('*, skin_finding_markers(*)').order('event_occurred_at', { ascending: false }).limit(200),
+        (() => {
+          let query = supabase
+            .from('pressure_relief_plans')
+            .select('*')
+            .eq('status', 'published')
+            .order('version', { ascending: false })
+            .limit(1);
+          return profile?.id && profile.id !== '1' ? query.eq('client_id', profile.id).maybeSingle() : query.is('client_id', null).maybeSingle();
+        })(),
+      ]);
 
-      // Fetch published plan
-      const { data: planData } = await supabase
-        .from('pressure_relief_plans')
-        .select('*')
-        .eq('status', 'published')
-        .order('version', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const configData = configResult.data;
+      const events = eventsResult.data;
+      const skinChecks = skinChecksResult.data;
+      const planData = planResult.data;
+
+      let hasAcknowledgedPlan = true;
+      if (planData?.id && planData?.version && user?.id) {
+        const { data: acknowledgement } = await supabase
+          .from('pressure_relief_plan_acknowledgements')
+          .select('id')
+          .eq('plan_id', planData.id)
+          .eq('plan_version', planData.version)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        hasAcknowledgedPlan = !!acknowledgement;
+      }
 
       const typedEvents = (events || []) as unknown as PressureReliefEvent[];
       const typedSkinChecks = (skinChecks || []) as unknown as (SkinCheckSession & { skin_finding_markers?: SkinFindingMarker[] })[];
@@ -919,12 +1091,20 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           skin_checks_per_day: (configData as any).skin_checks_per_day ?? 0,
           skin_check_times: (configData as any).skin_check_times ?? [],
         } : null,
-        planAcknowledged: true,
+        planAcknowledged: hasAcknowledgedPlan,
       });
 
-      const moduleStatus = statusResult.status === 'ideal' ? 'stable' : statusResult.status;
-      setLatestPressureAreaData({ status: moduleStatus, message: statusResult.message, timestamp: typedEvents[0]?.event_occurred_at || new Date().toISOString() });
-      updateModuleStatus('pressure-area', moduleStatus, statusResult.lastEntry || 'Not yet logged');
+      const clinicalData: ModuleAlertData = {
+        status: statusResult.status === 'ideal' ? 'stable' : statusResult.status,
+        message: statusResult.message,
+        timestamp: typedEvents[0]?.event_occurred_at || typedSkinChecks[0]?.event_occurred_at || new Date().toISOString(),
+      };
+      const planAlertData = buildPlanStatusAlert('Pressure Area Prevention', planData, hasAcknowledgedPlan);
+      const dailySkinCheckAlert = buildPressureAreaDailySkinCheckAlert(configData as any, typedSkinChecks);
+      const finalData = getHighestPriorityModuleData(clinicalData, planAlertData, dailySkinCheckAlert) || clinicalData;
+
+      setLatestPressureAreaData(finalData);
+      updateModuleStatus('pressure-area', finalData.status, finalData.status === 'stable' ? (statusResult.lastEntry || 'Not yet logged') : finalData.message);
     } catch (err) { console.error('Error in fetchPressureAreaStatus:', err); }
   };
 
@@ -1168,7 +1348,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       supabase.removeChannel(mealtimeChannel);
       supabase.removeChannel(enteralChannel);
     };
-  }, [profile?.id]);
+  }, [profile?.id, user?.id]);
 
   // Re-fetch profile-dependent statuses when profile loads from DB
   useEffect(() => {
@@ -1188,7 +1368,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       fetchIddsiStatus();
       fetchEnteralStatus();
     }
-  }, [profile?.id, profile?.dateOfBirth]);
+  }, [profile?.id, profile?.dateOfBirth, user?.id]);
 
   // Enable ALL vitals by default
   const [healthMonitoringConfig, setHealthMonitoringConfig] = useState<HealthMonitoringConfig>({
