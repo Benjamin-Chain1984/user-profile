@@ -3,7 +3,7 @@
  * Staff identity is auto-stamped from authenticated session.
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -19,6 +19,7 @@ import { usePressureReliefPlan } from '@/hooks/usePressureReliefPlan';
 import { useCurrentStaff } from '@/hooks/useCurrentStaff';
 import { RELIEF_ISSUES, type RotationPosition, getPositionsForDay } from '@/types/pressureArea';
 import { Loader2, CheckCircle2, AlertTriangle, User } from 'lucide-react';
+import { addMinutes, format } from 'date-fns';
 
 interface Props {
   clientId?: string;
@@ -34,6 +35,31 @@ export function PressureReliefLogForm({ clientId, open, onOpenChange }: Props) {
   const positions = plan?.rotation_sequence ? getPositionsForDay(plan.rotation_sequence) : [] as RotationPosition[];
   const recommendedPosition = positions.length > 0 ? positions[0].name : '';
 
+  // Build scheduled time slots from plan
+  const scheduledSlots = useMemo(() => {
+    if (!plan || plan.status !== 'published' || plan.schedule_type === 'as_required' || positions.length === 0) return [];
+    const dayStartStr = plan.day_schedule_start || '06:00';
+    const [startH, startM] = dayStartStr.split(':').map(Number);
+    const now = new Date();
+    const todayBase = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startH, startM);
+    const intervalMinutes = plan.interval_minutes || 120;
+
+    const slots: { time: string; label: string; position: string }[] = [];
+    let cumulativeMinutes = 0;
+    for (let i = 0; i < positions.length; i++) {
+      const slotTime = addMinutes(todayBase, cumulativeMinutes);
+      const timeStr = format(slotTime, 'HH:mm');
+      slots.push({
+        time: timeStr,
+        label: `${timeStr} – ${positions[i].name}`,
+        position: positions[i].name,
+      });
+      cumulativeMinutes += positions[i].target_duration_minutes || intervalMinutes;
+    }
+    return slots;
+  }, [plan, positions]);
+
+  const [selectedScheduledTime, setSelectedScheduledTime] = useState<string>('');
   const [positionCompleted, setPositionCompleted] = useState(recommendedPosition);
   const [selectedIssues, setSelectedIssues] = useState<string[]>([]);
   const [issueDetails, setIssueDetails] = useState('');
@@ -41,6 +67,30 @@ export function PressureReliefLogForm({ clientId, open, onOpenChange }: Props) {
   const [showEscalation, setShowEscalation] = useState(false);
   const [escalationContact, setEscalationContact] = useState('');
   const [escalationAdvice, setEscalationAdvice] = useState('');
+
+  // Auto-select the next due scheduled slot when form opens
+  useEffect(() => {
+    if (open && scheduledSlots.length > 0 && !selectedScheduledTime) {
+      const now = new Date();
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+      const nextSlot = scheduledSlots.find(s => {
+        const [h, m] = s.time.split(':').map(Number);
+        return h * 60 + m >= nowMinutes;
+      }) || scheduledSlots[0];
+      if (nextSlot) {
+        setSelectedScheduledTime(nextSlot.time);
+        setPositionCompleted(nextSlot.position);
+      }
+    }
+  }, [open, scheduledSlots]);
+
+  // When scheduled time changes, update recommended position
+  useEffect(() => {
+    if (selectedScheduledTime && selectedScheduledTime !== 'other') {
+      const slot = scheduledSlots.find(s => s.time === selectedScheduledTime);
+      if (slot) setPositionCompleted(slot.position);
+    }
+  }, [selectedScheduledTime, scheduledSlots]);
 
   const toggleIssue = (issue: string) => {
     setSelectedIssues(prev => {
@@ -65,6 +115,7 @@ export function PressureReliefLogForm({ clientId, open, onOpenChange }: Props) {
     });
     // Reset
     setPositionCompleted(recommendedPosition);
+    setSelectedScheduledTime('');
     setSelectedIssues([]);
     setIssueDetails('');
     setNotes('');
@@ -89,6 +140,24 @@ export function PressureReliefLogForm({ clientId, open, onOpenChange }: Props) {
             <span className="text-sm text-muted-foreground">Logged by:</span>
             <span className="text-sm font-medium">{staffName}</span>
           </div>
+
+          {/* Scheduled Time Selector */}
+          {scheduledSlots.length > 0 && (
+            <div>
+              <Label>Which scheduled reposition is this for?</Label>
+              <Select value={selectedScheduledTime} onValueChange={setSelectedScheduledTime}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select scheduled time" />
+                </SelectTrigger>
+                <SelectContent>
+                  {scheduledSlots.map(slot => (
+                    <SelectItem key={slot.time} value={slot.time}>{slot.label}</SelectItem>
+                  ))}
+                  <SelectItem value="other">Other (outside schedule)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div>
             <Label>Position Completed</Label>
