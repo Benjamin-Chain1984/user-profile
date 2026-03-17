@@ -1368,7 +1368,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       fetchIddsiStatus();
       fetchEnteralStatus();
     }
-  }, [profile?.id, profile?.dateOfBirth]);
+  }, [profile?.id, profile?.dateOfBirth, user?.id]);
 
   // Enable ALL vitals by default
   const [healthMonitoringConfig, setHealthMonitoringConfig] = useState<HealthMonitoringConfig>({
