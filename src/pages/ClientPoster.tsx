@@ -208,9 +208,7 @@ export default function ClientPosterPage() {
       pdf.setFontSize(9);
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(80);
-      pdf.text('Use your authorised device to scan this QR code.', pw / 2, y, { align: 'center' });
-      y += 4;
-      pdf.text('Access may require staff verification.', pw / 2, y, { align: 'center' });
+      pdf.text('Use your authorised device to scan this QR code to open the individual\'s IDEAL profile.', pw / 2, y, { align: 'center' });
       y += 8;
 
       // Client name + avatar area
