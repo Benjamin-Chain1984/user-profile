@@ -68,21 +68,23 @@ export function PressureReliefLogForm({ clientId, open, onOpenChange }: Props) {
   const [escalationContact, setEscalationContact] = useState('');
   const [escalationAdvice, setEscalationAdvice] = useState('');
 
-  // Auto-select the next due scheduled slot when form opens
+  // Auto-select the most recent due scheduled slot when form opens
   useEffect(() => {
     if (open && scheduledSlots.length > 0 && !selectedScheduledTime) {
       const now = new Date();
       const nowMinutes = now.getHours() * 60 + now.getMinutes();
-      const nextSlot = scheduledSlots.find(s => {
+      const dueOrPastSlots = scheduledSlots.filter(s => {
         const [h, m] = s.time.split(':').map(Number);
-        return h * 60 + m >= nowMinutes;
-      }) || scheduledSlots[0];
-      if (nextSlot) {
-        setSelectedScheduledTime(nextSlot.time);
-        setPositionCompleted(nextSlot.position);
+        return h * 60 + m <= nowMinutes;
+      });
+
+      const targetSlot = dueOrPastSlots[dueOrPastSlots.length - 1] || scheduledSlots[0];
+      if (targetSlot) {
+        setSelectedScheduledTime(targetSlot.time);
+        setPositionCompleted(targetSlot.position);
       }
     }
-  }, [open, scheduledSlots]);
+  }, [open, scheduledSlots, selectedScheduledTime]);
 
   // When scheduled time changes, update recommended position
   useEffect(() => {

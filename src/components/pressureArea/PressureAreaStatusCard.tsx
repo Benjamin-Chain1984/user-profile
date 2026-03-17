@@ -104,37 +104,37 @@ function PressureReliefTile({
     });
 
     // Generate scheduled slots from the plan's rotation sequence for today
-    // Track which events have already been matched to avoid double-counting
-    const usedEventIds = new Set<string>();
+    const scheduledEventMap = new Map<string, typeof todayEvents[number]>();
+    const unscheduledEvents = [...todayEvents];
+
+    todayEvents.forEach((event) => {
+      const scheduledTime = (event as any).scheduled_time;
+      if (scheduledTime && !scheduledEventMap.has(scheduledTime)) {
+        scheduledEventMap.set(scheduledTime, event);
+      }
+    });
+
     const slots: {position: string;dueAt: Date;completed: boolean;completedBy?: string;completedAt?: string;}[] = [];
     let cumulativeMinutes = 0;
     for (let i = 0; i < positions.length; i++) {
       const dueAt = addMinutes(todayBase, cumulativeMinutes);
       const timeStr = `${String(dueAt.getHours()).padStart(2, '0')}:${String(dueAt.getMinutes()).padStart(2, '0')}`;
 
-      // 1. Exact match on scheduled_time field (like skin checks)
-      let matchingEvent = todayEvents.find((e) => !usedEventIds.has(e.id) && (e as any).scheduled_time === timeStr);
+      let matchingEvent = scheduledEventMap.get(timeStr);
 
-      // 2. Fallback: position name + time proximity
       if (!matchingEvent) {
-        matchingEvent = todayEvents.find((e) => {
-          if (usedEventIds.has(e.id)) return false;
+        const fallbackIndex = unscheduledEvents.findIndex((e) => {
+          if ((e as any).scheduled_time) return false;
           const eventTime = new Date(e.event_occurred_at);
           return e.position_completed === positions[i].name &&
-          Math.abs(differenceInMinutes(eventTime, dueAt)) < intervalMinutes / 2;
+            Math.abs(differenceInMinutes(eventTime, dueAt)) <= 120;
         });
-      }
 
-      // 3. Fallback: any event within ±2 hours of the slot (generous matching)
-      if (!matchingEvent) {
-        matchingEvent = todayEvents.find((e) => {
-          if (usedEventIds.has(e.id)) return false;
-          const eventTime = new Date(e.event_occurred_at);
-          return Math.abs(differenceInMinutes(eventTime, dueAt)) <= 120;
-        });
+        if (fallbackIndex >= 0) {
+          matchingEvent = unscheduledEvents[fallbackIndex];
+          unscheduledEvents.splice(fallbackIndex, 1);
+        }
       }
-
-      if (matchingEvent) usedEventIds.add(matchingEvent.id);
 
       slots.push({
         position: positions[i].name,
