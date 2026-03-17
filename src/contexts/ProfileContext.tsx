@@ -1046,19 +1046,47 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   // ── Pressure Area Prevention ─────────────────────────────────
   const fetchPressureAreaStatus = async () => {
     try {
+      const hasActiveClient = Boolean(profile?.id && profile.id !== '1');
+      const activeClientId = hasActiveClient ? profile!.id : null;
+
+      const pressureAreaConfigQuery = (() => {
+        let query = supabase.from('pressure_area_config').select('*').limit(1);
+        return activeClientId ? query.eq('client_id', activeClientId).maybeSingle() : query.is('client_id', null).maybeSingle();
+      })();
+
+      const pressureReliefEventsQuery = (() => {
+        let query = supabase
+          .from('pressure_relief_events')
+          .select('*')
+          .order('event_occurred_at', { ascending: false })
+          .limit(50);
+        return activeClientId ? query.eq('client_id', activeClientId) : query.is('client_id', null);
+      })();
+
+      const skinCheckSessionsQuery = (() => {
+        let query = supabase
+          .from('skin_check_sessions')
+          .select('*, skin_finding_markers(*)')
+          .order('event_occurred_at', { ascending: false })
+          .limit(200);
+        return activeClientId ? query.eq('client_id', activeClientId) : query.is('client_id', null);
+      })();
+
+      const pressureReliefPlanQuery = (() => {
+        let query = supabase
+          .from('pressure_relief_plans')
+          .select('*')
+          .eq('status', 'published')
+          .order('version', { ascending: false })
+          .limit(1);
+        return activeClientId ? query.eq('client_id', activeClientId).maybeSingle() : query.is('client_id', null).maybeSingle();
+      })();
+
       const [configResult, eventsResult, skinChecksResult, planResult] = await Promise.all([
-        supabase.from('pressure_area_config').select('*').limit(1).maybeSingle(),
-        supabase.from('pressure_relief_events').select('*').order('event_occurred_at', { ascending: false }).limit(50),
-        supabase.from('skin_check_sessions').select('*, skin_finding_markers(*)').order('event_occurred_at', { ascending: false }).limit(200),
-        (() => {
-          let query = supabase
-            .from('pressure_relief_plans')
-            .select('*')
-            .eq('status', 'published')
-            .order('version', { ascending: false })
-            .limit(1);
-          return profile?.id && profile.id !== '1' ? query.eq('client_id', profile.id).maybeSingle() : query.is('client_id', null).maybeSingle();
-        })(),
+        pressureAreaConfigQuery,
+        pressureReliefEventsQuery,
+        skinCheckSessionsQuery,
+        pressureReliefPlanQuery,
       ]);
 
       const configData = configResult.data;
@@ -1094,10 +1122,21 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         planAcknowledged: hasAcknowledgedPlan,
       });
 
+      const clinicalTimestamp = (() => {
+        if (statusResult.status === 'action' || statusResult.status === 'monitor') {
+          const latestSkinFindingSession = typedSkinChecks.find((session) =>
+            (session.skin_finding_markers || []).some((marker) => marker.finding_type !== 'ok' && marker.finding_type !== 'unable')
+          );
+          if (latestSkinFindingSession) return latestSkinFindingSession.event_occurred_at;
+        }
+
+        return typedEvents[0]?.event_occurred_at || typedSkinChecks[0]?.event_occurred_at || new Date().toISOString();
+      })();
+
       const clinicalData: ModuleAlertData = {
         status: statusResult.status === 'ideal' ? 'stable' : statusResult.status,
         message: statusResult.message,
-        timestamp: typedEvents[0]?.event_occurred_at || typedSkinChecks[0]?.event_occurred_at || new Date().toISOString(),
+        timestamp: clinicalTimestamp,
       };
       const planAlertData = buildPlanStatusAlert('Pressure Area Prevention', planData, hasAcknowledgedPlan);
       const dailySkinCheckAlert = buildPressureAreaDailySkinCheckAlert(configData as any, typedSkinChecks);
