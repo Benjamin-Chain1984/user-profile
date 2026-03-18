@@ -239,7 +239,7 @@ export function computeHealthMonitoringStatus(
     elapsedHours: respOverdue.elapsedHours,
     reasonText: !config.respiratory_enabled ? 'Disabled'
       : respOverdue.overdue
-        ? `Overdue by ${respOverdue.elapsedHours != null ? `${respOverdue.elapsedHours - (config.respiratory_frequency_hours ?? 0)}h` : 'unknown'} (expected ${frequencyLabel(config.respiratory_frequency_hours ?? 24)})`
+        ? `Overdue by ${respOverdue.elapsedHours != null ? formatOverdue(respOverdue.elapsedHours - (config.respiratory_frequency_hours ?? 0)) : 'unknown'} (expected ${frequencyLabel(config.respiratory_frequency_hours ?? 24)})`
         : respLastAt ? 'On schedule' : 'Not yet recorded',
   };
 
