@@ -197,26 +197,6 @@ export function SleepConfigSettings({ clientId }: SleepConfigSettingsProps) {
           </CardContent>
         </Card>
 
-        {/* Who Can Help */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Who can help set up this module?
-            </CardTitle>
-            <CardDescription>The following professionals can assist with configuring sleep monitoring thresholds</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2">
-              {WHO_CAN_HELP.map((role) => (
-                <li key={role} className="flex items-center gap-2 text-sm">
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                  {role}
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
 
         {/* Related Modules */}
         <Card>
