@@ -27,6 +27,13 @@ export function frequencyLabel(hours: number): string {
   return 'weekly';
 }
 
+/** Format elapsed overdue hours as a human-readable days string */
+function formatOverdue(overdueHours: number): string {
+  if (overdueHours < 24) return 'less than 1 day';
+  const days = Math.round(overdueHours / 24);
+  return `${days} day${days === 1 ? '' : 's'}`;
+}
+
 // ─── Per-vital result ─────────────────────────────────────────────────────────
 
 export interface PerVitalStatus {
@@ -144,7 +151,7 @@ export function computeHealthMonitoringStatus(
     elapsedHours: tempOverdue.elapsedHours,
     reasonText: !config.temperature_enabled ? 'Disabled'
       : tempOverdue.overdue
-        ? `Overdue by ${tempOverdue.elapsedHours != null ? `${tempOverdue.elapsedHours - (config.temperature_frequency_hours ?? 0)}h` : 'unknown'} (expected ${frequencyLabel(config.temperature_frequency_hours ?? 24)})`
+        ? `Overdue by ${tempOverdue.elapsedHours != null ? formatOverdue(tempOverdue.elapsedHours - (config.temperature_frequency_hours ?? 0)) : 'unknown'} (expected ${frequencyLabel(config.temperature_frequency_hours ?? 24)})`
         : tempLastAt ? 'On schedule' : 'Not yet recorded',
   };
 
@@ -169,7 +176,7 @@ export function computeHealthMonitoringStatus(
     reasonText: !config.bp_enabled ? 'Disabled'
       : bpVitalStatus === 'red' ? 'Critical reading — action needed'
       : bpOverdue.overdue
-        ? `Overdue by ${bpOverdue.elapsedHours != null ? `${bpOverdue.elapsedHours - (config.bp_frequency_hours ?? 0)}h` : 'unknown'} (expected ${frequencyLabel(config.bp_frequency_hours ?? 24)})`
+        ? `Overdue by ${bpOverdue.elapsedHours != null ? formatOverdue(bpOverdue.elapsedHours - (config.bp_frequency_hours ?? 0)) : 'unknown'} (expected ${frequencyLabel(config.bp_frequency_hours ?? 24)})`
         : bpLastAt ? 'On schedule' : 'Not yet recorded',
   };
 
@@ -190,7 +197,7 @@ export function computeHealthMonitoringStatus(
     elapsedHours: oxygenOverdue.elapsedHours,
     reasonText: !config.oxygen_enabled ? 'Disabled'
       : oxygenOverdue.overdue
-        ? `Overdue by ${oxygenOverdue.elapsedHours != null ? `${oxygenOverdue.elapsedHours - (config.oxygen_frequency_hours ?? 0)}h` : 'unknown'} (expected ${frequencyLabel(config.oxygen_frequency_hours ?? 24)})`
+        ? `Overdue by ${oxygenOverdue.elapsedHours != null ? formatOverdue(oxygenOverdue.elapsedHours - (config.oxygen_frequency_hours ?? 0)) : 'unknown'} (expected ${frequencyLabel(config.oxygen_frequency_hours ?? 24)})`
         : oxygenLastAt ? 'On schedule' : 'Not yet recorded',
   };
 
@@ -211,7 +218,7 @@ export function computeHealthMonitoringStatus(
     elapsedHours: hrOverdue.elapsedHours,
     reasonText: !config.heart_rate_enabled ? 'Disabled'
       : hrOverdue.overdue
-        ? `Overdue by ${hrOverdue.elapsedHours != null ? `${hrOverdue.elapsedHours - (config.heart_rate_frequency_hours ?? 0)}h` : 'unknown'} (expected ${frequencyLabel(config.heart_rate_frequency_hours ?? 24)})`
+        ? `Overdue by ${hrOverdue.elapsedHours != null ? formatOverdue(hrOverdue.elapsedHours - (config.heart_rate_frequency_hours ?? 0)) : 'unknown'} (expected ${frequencyLabel(config.heart_rate_frequency_hours ?? 24)})`
         : hrLastAt ? 'On schedule' : 'Not yet recorded',
   };
 
@@ -232,7 +239,7 @@ export function computeHealthMonitoringStatus(
     elapsedHours: respOverdue.elapsedHours,
     reasonText: !config.respiratory_enabled ? 'Disabled'
       : respOverdue.overdue
-        ? `Overdue by ${respOverdue.elapsedHours != null ? `${respOverdue.elapsedHours - (config.respiratory_frequency_hours ?? 0)}h` : 'unknown'} (expected ${frequencyLabel(config.respiratory_frequency_hours ?? 24)})`
+        ? `Overdue by ${respOverdue.elapsedHours != null ? formatOverdue(respOverdue.elapsedHours - (config.respiratory_frequency_hours ?? 0)) : 'unknown'} (expected ${frequencyLabel(config.respiratory_frequency_hours ?? 24)})`
         : respLastAt ? 'On schedule' : 'Not yet recorded',
   };
 
