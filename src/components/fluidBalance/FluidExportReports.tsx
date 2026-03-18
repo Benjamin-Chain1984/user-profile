@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { FileText, Download, Calendar } from 'lucide-react';
+import { FileText, Download, Calendar, ArrowLeft } from 'lucide-react';
 import { FluidConfig, FluidIntakeEntry, FluidOutputEntry, FluidBalanceAlert } from '@/types/fluidBalance';
 import { calculateDailySummaries, getStatusLabel } from '@/utils/fluidBalanceCalculator';
 import { format, subDays, startOfMonth, endOfMonth, subMonths, startOfYear, parseISO } from 'date-fns';
@@ -15,6 +15,7 @@ interface FluidExportReportsProps {
   intakeEntries: FluidIntakeEntry[];
   outputEntries: FluidOutputEntry[];
   alerts: FluidBalanceAlert[];
+  onClose?: () => void;
 }
 
 type DatePreset = 'last7' | 'last30' | 'thisMonth' | 'lastMonth' | 'thisYear';
@@ -23,7 +24,8 @@ export const FluidExportReports: React.FC<FluidExportReportsProps> = ({
   config,
   intakeEntries,
   outputEntries,
-  alerts
+  alerts,
+  onClose
 }) => {
   const [datePreset, setDatePreset] = useState<DatePreset>('last7');
   const [includeSections, setIncludeSections] = useState({
@@ -203,7 +205,14 @@ export const FluidExportReports: React.FC<FluidExportReportsProps> = ({
   };
   
   return (
-    <Card>
+    <div className="space-y-6">
+      {onClose && (
+        <Button variant="ghost" onClick={onClose} className="mb-2">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Fluid Balance
+        </Button>
+      )}
+      <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
@@ -266,5 +275,6 @@ export const FluidExportReports: React.FC<FluidExportReportsProps> = ({
         </div>
       </CardContent>
     </Card>
+    </div>
   );
 };

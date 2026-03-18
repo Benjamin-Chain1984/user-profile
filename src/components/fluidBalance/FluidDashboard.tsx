@@ -1,9 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Droplets, FileText, Settings, TrendingUp, Clock } from 'lucide-react';
+import { AlertTriangle, Settings, TrendingUp, Clock, FileDown, Plus } from 'lucide-react';
 import { useFluidBalance } from '@/hooks/useFluidBalance';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { useProfile } from '@/contexts/ProfileContext';
@@ -15,7 +14,6 @@ import { IntakeLogForm } from './IntakeLogForm';
 import { OutputLogForm } from './OutputLogForm';
 import { FluidHistory } from './FluidHistory';
 import { FluidTrends } from './FluidTrends';
-
 import { SignsAndSymptomsPanel } from './SignsAndSymptomsPanel';
 import { FluidConfigSettings } from './FluidConfigSettings';
 import { FluidExportReports } from './FluidExportReports';
@@ -26,6 +24,7 @@ interface FluidDashboardProps {
 }
 
 export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
+  const [showExport, setShowExport] = useState(false);
   const {
     config,
     intakeEntries,
@@ -75,9 +74,38 @@ export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
   const targetOrCap = config?.fluid_restriction_enabled && config?.max_fluid_allowance_ml
     ? config.max_fluid_allowance_ml
     : config?.target_daily_intake_ml || 2000;
+
+  // Show export view (full-page toggle, consistent with Bowel Care)
+  if (showExport) {
+    return (
+      <FluidExportReports
+        config={config}
+        intakeEntries={intakeEntries}
+        outputEntries={outputEntries}
+        alerts={alerts}
+        onClose={() => setShowExport(false)}
+      />
+    );
+  }
   
   return (
     <div className="space-y-6">
+      {/* Header Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-bold">Fluid Balance & Hydration</h2>
+          <p className="text-muted-foreground">
+            Track fluid intake, output, and monitor hydration status
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setShowExport(true)}>
+            <FileDown className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+        </div>
+      </div>
+
       {/* Monitoring Paused Banner */}
       {isMonitoringPaused && monitoringStatus && (
         <MonitoringPausedBanner
@@ -114,7 +142,7 @@ export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
       )}
       
       <Tabs defaultValue="tracking" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="tracking" className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
             <span className="hidden sm:inline">Tracking</span>
@@ -122,10 +150,6 @@ export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
           <TabsTrigger value="trends" className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4" />
             <span className="hidden sm:inline">Trends</span>
-          </TabsTrigger>
-          <TabsTrigger value="export" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            <span className="hidden sm:inline">Export</span>
           </TabsTrigger>
           <RoleTabsTrigger 
             value="settings" 
@@ -172,11 +196,11 @@ export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
             )}
           </div>
           
-            {/* Signs and Symptoms - informational only */}
-            <SignsAndSymptomsPanel />
-            
-            {/* History */}
-            <FluidHistory
+          {/* Signs and Symptoms - informational only */}
+          <SignsAndSymptomsPanel />
+          
+          {/* History */}
+          <FluidHistory
             intakeEntries={intakeEntries}
             outputEntries={outputEntries}
             enableOutputLogging={config?.enable_output_logging ?? true}
@@ -188,15 +212,6 @@ export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
             intakeEntries={intakeEntries}
             outputEntries={outputEntries}
             config={config}
-          />
-        </TabsContent>
-        
-        <TabsContent value="export">
-          <FluidExportReports
-            config={config}
-            intakeEntries={intakeEntries}
-            outputEntries={outputEntries}
-            alerts={alerts}
           />
         </TabsContent>
         
