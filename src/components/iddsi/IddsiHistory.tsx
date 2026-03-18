@@ -90,14 +90,6 @@ export function IddsiHistory({ clientId }: Props) {
     return merged;
   }, [observations, checks, timeFilter]);
 
-  // Show last 5 mealtime observations separately
-  const lastFiveObservations = useMemo(() => {
-    return observations
-      .slice()
-      .sort((a, b) => new Date(b.eventOccurredAt).getTime() - new Date(a.eventOccurredAt).getTime())
-      .slice(0, 5);
-  }, [observations]);
-
   const loading = obsLoading || posLoading;
 
   return (
