@@ -17,7 +17,7 @@ import { useEpilepsyConfig } from '@/hooks/useEpilepsy';
 import { FREQUENCY_OPTIONS, SEIZURE_TYPES, SEIZURE_TRIGGERS } from '@/types/epilepsy';
 import type { EpilepsyWindowUnit } from '@/types/epilepsy';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Settings, Shield, AlertTriangle, Pill, Link as LinkIcon, Info, Moon, Thermometer, Activity, Droplets, Heart, Brain } from 'lucide-react';
+import { Settings, Shield, AlertTriangle, Pill, Link as LinkIcon, Info, Moon, Thermometer, Activity, Droplets, Heart, Brain, Users } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 
 interface EpilepsyConfigSettingsProps {
