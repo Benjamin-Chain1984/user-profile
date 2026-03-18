@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { FileText, Download, Calendar } from 'lucide-react';
+import { FileText, Download, Calendar, ArrowLeft } from 'lucide-react';
 import { FluidConfig, FluidIntakeEntry, FluidOutputEntry, FluidBalanceAlert } from '@/types/fluidBalance';
 import { calculateDailySummaries, getStatusLabel } from '@/utils/fluidBalanceCalculator';
 import { format, subDays, startOfMonth, endOfMonth, subMonths, startOfYear, parseISO } from 'date-fns';
