@@ -218,7 +218,7 @@ export function computeHealthMonitoringStatus(
     elapsedHours: hrOverdue.elapsedHours,
     reasonText: !config.heart_rate_enabled ? 'Disabled'
       : hrOverdue.overdue
-        ? `Overdue by ${hrOverdue.elapsedHours != null ? `${hrOverdue.elapsedHours - (config.heart_rate_frequency_hours ?? 0)}h` : 'unknown'} (expected ${frequencyLabel(config.heart_rate_frequency_hours ?? 24)})`
+        ? `Overdue by ${hrOverdue.elapsedHours != null ? formatOverdue(hrOverdue.elapsedHours - (config.heart_rate_frequency_hours ?? 0)) : 'unknown'} (expected ${frequencyLabel(config.heart_rate_frequency_hours ?? 24)})`
         : hrLastAt ? 'On schedule' : 'Not yet recorded',
   };
 
