@@ -18,9 +18,10 @@ import { PositioningCheckPanel } from './PositioningCheckPanel';
 import { SafeSwallowingStrategies } from './SafeSwallowingStrategies';
 import { IddsiHistory } from './IddsiHistory';
 import { IddsiConfigSettings } from './IddsiConfigSettings';
+import { IddsiStatusCard } from './IddsiStatusCard';
 import {
   AlertCircle, Settings, Clock, BarChart3,
-  Eye, Armchair, Brain, AlertTriangle, Plus,
+  Eye, Armchair, Brain, Plus,
 } from 'lucide-react';
 
 interface IddsiDashboardProps {
