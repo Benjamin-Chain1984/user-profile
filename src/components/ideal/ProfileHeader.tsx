@@ -1,6 +1,8 @@
 import { useProfile } from '@/contexts/ProfileContext';
 import { ProfileAvatar } from './ProfileAvatar';
-import { StatusBadge } from './StatusBadge';
+import { TrafficLightBadge } from '@/components/shared/TrafficLightBadge';
+import { TrafficLightIcon } from '@/components/shared/TrafficLightIcon';
+import { toTrafficLight } from '@/types/trafficLight';
 import { differenceInYears } from 'date-fns';
 
 export function ProfileHeader() {
@@ -25,9 +27,10 @@ export function ProfileHeader() {
           <p className="text-sm sm:text-base text-muted-foreground mt-0.5">
             Age {age}
           </p>
-          <div className="mt-2 sm:mt-3">
-            <StatusBadge 
-              status={globalAlertState.currentStatus} 
+          <div className="mt-2 sm:mt-3 flex items-center gap-2">
+            <TrafficLightIcon status={toTrafficLight(globalAlertState.currentStatus)} size="sm" />
+            <TrafficLightBadge 
+              status={toTrafficLight(globalAlertState.currentStatus)} 
               size="md" 
               isPaused={isMonitoringPaused}
             />
