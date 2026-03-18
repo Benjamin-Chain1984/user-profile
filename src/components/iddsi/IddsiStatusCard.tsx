@@ -49,7 +49,7 @@ export function IddsiStatusCard({
     <TrafficLightStatusCard
       status={trafficLight}
       reason={isOverdue && effectiveSeverity === 'amber' && lastSeverity === 'green'
-        ? 'Mealtime observation is overdue — escalated to Amber per settings.'
+        ? 'Mealtime observation is overdue'
         : getStatusMessage(effectiveSeverity, hasObservation)}
       lastUpdated={lastObservationTime}
     >
