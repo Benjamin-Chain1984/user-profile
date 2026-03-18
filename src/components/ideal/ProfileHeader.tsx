@@ -1,6 +1,8 @@
 import { useProfile } from '@/contexts/ProfileContext';
 import { ProfileAvatar } from './ProfileAvatar';
-import { StatusBadge } from './StatusBadge';
+import { TrafficLightBadge } from '@/components/shared/TrafficLightBadge';
+import { TrafficLightIcon } from '@/components/shared/TrafficLightIcon';
+import { toTrafficLight } from '@/types/trafficLight';
 import { differenceInYears } from 'date-fns';
 
 export function ProfileHeader() {
