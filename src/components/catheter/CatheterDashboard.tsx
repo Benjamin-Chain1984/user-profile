@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertTriangle, FileDown, Plus, Droplets, Package, Clock, TrendingUp, Settings, FileText, AlertCircle } from 'lucide-react';
 import { CatheterStatusCard } from './CatheterStatusCard';
+import { CatheterTrafficLightCard } from './CatheterTrafficLightCard';
 import { CatheterHistory } from './CatheterHistory';
 import { CatheterTrends } from './CatheterTrends';
 import { CatheterConfigSettings } from './CatheterConfigSettings';
