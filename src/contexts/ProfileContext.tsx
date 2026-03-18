@@ -1089,8 +1089,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         };
       }
 
-      const planAlertData = buildPlanStatusAlert('Urinary Catheter', effectivePublishedPlan, hasAcknowledgedPlan);
-      const finalData = getHighestPriorityModuleData(clinicalData, planAlertData) || clinicalData;
+      // Plan acknowledgement should NOT alter traffic light colour — clinical status is the sole source of truth
+      const finalData = clinicalData;
 
       setLatestCatheterData(finalData);
       const timeAgo = lastChange ? formatDistanceToNow(new Date(lastChange.event_occurred_at), { addSuffix: true }) : 'Never';
