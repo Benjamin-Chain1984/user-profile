@@ -14,7 +14,7 @@ import { Slider } from '@/components/ui/slider';
 import { useIddsiConfig } from '@/hooks/useIddsi';
 import { FOOD_LEVELS, DRINK_LEVELS, getFoodLevelKey } from '@/types/iddsi';
 import { format, addYears } from 'date-fns';
-import { CheckCircle2, ClipboardList, Bell, Smartphone } from 'lucide-react';
+import { CheckCircle2, ClipboardList, Bell, Smartphone, Users } from 'lucide-react';
 import { RestrictedSection } from '@/components/ui/restricted-section';
 import { ModuleNotificationsCard } from '@/components/module/ModuleNotificationsCard';
 import type { ModuleNotificationSettings } from '@/components/module/ModuleNotificationsCard';
@@ -102,6 +102,27 @@ export function IddsiConfigSettings({ clientId }: Props) {
   return (
     <RestrictedSection requiredRole="admin">
       <div className="space-y-6">
+        {/* Who Can Help */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Who can help set up this module?
+            </CardTitle>
+            <CardDescription>The following professionals can assist with configuring IDDSI and swallowing settings</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              {['Speech Pathologist', 'GP (General Practitioner)', 'Other Medical Professional'].map((role) => (
+                <li key={role} className="flex items-center gap-2 text-sm">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                  {role}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+
         {/* Food Level */}
         <Card>
           <CardHeader>
