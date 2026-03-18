@@ -40,7 +40,9 @@ export function IddsiStatusCard({
   isOverdue,
   enableObservations,
 }: IddsiStatusCardProps) {
-  const trafficLight = toTrafficLight(severityToStatus(lastSeverity));
+  // If observation is overdue, escalate to at least amber
+  const effectiveSeverity = isOverdue && lastSeverity === 'green' ? 'amber' : lastSeverity;
+  const trafficLight = toTrafficLight(severityToStatus(effectiveSeverity));
   const hasObservation = !!lastObservationTime;
 
   return (
