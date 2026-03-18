@@ -1430,11 +1430,23 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   });
 
   const toggleModule = (moduleId: string) => {
-    setEnabledModules((prev) =>
-      prev.map((m) =>
+    setEnabledModules((prev) => {
+      const updated = prev.map((m) =>
         m.id === moduleId ? { ...m, enabled: !m.enabled } : m
-      )
-    );
+      );
+      // Persist to database
+      const enabledIds = updated.filter((m) => m.enabled).map((m) => m.id);
+      if (profile?.id) {
+        supabase
+          .from('clients')
+          .update({ enabled_modules: enabledIds } as any)
+          .eq('id', profile.id)
+          .then(({ error }) => {
+            if (error) console.error('Error saving enabled modules:', error);
+          });
+      }
+      return updated;
+    });
   };
 
   const toggleVital = (vital: keyof HealthMonitoringConfig) => {
