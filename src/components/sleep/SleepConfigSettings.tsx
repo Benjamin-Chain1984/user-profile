@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,8 +13,23 @@ import { AlertRecipientSelector } from '@/components/profile';
 import { useModuleAlertRecipients, useSetModuleAlertRecipients } from '@/hooks/useNotificationContacts';
 import { useSleepConfig } from '@/hooks/useSleep';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Settings, Loader2, Bell, HelpCircle } from 'lucide-react';
+import { Settings, Loader2, Bell, HelpCircle, Scale, Heart, Thermometer, Smile, Users } from 'lucide-react';
 import type { AlertSeverity } from '@/types/notificationContacts';
+
+const WHO_CAN_HELP = [
+  'GP (General Practitioner)',
+  'Nurse',
+  'Sleep Specialist',
+  'Psychiatrist',
+  'Other Medical Professional',
+];
+
+const RELATED_MODULES = [
+  { id: 'weight', name: 'Weight Chart', description: 'Track weight changes that may affect sleep quality and energy levels', icon: Scale, path: '/module/weight' },
+  { id: 'health-prevention', name: 'Health Prevention', description: 'Proactive health monitoring to catch early warning signs', icon: Heart, path: '/module/health-prevention' },
+  { id: 'pain-assessment', name: 'Pain Assessment', description: 'Identify pain that may be disrupting sleep', icon: Thermometer, path: '/module/pain-check' },
+  { id: 'oral-health', name: 'Oral Health Care', description: 'Oral health issues can impact comfort and sleep quality', icon: Smile, path: '/module/oral-health' },
+];
 
 interface SleepConfigSettingsProps {
   clientId?: string;
