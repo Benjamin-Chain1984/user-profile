@@ -15,11 +15,11 @@ const statusConfig = {
     variant: 'stable' as const,
   },
   monitor: {
-    label: 'AMBER',
+    label: 'Amber',
     variant: 'monitor' as const,
   },
   action: {
-    label: 'RED',
+    label: 'Red',
     variant: 'action' as const,
   },
   paused: {

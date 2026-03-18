@@ -1,15 +1,16 @@
 /**
- * Oral Health Status Card with Next Assessment Countdown
+ * Oral Health Status Card - Uses shared TrafficLightStatusCard
  */
 
 import { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Smile, AlertTriangle, AlertCircle, CheckCircle, CalendarClock } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { CalendarClock } from 'lucide-react';
 import { useOralHealthAssessments, useOralHealthTaskLogs, useOralHealthConfig } from '@/hooks/useOralHealth';
 import { calculateOralHealthStatus } from '@/utils/oralHealthStatusCalculator';
-import { parseISO, addDays, addMonths, differenceInCalendarDays, differenceInHours, format, startOfDay } from 'date-fns';
+import { parseISO, addDays, addMonths, differenceInCalendarDays, startOfDay, format } from 'date-fns';
 import type { AssessmentFrequency } from '@/types/oralHealth';
+import { TrafficLightStatusCard } from '@/components/shared/TrafficLightStatusCard';
+import { toTrafficLight } from '@/types/trafficLight';
 
 interface Props {
   clientId?: string;
@@ -53,49 +54,28 @@ export function OralHealthStatusCard({ clientId }: Props) {
     const frequency = (config?.assessment_frequency || 'weekly') as AssessmentFrequency;
     if (frequency === 'if_concerns') return null;
     if (!assessments || assessments.length === 0) return { text: 'No assessments yet — first assessment due', isOverdue: true, isDueToday: false, dueDate: null, frequency };
-    const lastAssessment = assessments[0]; // already sorted desc
+    const lastAssessment = assessments[0];
     const dueDate = getNextDueDate(lastAssessment.created_at.split('T')[0], frequency);
     if (!dueDate) return null;
     return { ...formatCountdown(dueDate), dueDate, frequency };
   }, [assessments, config?.assessment_frequency]);
 
-  const statusConfig = {
-    ideal: { label: 'IDEAL', icon: CheckCircle, color: 'text-success', bg: 'bg-success/10', border: 'border-success/30' },
-    monitor: { label: 'Amber – Attention Required', icon: AlertTriangle, color: 'text-warning', bg: 'bg-warning/10', border: 'border-warning/30' },
-    action: { label: 'Red – Action Needed', icon: AlertCircle, color: 'text-destructive', bg: 'bg-destructive/10', border: 'border-destructive/30' },
-  };
-
-  const s = statusConfig[statusInfo.status];
-  const Icon = s.icon;
-
+  const trafficLight = toTrafficLight(statusInfo.status);
   const FREQ_LABELS: Record<string, string> = { daily: 'Daily', weekly: 'Weekly', fortnightly: 'Fortnightly', monthly: 'Monthly' };
 
   return (
     <div className="space-y-3">
-      <Card className={`${s.border} border`}>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Smile className="h-5 w-5" />
-            Oral Health Status
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-start gap-3">
-            <div className={`p-2 rounded-lg ${s.bg}`}>
-              <Icon className={`h-5 w-5 ${s.color}`} />
-            </div>
-            <div className="flex-1">
-              <Badge variant="outline" className={`${s.color} mb-1`}>{s.label}</Badge>
-              <p className="text-sm text-muted-foreground mt-1">{statusInfo.message}</p>
-              {statusInfo.compliancePercent !== undefined && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Weekly compliance: {statusInfo.compliancePercent}%
-                </p>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <TrafficLightStatusCard
+        status={trafficLight}
+        reason={statusInfo.message}
+        lastUpdated={assessments?.[0]?.created_at}
+      >
+        {statusInfo.compliancePercent !== undefined && (
+          <p className="text-xs text-muted-foreground">
+            Weekly compliance: {statusInfo.compliancePercent}%
+          </p>
+        )}
+      </TrafficLightStatusCard>
 
       {/* Next Assessment Countdown */}
       {countdown && (

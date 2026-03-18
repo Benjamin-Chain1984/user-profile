@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/contexts/ProfileContext';
 import { HealthModule } from '@/types/ideal';
-import { StatusBadge } from './StatusBadge';
+import { TrafficLightBadge } from '@/components/shared/TrafficLightBadge';
+import { toTrafficLight } from '@/types/trafficLight';
 import { ChevronRight } from 'lucide-react';
 import { 
   Droplets, Heart, Apple, Pill, Activity, Scale, 
@@ -63,7 +64,7 @@ function ModuleRow({ module, onClick }: { module: HealthModule; onClick: () => v
       
       {/* Status + Arrow */}
       <div className="flex items-center gap-2 shrink-0">
-        <StatusBadge status={module.status || 'stable'} size="sm" showIcon={false} />
+        <TrafficLightBadge status={toTrafficLight(module.status || 'stable')} size="sm" showIcon={false} />
         <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
       </div>
     </button>
