@@ -197,7 +197,7 @@ export function computeHealthMonitoringStatus(
     elapsedHours: oxygenOverdue.elapsedHours,
     reasonText: !config.oxygen_enabled ? 'Disabled'
       : oxygenOverdue.overdue
-        ? `Overdue by ${oxygenOverdue.elapsedHours != null ? `${oxygenOverdue.elapsedHours - (config.oxygen_frequency_hours ?? 0)}h` : 'unknown'} (expected ${frequencyLabel(config.oxygen_frequency_hours ?? 24)})`
+        ? `Overdue by ${oxygenOverdue.elapsedHours != null ? formatOverdue(oxygenOverdue.elapsedHours - (config.oxygen_frequency_hours ?? 0)) : 'unknown'} (expected ${frequencyLabel(config.oxygen_frequency_hours ?? 24)})`
         : oxygenLastAt ? 'On schedule' : 'Not yet recorded',
   };
 
