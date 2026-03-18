@@ -46,6 +46,7 @@ interface CatheterStatus {
   isFlushOverdue: boolean;
   lastStomaCheck: StomaCheck | null;
   stomaAlertActive: boolean;
+  stomaStatus: 'green' | 'amber' | 'red';
   activeAlerts: CatheterAlert[];
   monthlyBagUsage: number;
   changeFrequencyDays: number;
@@ -865,13 +866,35 @@ export function useCatheterStatus(clientId?: string): CatheterStatus & { loading
     isFlushOverdue = daysUntilFlush < 0;
   }
 
-  // Determine overall status
-  let status: HealthStatus = 'stable';
+  // Determine per-tile statuses, then resolve highest
+  // Catheter Change tile status
+  const changeStatus: HealthStatus = isChangeOverdue ? 'action'
+    : (daysUntilChange !== null && daysUntilChange <= 3) ? 'monitor' : 'stable';
 
-  if (isChangeOverdue || isFlushOverdue || (hasConcern && lastStomaCheck)) {
+  // Flush tile status
+  const flushStatus: HealthStatus = isFlushOverdue ? 'action'
+    : (daysUntilFlush !== null && daysUntilFlush <= 1) ? 'monitor' : 'stable';
+
+  // Stoma tile status — use actual stoma level (green/amber/red)
+  const stomaCurrentStatus = lastStomaCheck ? (hasConcern ? 
+    // Map the stoma's own currentStatus to HealthStatus
+    (() => {
+      const checks = [lastStomaCheck];
+      const findings: StomaFinding[] = (checks[0]?.findings as StomaFinding[]) || [];
+      const painLevel: StomaPainLevel = (checks[0]?.pain_level as StomaPainLevel) || 'none';
+      const stomaLevel = calculateStomaStatusLevel(findings, painLevel, 
+        differenceInHours(new Date(), parseISO(checks[0].event_occurred_at)));
+      return stomaLevel;
+    })() : 'green') : 'green';
+
+  const stomaHealthStatus: HealthStatus = stomaCurrentStatus === 'red' ? 'action'
+    : stomaCurrentStatus === 'amber' ? 'monitor' : 'stable';
+
+  // Resolve highest: Red > Amber > Green
+  let status: HealthStatus = 'stable';
+  if ([changeStatus, flushStatus, stomaHealthStatus].includes('action')) {
     status = 'action';
-  } else if ((daysUntilChange !== null && daysUntilChange <= 3) || 
-             (daysUntilFlush !== null && daysUntilFlush <= 1)) {
+  } else if ([changeStatus, flushStatus, stomaHealthStatus].includes('monitor')) {
     status = 'monitor';
   }
 
@@ -883,6 +906,7 @@ export function useCatheterStatus(clientId?: string): CatheterStatus & { loading
     isFlushOverdue,
     lastStomaCheck,
     stomaAlertActive: hasConcern || false,
+    stomaStatus: stomaCurrentStatus as 'green' | 'amber' | 'red',
     activeAlerts: alerts,
     monthlyBagUsage: monthlyUsage,
     changeFrequencyDays,
