@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/contexts/ProfileContext';
 import { HealthModule } from '@/types/ideal';
-import { StatusBadge } from './StatusBadge';
+import { TrafficLightBadge } from '@/components/shared/TrafficLightBadge';
+import { toTrafficLight } from '@/types/trafficLight';
 import { ChevronRight } from 'lucide-react';
 import { 
   Droplets, Heart, Apple, Pill, Activity, Scale, 
