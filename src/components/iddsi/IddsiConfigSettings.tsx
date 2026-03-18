@@ -102,6 +102,27 @@ export function IddsiConfigSettings({ clientId }: Props) {
   return (
     <RestrictedSection requiredRole="admin">
       <div className="space-y-6">
+        {/* Who Can Help */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Who can help set up this module?
+            </CardTitle>
+            <CardDescription>The following professionals can assist with configuring IDDSI and swallowing settings</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              {['Speech Pathologist', 'GP (General Practitioner)', 'Other Medical Professional'].map((role) => (
+                <li key={role} className="flex items-center gap-2 text-sm">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                  {role}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+
         {/* Food Level */}
         <Card>
           <CardHeader>
