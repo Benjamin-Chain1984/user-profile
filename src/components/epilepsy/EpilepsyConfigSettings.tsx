@@ -17,7 +17,7 @@ import { useEpilepsyConfig } from '@/hooks/useEpilepsy';
 import { FREQUENCY_OPTIONS, SEIZURE_TYPES, SEIZURE_TRIGGERS } from '@/types/epilepsy';
 import type { EpilepsyWindowUnit } from '@/types/epilepsy';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Settings, Shield, AlertTriangle, Pill, Link as LinkIcon, Info, Moon, Thermometer, Activity, Droplets, Heart, Brain } from 'lucide-react';
+import { Settings, Shield, AlertTriangle, Pill, Link as LinkIcon, Info, Moon, Thermometer, Activity, Droplets, Heart, Brain, Users } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 
 interface EpilepsyConfigSettingsProps {
@@ -146,6 +146,28 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
           <Info className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
           <span>Always follow the person's Epilepsy Management Plan.</span>
         </div>
+
+        {/* Who Can Help */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Who can help set up this module?
+            </CardTitle>
+            <CardDescription>
+              The following professionals can assist with configuring seizure monitoring and care plans.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {['GP', 'Nurse', 'Neurologist', 'Other Medical Professional'].map(role => (
+                <span key={role} className="px-3 py-1.5 bg-muted rounded-full text-sm font-medium text-foreground">
+                  {role}
+                </span>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Enable Toggle */}
         <Card>
