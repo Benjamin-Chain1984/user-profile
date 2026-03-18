@@ -1,12 +1,14 @@
 /**
- * Sleep History - Recent sleep log entries with structured awakening display
+ * Sleep History - Recent sleep log entries with time-range filter
  */
 
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSleepEntries } from '@/hooks/useSleep';
 import { getAwakeningCount, hasProlongedAwakenings, estimateAwakeMinutes } from '@/types/sleep';
-import { format } from 'date-fns';
+import { format, subDays, isAfter } from 'date-fns';
 import { Moon, User } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,11 +17,35 @@ interface SleepHistoryProps {
   clientId?: string;
 }
 
+type FilterRange = 'last5' | '7d' | '14d' | '1m' | '3m';
+
+const FILTER_OPTIONS: { value: FilterRange; label: string }[] = [
+  { value: 'last5', label: 'Last 5 entries' },
+  { value: '7d', label: 'Last 7 days' },
+  { value: '14d', label: 'Last 2 weeks' },
+  { value: '1m', label: 'Last 1 month' },
+  { value: '3m', label: 'Last 3 months' },
+];
+
+const RANGE_DAYS: Record<Exclude<FilterRange, 'last5'>, number> = {
+  '7d': 7,
+  '14d': 14,
+  '1m': 30,
+  '3m': 90,
+};
+
 export function SleepHistory({ clientId }: SleepHistoryProps) {
-  const { entries, isLoading } = useSleepEntries(clientId, 20);
+  const [filter, setFilter] = useState<FilterRange>('last5');
+  const { entries, isLoading } = useSleepEntries(clientId, 100);
+
+  const filteredEntries = useMemo(() => {
+    if (filter === 'last5') return entries.slice(0, 5);
+    const cutoff = subDays(new Date(), RANGE_DAYS[filter]);
+    return entries.filter(e => isAfter(new Date(e.event_occurred_at), cutoff));
+  }, [entries, filter]);
 
   // Fetch staff names for created_by UUIDs
-  const creatorIds = [...new Set(entries.map(e => e.created_by).filter(Boolean))];
+  const creatorIds = [...new Set(filteredEntries.map(e => e.created_by).filter(Boolean))];
   const { data: profiles } = useQuery({
     queryKey: ['sleepHistoryProfiles', creatorIds],
     queryFn: async () => {
@@ -49,14 +75,26 @@ export function SleepHistory({ clientId }: SleepHistoryProps) {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
         <CardTitle className="text-lg">Recent Sleep Logs</CardTitle>
+        <Select value={filter} onValueChange={(v) => setFilter(v as FilterRange)}>
+          <SelectTrigger className="w-[160px] h-8 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {FILTER_OPTIONS.map(opt => (
+              <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </CardHeader>
       <CardContent className="space-y-3">
-        {entries.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">No sleep entries yet.</p>
+        {filteredEntries.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">No sleep entries for this period.</p>
         ) : (
-          entries.map(entry => {
+          filteredEntries.map(entry => {
             const hours = Number(entry.estimated_hours_slept);
             const awakenings = getAwakeningCount(entry);
             const hasEvents = entry.awakening_events?.length > 0;
@@ -90,7 +128,6 @@ export function SleepHistory({ clientId }: SleepHistoryProps) {
                       <> • Nap: {entry.day_nap_duration_minutes}min</>
                     )}
                   </p>
-                  {/* Awakening detail */}
                   {hasEvents && (
                     <div className="text-xs text-muted-foreground mt-1">
                       {entry.awakening_events.map((evt, i) => (
@@ -111,7 +148,6 @@ export function SleepHistory({ clientId }: SleepHistoryProps) {
                   {entry.notes && (
                     <p className="text-xs text-muted-foreground mt-0.5 italic">{entry.notes}</p>
                   )}
-                  {/* Staff attribution */}
                   {(() => {
                     const staffName = entry.recorded_on_behalf_of_name || getStaffName(entry.created_by);
                     return staffName ? (
