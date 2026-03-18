@@ -205,7 +205,14 @@ export const FluidExportReports: React.FC<FluidExportReportsProps> = ({
   };
   
   return (
-    <Card>
+    <div className="space-y-6">
+      {onClose && (
+        <Button variant="ghost" onClick={onClose} className="mb-2">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Fluid Balance
+        </Button>
+      )}
+      <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
