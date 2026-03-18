@@ -81,23 +81,31 @@ export function WeightBmiStatusCard({ clientId }: WeightBmiStatusCardProps) {
 
       {/* Active Alerts */}
       {statusInfo.activeAlerts.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-current/10 space-y-2">
-          <p className="text-xs font-medium flex items-center gap-1">
-            <AlertCircle className="h-3 w-3" />
-            Active Alerts
-          </p>
-          {statusInfo.activeAlerts.slice(0, 3).map(alert => (
-            <div
-              key={alert.id}
-              className={`text-xs p-2 rounded ${
-                alert.severity === 'red' ? 'bg-destructive/10 text-destructive' : 'bg-warning/10 text-warning'
-              }`}
-            >
-              {alert.message}
-            </div>
-          ))}
+        <div className="mt-3 pt-3 border-t border-current/10">
+          <div className="text-sm font-medium mb-2">
+            Active Alerts ({statusInfo.activeAlerts.length})
+          </div>
+          <ul className="space-y-1">
+            {statusInfo.activeAlerts.slice(0, 3).map(alert => (
+              <li key={alert.id} className="text-sm opacity-80">• {alert.message}</li>
+            ))}
+          </ul>
         </div>
       )}
+
+      {/* Guidance */}
+      <div className="mt-3 pt-3 border-t border-current/10">
+        <h4 className="text-sm font-medium mb-1">What to do:</h4>
+        <p className="text-sm opacity-80">
+          {trafficLight === 'green' && 'Continue regular weight monitoring. Maintain balanced nutrition and hydration.'}
+          {trafficLight === 'amber' && 'Monitor closely. Review intake and consider consulting a dietitian or GP.'}
+          {trafficLight === 'red' && 'Follow the person\'s health plan. Escalate to GP or dietitian for review.'}
+        </p>
+      </div>
+
+      <p className="mt-3 text-xs opacity-60 italic">
+        Weight targets and monitoring frequency should be set by a GP or dietitian.
+      </p>
     </TrafficLightStatusCard>
   );
 }
