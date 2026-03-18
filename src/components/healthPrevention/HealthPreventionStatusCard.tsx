@@ -1,15 +1,33 @@
 /**
- * HealthPreventionStatusCard - Status overview card for Health Prevention module
+ * HealthPreventionStatusCard - Uses shared TrafficLightStatusCard
+ * Health Prevention only uses green or amber — clamps any 'action' to 'monitor'.
  */
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Shield, CheckCircle2, Clock, Circle } from 'lucide-react';
+import { TrafficLightStatusCard } from '@/components/shared/TrafficLightStatusCard';
+import { toTrafficLight } from '@/types/trafficLight';
+import { Shield, Calendar } from 'lucide-react';
 
 interface HealthPreventionStatusCardProps {
   status: 'stable' | 'monitor' | 'action';
   dueCount: number;
   reminderText: string;
+}
+
+function getStatusMessage(status: 'stable' | 'monitor', dueCount: number): string {
+  if (status === 'stable' && dueCount === 0) {
+    return 'All preventive health items are up to date.';
+  }
+  if (dueCount === 1) {
+    return '1 preventive health action pending';
+  }
+  return `${dueCount} preventive health actions pending`;
+}
+
+function getGuidance(status: 'stable' | 'monitor', dueCount: number): string {
+  if (status === 'stable') {
+    return 'Continue regular preventive health monitoring. Review screening and vaccination schedules at the next GP visit.';
+  }
+  return 'Review pending items below and discuss with the GP at the next appointment. Ensure all eligible screenings and vaccinations are scheduled.';
 }
 
 export function HealthPreventionStatusCard({
@@ -19,56 +37,39 @@ export function HealthPreventionStatusCard({
 }: HealthPreventionStatusCardProps) {
   // Health Prevention only uses green or amber — clamp any 'action' to 'monitor'
   const status = rawStatus === 'action' ? 'monitor' : rawStatus;
-
-  const getStatusIcon = () => {
-    switch (status) {
-      case 'stable':
-        return <CheckCircle2 className="h-5 w-5 text-success" />;
-      case 'monitor':
-        return <Clock className="h-5 w-5 text-warning" />;
-    }
-  };
-
-  const getStatusMessage = () => {
-    if (status === 'stable' && dueCount === 0) {
-      return 'All preventive health items are up to date.';
-    }
-    if (dueCount === 1) {
-      return '1 preventive health action pending';
-    }
-    return `${dueCount} preventive health actions pending`;
-  };
+  const trafficLight = toTrafficLight(status);
 
   return (
-    <Card className={
-      status === 'monitor' ? 'border-warning/50 bg-warning/5' :
-      'border-success/50 bg-success/5'
-    }>
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center justify-between text-lg">
-          <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            <span>Preventive Health Status</span>
-          </div>
-          <Badge variant={status === 'stable' ? 'stable' : 'monitor'} className="gap-1.5 text-sm px-3 py-1">
-            <Circle className="w-2 h-2 fill-current" />
-            {status === 'stable' ? 'Up to date' : 'AMBER'}
-          </Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-start gap-3">
-          {getStatusIcon()}
-          <div>
-            <p className="font-medium">{getStatusMessage()}</p>
-            {dueCount > 0 && (
-              <p className="text-sm text-muted-foreground mt-1">
-                {reminderText}
-              </p>
-            )}
-          </div>
+    <TrafficLightStatusCard
+      status={trafficLight}
+      reason={getStatusMessage(status, dueCount)}
+    >
+      {/* Module-specific details */}
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-2 text-sm">
+          <Shield className="h-4 w-4 opacity-70" />
+          <span>
+            <span className="font-semibold">{dueCount}</span>
+            <span className="opacity-70"> item{dueCount !== 1 ? 's' : ''} pending</span>
+          </span>
         </div>
-      </CardContent>
-    </Card>
+        {dueCount > 0 && (
+          <div className="flex items-center gap-2 text-sm">
+            <Calendar className="h-4 w-4 opacity-70" />
+            <span className="opacity-70">{reminderText}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Guidance */}
+      <div className="mt-3 pt-3 border-t border-current/10">
+        <h4 className="text-sm font-medium mb-1">What to do:</h4>
+        <p className="text-sm opacity-80">{getGuidance(status, dueCount)}</p>
+      </div>
+
+      <p className="mt-3 text-xs opacity-60 italic">
+        Screening eligibility and vaccination schedules are based on Australian national guidelines.
+      </p>
+    </TrafficLightStatusCard>
   );
 }
