@@ -309,6 +309,17 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           editedAt: (data as any).edited_at || undefined,
           editedBy: (data as any).edited_by || undefined,
         });
+
+        // Load persisted enabled_modules from database
+        const dbEnabledModules: string[] | null = (data as any).enabled_modules;
+        if (dbEnabledModules !== null && dbEnabledModules !== undefined) {
+          setEnabledModules((prev) =>
+            prev.map((m) => ({
+              ...m,
+              enabled: dbEnabledModules.includes(m.id),
+            }))
+          );
+        }
       }
     } catch (err) {
       console.error('Error in fetchProfileFromDb:', err);
