@@ -27,6 +27,13 @@ export function frequencyLabel(hours: number): string {
   return 'weekly';
 }
 
+/** Format elapsed overdue hours as a human-readable days string */
+function formatOverdue(overdueHours: number): string {
+  if (overdueHours < 24) return 'less than 1 day';
+  const days = Math.round(overdueHours / 24);
+  return `${days} day${days === 1 ? '' : 's'}`;
+}
+
 // ─── Per-vital result ─────────────────────────────────────────────────────────
 
 export interface PerVitalStatus {
