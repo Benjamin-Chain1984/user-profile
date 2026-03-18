@@ -94,50 +94,6 @@ export function IddsiHistory({ clientId }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* Last 5 Mealtime Observations */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Last 5 Mealtime Observations</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">Loading...</p>
-          ) : lastFiveObservations.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">No observations yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {lastFiveObservations.map(obs => (
-                <div key={obs.id} className="flex items-start gap-3 p-3 rounded-lg border border-border">
-                  <Utensils className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-medium">Mealtime Observation</span>
-                      <SeverityBadge severity={obs.severity} />
-                    </div>
-                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-                      <span className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(obs.eventOccurredAt), { addSuffix: true })}
-                      </span>
-                      <span className="text-xs text-muted-foreground">by {obs.completedByName}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 mt-1.5">
-                      {obs.coughing !== 'none' && (
-                        <Badge variant="outline" className="text-xs">Coughing: {obs.coughing}</Badge>
-                      )}
-                      {obs.wetVoice && <Badge variant="outline" className="text-xs border-destructive/30 text-destructive">Wet voice</Badge>}
-                      {obs.mealCompletionPct !== null && (
-                        <Badge variant="outline" className="text-xs">Meal: {obs.mealCompletionPct}%</Badge>
-                      )}
-                    </div>
-                  </div>
-                  <SeverityIcon severity={obs.severity} />
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Full Activity with Time Filter */}
       <Card>
         <CardHeader className="pb-2">
