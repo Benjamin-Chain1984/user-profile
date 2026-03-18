@@ -1,0 +1,1 @@
+ALTER TABLE public.clients ADD COLUMN enabled_modules text[] DEFAULT NULL;
