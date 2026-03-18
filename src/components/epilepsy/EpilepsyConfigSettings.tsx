@@ -147,6 +147,28 @@ export function EpilepsyConfigSettings({ clientId }: EpilepsyConfigSettingsProps
           <span>Always follow the person's Epilepsy Management Plan.</span>
         </div>
 
+        {/* Who Can Help */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Who can help set up this module?
+            </CardTitle>
+            <CardDescription>
+              The following professionals can assist with configuring seizure monitoring and care plans.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {['GP', 'Nurse', 'Neurologist', 'Other Medical Professional'].map(role => (
+                <span key={role} className="px-3 py-1.5 bg-muted rounded-full text-sm font-medium text-foreground">
+                  {role}
+                </span>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Enable Toggle */}
         <Card>
           <CardHeader>
