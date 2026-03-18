@@ -18,9 +18,10 @@ import { PositioningCheckPanel } from './PositioningCheckPanel';
 import { SafeSwallowingStrategies } from './SafeSwallowingStrategies';
 import { IddsiHistory } from './IddsiHistory';
 import { IddsiConfigSettings } from './IddsiConfigSettings';
+import { IddsiStatusCard } from './IddsiStatusCard';
 import {
   AlertCircle, Settings, Clock, BarChart3,
-  Eye, Armchair, Brain, AlertTriangle, Plus,
+  Eye, Armchair, Brain, Plus,
 } from 'lucide-react';
 
 interface IddsiDashboardProps {
@@ -98,35 +99,6 @@ export function IddsiDashboard({ clientId }: IddsiDashboardProps) {
     return <SafeSwallowingStrategies onClose={() => setShowStrategies(false)} />;
   }
 
-  const severityConfig = {
-    red: {
-      border: 'border-destructive',
-      bg: 'bg-destructive/10',
-      icon: <AlertCircle className="h-7 w-7 text-destructive" />,
-      label: 'RED – Action Needed',
-      labelClass: 'text-destructive',
-      dotClass: 'bg-destructive',
-    },
-    amber: {
-      border: 'border-amber-400',
-      bg: 'bg-amber-50',
-      icon: <AlertTriangle className="h-7 w-7 text-amber-600" />,
-      label: 'Amber – Attention Required',
-      labelClass: 'text-amber-700',
-      dotClass: 'bg-amber-500',
-    },
-    green: {
-      border: 'border-emerald-400',
-      bg: 'bg-emerald-50/60',
-      icon: <Eye className="h-7 w-7 text-emerald-600" />,
-      label: 'IDEAL – No Concerns',
-      labelClass: 'text-emerald-700',
-      dotClass: 'bg-emerald-500',
-    },
-  };
-
-  const sev = severityConfig[lastSeverity as keyof typeof severityConfig] || severityConfig.green;
-
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -147,52 +119,22 @@ export function IddsiDashboard({ clientId }: IddsiDashboardProps) {
       )}
 
       {/* Safety Disclaimer — compact */}
-      <div className="flex gap-2.5 p-3 rounded-lg border border-amber-200 bg-amber-50/50">
-        <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-        <p className="text-xs text-amber-800">
+      <div className="flex gap-2.5 p-3 rounded-lg border border-warning/30 bg-warning/10">
+        <AlertCircle className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
+        <p className="text-xs text-warning">
           <strong>Important:</strong> Food and fluid levels must be prescribed by a qualified
           Speech Pathologist. This tool supports safe implementation only.
         </p>
       </div>
 
       {/* ── Status Card ── */}
-      <Card className={`${sev.border} ${sev.bg} shadow-sm`}>
-        <CardContent className="py-4 px-5">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                {sev.icon}
-                <span className={`absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ${sev.dotClass} ring-2 ring-white animate-pulse`} />
-              </div>
-              <div className="space-y-0.5">
-                <p className={`text-sm font-bold ${sev.labelClass}`}>
-                  {sev.label}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {lastObs
-                    ? `Last observation ${formatDistanceToNow(new Date(lastObs.eventOccurredAt || lastObs.createdAt), { addSuffix: true })}`
-                    : 'No observations recorded yet'}
-                </p>
-                {config?.enableObservations && countdown && (
-                  <p className={`text-xs font-semibold flex items-center gap-1 ${isOverdue ? 'text-destructive' : 'text-muted-foreground'}`}>
-                    <Clock className="h-3 w-3" />
-                    {isOverdue ? `⚠ ${countdown}` : `Next due in ${countdown}`}
-                  </p>
-                )}
-              </div>
-            </div>
-            <Button
-              size="sm"
-              onClick={() => setShowObservation(true)}
-              disabled={isMonitoringPaused}
-              className="gap-1.5"
-            >
-              <Plus className="h-4 w-4" />
-              Log
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <IddsiStatusCard
+        lastSeverity={lastSeverity}
+        lastObservationTime={lastObs ? (lastObs.eventOccurredAt || lastObs.createdAt) : null}
+        countdown={countdown}
+        isOverdue={isOverdue}
+        enableObservations={config?.enableObservations ?? false}
+      />
 
       {/* ── Prescribed Levels ── */}
       {config && (config.foodLevel !== null || config.drinkLevel !== null) && (
