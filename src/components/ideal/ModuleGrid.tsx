@@ -64,7 +64,7 @@ function ModuleRow({ module, onClick }: { module: HealthModule; onClick: () => v
       
       {/* Status + Arrow */}
       <div className="flex items-center gap-2 shrink-0">
-        <StatusBadge status={module.status || 'stable'} size="sm" showIcon={false} />
+        <TrafficLightBadge status={toTrafficLight(module.status || 'stable')} size="sm" showIcon={false} />
         <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
       </div>
     </button>
