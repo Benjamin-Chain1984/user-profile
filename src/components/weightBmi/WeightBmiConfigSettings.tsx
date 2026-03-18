@@ -241,6 +241,18 @@ export function WeightBmiConfigSettings({ clientId }: WeightBmiConfigSettingsPro
     <RestrictedSection requiredRole="admin" message="Admin access required to modify settings">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* Who can help */}
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="pt-5 pb-4">
+              <p className="text-sm font-medium mb-1">Who can help set up this module?</p>
+              <ul className="text-sm text-muted-foreground list-disc list-inside space-y-0.5">
+                <li>General Practitioner (GP)</li>
+                <li>Dietitian</li>
+                <li>Registered Nurse</li>
+              </ul>
+            </CardContent>
+          </Card>
+
           {/* Baseline & Frequency */}
           <Card>
             <CardHeader>
