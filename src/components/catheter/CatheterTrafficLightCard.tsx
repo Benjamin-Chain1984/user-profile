@@ -55,6 +55,7 @@ export function CatheterTrafficLightCard({ clientId }: CatheterTrafficLightCardP
     isChangeOverdue,
     daysUntilFlush,
     isFlushOverdue,
+    stomaStatus,
     stomaAlertActive,
     activeAlerts,
     loading,
