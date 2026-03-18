@@ -114,7 +114,12 @@ export function HealthMonitoringStatusCard({ clientId }: HealthMonitoringStatusC
                   Overdue
                   {vital.elapsedHours != null && vital.expectedIntervalHours != null && (
                     <span>
-                      {' '}+{vital.elapsedHours - vital.expectedIntervalHours}h
+                      {' '}+{(() => {
+                        const overdueH = vital.elapsedHours - vital.expectedIntervalHours;
+                        if (overdueH < 24) return '<1d';
+                        const days = Math.round(overdueH / 24);
+                        return `${days}d`;
+                      })()}
                     </span>
                   )}
                 </div>
