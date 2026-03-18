@@ -16,7 +16,7 @@ function getStatusReason(
   status: 'stable' | 'monitor' | 'action',
   isChangeOverdue: boolean,
   isFlushOverdue: boolean,
-  stomaAlertActive: boolean,
+  stomaStatus: 'green' | 'amber' | 'red',
   daysUntilChange: number | null,
   daysUntilFlush: number | null,
 ): string {
@@ -24,10 +24,11 @@ function getStatusReason(
     const reasons: string[] = [];
     if (isChangeOverdue) reasons.push('Catheter change is overdue');
     if (isFlushOverdue) reasons.push('Catheter flush is overdue');
-    if (stomaAlertActive) reasons.push('Stoma check flagged a concern');
+    if (stomaStatus === 'red') reasons.push('Stoma check flagged a critical concern');
     return reasons.join('. ') || 'Action required';
   }
   if (status === 'monitor') {
+    if (stomaStatus === 'amber') return 'Stoma check flagged a concern — monitor closely';
     if (daysUntilChange !== null && daysUntilChange <= 3)
       return `Catheter change due in ${daysUntilChange} day${daysUntilChange === 1 ? '' : 's'}`;
     if (daysUntilFlush !== null && daysUntilFlush <= 1)
