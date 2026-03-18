@@ -1,17 +1,11 @@
 /**
  * TrafficLightStatusCard — Universal module status header card.
  * Every module MUST render this at the top of its dashboard.
- * 
- * Shows:
- * - Large traffic light indicator
- * - Status label (IDEAL / Amber / Red)
- * - One-line reason text
- * - Last updated timestamp
  */
 
 import { cn } from '@/lib/utils';
-import { CheckCircle, AlertTriangle, AlertCircle } from 'lucide-react';
 import { TrafficLightBadge } from './TrafficLightBadge';
+import { TrafficLightIcon } from './TrafficLightIcon';
 import type { TrafficLightStatus } from '@/types/trafficLight';
 import { getTrafficLightFullLabel } from '@/types/trafficLight';
 import { formatDistanceToNow } from 'date-fns';
@@ -24,30 +18,10 @@ interface TrafficLightStatusCardProps {
   className?: string;
 }
 
-const statusStyles: Record<TrafficLightStatus, {
-  icon: React.ElementType;
-  containerClass: string;
-  iconContainerClass: string;
-  emoji: string;
-}> = {
-  green: {
-    icon: CheckCircle,
-    containerClass: 'bg-success/10 border-success/30',
-    iconContainerClass: 'bg-success/20',
-    emoji: '🟢',
-  },
-  amber: {
-    icon: AlertTriangle,
-    containerClass: 'bg-warning/10 border-warning/30',
-    iconContainerClass: 'bg-warning/20',
-    emoji: '🟠',
-  },
-  red: {
-    icon: AlertCircle,
-    containerClass: 'bg-destructive/10 border-destructive/30',
-    iconContainerClass: 'bg-destructive/20',
-    emoji: '🔴',
-  },
+const containerStyles: Record<TrafficLightStatus, string> = {
+  green: 'bg-success/10 border-success/30',
+  amber: 'bg-warning/10 border-warning/30',
+  red: 'bg-destructive/10 border-destructive/30',
 };
 
 export function TrafficLightStatusCard({
@@ -57,22 +31,17 @@ export function TrafficLightStatusCard({
   children,
   className,
 }: TrafficLightStatusCardProps) {
-  const config = statusStyles[status];
-  const Icon = config.icon;
-
   return (
     <div
       className={cn(
         'rounded-xl border-2 p-5 sm:p-6 transition-all',
-        config.containerClass,
+        containerStyles[status],
         className
       )}
     >
       <div className="flex items-start gap-3 sm:gap-4">
-        {/* Icon */}
-        <div className={cn('p-3 rounded-full shrink-0', config.iconContainerClass)}>
-          <Icon className="h-6 w-6" />
-        </div>
+        {/* Traffic light icon */}
+        <TrafficLightIcon status={status} size="md" />
 
         {/* Content */}
         <div className="flex-1 min-w-0">
@@ -80,7 +49,6 @@ export function TrafficLightStatusCard({
             <h3 className="text-lg font-bold leading-tight">
               {getTrafficLightFullLabel(status)}
             </h3>
-            <span className="text-xl leading-none">{config.emoji}</span>
           </div>
           <p className="text-sm opacity-80 mt-1">{reason}</p>
           {lastUpdated && (
@@ -96,7 +64,6 @@ export function TrafficLightStatusCard({
         </div>
       </div>
 
-      {/* Optional children (module-specific details) */}
       {children && (
         <div className="mt-4 pt-4 border-t border-current/10">
           {children}
