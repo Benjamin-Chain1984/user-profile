@@ -14,7 +14,15 @@ import { Slider } from '@/components/ui/slider';
 import { useIddsiConfig } from '@/hooks/useIddsi';
 import { FOOD_LEVELS, DRINK_LEVELS, getFoodLevelKey } from '@/types/iddsi';
 import { format, addYears } from 'date-fns';
-import { CheckCircle2, ClipboardList, Bell, Smartphone, Users } from 'lucide-react';
+import { CheckCircle2, ClipboardList, Bell, Smartphone, Users, Scale, ShieldCheck, Heart, Thermometer } from 'lucide-react';
+import { Link } from 'react-router-dom';
+
+const RELATED_MODULES = [
+  { id: 'weight', name: 'Weight Chart', description: 'Track weight changes that may affect nutritional intake and swallowing safety', icon: Scale, path: '/module/weight' },
+  { id: 'health-prevention', name: 'Health Prevention', description: 'Monitor preventive health screenings and assessments', icon: ShieldCheck, path: '/module/health-prevention' },
+  { id: 'oral-health', name: 'Oral Health Care', description: 'Maintain oral hygiene critical for safe swallowing and nutrition', icon: Heart, path: '/module/oral-health' },
+  { id: 'health-monitoring', name: 'Health Monitoring', description: 'Monitor temperature and oxygen saturation for aspiration risk', icon: Thermometer, path: '/module/health-monitoring' },
+];
 import { RestrictedSection } from '@/components/ui/restricted-section';
 import { ModuleNotificationsCard } from '@/components/module/ModuleNotificationsCard';
 import type { ModuleNotificationSettings } from '@/components/module/ModuleNotificationsCard';
@@ -514,6 +522,35 @@ export function IddsiConfigSettings({ clientId }: Props) {
         <Button onClick={handleSave} className="w-full" size="lg">
           Save IDDSI Configuration
         </Button>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Other Recommended Related Modules</CardTitle>
+            <CardDescription>Comprehensive care involves monitoring multiple aspects of health</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {RELATED_MODULES.map((module) => (
+                <Link
+                  key={module.id}
+                  to={module.path}
+                  className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                >
+                  <div className="p-2 rounded-md bg-primary/10">
+                    <module.icon className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm">{module.name}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{module.description}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-4">
+              Always consult a healthcare professional to ensure modules are clinically valid and set according to individual need.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </RestrictedSection>
   );
