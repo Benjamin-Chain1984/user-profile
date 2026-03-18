@@ -1579,6 +1579,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         globalAlertState,
         isProfileComplete,
         getModuleStatus,
+        updateModuleStatus,
         refreshPainStatus: fetchLatestPainAssessment,
         refreshBowelStatus: fetchBowelCareStatus,
         refreshWeightStatus: fetchWeightStatus,
