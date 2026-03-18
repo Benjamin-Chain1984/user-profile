@@ -13,7 +13,7 @@ import { PainadAssessmentForm } from './PainadAssessmentForm';
 import { PainAssessmentHistory } from './PainAssessmentHistory';
 import { PainTrendChart } from './PainTrendChart';
 import { PainConfigSettings } from './PainConfigSettings';
-import { PainQuickStatus } from './PainQuickStatus';
+import { PainStatusCard } from './PainStatusCard';
 import { PainExportReports } from './PainExportReports';
 import { PainActiveActionPlan } from './PainActiveActionPlan';
 import { getSeverityLabel, getSeverityColor, ASSESSMENT_FREQUENCY_OPTIONS, AssessmentFrequency } from '@/types/painAssessment';
@@ -358,43 +358,14 @@ export function PainCheckDashboard() {
         </Card>
       )}
 
-      {/* Quick Status Cards - Side by side for both tools */}
-      <div className="grid sm:grid-cols-2 gap-4">
-        {enabledTools.includes('abbey') && (
-          <Card className="border-l-4 border-l-success">
-            <CardContent className="p-4">
-              <p className="text-xs font-medium text-muted-foreground mb-1">Abbey Pain Scale (Last)</p>
-              {latestAbbey ? (
-                <>
-                  <p className={`text-xl font-bold ${getSeverityColor(latestAbbey.severity)}`}>
-                    {getSeverityLabel(latestAbbey.severity)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{format(new Date(latestAbbey.created_at), 'PPp')}</p>
-                </>
-              ) : (
-                <p className="text-sm text-muted-foreground">No assessments yet</p>
-              )}
-            </CardContent>
-          </Card>
-        )}
-        {enabledTools.includes('painad') && (
-          <Card className="border-l-4 border-l-primary">
-            <CardContent className="p-4">
-              <p className="text-xs font-medium text-muted-foreground mb-1">PAINAD Scale (Last)</p>
-              {latestPainad ? (
-                <>
-                  <p className={`text-xl font-bold ${getPainadSeverityColor(latestPainad.severity)}`}>
-                    {getPainadSeverityLabel(latestPainad.severity)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{format(new Date(latestPainad.created_at), 'PPp')}</p>
-                </>
-              ) : (
-                <p className="text-sm text-muted-foreground">No assessments yet</p>
-              )}
-            </CardContent>
-          </Card>
-        )}
-      </div>
+      {/* Traffic Light Status Card */}
+      <PainStatusCard
+        latestAbbey={latestAbbey}
+        latestPainad={latestPainad}
+        abbeyTrend={getAbbeyTrend()}
+        painadTrend={getPainadTrend()}
+        enabledTools={enabledTools}
+      />
 
       {/* Active Action Plan — shown above tabs when pain detected */}
       {latestAbbey && latestAbbey.severity !== 'no_pain' && (
