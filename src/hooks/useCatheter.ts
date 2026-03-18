@@ -46,6 +46,7 @@ interface CatheterStatus {
   isFlushOverdue: boolean;
   lastStomaCheck: StomaCheck | null;
   stomaAlertActive: boolean;
+  stomaStatus: 'green' | 'amber' | 'red';
   activeAlerts: CatheterAlert[];
   monthlyBagUsage: number;
   changeFrequencyDays: number;
