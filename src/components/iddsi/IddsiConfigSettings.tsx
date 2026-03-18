@@ -14,7 +14,15 @@ import { Slider } from '@/components/ui/slider';
 import { useIddsiConfig } from '@/hooks/useIddsi';
 import { FOOD_LEVELS, DRINK_LEVELS, getFoodLevelKey } from '@/types/iddsi';
 import { format, addYears } from 'date-fns';
-import { CheckCircle2, ClipboardList, Bell, Smartphone, Users } from 'lucide-react';
+import { CheckCircle2, ClipboardList, Bell, Smartphone, Users, Scale, ShieldCheck, Heart, Thermometer } from 'lucide-react';
+import { Link } from 'react-router-dom';
+
+const RELATED_MODULES = [
+  { id: 'weight', name: 'Weight Chart', description: 'Track weight changes that may affect nutritional intake and swallowing safety', icon: Scale, path: '/module/weight' },
+  { id: 'health-prevention', name: 'Health Prevention', description: 'Monitor preventive health screenings and assessments', icon: ShieldCheck, path: '/module/health-prevention' },
+  { id: 'oral-health', name: 'Oral Health Care', description: 'Maintain oral hygiene critical for safe swallowing and nutrition', icon: Heart, path: '/module/oral-health' },
+  { id: 'health-monitoring', name: 'Health Monitoring', description: 'Monitor temperature and oxygen saturation for aspiration risk', icon: Thermometer, path: '/module/health-monitoring' },
+];
 import { RestrictedSection } from '@/components/ui/restricted-section';
 import { ModuleNotificationsCard } from '@/components/module/ModuleNotificationsCard';
 import type { ModuleNotificationSettings } from '@/components/module/ModuleNotificationsCard';
