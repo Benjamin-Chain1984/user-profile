@@ -14,7 +14,7 @@ import { Slider } from '@/components/ui/slider';
 import { useIddsiConfig } from '@/hooks/useIddsi';
 import { FOOD_LEVELS, DRINK_LEVELS, getFoodLevelKey } from '@/types/iddsi';
 import { format, addYears } from 'date-fns';
-import { CheckCircle2, ClipboardList, Bell, Smartphone } from 'lucide-react';
+import { CheckCircle2, ClipboardList, Bell, Smartphone, Users } from 'lucide-react';
 import { RestrictedSection } from '@/components/ui/restricted-section';
 import { ModuleNotificationsCard } from '@/components/module/ModuleNotificationsCard';
 import type { ModuleNotificationSettings } from '@/components/module/ModuleNotificationsCard';
