@@ -135,13 +135,6 @@ export function IddsiDashboard({ clientId }: IddsiDashboardProps) {
         isOverdue={isOverdue}
         enableObservations={config?.enableObservations ?? false}
       />
-      <IddsiStatusCard
-        lastSeverity={lastSeverity}
-        lastObservationTime={lastObs ? (lastObs.eventOccurredAt || lastObs.createdAt) : null}
-        countdown={countdown}
-        isOverdue={isOverdue}
-        enableObservations={config?.enableObservations ?? false}
-      />
 
       {/* ── Prescribed Levels ── */}
       {config && (config.foodLevel !== null || config.drinkLevel !== null) && (
