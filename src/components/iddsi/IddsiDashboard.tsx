@@ -199,6 +199,14 @@ export function IddsiDashboard({ clientId }: IddsiDashboardProps) {
         ))}
       </div>
 
+      {/* ── Log Observation Button ── */}
+      {config?.enableObservations && (
+        <Button onClick={() => setShowObservation(true)} className="w-full gap-2">
+          <Plus className="h-4 w-4" />
+          Log Mealtime Observation
+        </Button>
+      )}
+
       {/* ── Tabs ── */}
       <Tabs defaultValue="tracking" className="space-y-3">
         <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
