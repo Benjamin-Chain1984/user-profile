@@ -112,7 +112,10 @@ export function CatheterDashboard({ clientId }: CatheterDashboardProps) {
         </AlertDescription>
       </Alert>
 
-      {/* Status Card */}
+      {/* Traffic Light Status */}
+      <CatheterTrafficLightCard clientId={clientId} />
+
+      {/* Status Tiles */}
       <CatheterStatusCard
         clientId={clientId}
         onLogChange={() => setShowChangeForm(true)}
