@@ -99,7 +99,42 @@ export function IddsiDashboard({ clientId }: IddsiDashboardProps) {
     return <SafeSwallowingStrategies onClose={() => setShowStrategies(false)} />;
   }
 
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div>
+        <h2 className="text-2xl font-bold">IDDSI & Safe Swallowing</h2>
+        <p className="text-sm text-muted-foreground">
+          Food and fluid texture management & swallowing monitoring
+        </p>
+      </div>
+
+      {/* Monitoring Paused */}
+      {isMonitoringPaused && monitoringStatus && (
+        <MonitoringPausedBanner
+          pauseReason={monitoringStatus.pauseReason}
+          pauseStartDatetime={monitoringStatus.pauseStartDatetime}
+          pauseEndDatetime={monitoringStatus.pauseEndDatetime}
+        />
+      )}
+
+      {/* Safety Disclaimer — compact */}
+      <div className="flex gap-2.5 p-3 rounded-lg border border-warning/30 bg-warning/10">
+        <AlertCircle className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
+        <p className="text-xs text-warning">
+          <strong>Important:</strong> Food and fluid levels must be prescribed by a qualified
+          Speech Pathologist. This tool supports safe implementation only.
+        </p>
+      </div>
+
       {/* ── Status Card ── */}
+      <IddsiStatusCard
+        lastSeverity={lastSeverity}
+        lastObservationTime={lastObs ? (lastObs.eventOccurredAt || lastObs.createdAt) : null}
+        countdown={countdown}
+        isOverdue={isOverdue}
+        enableObservations={config?.enableObservations ?? false}
+      />
       <IddsiStatusCard
         lastSeverity={lastSeverity}
         lastObservationTime={lastObs ? (lastObs.eventOccurredAt || lastObs.createdAt) : null}
