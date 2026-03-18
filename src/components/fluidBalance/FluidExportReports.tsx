@@ -275,5 +275,6 @@ export const FluidExportReports: React.FC<FluidExportReportsProps> = ({
         </div>
       </CardContent>
     </Card>
+    </div>
   );
 };
