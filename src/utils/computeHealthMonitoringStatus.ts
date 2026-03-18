@@ -176,7 +176,7 @@ export function computeHealthMonitoringStatus(
     reasonText: !config.bp_enabled ? 'Disabled'
       : bpVitalStatus === 'red' ? 'Critical reading — action needed'
       : bpOverdue.overdue
-        ? `Overdue by ${bpOverdue.elapsedHours != null ? `${bpOverdue.elapsedHours - (config.bp_frequency_hours ?? 0)}h` : 'unknown'} (expected ${frequencyLabel(config.bp_frequency_hours ?? 24)})`
+        ? `Overdue by ${bpOverdue.elapsedHours != null ? formatOverdue(bpOverdue.elapsedHours - (config.bp_frequency_hours ?? 0)) : 'unknown'} (expected ${frequencyLabel(config.bp_frequency_hours ?? 24)})`
         : bpLastAt ? 'On schedule' : 'Not yet recorded',
   };
 
