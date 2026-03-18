@@ -15,6 +15,7 @@ interface FluidExportReportsProps {
   intakeEntries: FluidIntakeEntry[];
   outputEntries: FluidOutputEntry[];
   alerts: FluidBalanceAlert[];
+  onClose?: () => void;
 }
 
 type DatePreset = 'last7' | 'last30' | 'thisMonth' | 'lastMonth' | 'thisYear';
