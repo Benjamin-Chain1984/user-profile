@@ -1,10 +1,14 @@
+/**
+ * Fluid Balance Status Card - Uses shared TrafficLightStatusCard
+ * Mirrors the BowelCareStatusCard design pattern.
+ */
+
 import React from 'react';
-import { Droplets, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Droplets, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
 import { FluidStatus } from '@/types/fluidBalance';
 import { getHydrationLevel } from '@/utils/fluidBalanceCalculator';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
-import { TrendingUp, TrendingDown } from 'lucide-react';
 import { TrafficLightStatusCard } from '@/components/shared/TrafficLightStatusCard';
 import { toTrafficLight } from '@/types/trafficLight';
 
@@ -36,7 +40,7 @@ export const FluidStatusCard: React.FC<FluidStatusCardProps> = ({
   const hydrationLevel = getHydrationLevel(percentOfTarget);
   const trafficLight = toTrafficLight(status);
 
-  const progressColors = {
+  const progressColors: Record<string, string> = {
     critical: 'bg-destructive',
     low: 'bg-warning',
     moderate: 'bg-warning',
@@ -122,6 +126,20 @@ export const FluidStatusCard: React.FC<FluidStatusCardProps> = ({
           </p>
         </div>
       )}
+
+      {/* What to do guidance — matches Bowel Care pattern */}
+      <div className="mt-3 pt-3 border-t border-current/10">
+        <h4 className="text-sm font-medium mb-1">What to do:</h4>
+        <p className="text-sm opacity-80">
+          {status === 'ideal' && 'Continue regular monitoring. Encourage consistent hydration throughout the day.'}
+          {status === 'amber' && 'Monitor closely. Encourage increased fluid intake and reassess shortly.'}
+          {status === 'red' && 'Review the person\'s fluid care plan. Escalate to a clinician or GP if concerned.'}
+        </p>
+      </div>
+
+      <p className="mt-3 text-xs opacity-60 italic">
+        Targets and thresholds should be set by a clinician, dietitian, or GP.
+      </p>
     </TrafficLightStatusCard>
   );
 };
