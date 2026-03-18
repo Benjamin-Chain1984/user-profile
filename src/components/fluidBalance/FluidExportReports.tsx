@@ -24,7 +24,8 @@ export const FluidExportReports: React.FC<FluidExportReportsProps> = ({
   config,
   intakeEntries,
   outputEntries,
-  alerts
+  alerts,
+  onClose
 }) => {
   const [datePreset, setDatePreset] = useState<DatePreset>('last7');
   const [includeSections, setIncludeSections] = useState({

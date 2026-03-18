@@ -1,9 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Droplets, FileText, Settings, TrendingUp, Clock } from 'lucide-react';
+import { AlertTriangle, Settings, TrendingUp, Clock, FileDown, Plus } from 'lucide-react';
 import { useFluidBalance } from '@/hooks/useFluidBalance';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { useProfile } from '@/contexts/ProfileContext';
@@ -15,7 +14,6 @@ import { IntakeLogForm } from './IntakeLogForm';
 import { OutputLogForm } from './OutputLogForm';
 import { FluidHistory } from './FluidHistory';
 import { FluidTrends } from './FluidTrends';
-
 import { SignsAndSymptomsPanel } from './SignsAndSymptomsPanel';
 import { FluidConfigSettings } from './FluidConfigSettings';
 import { FluidExportReports } from './FluidExportReports';
