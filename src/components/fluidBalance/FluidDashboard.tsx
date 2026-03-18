@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Settings, TrendingUp, Clock, FileDown, Plus } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { AlertTriangle, Settings, TrendingUp, Clock, FileDown, Droplets, TrendingDown } from 'lucide-react';
 import { useFluidBalance } from '@/hooks/useFluidBalance';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { useProfile } from '@/contexts/ProfileContext';
@@ -25,6 +26,8 @@ interface FluidDashboardProps {
 
 export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
   const [showExport, setShowExport] = useState(false);
+  const [showIntakeForm, setShowIntakeForm] = useState(false);
+  const [showOutputForm, setShowOutputForm] = useState(false);
   const {
     config,
     intakeEntries,
@@ -88,6 +91,16 @@ export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
     );
   }
   
+  const handleIntakeSubmit = async (data: any) => {
+    await logIntake(data);
+    setShowIntakeForm(false);
+  };
+
+  const handleOutputSubmit = async (data: any) => {
+    await logOutput(data);
+    setShowOutputForm(false);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header Actions */}
@@ -103,8 +116,55 @@ export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
             <FileDown className="h-4 w-4 mr-2" />
             Export
           </Button>
+          {config?.enable_output_logging && (
+            <Button variant="outline" onClick={() => setShowOutputForm(true)} disabled={isMonitoringPaused}>
+              <TrendingDown className="h-4 w-4 mr-2" />
+              Log Output
+            </Button>
+          )}
+          <Button onClick={() => setShowIntakeForm(true)} disabled={isMonitoringPaused}>
+            <Droplets className="h-4 w-4 mr-2" />
+            Log Intake
+          </Button>
         </div>
       </div>
+
+      {/* Intake Log Dialog */}
+      <Dialog open={showIntakeForm} onOpenChange={setShowIntakeForm}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Droplets className="h-5 w-5 text-primary" />
+              Log Fluid Intake
+            </DialogTitle>
+            <DialogDescription>
+              Record fluid intake for monitoring
+            </DialogDescription>
+          </DialogHeader>
+          <IntakeLogForm
+            onSubmit={handleIntakeSubmit}
+            isRestricted={config?.fluid_restriction_enabled}
+            currentTotal={todayIntake}
+            maxAllowance={config?.max_fluid_allowance_ml}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Output Log Dialog */}
+      <Dialog open={showOutputForm} onOpenChange={setShowOutputForm}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <TrendingDown className="h-5 w-5 text-primary" />
+              Log Fluid Output
+            </DialogTitle>
+            <DialogDescription>
+              Record fluid output for balance tracking
+            </DialogDescription>
+          </DialogHeader>
+          <OutputLogForm onSubmit={handleOutputSubmit} />
+        </DialogContent>
+      </Dialog>
 
       {/* Monitoring Paused Banner */}
       {isMonitoringPaused && monitoringStatus && (
@@ -141,6 +201,20 @@ export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
         </div>
       )}
       
+      {/* Status Card */}
+      <FluidStatusCard
+        status={currentStatus}
+        statusMessage={statusMessage}
+        statusLabel={statusLabel}
+        todayIntake={todayIntake}
+        todayOutput={todayOutput}
+        todayBalance={todayBalance}
+        percentOfTarget={percentOfTarget}
+        targetOrCap={targetOrCap}
+        enableOutputLogging={config?.enable_output_logging ?? true}
+        isRestricted={config?.fluid_restriction_enabled ?? false}
+      />
+
       <Tabs defaultValue="tracking" className="space-y-6">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="tracking" className="flex items-center gap-2">
@@ -162,18 +236,6 @@ export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
         <TabsContent value="tracking" className="space-y-6">
           {/* Status overview */}
           <div className="grid md:grid-cols-2 gap-6">
-            <FluidStatusCard
-              status={currentStatus}
-              statusMessage={statusMessage}
-              statusLabel={statusLabel}
-              todayIntake={todayIntake}
-              todayOutput={todayOutput}
-              todayBalance={todayBalance}
-              percentOfTarget={percentOfTarget}
-              targetOrCap={targetOrCap}
-              enableOutputLogging={config?.enable_output_logging ?? true}
-              isRestricted={config?.fluid_restriction_enabled ?? false}
-            />
             <HydrationInfographic
               percentOfTarget={percentOfTarget}
               isRestricted={config?.fluid_restriction_enabled ?? false}
@@ -181,30 +243,15 @@ export const FluidDashboard: React.FC<FluidDashboardProps> = ({ clientId }) => {
               todayIntake={todayIntake}
               status={currentStatus}
             />
-          </div>
-          
-          {/* Logging forms */}
-          <div className={`grid gap-6 ${config?.enable_output_logging ? 'md:grid-cols-2' : 'md:grid-cols-1 max-w-xl'}`}>
-            <IntakeLogForm
-              onSubmit={logIntake}
-              isRestricted={config?.fluid_restriction_enabled}
-              currentTotal={todayIntake}
-              maxAllowance={config?.max_fluid_allowance_ml}
+            <FluidHistory
+              intakeEntries={intakeEntries}
+              outputEntries={outputEntries}
+              enableOutputLogging={config?.enable_output_logging ?? true}
             />
-            {config?.enable_output_logging && (
-              <OutputLogForm onSubmit={logOutput} />
-            )}
           </div>
           
           {/* Signs and Symptoms - informational only */}
           <SignsAndSymptomsPanel />
-          
-          {/* History */}
-          <FluidHistory
-            intakeEntries={intakeEntries}
-            outputEntries={outputEntries}
-            enableOutputLogging={config?.enable_output_logging ?? true}
-          />
         </TabsContent>
         
         <TabsContent value="trends" className="space-y-6">
