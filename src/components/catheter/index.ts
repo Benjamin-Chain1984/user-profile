@@ -1,5 +1,6 @@
 export { CatheterDashboard } from './CatheterDashboard';
 export { CatheterStatusCard } from './CatheterStatusCard';
+export { CatheterTrafficLightCard } from './CatheterTrafficLightCard';
 export { CatheterHistory } from './CatheterHistory';
 export { CatheterTrends } from './CatheterTrends';
 export { CatheterConfigSettings } from './CatheterConfigSettings';
