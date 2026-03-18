@@ -65,7 +65,7 @@ export function CatheterTrafficLightCard({ clientId }: CatheterTrafficLightCardP
   if (loading) return null;
 
   const trafficLight = toTrafficLight(status);
-  const reason = getStatusReason(status, isChangeOverdue, isFlushOverdue, stomaAlertActive, daysUntilChange, daysUntilFlush);
+  const reason = getStatusReason(status, isChangeOverdue, isFlushOverdue, stomaStatus, daysUntilChange, daysUntilFlush);
 
   return (
     <TrafficLightStatusCard
