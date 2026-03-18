@@ -1042,17 +1042,18 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       const dynamicStomaStatus = lastStoma ? calculateStomaStatusLevel(stomaFindings, stomaPainLevel, hoursSinceStoma) : 'green';
 
       // Per-tile status resolution (mirrors useCatheterStatus exactly)
-      const changeStatus: HealthStatus = isChangeOverdue ? 'action'
+      type TileStatus = 'stable' | 'monitor' | 'action';
+      const changeStatus: TileStatus = isChangeOverdue ? 'action'
         : (daysUntilChange !== null && daysUntilChange <= 3) ? 'monitor' : 'stable';
 
-      const flushStatus: HealthStatus = isFlushOverdue ? 'action'
+      const flushStatus: TileStatus = isFlushOverdue ? 'action'
         : (daysUntilFlush !== null && daysUntilFlush <= 1) ? 'monitor' : 'stable';
 
-      const stomaHealthStatus: HealthStatus = dynamicStomaStatus === 'red' ? 'action'
+      const stomaHealthStatus: TileStatus = dynamicStomaStatus === 'red' ? 'action'
         : dynamicStomaStatus === 'amber' ? 'monitor' : 'stable';
 
       // Resolve highest: Red > Amber > Green (Module Sovereignty)
-      let resolvedStatus: HealthStatus = 'stable';
+      let resolvedStatus: TileStatus = 'stable';
       if ([changeStatus, flushStatus, stomaHealthStatus].includes('action')) {
         resolvedStatus = 'action';
       } else if ([changeStatus, flushStatus, stomaHealthStatus].includes('monitor')) {
