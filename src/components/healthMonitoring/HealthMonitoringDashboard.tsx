@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { HealthMonitoringStatusCard } from './HealthMonitoringStatusCard';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { VitalTilesDashboard } from './VitalTilesDashboard';
@@ -131,6 +132,9 @@ export function HealthMonitoringDashboard({ clientId }: HealthMonitoringDashboar
       <ModuleDisclaimer 
         message="This tool supports monitoring only. It does not replace clinical assessment. Follow the person's health plan and seek medical advice if concerned."
       />
+
+      {/* Traffic Light Status Card */}
+      <HealthMonitoringStatusCard clientId={clientId} />
 
       {/* Vital Signs Tiles Dashboard */}
       <VitalTilesDashboard 
