@@ -3,6 +3,7 @@
  * Follows IDEAL module patterns with Tracking, Trends, and Settings tabs
  */
 
+import { useEffect } from 'react';
 import { ModuleHeader, ModuleDisclaimer, ModuleTabs } from '@/components/module';
 import { useHealthPrevention } from '@/hooks/useHealthPrevention';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
@@ -21,7 +22,7 @@ import { Card, CardContent } from '@/components/ui/card';
 
 export function HealthPreventionDashboard() {
   const { isAdmin } = useRoleAccess();
-  const { isMonitoringPaused, monitoringStatus } = useProfile();
+  const { isMonitoringPaused, monitoringStatus, updateModuleStatus } = useProfile();
   const {
     config,
     isLoading,
@@ -36,6 +37,17 @@ export function HealthPreventionDashboard() {
     logAssessment,
   } = useHealthPrevention();
 
+  const moduleStatus = getModuleStatus();
+  const dueCount = getDueCount();
+
+  // Sync module's authoritative status to the global context (home dashboard)
+  useEffect(() => {
+    if (!isLoading) {
+      const lastEntry = dueCount === 0 ? 'Up to date' : `${dueCount} action(s) pending`;
+      updateModuleStatus('health-prevention', moduleStatus, lastEntry);
+    }
+  }, [moduleStatus, dueCount, isLoading]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -43,9 +55,6 @@ export function HealthPreventionDashboard() {
       </div>
     );
   }
-
-  const moduleStatus = getModuleStatus();
-  const dueCount = getDueCount();
 
   const trackingContent = (
     <div className="space-y-6">
