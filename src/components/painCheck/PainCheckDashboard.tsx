@@ -13,7 +13,7 @@ import { PainadAssessmentForm } from './PainadAssessmentForm';
 import { PainAssessmentHistory } from './PainAssessmentHistory';
 import { PainTrendChart } from './PainTrendChart';
 import { PainConfigSettings } from './PainConfigSettings';
-import { PainQuickStatus } from './PainQuickStatus';
+import { PainStatusCard } from './PainStatusCard';
 import { PainExportReports } from './PainExportReports';
 import { PainActiveActionPlan } from './PainActiveActionPlan';
 import { getSeverityLabel, getSeverityColor, ASSESSMENT_FREQUENCY_OPTIONS, AssessmentFrequency } from '@/types/painAssessment';
