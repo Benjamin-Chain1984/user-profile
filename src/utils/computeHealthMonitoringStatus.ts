@@ -151,7 +151,7 @@ export function computeHealthMonitoringStatus(
     elapsedHours: tempOverdue.elapsedHours,
     reasonText: !config.temperature_enabled ? 'Disabled'
       : tempOverdue.overdue
-        ? `Overdue by ${tempOverdue.elapsedHours != null ? `${tempOverdue.elapsedHours - (config.temperature_frequency_hours ?? 0)}h` : 'unknown'} (expected ${frequencyLabel(config.temperature_frequency_hours ?? 24)})`
+        ? `Overdue by ${tempOverdue.elapsedHours != null ? formatOverdue(tempOverdue.elapsedHours - (config.temperature_frequency_hours ?? 0)) : 'unknown'} (expected ${frequencyLabel(config.temperature_frequency_hours ?? 24)})`
         : tempLastAt ? 'On schedule' : 'Not yet recorded',
   };
 
