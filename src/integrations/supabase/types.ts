@@ -1693,6 +1693,7 @@ export type Database = {
           edited_at: string | null
           edited_by: string | null
           email: string | null
+          enabled_modules: string[] | null
           full_name: string | null
           id: string
           person_responsible_name: string | null
@@ -1716,6 +1717,7 @@ export type Database = {
           edited_at?: string | null
           edited_by?: string | null
           email?: string | null
+          enabled_modules?: string[] | null
           full_name?: string | null
           id?: string
           person_responsible_name?: string | null
@@ -1739,6 +1741,7 @@ export type Database = {
           edited_at?: string | null
           edited_by?: string | null
           email?: string | null
+          enabled_modules?: string[] | null
           full_name?: string | null
           id?: string
           person_responsible_name?: string | null
