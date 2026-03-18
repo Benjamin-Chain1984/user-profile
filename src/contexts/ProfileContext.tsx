@@ -57,6 +57,7 @@ interface ProfileContextType {
   globalAlertState: GlobalAlertState;
   isProfileComplete: boolean;
   getModuleStatus: (moduleId: string) => HealthModule | undefined;
+  updateModuleStatus: (moduleId: string, status: 'stable' | 'monitor' | 'action', lastEntry: string) => void;
   refreshPainStatus: () => void;
   refreshBowelStatus: () => void;
   refreshWeightStatus: () => void;
