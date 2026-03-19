@@ -77,9 +77,13 @@ export function calculateBowelCareStatus(
   const effectiveConfig: BowelCareConfig = { ...DEFAULT_CONFIG, ...config };
   const now = new Date();
   
-  // Default: amber threshold is one day before red threshold
-  const amberThreshold = effectiveConfig.amber_days_threshold ?? 
-    Math.max(1, effectiveConfig.no_bm_days_threshold - 1);
+  // Use explicit amber/red thresholds (fallback to legacy fields)
+  const amberNoBmDays = effectiveConfig.amber_no_bm_days_threshold ?? Math.max(1, effectiveConfig.no_bm_days_threshold - 1);
+  const redNoBmDays = effectiveConfig.red_no_bm_days_threshold ?? effectiveConfig.no_bm_days_threshold;
+  const amberType1Days = effectiveConfig.amber_type1_consecutive_days ?? Math.max(1, effectiveConfig.type1_consecutive_days_threshold - 1);
+  const redType1Days = effectiveConfig.red_type1_consecutive_days ?? effectiveConfig.type1_consecutive_days_threshold;
+  const amberDiarrhoeaCount = effectiveConfig.amber_diarrhoea_count ?? 1;
+  const redDiarrhoeaCount = effectiveConfig.red_diarrhoea_count ?? effectiveConfig.diarrhoea_type67_count_threshold;
 
   // No logs case
   if (!logs || logs.length === 0) {
