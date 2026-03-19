@@ -148,7 +148,7 @@ export function CatheterHistory({ clientId }: CatheterHistoryProps) {
                       {log.output_description && (
                         <p className="text-sm text-muted-foreground">{log.output_description}</p>
                       )}
-                    </div>
+                      <StaffAttribution entry={log} />
                   ))}
                 </div>
               </ScrollArea>
