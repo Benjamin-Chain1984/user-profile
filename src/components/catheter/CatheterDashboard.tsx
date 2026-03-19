@@ -21,6 +21,7 @@ import { BagChangeForm } from './BagChangeForm';
 import { AutonomicDysreflexiaPanel } from './AutonomicDysreflexiaPanel';
 import { CatheterCarePlanViewer } from './CatheterCarePlanViewer';
 import { CatheterCarePlanEditor } from './CatheterCarePlanEditor';
+import { UrineColourChart } from './UrineColourChart';
 import { useCatheterCarePlan, useCatheterCarePlanAcknowledgements, useCatheterCarePlanStatus } from '@/hooks/useCatheterCarePlan';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { useProfile } from '@/contexts/ProfileContext';
@@ -144,8 +145,9 @@ export function CatheterDashboard({ clientId }: CatheterDashboardProps) {
           />
         </TabsList>
 
-        <TabsContent value="tracking">
+        <TabsContent value="tracking" className="space-y-4">
           <CatheterHistory clientId={clientId} />
+          <UrineColourChart />
         </TabsContent>
 
         <TabsContent value="trends">
