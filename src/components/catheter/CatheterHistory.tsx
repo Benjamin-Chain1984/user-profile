@@ -27,6 +27,23 @@ import {
   CATHETER_TYPE_CONFIG,
 } from '@/types/catheter';
 import { format, parseISO } from 'date-fns';
+import { User } from 'lucide-react';
+
+const getStaffName = (entry: any): string | null => {
+  if (entry.profiles?.full_name) return entry.profiles.full_name;
+  return null;
+};
+
+function StaffAttribution({ entry }: { entry: any }) {
+  const name = getStaffName(entry);
+  if (!name) return null;
+  return (
+    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+      <User className="h-3 w-3" />
+      <span>Logged by {name}</span>
+    </div>
+  );
+}
 
 interface CatheterHistoryProps {
   clientId?: string;
@@ -94,6 +111,7 @@ export function CatheterHistory({ clientId }: CatheterHistoryProps) {
                       {change.notes && (
                         <p className="text-sm text-muted-foreground">{change.notes}</p>
                       )}
+                      <StaffAttribution entry={change} />
                     </div>
                   ))}
                 </div>
@@ -131,8 +149,10 @@ export function CatheterHistory({ clientId }: CatheterHistoryProps) {
                       {log.output_description && (
                         <p className="text-sm text-muted-foreground">{log.output_description}</p>
                       )}
+                      <StaffAttribution entry={log} />
                     </div>
                   ))}
+
                 </div>
               </ScrollArea>
             )}
@@ -191,6 +211,7 @@ export function CatheterHistory({ clientId }: CatheterHistoryProps) {
                         {check.notes && (
                           <p className="text-sm text-muted-foreground">{check.notes}</p>
                         )}
+                        <StaffAttribution entry={check} />
                       </div>
                     );
                   })}
@@ -238,6 +259,7 @@ export function CatheterHistory({ clientId }: CatheterHistoryProps) {
                       {change.notes && (
                         <p className="text-sm text-muted-foreground">{change.notes}</p>
                       )}
+                      <StaffAttribution entry={change} />
                     </div>
                   ))}
                 </div>
