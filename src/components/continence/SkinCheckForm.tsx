@@ -63,6 +63,9 @@ export function SkinCheckForm({
   const [escalationNotes, setEscalationNotes] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showEventTime, setShowEventTime] = useState(false);
+  const [eventDate, setEventDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [eventTime, setEventTime] = useState(format(new Date(), 'HH:mm'));
 
   const requiresEscalation = ['broken_skin', 'fungal_signs'].includes(skinCondition);
   const requiresMonitoring = ['rash', 'redness', 'moisture_damage', 'bruising'].includes(skinCondition);
