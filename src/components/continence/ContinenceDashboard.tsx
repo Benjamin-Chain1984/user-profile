@@ -75,6 +75,12 @@ export function ContinenceDashboard({ clientId }: ContinenceDashboardProps) {
         </AlertDescription>
       </Alert>
 
+      {/* Traffic Light Status Card */}
+      <ContinenceStatusCard
+        clientId={clientId}
+        onLogPadChange={() => setShowPadChangeForm(true)}
+      />
+
       {/* Status Tiles — 4 individual tiles */}
       <ContinenceStatusTiles
         clientId={clientId}
