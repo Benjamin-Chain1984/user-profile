@@ -145,8 +145,9 @@ export function CatheterDashboard({ clientId }: CatheterDashboardProps) {
           />
         </TabsList>
 
-        <TabsContent value="tracking">
+        <TabsContent value="tracking" className="space-y-4">
           <CatheterHistory clientId={clientId} />
+          <UrineColourChart />
         </TabsContent>
 
         <TabsContent value="trends">
