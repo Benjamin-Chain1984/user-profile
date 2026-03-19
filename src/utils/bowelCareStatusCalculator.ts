@@ -142,14 +142,14 @@ export function calculateBowelCareStatus(
     };
   }
 
-  // === CONSECUTIVE TYPE 1 (CONSTIPATION) ===
+  // === CONSECUTIVE TYPE 1 (CONSTIPATION) — RED ===
   const actualBMs = logs.filter(l => l.bristol_type > 0);
-  const recentActualBMs = actualBMs.slice(0, effectiveConfig.type1_consecutive_days_threshold);
-  const type1ThresholdMet = 
-    recentActualBMs.length >= effectiveConfig.type1_consecutive_days_threshold &&
-    recentActualBMs.every(l => l.bristol_type === 1);
+  const recentType1ForRed = actualBMs.slice(0, redType1Days);
+  const type1RedMet = 
+    recentType1ForRed.length >= redType1Days &&
+    recentType1ForRed.every(l => l.bristol_type === 1);
 
-  if (type1ThresholdMet) {
+  if (type1RedMet) {
     return {
       status: 'action',
       message: `Consecutive hard stools (Type 1) – constipation risk, action required`,
