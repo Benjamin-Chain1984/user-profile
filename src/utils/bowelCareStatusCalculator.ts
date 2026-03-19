@@ -173,7 +173,7 @@ export function calculateBowelCareStatus(
     return true;
   });
   
-  if (recentDiarrhoea.length >= effectiveConfig.diarrhoea_type67_count_threshold) {
+  if (recentDiarrhoea.length >= redDiarrhoeaCount) {
     return {
       status: 'action',
       message: `Persistent loose stools – consider medical review`,
@@ -183,8 +183,8 @@ export function calculateBowelCareStatus(
     };
   }
 
-  // === DIARRHOEA AMBER: Any Type 6 or 7 (below threshold, and more recent than last healthy stool) ===
-  if (recentDiarrhoea.length > 0) {
+  // === DIARRHOEA AMBER: meets amber threshold ===
+  if (recentDiarrhoea.length >= amberDiarrhoeaCount) {
     return {
       status: 'monitor',
       message: `Loose/watery stool recorded – monitoring`,
@@ -194,8 +194,24 @@ export function calculateBowelCareStatus(
     };
   }
 
-  // === AMBER: APPROACHING THRESHOLD ===
-  if (daysSinceLastBm !== null && daysSinceLastBm >= amberThreshold) {
+  // === CONSECUTIVE TYPE 1 (CONSTIPATION) — AMBER ===
+  const recentType1ForAmber = actualBMs.slice(0, amberType1Days);
+  const type1AmberMet = amberType1Days > 0 &&
+    recentType1ForAmber.length >= amberType1Days &&
+    recentType1ForAmber.every(l => l.bristol_type === 1);
+
+  if (type1AmberMet) {
+    return {
+      status: 'monitor',
+      message: `Hard stools (Type 1) recorded – monitoring for constipation`,
+      daysSinceLastBm,
+      lastBristolType,
+      lastEventTimestamp,
+    };
+  }
+
+  // === AMBER: APPROACHING NO BM THRESHOLD ===
+  if (daysSinceLastBm !== null && daysSinceLastBm >= amberNoBmDays) {
     return {
       status: 'monitor',
       message: `${daysSinceLastBm} day${daysSinceLastBm === 1 ? '' : 's'} since last bowel movement – attention required`,
