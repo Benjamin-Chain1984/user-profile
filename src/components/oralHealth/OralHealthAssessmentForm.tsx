@@ -107,11 +107,26 @@ export function OralHealthAssessmentForm({ clientId, open, onOpenChange }: Props
     });
   };
 
-  const requiredAction = overallStatus === 'unhealthy'
-    ? 'Arrange urgent dental visit'
+  const autoAction = overallStatus === 'unhealthy'
+    ? 'urgent_dental_visit'
     : overallStatus === 'changes'
-      ? 'Notify at next dental visit'
-      : 'Maintain daily oral care';
+      ? 'notify_next_visit'
+      : 'maintain_daily_care';
+
+  const requiredActionLabel = overallStatus === 'unhealthy'
+    ? 'Organise urgent dental appointment'
+    : overallStatus === 'changes'
+      ? 'Discuss at next dental review'
+      : 'No action — continue oral healthcare';
+
+  // Auto-assign action when overall status changes
+  const prevOverall = useState<string | null>(null);
+  if (prevOverall[0] !== overallStatus) {
+    prevOverall[1](overallStatus);
+    if (actionTaken !== autoAction) {
+      setActionTaken(autoAction);
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
