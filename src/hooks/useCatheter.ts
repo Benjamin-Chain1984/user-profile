@@ -120,7 +120,7 @@ export function useCatheterChanges(clientId?: string) {
     queryFn: async () => {
       const query = supabase
         .from('catheter_change_logs')
-        .select('*')
+        .select('*, profiles:created_by(full_name)')
         .order('event_occurred_at', { ascending: false })
         .limit(100);
       if (clientId) {
