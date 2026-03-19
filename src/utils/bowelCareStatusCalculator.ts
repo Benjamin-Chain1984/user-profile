@@ -18,7 +18,14 @@ export interface BowelCareConfig {
   type1_consecutive_days_threshold: number;
   diarrhoea_type67_count_threshold: number;
   diarrhoea_hours_window: number;
-  amber_days_threshold?: number; // Days before amber warning (default: noBmDays - 1)
+  amber_days_threshold?: number;
+  // Explicit amber/red thresholds
+  amber_no_bm_days_threshold?: number;
+  red_no_bm_days_threshold?: number;
+  amber_type1_consecutive_days?: number;
+  red_type1_consecutive_days?: number;
+  amber_diarrhoea_count?: number;
+  red_diarrhoea_count?: number;
 }
 
 export interface BowelLogEntry {
@@ -42,6 +49,12 @@ const DEFAULT_CONFIG: BowelCareConfig = {
   type1_consecutive_days_threshold: 2,
   diarrhoea_type67_count_threshold: 3,
   diarrhoea_hours_window: 48,
+  amber_no_bm_days_threshold: 2,
+  red_no_bm_days_threshold: 3,
+  amber_type1_consecutive_days: 1,
+  red_type1_consecutive_days: 2,
+  amber_diarrhoea_count: 1,
+  red_diarrhoea_count: 3,
 };
 
 /**
@@ -64,9 +77,13 @@ export function calculateBowelCareStatus(
   const effectiveConfig: BowelCareConfig = { ...DEFAULT_CONFIG, ...config };
   const now = new Date();
   
-  // Default: amber threshold is one day before red threshold
-  const amberThreshold = effectiveConfig.amber_days_threshold ?? 
-    Math.max(1, effectiveConfig.no_bm_days_threshold - 1);
+  // Use explicit amber/red thresholds (fallback to legacy fields)
+  const amberNoBmDays = effectiveConfig.amber_no_bm_days_threshold ?? Math.max(1, effectiveConfig.no_bm_days_threshold - 1);
+  const redNoBmDays = effectiveConfig.red_no_bm_days_threshold ?? effectiveConfig.no_bm_days_threshold;
+  const amberType1Days = effectiveConfig.amber_type1_consecutive_days ?? Math.max(1, effectiveConfig.type1_consecutive_days_threshold - 1);
+  const redType1Days = effectiveConfig.red_type1_consecutive_days ?? effectiveConfig.type1_consecutive_days_threshold;
+  const amberDiarrhoeaCount = effectiveConfig.amber_diarrhoea_count ?? 1;
+  const redDiarrhoeaCount = effectiveConfig.red_diarrhoea_count ?? effectiveConfig.diarrhoea_type67_count_threshold;
 
   // No logs case
   if (!logs || logs.length === 0) {
@@ -115,7 +132,7 @@ export function calculateBowelCareStatus(
   }
 
   // === NO BOWEL MOVEMENT THRESHOLD (RED) ===
-  if (daysSinceLastBm !== null && daysSinceLastBm >= effectiveConfig.no_bm_days_threshold) {
+  if (daysSinceLastBm !== null && daysSinceLastBm >= redNoBmDays) {
     return {
       status: 'action',
       message: `No bowel movement for ${daysSinceLastBm} days – seek urgent medical review`,
@@ -125,14 +142,14 @@ export function calculateBowelCareStatus(
     };
   }
 
-  // === CONSECUTIVE TYPE 1 (CONSTIPATION) ===
+  // === CONSECUTIVE TYPE 1 (CONSTIPATION) — RED ===
   const actualBMs = logs.filter(l => l.bristol_type > 0);
-  const recentActualBMs = actualBMs.slice(0, effectiveConfig.type1_consecutive_days_threshold);
-  const type1ThresholdMet = 
-    recentActualBMs.length >= effectiveConfig.type1_consecutive_days_threshold &&
-    recentActualBMs.every(l => l.bristol_type === 1);
+  const recentType1ForRed = actualBMs.slice(0, redType1Days);
+  const type1RedMet = 
+    recentType1ForRed.length >= redType1Days &&
+    recentType1ForRed.every(l => l.bristol_type === 1);
 
-  if (type1ThresholdMet) {
+  if (type1RedMet) {
     return {
       status: 'action',
       message: `Consecutive hard stools (Type 1) – constipation risk, action required`,
@@ -156,7 +173,7 @@ export function calculateBowelCareStatus(
     return true;
   });
   
-  if (recentDiarrhoea.length >= effectiveConfig.diarrhoea_type67_count_threshold) {
+  if (recentDiarrhoea.length >= redDiarrhoeaCount) {
     return {
       status: 'action',
       message: `Persistent loose stools – consider medical review`,
@@ -166,8 +183,8 @@ export function calculateBowelCareStatus(
     };
   }
 
-  // === DIARRHOEA AMBER: Any Type 6 or 7 (below threshold, and more recent than last healthy stool) ===
-  if (recentDiarrhoea.length > 0) {
+  // === DIARRHOEA AMBER: meets amber threshold ===
+  if (recentDiarrhoea.length >= amberDiarrhoeaCount) {
     return {
       status: 'monitor',
       message: `Loose/watery stool recorded – monitoring`,
@@ -177,8 +194,24 @@ export function calculateBowelCareStatus(
     };
   }
 
-  // === AMBER: APPROACHING THRESHOLD ===
-  if (daysSinceLastBm !== null && daysSinceLastBm >= amberThreshold) {
+  // === CONSECUTIVE TYPE 1 (CONSTIPATION) — AMBER ===
+  const recentType1ForAmber = actualBMs.slice(0, amberType1Days);
+  const type1AmberMet = amberType1Days > 0 &&
+    recentType1ForAmber.length >= amberType1Days &&
+    recentType1ForAmber.every(l => l.bristol_type === 1);
+
+  if (type1AmberMet) {
+    return {
+      status: 'monitor',
+      message: `Hard stools (Type 1) recorded – monitoring for constipation`,
+      daysSinceLastBm,
+      lastBristolType,
+      lastEventTimestamp,
+    };
+  }
+
+  // === AMBER: APPROACHING NO BM THRESHOLD ===
+  if (daysSinceLastBm !== null && daysSinceLastBm >= amberNoBmDays) {
     return {
       status: 'monitor',
       message: `${daysSinceLastBm} day${daysSinceLastBm === 1 ? '' : 's'} since last bowel movement – attention required`,

@@ -254,6 +254,16 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
     addField('Continence Support', plan.continence_support ? 'Yes' : 'No');
     y += 2;
 
+    // Alert Thresholds
+    addSectionHeader('Alert Thresholds');
+    addField('No Bowel Movement — Amber', `${config?.amber_no_bm_days_threshold ?? 2} days`);
+    addField('No Bowel Movement — Red', `${config?.red_no_bm_days_threshold ?? 3} days`);
+    addField('Consecutive Type 1 — Amber', `${config?.amber_type1_consecutive_days ?? 1} entries`);
+    addField('Consecutive Type 1 — Red', `${config?.red_type1_consecutive_days ?? 2} entries`);
+    addField('Loose/Watery Stools — Amber', `${config?.amber_diarrhoea_count ?? 1} episodes`);
+    addField('Loose/Watery Stools — Red', `${config?.red_diarrhoea_count ?? 3} episodes`);
+    y += 2;
+
     // Risk Monitoring
     if (riskEntries.length > 0) {
       addSectionHeader('Risk Monitoring & Early Warning Signs');
@@ -510,6 +520,61 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
           {plan.positioning_requirements && <div><strong>Positioning:</strong> {plan.positioning_requirements}</div>}
           {plan.equipment_required && <div><strong>Equipment:</strong> {plan.equipment_required}</div>}
           <div><strong>Continence Support:</strong> {plan.continence_support ? 'Yes – See Continence Plan' : 'No'}</div>
+        </CardContent>
+      </Card>
+
+      {/* Alert Thresholds */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5" />
+            Alert Thresholds
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid sm:grid-cols-2 gap-3">
+              {/* No BM */}
+              <div className="space-y-2">
+                <p className="font-medium text-sm">No Bowel Movement</p>
+                <div className="flex gap-2">
+                  <Badge className="bg-amber-100 text-amber-800 border-amber-200">
+                    Amber: {config?.amber_no_bm_days_threshold ?? 2} days
+                  </Badge>
+                  <Badge className="bg-red-100 text-red-800 border-red-200">
+                    Red: {config?.red_no_bm_days_threshold ?? 3} days
+                  </Badge>
+                </div>
+              </div>
+              {/* Type 1 */}
+              <div className="space-y-2">
+                <p className="font-medium text-sm">Consecutive Hard Stools (Type 1)</p>
+                <div className="flex gap-2">
+                  <Badge className="bg-amber-100 text-amber-800 border-amber-200">
+                    Amber: {config?.amber_type1_consecutive_days ?? 1} entries
+                  </Badge>
+                  <Badge className="bg-red-100 text-red-800 border-red-200">
+                    Red: {config?.red_type1_consecutive_days ?? 2} entries
+                  </Badge>
+                </div>
+              </div>
+              {/* Diarrhoea */}
+              <div className="space-y-2">
+                <p className="font-medium text-sm">Loose/Watery Stools (Type 6 & 7)</p>
+                <div className="flex gap-2">
+                  <Badge className="bg-amber-100 text-amber-800 border-amber-200">
+                    Amber: {config?.amber_diarrhoea_count ?? 1} episodes
+                  </Badge>
+                  <Badge className="bg-red-100 text-red-800 border-red-200">
+                    Red: {config?.red_diarrhoea_count ?? 3} episodes
+                  </Badge>
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground italic">
+              These thresholds are configured in Settings and drive the traffic light indicator.
+            </p>
+          </div>
         </CardContent>
       </Card>
 

@@ -231,7 +231,154 @@ export function BowelCareConfigSettings({ clientId }: BowelCareConfigSettingsPro
         </CardContent>
       </Card>
 
+      {/* Alert Thresholds */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5" />
+            Alert Thresholds
+          </CardTitle>
+          <CardDescription>
+            Set the thresholds that trigger Amber (monitor) and Red (action required) alerts on the traffic light indicator.
+            These thresholds also appear on the Digital Bowel Care Plan.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <RestrictedSection requiredRole="admin">
+            <div className="space-y-6">
+              {/* No Bowel Movement */}
+              <div className="space-y-3">
+                <h4 className="font-medium text-sm">No Bowel Movement (days)</h4>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-2 p-3 rounded-lg border border-amber-200 bg-amber-50/50">
+                    <Label className="text-amber-800 font-medium text-xs uppercase tracking-wide">
+                      Amber – Attention Required
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={30}
+                        value={localConfig.amber_no_bm_days_threshold ?? 2}
+                        onChange={(e) => setLocalConfig({ ...localConfig, amber_no_bm_days_threshold: parseInt(e.target.value) || 2 })}
+                        className="w-20"
+                        disabled={!isAdmin}
+                      />
+                      <span className="text-sm text-muted-foreground">days without a bowel movement</span>
+                    </div>
+                  </div>
+                  <div className="space-y-2 p-3 rounded-lg border border-red-200 bg-red-50/50">
+                    <Label className="text-red-800 font-medium text-xs uppercase tracking-wide">
+                      Red – Action Needed
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={30}
+                        value={localConfig.red_no_bm_days_threshold ?? 3}
+                        onChange={(e) => setLocalConfig({ ...localConfig, red_no_bm_days_threshold: parseInt(e.target.value) || 3 })}
+                        className="w-20"
+                        disabled={!isAdmin}
+                      />
+                      <span className="text-sm text-muted-foreground">days without a bowel movement</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
+              {/* Consecutive Hard Stools (Type 1) */}
+              <div className="space-y-3">
+                <h4 className="font-medium text-sm">Consecutive Hard Stools – Type 1 (entries)</h4>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-2 p-3 rounded-lg border border-amber-200 bg-amber-50/50">
+                    <Label className="text-amber-800 font-medium text-xs uppercase tracking-wide">
+                      Amber – Attention Required
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={30}
+                        value={localConfig.amber_type1_consecutive_days ?? 1}
+                        onChange={(e) => setLocalConfig({ ...localConfig, amber_type1_consecutive_days: parseInt(e.target.value) || 1 })}
+                        className="w-20"
+                        disabled={!isAdmin}
+                      />
+                      <span className="text-sm text-muted-foreground">consecutive Type 1 entries</span>
+                    </div>
+                  </div>
+                  <div className="space-y-2 p-3 rounded-lg border border-red-200 bg-red-50/50">
+                    <Label className="text-red-800 font-medium text-xs uppercase tracking-wide">
+                      Red – Action Needed
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={30}
+                        value={localConfig.red_type1_consecutive_days ?? 2}
+                        onChange={(e) => setLocalConfig({ ...localConfig, red_type1_consecutive_days: parseInt(e.target.value) || 2 })}
+                        className="w-20"
+                        disabled={!isAdmin}
+                      />
+                      <span className="text-sm text-muted-foreground">consecutive Type 1 entries</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Diarrhoea (Type 6/7) */}
+              <div className="space-y-3">
+                <h4 className="font-medium text-sm">Loose/Watery Stools – Type 6 & 7 (episodes in {localConfig.diarrhoea_hours_window ?? 48}h window)</h4>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-2 p-3 rounded-lg border border-amber-200 bg-amber-50/50">
+                    <Label className="text-amber-800 font-medium text-xs uppercase tracking-wide">
+                      Amber – Attention Required
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={30}
+                        value={localConfig.amber_diarrhoea_count ?? 1}
+                        onChange={(e) => setLocalConfig({ ...localConfig, amber_diarrhoea_count: parseInt(e.target.value) || 1 })}
+                        className="w-20"
+                        disabled={!isAdmin}
+                      />
+                      <span className="text-sm text-muted-foreground">episodes</span>
+                    </div>
+                  </div>
+                  <div className="space-y-2 p-3 rounded-lg border border-red-200 bg-red-50/50">
+                    <Label className="text-red-800 font-medium text-xs uppercase tracking-wide">
+                      Red – Action Needed
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={30}
+                        value={localConfig.red_diarrhoea_count ?? 3}
+                        onChange={(e) => setLocalConfig({ ...localConfig, red_diarrhoea_count: parseInt(e.target.value) || 3 })}
+                        className="w-20"
+                        disabled={!isAdmin}
+                      />
+                      <span className="text-sm text-muted-foreground">episodes</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {isAdmin && (
+              <Button onClick={handleSaveConfig} disabled={isUpdating} className="mt-6">
+                {isUpdating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Save Alert Thresholds
+              </Button>
+            )}
+          </RestrictedSection>
+        </CardContent>
+      </Card>
 
 
       {/* Alert Notification Recipients */}

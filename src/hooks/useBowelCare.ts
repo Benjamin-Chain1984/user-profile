@@ -33,6 +33,12 @@ const DEFAULT_CONFIG: Partial<BowelCareConfig> = {
   diarrhoea_hours_window: 48,
   escalation_recipients: ['supervisor', 'nurse'],
   enable_log_on_behalf: false,
+  amber_no_bm_days_threshold: 2,
+  red_no_bm_days_threshold: 3,
+  amber_type1_consecutive_days: 1,
+  red_type1_consecutive_days: 2,
+  amber_diarrhoea_count: 1,
+  red_diarrhoea_count: 3,
 };
 
 export function useBowelCareConfig(clientId?: string) {

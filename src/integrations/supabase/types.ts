@@ -323,6 +323,9 @@ export type Database = {
       }
       bowel_care_config: {
         Row: {
+          amber_diarrhoea_count: number
+          amber_no_bm_days_threshold: number
+          amber_type1_consecutive_days: number
           client_id: string | null
           created_at: string
           created_by: string | null
@@ -337,11 +340,17 @@ export type Database = {
           no_bm_after_prn_hours_escalation: number
           no_bm_days_threshold: number
           prn_dose_lookback_window_hours: number
+          red_diarrhoea_count: number
+          red_no_bm_days_threshold: number
+          red_type1_consecutive_days: number
           type1_consecutive_days_threshold: number
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          amber_diarrhoea_count?: number
+          amber_no_bm_days_threshold?: number
+          amber_type1_consecutive_days?: number
           client_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -356,11 +365,17 @@ export type Database = {
           no_bm_after_prn_hours_escalation?: number
           no_bm_days_threshold?: number
           prn_dose_lookback_window_hours?: number
+          red_diarrhoea_count?: number
+          red_no_bm_days_threshold?: number
+          red_type1_consecutive_days?: number
           type1_consecutive_days_threshold?: number
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          amber_diarrhoea_count?: number
+          amber_no_bm_days_threshold?: number
+          amber_type1_consecutive_days?: number
           client_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -375,6 +390,9 @@ export type Database = {
           no_bm_after_prn_hours_escalation?: number
           no_bm_days_threshold?: number
           prn_dose_lookback_window_hours?: number
+          red_diarrhoea_count?: number
+          red_no_bm_days_threshold?: number
+          red_type1_consecutive_days?: number
           type1_consecutive_days_threshold?: number
           updated_at?: string
           updated_by?: string | null
