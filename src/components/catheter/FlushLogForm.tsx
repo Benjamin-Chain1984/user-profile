@@ -377,6 +377,7 @@ export function FlushLogForm({ clientId, open, onOpenChange }: FlushLogFormProps
                 )}
               </p>
             )}
+          </div>
 
           {/* Flow After Flush */}
           <div className="space-y-2">
