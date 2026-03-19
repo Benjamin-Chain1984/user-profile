@@ -254,6 +254,16 @@ export function BowelCarePlanViewer({ clientId, onClose, onEdit }: BowelCarePlan
     addField('Continence Support', plan.continence_support ? 'Yes' : 'No');
     y += 2;
 
+    // Alert Thresholds
+    addSectionHeader('Alert Thresholds');
+    addField('No Bowel Movement — Amber', `${config?.amber_no_bm_days_threshold ?? 2} days`);
+    addField('No Bowel Movement — Red', `${config?.red_no_bm_days_threshold ?? 3} days`);
+    addField('Consecutive Type 1 — Amber', `${config?.amber_type1_consecutive_days ?? 1} entries`);
+    addField('Consecutive Type 1 — Red', `${config?.red_type1_consecutive_days ?? 2} entries`);
+    addField('Loose/Watery Stools — Amber', `${config?.amber_diarrhoea_count ?? 1} episodes`);
+    addField('Loose/Watery Stools — Red', `${config?.red_diarrhoea_count ?? 3} episodes`);
+    y += 2;
+
     // Risk Monitoring
     if (riskEntries.length > 0) {
       addSectionHeader('Risk Monitoring & Early Warning Signs');
