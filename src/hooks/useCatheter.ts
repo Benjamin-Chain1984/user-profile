@@ -284,7 +284,7 @@ export function useStomaChecks(clientId?: string) {
     queryFn: async () => {
       const query = supabase
         .from('catheter_stoma_checks')
-        .select('*, profiles:created_by(full_name)')
+        .select('*')
         .order('event_occurred_at', { ascending: false })
         .limit(100);
       if (clientId) {
