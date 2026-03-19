@@ -2,7 +2,7 @@
  * Oral Health Assessment Form
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -107,11 +107,22 @@ export function OralHealthAssessmentForm({ clientId, open, onOpenChange }: Props
     });
   };
 
-  const requiredAction = overallStatus === 'unhealthy'
-    ? 'Arrange urgent dental visit'
+  const autoAction = overallStatus === 'unhealthy'
+    ? 'urgent_dental_visit'
     : overallStatus === 'changes'
-      ? 'Notify at next dental visit'
-      : 'Maintain daily oral care';
+      ? 'notify_next_visit'
+      : 'maintain_daily_care';
+
+  const requiredActionLabel = overallStatus === 'unhealthy'
+    ? 'Organise urgent dental appointment'
+    : overallStatus === 'changes'
+      ? 'Discuss at next dental review'
+      : 'No action — continue oral healthcare';
+
+  // Auto-assign action when overall status changes
+  useEffect(() => {
+    setActionTaken(autoAction);
+  }, [overallStatus]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -193,20 +204,20 @@ export function OralHealthAssessmentForm({ clientId, open, onOpenChange }: Props
               <AlertCircle className={`h-5 w-5 ${overallStatus === 'unhealthy' ? 'text-destructive' : overallStatus === 'changes' ? 'text-warning' : 'text-success'}`} />
               <div>
                 <p className="font-medium">Overall: {overallStatus.charAt(0).toUpperCase() + overallStatus.slice(1)}</p>
-                <p className="text-sm text-muted-foreground">{requiredAction}</p>
+                <p className="text-sm text-muted-foreground">{requiredActionLabel}</p>
               </div>
             </div>
           </Card>
 
-          {/* Action */}
+          {/* Action — auto-assigned based on assessment outcome */}
           <div>
-            <Label>Action Taken</Label>
+            <Label>Action Taken <span className="text-xs text-muted-foreground font-normal">(auto-assigned)</span></Label>
             <Select value={actionTaken} onValueChange={setActionTaken}>
               <SelectTrigger><SelectValue placeholder="Select action" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="maintain_daily_care">Maintain daily oral care</SelectItem>
-                <SelectItem value="notify_next_visit">Notify at next dental visit</SelectItem>
-                <SelectItem value="urgent_dental_visit">Arrange urgent dental visit</SelectItem>
+                <SelectItem value="maintain_daily_care">No action — continue oral healthcare</SelectItem>
+                <SelectItem value="notify_next_visit">Discuss at next dental review</SelectItem>
+                <SelectItem value="urgent_dental_visit">Organise urgent dental appointment</SelectItem>
               </SelectContent>
             </Select>
           </div>
