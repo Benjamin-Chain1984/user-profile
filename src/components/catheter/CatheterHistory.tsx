@@ -150,7 +150,9 @@ export function CatheterHistory({ clientId }: CatheterHistoryProps) {
                         <p className="text-sm text-muted-foreground">{log.output_description}</p>
                       )}
                       <StaffAttribution entry={log} />
+                    </div>
                   ))}
+
                 </div>
               </ScrollArea>
             )}
