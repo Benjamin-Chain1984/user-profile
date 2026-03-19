@@ -3,7 +3,8 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Link } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -13,7 +14,16 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useOralHealthConfig } from '@/hooks/useOralHealth';
 import { ModuleNotificationsCard, type ModuleNotificationSettings } from '@/components/module';
 import { FREQUENCY_LABELS, type AssessmentFrequency } from '@/types/oralHealth';
-import { Settings, Save, HelpCircle } from 'lucide-react';
+import { Settings, Save, HelpCircle, Scale, Heart, Utensils, CupSoda, Thermometer, Moon } from 'lucide-react';
+
+const RELATED_MODULES = [
+  { id: 'weight', name: 'Weight Chart', description: 'Track weight changes that may indicate nutritional or swallowing concerns', icon: Scale, path: '/module/weight' },
+  { id: 'health-prevention', name: 'Health Prevention', description: 'Proactive health monitoring to catch early warning signs', icon: Heart, path: '/module/health-prevention' },
+  { id: 'enteral', name: 'Enteral Nutrition', description: 'Monitor enteral feeding for those with oral intake difficulties', icon: Utensils, path: '/module/enteral' },
+  { id: 'iddsi', name: 'IDDSI & Safe Swallowing', description: 'Ensure texture-modified diets and safe swallowing strategies', icon: CupSoda, path: '/module/iddsi' },
+  { id: 'pain-assessment', name: 'Pain Assessment', description: 'Identify oral or dental pain that may affect eating and wellbeing', icon: Thermometer, path: '/module/pain-check' },
+  { id: 'sleep', name: 'Sleep Chart', description: 'Quality sleep supports overall health and recovery', icon: Moon, path: '/module/sleep' },
+];
 
 interface Props {
   clientId?: string;
