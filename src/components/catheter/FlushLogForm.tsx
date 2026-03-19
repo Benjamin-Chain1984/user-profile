@@ -27,6 +27,7 @@ import {
   type FlushSolution, type FlushReason, type UrineAppearance,
   type FlowAfterFlush, type PersonResponse,
 } from '@/types/catheter';
+import { URINE_COLOUR_SCALE } from '@/types/fluidBalance';
 import {
   AlertTriangle, ChevronDown, Shield, CheckCircle2, CalendarIcon,
 } from 'lucide-react';
