@@ -49,6 +49,12 @@ const DEFAULT_CONFIG: BowelCareConfig = {
   type1_consecutive_days_threshold: 2,
   diarrhoea_type67_count_threshold: 3,
   diarrhoea_hours_window: 48,
+  amber_no_bm_days_threshold: 2,
+  red_no_bm_days_threshold: 3,
+  amber_type1_consecutive_days: 1,
+  red_type1_consecutive_days: 2,
+  amber_diarrhoea_count: 1,
+  red_diarrhoea_count: 3,
 };
 
 /**
