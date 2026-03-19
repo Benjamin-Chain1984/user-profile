@@ -208,7 +208,7 @@ export function CatheterHistory({ clientId }: CatheterHistoryProps) {
                         {check.notes && (
                           <p className="text-sm text-muted-foreground">{check.notes}</p>
                         )}
-                      </div>
+                        <StaffAttribution entry={check} />
                     );
                   })}
                 </div>
