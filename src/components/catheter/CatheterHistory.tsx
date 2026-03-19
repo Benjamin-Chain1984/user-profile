@@ -2,6 +2,7 @@
  * Catheter History - View all catheter-related logs
  */
 
+import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -28,19 +29,41 @@ import {
 } from '@/types/catheter';
 import { format, parseISO } from 'date-fns';
 import { User } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
-const getStaffName = (entry: any): string | null => {
-  if (entry.profiles?.full_name) return entry.profiles.full_name;
-  return null;
-};
+function useStaffNames(entries: { created_by?: string | null }[]) {
+  const userIds = useMemo(() => {
+    const ids = new Set<string>();
+    entries.forEach(e => { if (e.created_by) ids.add(e.created_by); });
+    return Array.from(ids);
+  }, [entries]);
 
-function StaffAttribution({ entry }: { entry: any }) {
-  const name = getStaffName(entry);
-  if (!name) return null;
+  const { data: nameMap = {} } = useQuery({
+    queryKey: ['staff-names', userIds.sort().join(',')],
+    queryFn: async () => {
+      if (userIds.length === 0) return {};
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', userIds);
+      const map: Record<string, string> = {};
+      data?.forEach(p => { map[p.id] = p.full_name || 'Unknown'; });
+      return map;
+    },
+    enabled: userIds.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  return nameMap;
+}
+
+function StaffAttribution({ createdBy, nameMap }: { createdBy?: string | null; nameMap: Record<string, string> }) {
+  if (!createdBy || !nameMap[createdBy]) return null;
   return (
     <div className="flex items-center gap-1 text-xs text-muted-foreground">
       <User className="h-3 w-3" />
-      <span>Logged by {name}</span>
+      <span>Logged by {nameMap[createdBy]}</span>
     </div>
   );
 }
