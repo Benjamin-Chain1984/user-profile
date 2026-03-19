@@ -79,6 +79,11 @@ export function CatheterHistory({ clientId }: CatheterHistoryProps) {
   const { checks: stomaChecks, loading: stomaLoading } = useStomaChecks(clientId);
   const { changes: bagChanges, loading: bagLoading } = useBagChanges(clientId);
 
+  const allEntries = useMemo(() => [
+    ...changes, ...flushLogs, ...stomaChecks, ...bagChanges,
+  ], [changes, flushLogs, stomaChecks, bagChanges]);
+  const staffNames = useStaffNames(allEntries);
+
   const typeConfig = config?.catheter_type ? CATHETER_TYPE_CONFIG[config.catheter_type] : null;
 
   const getLabel = (value: string, options: { value: string; label: string }[]) =>
