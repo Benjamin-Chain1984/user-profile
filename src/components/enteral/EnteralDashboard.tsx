@@ -121,16 +121,8 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
         </AlertDescription>
       </Alert>
 
-      {/* Status Overview Tiles */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-xs text-muted-foreground mb-1">Status</div>
-            <StatusBadge status={statusResult.status} size="sm" />
-            <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{statusResult.message}</p>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Traffic Light Status Card */}
+      <EnteralTrafficLightCard clientId={clientId} />
 
       {/* Daily Feeding Schedule */}
       {schedule.length > 0 && (
