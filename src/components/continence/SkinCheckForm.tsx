@@ -126,6 +126,40 @@ export function SkinCheckForm({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          {/* Late Entry Option */}
+          <div className="space-y-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2 text-muted-foreground"
+              onClick={() => setShowEventTime(!showEventTime)}
+            >
+              <Clock className="h-4 w-4" />
+              {showEventTime ? 'Hide' : 'Log'} Late Entry
+            </Button>
+            {showEventTime && (
+              <div className="p-4 bg-muted/50 rounded-lg border space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  Use the time the skin check actually occurred.
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    type="date"
+                    value={eventDate}
+                    onChange={(e) => setEventDate(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Input
+                    type="time"
+                    value={eventTime}
+                    onChange={(e) => setEventTime(e.target.value)}
+                    className="w-32"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Skin Condition */}
           <div className="space-y-2">
             <Label>Skin Condition</Label>
