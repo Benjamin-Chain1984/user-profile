@@ -13,6 +13,7 @@ import { useProfile } from '@/contexts/ProfileContext';
 import { usePressureReliefPlan, usePressureReliefPlanAcknowledgements, usePressureReliefPlanStatus } from '@/hooks/usePressureReliefPlan';
 import { MonitoringPausedBanner } from '@/components/monitoring';
 import { PressureAreaStatusCard } from './PressureAreaStatusCard';
+import { PressureAreaTrafficLightCard } from './PressureAreaTrafficLightCard';
 import { PressureReliefPlanViewer } from './PressureReliefPlanViewer';
 import { PressureReliefPlanEditor } from './PressureReliefPlanEditor';
 import { PressureReliefLogForm } from './PressureReliefLogForm';
@@ -145,6 +146,9 @@ export function PressureAreaDashboard({ clientId }: Props) {
         </CardContent>
       </Card>
 
+
+      {/* Traffic Light Status Card */}
+      <PressureAreaTrafficLightCard clientId={clientId} />
 
       {/* Status Tiles — side by side */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
