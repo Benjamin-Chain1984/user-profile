@@ -18,6 +18,7 @@ import { useEnteralConfig, useEnteralFeedLogs, useEnteralMedicationLogs, useEnte
 import { calculateEnteralStatus } from '@/utils/enteralStatusCalculator';
 import { tubeRequiresStomaCheck, TUBE_TYPES } from '@/types/enteral';
 
+import { EnteralTrafficLightCard } from './EnteralTrafficLightCard';
 import { EnteralFeedLogForm } from './EnteralFeedLogForm';
 import { EnteralStomaCheckForm } from './EnteralStomaCheckForm';
 import { EnteralMedicationLogForm } from './EnteralMedicationLogForm';
