@@ -212,6 +212,7 @@ export function CatheterHistory({ clientId }: CatheterHistoryProps) {
                           <p className="text-sm text-muted-foreground">{check.notes}</p>
                         )}
                         <StaffAttribution entry={check} />
+                      </div>
                     );
                   })}
                 </div>
