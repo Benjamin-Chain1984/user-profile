@@ -405,25 +405,11 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       })[0];
 
       const severity = best.severity as PainSeverity;
-      let status = painSeverityToStatus(severity);
+      const status = painSeverityToStatus(severity);
       const timeAgo = formatDistanceToNow(new Date(best.created_at), { addSuffix: true });
       const toolLabel = best.tool === 'painad' ? 'PAINAD' : 'Abbey';
 
-      // Check overdue based on config threshold
-      const overdueEnabled = configResult.data?.overdue_alert_enabled ?? true;
-      const thresholdDays = configResult.data?.overdue_threshold_days ?? 1;
-      const lastAssessmentDate = new Date(best.created_at);
-      const daysSinceLastAssessment = (Date.now() - lastAssessmentDate.getTime()) / (1000 * 60 * 60 * 24);
-      const isOverdue = daysSinceLastAssessment > thresholdDays;
-
-      let statusMessage = `${toolLabel} • ${getSeverityLabel(severity)} • ${timeAgo}`;
-
-      if (overdueEnabled && isOverdue && status === 'stable') {
-        // Escalate to amber when overdue
-        status = 'monitor';
-        const overdueDays = Math.floor(daysSinceLastAssessment);
-        statusMessage = `Assessment overdue by ${overdueDays} day${overdueDays !== 1 ? 's' : ''} • Last: ${timeAgo}`;
-      }
+      const statusMessage = `${toolLabel} • ${getSeverityLabel(severity)} • ${timeAgo}`;
 
       setLatestPainData({ severity, score: best.total_score, timestamp: best.created_at });
       updateModuleStatus('pain-check', status, statusMessage);
