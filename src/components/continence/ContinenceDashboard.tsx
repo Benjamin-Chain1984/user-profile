@@ -7,6 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertTriangle, FileDown, Clock, TrendingUp, Settings } from 'lucide-react';
+import { ContinenceStatusCard } from './ContinenceStatusCard';
 import { ContinenceStatusTiles } from './ContinenceStatusTiles';
 import { ContinenceHistory } from './ContinenceHistory';
 import { ContinenceTrends } from './ContinenceTrends';
@@ -73,6 +74,12 @@ export function ContinenceDashboard({ clientId }: ContinenceDashboardProps) {
           determined by a qualified health professional.
         </AlertDescription>
       </Alert>
+
+      {/* Traffic Light Status Card */}
+      <ContinenceStatusCard
+        clientId={clientId}
+        onLogPadChange={() => setShowPadChangeForm(true)}
+      />
 
       {/* Status Tiles — 4 individual tiles */}
       <ContinenceStatusTiles
