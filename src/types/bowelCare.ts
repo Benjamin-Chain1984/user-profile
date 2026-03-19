@@ -16,6 +16,13 @@ export interface BowelCareConfig {
   diarrhoea_hours_window: number;
   escalation_recipients: string[];
   enable_log_on_behalf: boolean;
+  // Amber/Red alert thresholds
+  amber_no_bm_days_threshold: number;
+  red_no_bm_days_threshold: number;
+  amber_type1_consecutive_days: number;
+  red_type1_consecutive_days: number;
+  amber_diarrhoea_count: number;
+  red_diarrhoea_count: number;
   created_at: string;
   created_by: string | null;
   updated_at: string;

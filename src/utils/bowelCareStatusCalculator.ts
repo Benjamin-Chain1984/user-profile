@@ -18,7 +18,14 @@ export interface BowelCareConfig {
   type1_consecutive_days_threshold: number;
   diarrhoea_type67_count_threshold: number;
   diarrhoea_hours_window: number;
-  amber_days_threshold?: number; // Days before amber warning (default: noBmDays - 1)
+  amber_days_threshold?: number;
+  // Explicit amber/red thresholds
+  amber_no_bm_days_threshold?: number;
+  red_no_bm_days_threshold?: number;
+  amber_type1_consecutive_days?: number;
+  red_type1_consecutive_days?: number;
+  amber_diarrhoea_count?: number;
+  red_diarrhoea_count?: number;
 }
 
 export interface BowelLogEntry {
