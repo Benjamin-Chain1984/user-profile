@@ -112,6 +112,7 @@ export function CatheterHistory({ clientId }: CatheterHistoryProps) {
                         <p className="text-sm text-muted-foreground">{change.notes}</p>
                       )}
                       <StaffAttribution entry={change} />
+                    </div>
                   ))}
                 </div>
               </ScrollArea>
