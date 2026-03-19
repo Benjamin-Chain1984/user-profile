@@ -147,6 +147,9 @@ export function PressureAreaDashboard({ clientId }: Props) {
       </Card>
 
 
+      {/* Traffic Light Status Card */}
+      <PressureAreaTrafficLightCard clientId={clientId} />
+
       {/* Status Tiles — side by side */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <PressureAreaStatusCard
