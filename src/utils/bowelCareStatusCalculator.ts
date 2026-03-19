@@ -132,7 +132,7 @@ export function calculateBowelCareStatus(
   }
 
   // === NO BOWEL MOVEMENT THRESHOLD (RED) ===
-  if (daysSinceLastBm !== null && daysSinceLastBm >= effectiveConfig.no_bm_days_threshold) {
+  if (daysSinceLastBm !== null && daysSinceLastBm >= redNoBmDays) {
     return {
       status: 'action',
       message: `No bowel movement for ${daysSinceLastBm} days – seek urgent medical review`,
