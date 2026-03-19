@@ -13,6 +13,7 @@ import { useProfile } from '@/contexts/ProfileContext';
 import { usePressureReliefPlan, usePressureReliefPlanAcknowledgements, usePressureReliefPlanStatus } from '@/hooks/usePressureReliefPlan';
 import { MonitoringPausedBanner } from '@/components/monitoring';
 import { PressureAreaStatusCard } from './PressureAreaStatusCard';
+import { PressureAreaTrafficLightCard } from './PressureAreaTrafficLightCard';
 import { PressureReliefPlanViewer } from './PressureReliefPlanViewer';
 import { PressureReliefPlanEditor } from './PressureReliefPlanEditor';
 import { PressureReliefLogForm } from './PressureReliefLogForm';
