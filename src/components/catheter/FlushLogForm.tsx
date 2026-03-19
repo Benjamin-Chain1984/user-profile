@@ -27,6 +27,7 @@ import {
   type FlushSolution, type FlushReason, type UrineAppearance,
   type FlowAfterFlush, type PersonResponse,
 } from '@/types/catheter';
+import { URINE_COLOUR_SCALE } from '@/types/fluidBalance';
 import {
   AlertTriangle, ChevronDown, Shield, CheckCircle2, CalendarIcon,
 } from 'lucide-react';
@@ -110,6 +111,7 @@ export function FlushLogForm({ clientId, open, onOpenChange }: FlushLogFormProps
   const [notes, setNotes] = useState('');
   const [trainingConfirmed, setTrainingConfirmed] = useState(false);
   const [escalationRequired, setEscalationRequired] = useState(false);
+  const [urineColour, setUrineColour] = useState<number | null>(null);
   const [guideOpen, setGuideOpen] = useState(false);
 
   const isRNPerformer = plan?.flush_performer === 'rn';
@@ -339,6 +341,42 @@ export function FlushLogForm({ clientId, open, onOpenChange }: FlushLogFormProps
                 </Button>
               ))}
             </div>
+          </div>
+
+          {/* Urine Colour Chart */}
+          <div className="space-y-2">
+            <Label>Urine Colour</Label>
+            <div className="grid grid-cols-4 gap-2">
+              {URINE_COLOUR_SCALE.map(colour => (
+                <button
+                  key={colour.value}
+                  type="button"
+                  onClick={() => setUrineColour(colour.value)}
+                  className={cn(
+                    'p-2 rounded-lg border-2 transition-all',
+                    urineColour === colour.value
+                      ? 'border-primary ring-2 ring-primary/20'
+                      : 'border-transparent hover:border-muted-foreground/30'
+                  )}
+                >
+                  <div
+                    className="w-full h-8 rounded mb-1"
+                    style={{ backgroundColor: colour.color }}
+                  />
+                  <p className="text-xs text-center">{colour.value}</p>
+                </button>
+              ))}
+            </div>
+            {urineColour && (
+              <p className="text-sm text-muted-foreground mt-2">
+                {URINE_COLOUR_SCALE.find(c => c.value === urineColour)?.description}
+                {urineColour >= 5 && (
+                  <span className="text-amber-600 font-medium ml-1">
+                    — Encourage fluids
+                  </span>
+                )}
+              </p>
+            )}
           </div>
 
           {/* Flow After Flush */}
