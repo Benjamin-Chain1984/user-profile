@@ -1,12 +1,10 @@
 /**
  * Continence Status Card - Uses shared TrafficLightStatusCard
+ * Matches Bowel Care status card design pattern.
  */
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Clock, AlertCircle, Timer } from 'lucide-react';
+import { AlertCircle, Timer } from 'lucide-react';
 import { useContinenceStatus } from '@/hooks/useContinence';
 import { formatDistanceToNow, format } from 'date-fns';
 import { TrafficLightStatusCard } from '@/components/shared/TrafficLightStatusCard';
@@ -29,7 +27,7 @@ export function ContinenceStatusCard({ clientId, onLogPadChange }: ContinenceSta
   };
 
   const statusMessage = status.lastPadChange
-    ? `Last change ${formatDistanceToNow(new Date(status.lastPadChange.event_occurred_at), { addSuffix: true })}`
+    ? `Last pad change ${formatDistanceToNow(new Date(status.lastPadChange.event_occurred_at), { addSuffix: true })}`
     : 'No pad changes logged yet';
 
   return (
@@ -38,78 +36,79 @@ export function ContinenceStatusCard({ clientId, onLogPadChange }: ContinenceSta
       reason={statusMessage}
       lastUpdated={status.lastPadChange?.event_occurred_at}
     >
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-medium">Continence Status</span>
-        <Button onClick={onLogPadChange} size="sm" className="gap-2">
-          <Clock className="h-4 w-4" />
-          Log Pad Change
-        </Button>
-      </div>
-
-      {/* Countdown Timer */}
-      {status.nextScheduledChange && (
-        <div className="bg-background/80 rounded-lg p-4 border mb-3">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <Timer className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Next Scheduled Change</span>
+      {/* Module-specific details */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          {status.nextScheduledChange && (
+            <div className="flex flex-col items-center gap-1">
+              <div className="w-16 h-10 rounded-lg bg-background/50 p-1 flex items-center justify-center">
+                <Timer className="h-5 w-5 opacity-70" />
+              </div>
+              <span className="text-xs opacity-70">
+                {format(status.nextScheduledChange, 'h:mm a')}
+              </span>
             </div>
-            <span className="text-sm text-muted-foreground">
-              {format(status.nextScheduledChange, 'h:mm a')}
-            </span>
-          </div>
+          )}
           {status.isOverdue ? (
-            <div className="flex items-center justify-between">
+            <div className="text-sm">
               <Badge variant="destructive" className="gap-1">
                 <AlertCircle className="h-3 w-3" />
                 Overdue by {formatMinutes(status.overdueMinutes)}
               </Badge>
-              <Progress value={100} className="w-32 h-2" />
             </div>
-          ) : (
-            <div className="flex items-center justify-between">
-              <span className="text-lg font-bold">
-                {formatMinutes(status.minutesUntilNext || 0)} remaining
-              </span>
-              <Progress
-                value={Math.max(0, Math.min(100, ((status.minutesUntilNext || 0) / 240) * 100))}
-                className="w-32 h-2"
-              />
+          ) : status.minutesUntilNext !== null && status.minutesUntilNext > 0 ? (
+            <div className="text-sm">
+              <span className="font-semibold">{formatMinutes(status.minutesUntilNext)}</span>
+              <span className="opacity-70"> until next scheduled change</span>
             </div>
-          )}
+          ) : null}
         </div>
-      )}
-
-      {/* Performance Score */}
-      <div className="flex items-center justify-between bg-background/80 rounded-lg p-4 border mb-3">
-        <div>
-          <span className="text-sm font-medium">Weekly Care Score</span>
-          <p className="text-xs text-muted-foreground">Based on scheduled changes completed this week</p>
-        </div>
-        <div className="text-right">
-          <span className={`text-2xl font-bold ${
-            status.performanceScore >= 80 ? 'text-success' :
-            status.performanceScore >= 60 ? 'text-warning' : 'text-destructive'
-          }`}>
-            {status.performanceScore}%
-          </span>
-        </div>
+        {status.performanceScore > 0 && (
+          <div className="text-right">
+            <span className={`text-lg font-bold ${
+              status.performanceScore >= 80 ? 'text-success' :
+              status.performanceScore >= 60 ? 'text-warning' : 'text-destructive'
+            }`}>
+              {status.performanceScore}%
+            </span>
+            <p className="text-xs opacity-60">Weekly score</p>
+          </div>
+        )}
       </div>
 
-      {/* Active Alerts Summary */}
+      {/* Active Alerts */}
       {(status.skinAlerts.length > 0 || status.consumableAlerts.length > 0 || status.utiAlerts.length > 0) && (
-        <div className="flex flex-wrap gap-2">
-          {status.skinAlerts.length > 0 && (
-            <Badge variant="destructive">{status.skinAlerts.length} Skin Alert(s)</Badge>
-          )}
-          {status.consumableAlerts.length > 0 && (
-            <Badge variant="secondary">{status.consumableAlerts.length} Low Stock Alert(s)</Badge>
-          )}
-          {status.utiAlerts.length > 0 && (
-            <Badge variant="destructive">{status.utiAlerts.length} UTI Alert(s)</Badge>
-          )}
+        <div className="mt-3 pt-3 border-t border-current/10">
+          <div className="text-sm font-medium mb-2">
+            Active Alerts ({status.skinAlerts.length + status.consumableAlerts.length + status.utiAlerts.length})
+          </div>
+          <ul className="space-y-1">
+            {status.skinAlerts.map((a) => (
+              <li key={a.id} className="text-sm opacity-80">• {a.message}</li>
+            ))}
+            {status.consumableAlerts.map((a) => (
+              <li key={a.id} className="text-sm opacity-80">• {a.message}</li>
+            ))}
+            {status.utiAlerts.map((a) => (
+              <li key={a.id} className="text-sm opacity-80">• {a.message}</li>
+            ))}
+          </ul>
         </div>
       )}
+
+      {/* Guidance */}
+      <div className="mt-3 pt-3 border-t border-current/10">
+        <h4 className="text-sm font-medium mb-1">What to do:</h4>
+        <p className="text-sm opacity-80">
+          {status.status === 'stable' && 'Continue regular pad change schedule. Monitor skin integrity at each change.'}
+          {status.status === 'monitor' && 'Review pad change frequency. Check skin for early signs of irritation. Ensure barrier cream is applied.'}
+          {status.status === 'action' && 'Attend to overdue pad change. Escalate skin concerns. Follow the person\'s continence care plan.'}
+        </p>
+      </div>
+
+      <p className="mt-3 text-xs opacity-60 italic">
+        Continence schedules and skin protocols should be determined by a qualified health professional.
+      </p>
     </TrafficLightStatusCard>
   );
 }
