@@ -120,13 +120,9 @@ export function OralHealthAssessmentForm({ clientId, open, onOpenChange }: Props
       : 'No action — continue oral healthcare';
 
   // Auto-assign action when overall status changes
-  const prevOverall = useState<string | null>(null);
-  if (prevOverall[0] !== overallStatus) {
-    prevOverall[1](overallStatus);
-    if (actionTaken !== autoAction) {
-      setActionTaken(autoAction);
-    }
-  }
+  useEffect(() => {
+    setActionTaken(autoAction);
+  }, [overallStatus]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
