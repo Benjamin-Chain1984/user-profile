@@ -12,6 +12,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
@@ -34,7 +35,8 @@ import {
   DiscomfortLevel,
   BarrierCreamStatus,
 } from '@/types/continence';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Clock } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface SkinCheckFormProps {
   clientId?: string;
@@ -61,6 +63,9 @@ export function SkinCheckForm({
   const [escalationNotes, setEscalationNotes] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showEventTime, setShowEventTime] = useState(false);
+  const [eventDate, setEventDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [eventTime, setEventTime] = useState(format(new Date(), 'HH:mm'));
 
   const requiresEscalation = ['broken_skin', 'fungal_signs'].includes(skinCondition);
   const requiresMonitoring = ['rash', 'redness', 'moisture_damage', 'bruising'].includes(skinCondition);
@@ -68,6 +73,14 @@ export function SkinCheckForm({
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
+      let eventOccurredAt: string | undefined;
+      if (showEventTime) {
+        const [hours, minutes] = eventTime.split(':').map(Number);
+        const d = new Date(eventDate);
+        d.setHours(hours, minutes, 0, 0);
+        eventOccurredAt = d.toISOString();
+      }
+
       await addCheck.mutateAsync({
         pad_change_id: padChangeId,
         areas_checked: ['perineum'],
@@ -78,6 +91,7 @@ export function SkinCheckForm({
         escalated_to_clinician: escalated,
         escalation_notes: escalated ? escalationNotes : undefined,
         notes: notes || undefined,
+        event_occurred_at: eventOccurredAt,
       });
 
       resetForm();
@@ -96,6 +110,9 @@ export function SkinCheckForm({
     setEscalated(false);
     setEscalationNotes('');
     setNotes('');
+    setShowEventTime(false);
+    setEventDate(format(new Date(), 'yyyy-MM-dd'));
+    setEventTime(format(new Date(), 'HH:mm'));
   };
 
   return (
@@ -109,6 +126,40 @@ export function SkinCheckForm({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          {/* Late Entry Option */}
+          <div className="space-y-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2 text-muted-foreground"
+              onClick={() => setShowEventTime(!showEventTime)}
+            >
+              <Clock className="h-4 w-4" />
+              {showEventTime ? 'Hide' : 'Log'} Late Entry
+            </Button>
+            {showEventTime && (
+              <div className="p-4 bg-muted/50 rounded-lg border space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  Use the time the skin check actually occurred.
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    type="date"
+                    value={eventDate}
+                    onChange={(e) => setEventDate(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Input
+                    type="time"
+                    value={eventTime}
+                    onChange={(e) => setEventTime(e.target.value)}
+                    className="w-32"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Skin Condition */}
           <div className="space-y-2">
             <Label>Skin Condition</Label>
