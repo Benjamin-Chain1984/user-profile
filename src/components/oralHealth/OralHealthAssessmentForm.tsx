@@ -208,7 +208,7 @@ export function OralHealthAssessmentForm({ clientId, open, onOpenChange }: Props
               <AlertCircle className={`h-5 w-5 ${overallStatus === 'unhealthy' ? 'text-destructive' : overallStatus === 'changes' ? 'text-warning' : 'text-success'}`} />
               <div>
                 <p className="font-medium">Overall: {overallStatus.charAt(0).toUpperCase() + overallStatus.slice(1)}</p>
-                <p className="text-sm text-muted-foreground">{requiredAction}</p>
+                <p className="text-sm text-muted-foreground">{requiredActionLabel}</p>
               </div>
             </div>
           </Card>
