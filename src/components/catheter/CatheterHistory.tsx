@@ -239,7 +239,7 @@ export function CatheterHistory({ clientId }: CatheterHistoryProps) {
                         {check.notes && (
                           <p className="text-sm text-muted-foreground">{check.notes}</p>
                         )}
-                        <StaffAttribution entry={check} />
+                        <StaffAttribution createdBy={check.created_by} nameMap={staffNames} />
                       </div>
                     );
                   })}
