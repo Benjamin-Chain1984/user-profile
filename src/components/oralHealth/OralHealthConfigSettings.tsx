@@ -161,6 +161,35 @@ export function OralHealthConfigSettings({ clientId }: Props) {
       <Button onClick={handleSave} disabled={isUpdating}>
         <Save className="h-4 w-4 mr-2" /> Save Settings
       </Button>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Other Recommended Related Modules</CardTitle>
+          <CardDescription>Comprehensive care involves monitoring multiple aspects of health</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {RELATED_MODULES.map((module) => (
+              <Link
+                key={module.id}
+                to={module.path}
+                className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+              >
+                <div className="p-2 rounded-md bg-primary/10">
+                  <module.icon className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm">{module.name}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2">{module.description}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground mt-4">
+            Always consult a healthcare professional to ensure modules are clinically valid and set according to individual need.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
