@@ -287,7 +287,7 @@ export function CatheterHistory({ clientId }: CatheterHistoryProps) {
                       {change.notes && (
                         <p className="text-sm text-muted-foreground">{change.notes}</p>
                       )}
-                      <StaffAttribution entry={change} />
+                      <StaffAttribution createdBy={change.created_by} nameMap={staffNames} />
                     </div>
                   ))}
                 </div>
