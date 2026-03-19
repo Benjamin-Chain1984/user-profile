@@ -73,6 +73,14 @@ export function SkinCheckForm({
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
+      let eventOccurredAt: string | undefined;
+      if (showEventTime) {
+        const [hours, minutes] = eventTime.split(':').map(Number);
+        const d = new Date(eventDate);
+        d.setHours(hours, minutes, 0, 0);
+        eventOccurredAt = d.toISOString();
+      }
+
       await addCheck.mutateAsync({
         pad_change_id: padChangeId,
         areas_checked: ['perineum'],
@@ -83,6 +91,7 @@ export function SkinCheckForm({
         escalated_to_clinician: escalated,
         escalation_notes: escalated ? escalationNotes : undefined,
         notes: notes || undefined,
+        event_occurred_at: eventOccurredAt,
       });
 
       resetForm();
@@ -101,6 +110,9 @@ export function SkinCheckForm({
     setEscalated(false);
     setEscalationNotes('');
     setNotes('');
+    setShowEventTime(false);
+    setEventDate(format(new Date(), 'yyyy-MM-dd'));
+    setEventTime(format(new Date(), 'HH:mm'));
   };
 
   return (
