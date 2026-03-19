@@ -27,6 +27,23 @@ import {
   CATHETER_TYPE_CONFIG,
 } from '@/types/catheter';
 import { format, parseISO } from 'date-fns';
+import { User } from 'lucide-react';
+
+const getStaffName = (entry: any): string | null => {
+  if (entry.profiles?.full_name) return entry.profiles.full_name;
+  return null;
+};
+
+function StaffAttribution({ entry }: { entry: any }) {
+  const name = getStaffName(entry);
+  if (!name) return null;
+  return (
+    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+      <User className="h-3 w-3" />
+      <span>Logged by {name}</span>
+    </div>
+  );
+}
 
 interface CatheterHistoryProps {
   clientId?: string;
