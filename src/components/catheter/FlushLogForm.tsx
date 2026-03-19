@@ -111,6 +111,7 @@ export function FlushLogForm({ clientId, open, onOpenChange }: FlushLogFormProps
   const [notes, setNotes] = useState('');
   const [trainingConfirmed, setTrainingConfirmed] = useState(false);
   const [escalationRequired, setEscalationRequired] = useState(false);
+  const [urineColour, setUrineColour] = useState<number | null>(null);
   const [guideOpen, setGuideOpen] = useState(false);
 
   const isRNPerformer = plan?.flush_performer === 'rn';
