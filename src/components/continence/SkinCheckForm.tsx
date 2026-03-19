@@ -35,7 +35,8 @@ import {
   DiscomfortLevel,
   BarrierCreamStatus,
 } from '@/types/continence';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Clock } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface SkinCheckFormProps {
   clientId?: string;
