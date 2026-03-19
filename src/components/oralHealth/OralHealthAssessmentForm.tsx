@@ -209,15 +209,15 @@ export function OralHealthAssessmentForm({ clientId, open, onOpenChange }: Props
             </div>
           </Card>
 
-          {/* Action */}
+          {/* Action — auto-assigned based on assessment outcome */}
           <div>
-            <Label>Action Taken</Label>
+            <Label>Action Taken <span className="text-xs text-muted-foreground font-normal">(auto-assigned)</span></Label>
             <Select value={actionTaken} onValueChange={setActionTaken}>
               <SelectTrigger><SelectValue placeholder="Select action" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="maintain_daily_care">Maintain daily oral care</SelectItem>
-                <SelectItem value="notify_next_visit">Notify at next dental visit</SelectItem>
-                <SelectItem value="urgent_dental_visit">Arrange urgent dental visit</SelectItem>
+                <SelectItem value="maintain_daily_care">No action — continue oral healthcare</SelectItem>
+                <SelectItem value="notify_next_visit">Discuss at next dental review</SelectItem>
+                <SelectItem value="urgent_dental_visit">Organise urgent dental appointment</SelectItem>
               </SelectContent>
             </Select>
           </div>
