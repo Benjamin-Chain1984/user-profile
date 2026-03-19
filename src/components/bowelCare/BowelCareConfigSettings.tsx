@@ -178,6 +178,18 @@ export function BowelCareConfigSettings({ clientId }: BowelCareConfigSettingsPro
 
   return (
     <div className="space-y-6">
+      {/* Who can help */}
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="pt-5 pb-4">
+          <p className="text-sm font-medium mb-1">Who can help set up this module?</p>
+          <ul className="text-sm text-muted-foreground list-disc list-inside space-y-0.5">
+            <li>General Practitioner (GP)</li>
+            <li>Registered Nurse</li>
+            <li>Medical Specialist</li>
+          </ul>
+        </CardContent>
+      </Card>
+
       {/* Disclaimer */}
       <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
         <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
