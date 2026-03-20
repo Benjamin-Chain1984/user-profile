@@ -1,6 +1,7 @@
 /**
  * Continence Management Module - Hooks
  */
+import { resolveHighestStatus, type TrafficLightStatus } from '@/types/trafficLight';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
