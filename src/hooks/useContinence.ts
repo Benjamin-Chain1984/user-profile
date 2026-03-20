@@ -1,6 +1,7 @@
 /**
  * Continence Management Module - Hooks
  */
+import { resolveHighestStatus, type TrafficLightStatus } from '@/types/trafficLight';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -486,20 +487,54 @@ export function useContinenceStatus(clientId?: string): ContinenceStatus {
     ? Math.min(100, Math.round((scheduledCount / expectedChangesPerWeek) * 100))
     : 100;
 
-  // Determine overall status
-  let status: HealthStatus = 'stable';
+  // Determine overall status by aggregating tile-level statuses (Red > Amber > Green)
+  // This mirrors the exact logic used in ContinenceStatusTiles for each card.
 
-  // Red status conditions
-  const hasSkinIssue = skinChecks.some(c =>
-    ['broken_skin', 'fungal_signs'].includes(c.skin_condition) &&
-    differenceInHours(now, parseISO(c.event_occurred_at)) <= 48
-  );
-
-  if (hasPositiveUTI || hasSkinIssue || overdueMinutes > 120) {
-    status = 'action';
-  } else if (skinCheckOverdue || hasLowStock || isOverdue) {
-    status = 'monitor';
+  // 1. Pad Change tile status
+  let padStatus: TrafficLightStatus = 'green';
+  if (!lastPadChange) {
+    padStatus = 'amber';
+  } else if (isOverdue) {
+    padStatus = 'amber'; // Late (tiles only go to monitor for late)
   }
+
+  // 2. Skin Check tile status
+  let skinStatus: TrafficLightStatus = 'green';
+  const latestSkinCheck = skinChecks[0] || null;
+  if (!latestSkinCheck) {
+    skinStatus = 'amber';
+  } else if (['broken_skin', 'fungal_signs'].includes(latestSkinCheck.skin_condition)) {
+    skinStatus = 'red';
+  } else if (['redness', 'rash', 'moisture_damage'].includes(latestSkinCheck.skin_condition)) {
+    skinStatus = 'amber';
+  }
+  if (skinCheckOverdue && skinStatus === 'green') {
+    skinStatus = 'amber';
+  }
+
+  // 3. Supplies tile status (only if enabled)
+  let suppliesStatus: TrafficLightStatus = 'green';
+  if (config?.enable_consumables_monitoring) {
+    if (hasLowStock) {
+      suppliesStatus = 'red'; // Low stock = action in tile
+    }
+    // Note: medium stock check requires consumables data not available here,
+    // but hasLowStock covers the critical path
+  }
+
+  // 4. UTI tile status (only if enabled)
+  let utiStatus: TrafficLightStatus = 'green';
+  if (config?.enable_uti_testing) {
+    if (hasPositiveUTI) {
+      utiStatus = 'red';
+    }
+  }
+
+  // Resolve highest priority across all tiles
+  const resolvedTrafficLight = resolveHighestStatus(padStatus, skinStatus, suppliesStatus, utiStatus);
+  const status: HealthStatus =
+    resolvedTrafficLight === 'red' ? 'action' :
+    resolvedTrafficLight === 'amber' ? 'monitor' : 'stable';
 
   return {
     status,

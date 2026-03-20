@@ -823,29 +823,46 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       const lastUti = utiTests?.[0];
       const lastConsumable = consumables?.[0];
 
-      // Determine status using same logic as useContinenceStatus
+      // Determine status by aggregating tile-level statuses (Red > Amber > Green)
+      // Mirrors the exact logic used in ContinenceStatusTiles for each card.
       let status: 'stable' | 'monitor' | 'action' = 'stable';
       let message = 'All continence indicators within normal range.';
 
-      // Red conditions
-      const hasPositiveUTI = lastUti?.test_result === 'positive';
-      const hasSkinIssue = lastSkin && ['broken_skin', 'fungal_signs'].includes(lastSkin.skin_condition) &&
-        differenceInHours(now, parseISO(lastSkin.event_occurred_at)) <= 48;
-
-      // Overdue check
-      let isOverdue = false;
-      let overdueMinutes = 0;
-      if (configData && lastPad) {
-        const lastChangeTime = parseISO(lastPad.event_occurred_at);
-        if (configData.schedule_type === 'hourly' && configData.interval_hours) {
-          const nextChange = new Date(lastChangeTime.getTime() + configData.interval_hours * 60 * 60 * 1000);
-          const diffMs = nextChange.getTime() - now.getTime();
-          const mins = Math.round(diffMs / 60000);
-          isOverdue = mins < 0;
-          overdueMinutes = isOverdue ? Math.abs(mins) : 0;
+      // 1. Pad Change tile
+      let padStatus: 'stable' | 'monitor' | 'action' = 'stable';
+      if (!lastPad) {
+        padStatus = 'monitor';
+      } else {
+        let isOverdue = false;
+        if (configData && lastPad) {
+          const lastChangeTime = parseISO(lastPad.event_occurred_at);
+          if (configData.schedule_type === 'hourly' && configData.interval_hours) {
+            const nextChange = new Date(lastChangeTime.getTime() + configData.interval_hours * 60 * 60 * 1000);
+            isOverdue = nextChange.getTime() < now.getTime();
+          }
         }
+        if (isOverdue) padStatus = 'monitor';
       }
 
+      // 2. Skin Check tile
+      let skinStatus: 'stable' | 'monitor' | 'action' = 'stable';
+      if (!lastSkin) {
+        skinStatus = 'monitor';
+      } else if (['broken_skin', 'fungal_signs'].includes(lastSkin.skin_condition)) {
+        skinStatus = 'action';
+        message = 'Skin integrity concern – immediate review needed.';
+      } else if (['redness', 'rash', 'moisture_damage'].includes(lastSkin.skin_condition)) {
+        skinStatus = 'monitor';
+        message = 'Skin changes identified – monitor closely.';
+      }
+      const skinCheckOverdue = lastSkin ? differenceInHours(now, parseISO(lastSkin.event_occurred_at)) > 48 : false;
+      if (skinCheckOverdue && skinStatus === 'stable') {
+        skinStatus = 'monitor';
+        message = 'Skin check overdue – review required.';
+      }
+
+      // 3. Supplies tile
+      let suppliesStatus: 'stable' | 'monitor' | 'action' = 'stable';
       const hasLowStock = lastConsumable ? [
         lastConsumable.continence_pads_level,
         lastConsumable.barrier_creams_level,
@@ -853,19 +870,28 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         lastConsumable.cleansing_products_level,
         lastConsumable.disposable_sheets_level,
       ].includes('low') : false;
+      if (hasLowStock) {
+        suppliesStatus = 'action';
+        message = 'Continence supplies critically low.';
+      }
 
-      const skinCheckOverdue = lastSkin ? differenceInHours(now, parseISO(lastSkin.event_occurred_at)) > 48 : false;
+      // 4. UTI tile
+      let utiStatus: 'stable' | 'monitor' | 'action' = 'stable';
+      const hasPositiveUTI = lastUti?.test_result === 'positive';
+      if (hasPositiveUTI) {
+        utiStatus = 'action';
+        message = 'Positive UTI test – escalation required.';
+      }
 
-      if (hasPositiveUTI || hasSkinIssue || overdueMinutes > 120) {
+      // Resolve highest priority: action > monitor > stable
+      const allStatuses = [padStatus, skinStatus, suppliesStatus, utiStatus];
+      if (allStatuses.includes('action')) {
         status = 'action';
-        if (hasPositiveUTI) message = 'Positive UTI test – escalation required.';
-        else if (hasSkinIssue) message = 'Skin integrity concern – immediate review needed.';
-        else message = `Pad change critically overdue (${Math.round(overdueMinutes / 60)}h).`;
-      } else if (skinCheckOverdue || hasLowStock || isOverdue) {
+      } else if (allStatuses.includes('monitor')) {
         status = 'monitor';
-        if (skinCheckOverdue) message = 'Skin check overdue – review required.';
-        else if (hasLowStock) message = 'Continence supplies running low.';
-        else message = 'Pad change overdue – attend when possible.';
+        if (padStatus === 'monitor' && message === 'All continence indicators within normal range.') {
+          message = lastPad ? 'Pad change overdue – attend when possible.' : 'No pad changes logged yet.';
+        }
       }
 
       setLatestContinenceData({ status, message, timestamp: lastPad?.event_occurred_at || new Date().toISOString() });
