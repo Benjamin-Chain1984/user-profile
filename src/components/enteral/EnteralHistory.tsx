@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useEnteralFeedLogs, useEnteralMedicationLogs, useEnteralStomaChecks } from '@/hooks/useEnteral';
 import { format, subHours, subDays, subMonths, subYears } from 'date-fns';
-import { Apple, Pill, CheckCircle2 } from 'lucide-react';
+import { Apple, Pill, CheckCircle2, User } from 'lucide-react';
 
 const DISPLAY_LIMIT = 5;
 
@@ -109,6 +109,12 @@ export function EnteralHistory({ clientId }: EnteralHistoryProps) {
                       {log.method && ` • ${log.method}`}
                       {log.scheduled_time && ` • Sched: ${log.scheduled_time}`}
                     </div>
+                    {(log as any).staff_name && (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                        <User className="h-3 w-3" />
+                        <span>{(log as any).staff_name}</span>
+                      </div>
+                    )}
                   </div>
                   {log.position_confirmed && (
                     <Badge variant="outline" className="text-xs">✓ Position</Badge>
@@ -148,6 +154,12 @@ export function EnteralHistory({ clientId }: EnteralHistoryProps) {
                       {format(new Date(log.event_occurred_at), 'dd/MM/yy HH:mm')}
                       {' • Flush: '}{log.flush_before_ml + log.flush_after_ml}ml
                     </div>
+                    {(log as any).staff_name && (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                        <User className="h-3 w-3" />
+                        <span>{(log as any).staff_name}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))
@@ -200,6 +212,12 @@ export function EnteralHistory({ clientId }: EnteralHistoryProps) {
                     {check.pain_level !== 'none' && ` • Pain: ${check.pain_level}`}
                     {check.escalation_type && ` • ${check.escalation_type}`}
                   </div>
+                  {(check as any).staff_name && (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                      <User className="h-3 w-3" />
+                      <span>{(check as any).staff_name}</span>
+                    </div>
+                  )}
                 </div>
               ))
             )}
