@@ -8,11 +8,12 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { VitalTile, BloodPressureTile } from './VitalTile';
 import { useVitalSignEntries, useVitalSignConfig, useAlteredCriteria } from '@/hooks/useHealthMonitoring';
 import { calculateBpStatus, calculateVitalStatus } from '@/utils/vitalSignStatusCalculator';
 import type { VitalType, VitalStatus } from '@/types/healthMonitoring';
-import { Activity, AlertTriangle } from 'lucide-react';
+import { Activity, AlertTriangle, HelpCircle } from 'lucide-react';
 
 interface VitalTilesDashboardProps {
   clientId?: string;
