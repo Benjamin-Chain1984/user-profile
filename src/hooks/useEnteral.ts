@@ -15,6 +15,16 @@ import type {
   EnteralAlert,
 } from '@/types/enteral';
 
+/** Helper: resolve created_by UUIDs → full_name via profiles table */
+async function enrichWithStaffNames<T extends { created_by?: string | null }>(rows: T[]): Promise<(T & { staff_name?: string | null })[]> {
+  const ids = [...new Set(rows.map(r => r.created_by).filter(Boolean))] as string[];
+  if (ids.length === 0) return rows.map(r => ({ ...r, staff_name: null }));
+  const { data: profiles } = await supabase.from('profiles').select('id, full_name').in('id', ids);
+  const map: Record<string, string> = {};
+  (profiles || []).forEach((p: any) => { map[p.id] = p.full_name || 'Unknown'; });
+  return rows.map(r => ({ ...r, staff_name: r.created_by ? map[r.created_by] || null : null }));
+}
+
 // ── Config ──────────────────────────────────────────────────────
 export function useEnteralConfig(clientId?: string) {
   return useQuery({
@@ -138,7 +148,7 @@ export function useEnteralFeedLogs(clientId?: string) {
       if (clientId) query = query.eq('client_id', clientId);
       const { data, error } = await query;
       if (error) throw error;
-      return (data || []) as unknown as EnteralFeedLog[];
+      return enrichWithStaffNames((data || []) as unknown as EnteralFeedLog[]);
     },
   });
 }
@@ -234,7 +244,7 @@ export function useEnteralMedicationLogs(clientId?: string) {
       if (clientId) query = query.eq('client_id', clientId);
       const { data, error } = await query;
       if (error) throw error;
-      return (data || []) as unknown as EnteralMedicationLog[];
+      return enrichWithStaffNames((data || []) as unknown as EnteralMedicationLog[]);
     },
   });
 }
@@ -310,7 +320,7 @@ export function useEnteralStomaChecks(clientId?: string) {
       if (clientId) query = query.eq('client_id', clientId);
       const { data, error } = await query;
       if (error) throw error;
-      return (data || []) as unknown as EnteralStomaCheck[];
+      return enrichWithStaffNames((data || []) as unknown as EnteralStomaCheck[]);
     },
   });
 }
