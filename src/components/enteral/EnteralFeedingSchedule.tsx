@@ -141,9 +141,9 @@ export function EnteralFeedingSchedule({ schedule, onChange, readOnly = false }:
               {/* Three-column breakdown */}
               <div className="grid grid-cols-3 gap-2">
                 {/* Flush Before */}
-                <div className="rounded-md bg-blue-50 dark:bg-blue-950/20 p-2 text-center">
-                  <Droplets className="h-3.5 w-3.5 mx-auto mb-0.5 text-blue-500" />
-                  <p className="text-[10px] text-muted-foreground mb-1">Flush Before</p>
+                <div className="rounded-md bg-blue-50 dark:bg-blue-950/20 p-2 text-center space-y-1">
+                  <Droplets className="h-3.5 w-3.5 mx-auto text-blue-500" />
+                  <p className="text-[10px] text-muted-foreground">Flush Before</p>
                   {readOnly ? (
                     <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">{entry.flush_before_ml} mL</p>
                   ) : (
@@ -151,16 +151,16 @@ export function EnteralFeedingSchedule({ schedule, onChange, readOnly = false }:
                       type="number"
                       value={entry.flush_before_ml}
                       onChange={e => updateFeed(entry.id, 'flush_before_ml', parseInt(e.target.value) || 0)}
-                      className="h-7 text-sm text-center"
+                      className="h-8 text-sm text-center bg-background"
                       min={0}
                     />
                   )}
                 </div>
 
                 {/* Feed */}
-                <div className="rounded-md bg-amber-50 dark:bg-amber-950/20 p-2 text-center">
-                  <Apple className="h-3.5 w-3.5 mx-auto mb-0.5 text-amber-600" />
-                  <p className="text-[10px] text-muted-foreground mb-1">Feed</p>
+                <div className="rounded-md bg-amber-50 dark:bg-amber-950/20 p-2 text-center space-y-1">
+                  <Apple className="h-3.5 w-3.5 mx-auto text-amber-600" />
+                  <p className="text-[10px] text-muted-foreground">Feed</p>
                   {readOnly ? (
                     <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">{entry.feed_ml} mL</p>
                   ) : (
@@ -168,16 +168,16 @@ export function EnteralFeedingSchedule({ schedule, onChange, readOnly = false }:
                       type="number"
                       value={entry.feed_ml}
                       onChange={e => updateFeed(entry.id, 'feed_ml', parseInt(e.target.value) || 0)}
-                      className="h-7 text-sm text-center"
+                      className="h-8 text-sm text-center bg-background"
                       min={0}
                     />
                   )}
                 </div>
 
                 {/* Flush After */}
-                <div className="rounded-md bg-blue-50 dark:bg-blue-950/20 p-2 text-center">
-                  <Droplets className="h-3.5 w-3.5 mx-auto mb-0.5 text-blue-500" />
-                  <p className="text-[10px] text-muted-foreground mb-1">Flush After</p>
+                <div className="rounded-md bg-blue-50 dark:bg-blue-950/20 p-2 text-center space-y-1">
+                  <Droplets className="h-3.5 w-3.5 mx-auto text-blue-500" />
+                  <p className="text-[10px] text-muted-foreground">Flush After</p>
                   {readOnly ? (
                     <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">{entry.flush_after_ml} mL</p>
                   ) : (
@@ -185,7 +185,7 @@ export function EnteralFeedingSchedule({ schedule, onChange, readOnly = false }:
                       type="number"
                       value={entry.flush_after_ml}
                       onChange={e => updateFeed(entry.id, 'flush_after_ml', parseInt(e.target.value) || 0)}
-                      className="h-7 text-sm text-center"
+                      className="h-8 text-sm text-center bg-background"
                       min={0}
                     />
                   )}
