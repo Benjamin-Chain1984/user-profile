@@ -173,7 +173,12 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
                 <div className={`text-lg font-bold ${statusResult.tubeChangeOverdue ? 'text-destructive' : statusResult.tubeChangeDays <= 7 ? 'text-warning' : ''}`}>
                   {statusResult.tubeChangeOverdue ? `${Math.abs(statusResult.tubeChangeDays)}d overdue` : `${statusResult.tubeChangeDays}d`}
                 </div>
-                <p className="text-xs text-muted-foreground">{tubeLabel}</p>
+                <div className="space-y-0.5 text-xs text-muted-foreground">
+                  <p>{tubeLabel}</p>
+                  {config?.tube_size_fr && <p>Size: {config.tube_size_fr} Fr</p>}
+                  {config?.tube_inserted_date && <p>Inserted: {config.tube_inserted_date}</p>}
+                  {config?.tube_change_interval_days && <p>Change every {Math.round(config.tube_change_interval_days / 7)} weeks</p>}
+                </div>
               </>
             ) : (
               <div className="text-sm text-muted-foreground">Not configured</div>
