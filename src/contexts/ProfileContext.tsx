@@ -1301,7 +1301,13 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   // ── Enteral Nutrition ────────────────────────────────────────
   const fetchEnteralStatus = async () => {
     try {
-      const { data: configData } = await supabase.from('enteral_config').select('*').limit(1).maybeSingle();
+      const { data: configData } = await supabase
+        .from('enteral_config')
+        .select('*')
+        .is('client_id', null)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
       const { data: feedLogs } = await supabase.from('enteral_feed_logs').select('*').order('event_occurred_at', { ascending: false }).limit(100);
       const { data: flushLogs } = await supabase.from('enteral_flush_logs').select('*').order('event_occurred_at', { ascending: false }).limit(100);
       const { data: stomaChecks } = await supabase.from('enteral_stoma_checks').select('*').order('event_occurred_at', { ascending: false }).limit(10);
