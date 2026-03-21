@@ -1,6 +1,6 @@
 /**
- * Enteral Daily Schedule - Shows today's grouped feeding schedule with completion tracking
- * Each feed is displayed as "Feed 1", "Feed 2" etc. with flush-before + feed + flush-after
+ * Enteral Daily Schedule - Shows today's feeding schedule with completion tracking
+ * Supports both grouped feeds (Feed 1, Feed 2...) and standalone flushes
  */
 
 import { useMemo } from 'react';
@@ -17,9 +17,9 @@ interface EnteralDailyScheduleProps {
   graceMinutes?: number;
 }
 
-interface FeedSlot {
+interface ScheduleSlot {
   entry: FeedingScheduleEntry;
-  index: number;
+  feedNumber?: number;
   dueAt: Date;
   completed: boolean;
   late: boolean;
@@ -35,26 +35,47 @@ export function EnteralDailySchedule({ schedule, feedLogs, flushLogs = [], grace
   const now = new Date();
   const todayStr = getLocalDateStr(now);
 
-  const slots: FeedSlot[] = useMemo(() => {
+  const slots: ScheduleSlot[] = useMemo(() => {
     const graceMs = graceMinutes * 60 * 1000;
     const todayFeedLogs = feedLogs.filter(l => getLocalDateStr(new Date(l.event_occurred_at)) === todayStr);
-    const usedLogIds = new Set<number>();
+    const todayFlushLogs = [...flushLogs]
+      .filter(l => getLocalDateStr(new Date(l.event_occurred_at)) === todayStr)
+      .sort((a, b) => new Date(a.event_occurred_at).getTime() - new Date(b.event_occurred_at).getTime());
 
-    return schedule.map((entry, index) => {
+    const usedFeedIds = new Set<number>();
+    const usedFlushIds = new Set<number>();
+    let feedCounter = 0;
+
+    return schedule.map((entry) => {
+      const isFeed = (entry.type || 'feed') === 'feed';
+      if (isFeed) feedCounter++;
+      const feedNumber = isFeed ? feedCounter : undefined;
       const dueAt = new Date(`${todayStr}T${entry.time}:00`);
 
-      // Match feed log by scheduled_time or grace window
-      const logIdx = todayFeedLogs.findIndex((log, i) => {
-        if (usedLogIds.has(i)) return false;
-        if (log.scheduled_time === entry.time) return true;
-        const logTime = new Date(log.event_occurred_at);
-        return Math.abs(logTime.getTime() - dueAt.getTime()) <= graceMs && log.feed_volume_ml > 0;
-      });
-
       let matchedTime: Date | undefined;
-      if (logIdx !== -1) {
-        usedLogIds.add(logIdx);
-        matchedTime = new Date(todayFeedLogs[logIdx].event_occurred_at);
+
+      if (isFeed) {
+        const idx = todayFeedLogs.findIndex((log, i) => {
+          if (usedFeedIds.has(i)) return false;
+          if (log.scheduled_time === entry.time) return true;
+          const logTime = new Date(log.event_occurred_at);
+          return Math.abs(logTime.getTime() - dueAt.getTime()) <= graceMs && log.feed_volume_ml > 0;
+        });
+        if (idx !== -1) {
+          usedFeedIds.add(idx);
+          matchedTime = new Date(todayFeedLogs[idx].event_occurred_at);
+        }
+      } else {
+        // Match standalone flush
+        const idx = todayFlushLogs.findIndex((log, i) => {
+          if (usedFlushIds.has(i)) return false;
+          const logTime = new Date(log.event_occurred_at);
+          return Math.abs(logTime.getTime() - dueAt.getTime()) <= graceMs && log.flush_volume_ml > 0;
+        });
+        if (idx !== -1) {
+          usedFlushIds.add(idx);
+          matchedTime = new Date(todayFlushLogs[idx].event_occurred_at);
+        }
       }
 
       const completed = !!matchedTime;
@@ -63,7 +84,7 @@ export function EnteralDailySchedule({ schedule, feedLogs, flushLogs = [], grace
 
       return {
         entry,
-        index,
+        feedNumber,
         dueAt,
         completed,
         late: isPastDue && minutesOverdue < graceMinutes,
@@ -71,7 +92,7 @@ export function EnteralDailySchedule({ schedule, feedLogs, flushLogs = [], grace
         completedAt: matchedTime,
       };
     });
-  }, [schedule, feedLogs, todayStr, graceMinutes, now]);
+  }, [schedule, feedLogs, flushLogs, todayStr, graceMinutes, now]);
 
   const completedCount = slots.filter(s => s.completed).length;
   const missedCount = slots.filter(s => s.missed).length;
@@ -85,7 +106,7 @@ export function EnteralDailySchedule({ schedule, feedLogs, flushLogs = [], grace
         <div className="flex items-center justify-between flex-wrap gap-2">
           <CardTitle className="text-base flex items-center gap-2">
             <Clock className="h-4 w-4 text-primary" />
-            Today's Feeding Schedule
+            Today's Schedule
           </CardTitle>
           <Badge variant="outline" className="text-xs">
             {completedCount}/{slots.length} completed
@@ -109,73 +130,88 @@ export function EnteralDailySchedule({ schedule, feedLogs, flushLogs = [], grace
       <CardContent>
         <div className="space-y-2 max-h-[400px] overflow-y-auto">
           {slots.map((slot) => {
-            const totalMl = (slot.entry.flush_before_ml || 0) + (slot.entry.feed_ml || 0) + (slot.entry.flush_after_ml || 0);
+            const isFeed = (slot.entry.type || 'feed') === 'feed';
 
-            return (
-              <div
-                key={slot.entry.id}
-                className={`rounded-lg border p-3 transition-colors ${
-                  slot.completed
-                    ? 'bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800'
-                    : slot.missed
-                    ? 'bg-destructive/5 border-destructive/20'
-                    : slot.late
-                    ? 'bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-700'
-                    : 'bg-muted/30 border-border'
-                }`}
-              >
-                {/* Header: status + Feed N + time */}
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <div className="flex items-center gap-2">
-                    {slot.completed ? (
-                      <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
-                    ) : slot.missed ? (
-                      <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
-                    ) : slot.late ? (
-                      <AlertCircle className="h-4 w-4 text-amber-500 flex-shrink-0" />
-                    ) : (
-                      <div className="h-4 w-4 rounded-full border-2 flex-shrink-0 border-muted-foreground/40" />
-                    )}
-                    <span className={`text-sm font-semibold ${
-                      slot.completed ? 'line-through text-muted-foreground' : slot.missed ? 'text-destructive' : slot.late ? 'text-amber-700 dark:text-amber-400' : ''
-                    }`}>
-                      Feed {slot.index + 1}
-                    </span>
-                  </div>
-                  <span className={`text-xs whitespace-nowrap ${
-                    slot.completed ? 'text-green-600' : slot.missed ? 'text-destructive font-medium' : slot.late ? 'text-amber-600 font-medium' : 'text-muted-foreground'
-                  }`}>
-                    {slot.completed
-                      ? `✓ ${slot.completedAt!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                      : slot.missed
-                      ? `Missed ${slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                      : slot.late
-                      ? `Late ${slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                      : slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                    }
-                  </span>
-                </div>
+            const statusBg = slot.completed
+              ? 'bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800'
+              : slot.missed
+              ? 'bg-destructive/5 border-destructive/20'
+              : slot.late
+              ? 'bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-700'
+              : isFeed
+              ? 'bg-muted/30 border-border'
+              : 'bg-blue-50/30 border-blue-200 dark:bg-blue-950/20 dark:border-blue-800';
 
-                {/* Three-part breakdown */}
-                <div className="grid grid-cols-3 gap-1.5 text-center">
-                  <div className="rounded bg-blue-50/80 dark:bg-blue-950/20 px-1.5 py-1">
-                    <Droplets className="h-3 w-3 mx-auto text-blue-500" />
-                    <p className="text-[10px] text-muted-foreground">Flush</p>
-                    <p className="text-xs font-semibold text-blue-600 dark:text-blue-400">{slot.entry.flush_before_ml} mL</p>
-                  </div>
-                  <div className="rounded bg-amber-50/80 dark:bg-amber-950/20 px-1.5 py-1">
-                    <Apple className="h-3 w-3 mx-auto text-amber-600" />
-                    <p className="text-[10px] text-muted-foreground">Feed</p>
-                    <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">{slot.entry.feed_ml} mL</p>
-                  </div>
-                  <div className="rounded bg-blue-50/80 dark:bg-blue-950/20 px-1.5 py-1">
-                    <Droplets className="h-3 w-3 mx-auto text-blue-500" />
-                    <p className="text-[10px] text-muted-foreground">Flush</p>
-                    <p className="text-xs font-semibold text-blue-600 dark:text-blue-400">{slot.entry.flush_after_ml} mL</p>
-                  </div>
-                </div>
-              </div>
+            const statusIcon = slot.completed ? (
+              <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+            ) : slot.missed ? (
+              <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
+            ) : slot.late ? (
+              <AlertCircle className="h-4 w-4 text-amber-500 flex-shrink-0" />
+            ) : (
+              <div className="h-4 w-4 rounded-full border-2 flex-shrink-0 border-muted-foreground/40" />
             );
+
+            const timeLabel = slot.completed
+              ? `✓ ${slot.completedAt!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+              : slot.missed
+              ? `Missed ${slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+              : slot.late
+              ? `Late ${slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+              : slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            const timeClass = slot.completed ? 'text-green-600' : slot.missed ? 'text-destructive font-medium' : slot.late ? 'text-amber-600 font-medium' : 'text-muted-foreground';
+
+            if (isFeed) {
+              return (
+                <div key={slot.entry.id} className={`rounded-lg border p-3 transition-colors ${statusBg}`}>
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2">
+                      {statusIcon}
+                      <Apple className="h-3.5 w-3.5 text-amber-600 flex-shrink-0" />
+                      <span className={`text-sm font-semibold ${slot.completed ? 'line-through text-muted-foreground' : slot.missed ? 'text-destructive' : slot.late ? 'text-amber-700 dark:text-amber-400' : ''}`}>
+                        Feed {slot.feedNumber}
+                      </span>
+                    </div>
+                    <span className={`text-xs whitespace-nowrap ${timeClass}`}>{timeLabel}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1.5 text-center">
+                    <div className="rounded bg-blue-50/80 dark:bg-blue-950/20 px-1.5 py-1">
+                      <Droplets className="h-3 w-3 mx-auto text-blue-500" />
+                      <p className="text-[10px] text-muted-foreground">Flush</p>
+                      <p className="text-xs font-semibold text-blue-600 dark:text-blue-400">{slot.entry.flush_before_ml} mL</p>
+                    </div>
+                    <div className="rounded bg-amber-50/80 dark:bg-amber-950/20 px-1.5 py-1">
+                      <Apple className="h-3 w-3 mx-auto text-amber-600" />
+                      <p className="text-[10px] text-muted-foreground">Feed</p>
+                      <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">{slot.entry.feed_ml} mL</p>
+                    </div>
+                    <div className="rounded bg-blue-50/80 dark:bg-blue-950/20 px-1.5 py-1">
+                      <Droplets className="h-3 w-3 mx-auto text-blue-500" />
+                      <p className="text-[10px] text-muted-foreground">Flush</p>
+                      <p className="text-xs font-semibold text-blue-600 dark:text-blue-400">{slot.entry.flush_after_ml} mL</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            } else {
+              // Standalone flush
+              return (
+                <div key={slot.entry.id} className={`rounded-lg border p-3 transition-colors ${statusBg}`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      {statusIcon}
+                      <Droplets className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
+                      <span className={`text-sm font-semibold ${slot.completed ? 'line-through text-muted-foreground' : slot.missed ? 'text-destructive' : slot.late ? 'text-amber-700 dark:text-amber-400' : 'text-blue-700 dark:text-blue-400'}`}>
+                        Water Flush
+                      </span>
+                      <span className="text-xs font-medium text-blue-600 dark:text-blue-400">{slot.entry.flush_ml || 0} mL</span>
+                    </div>
+                    <span className={`text-xs whitespace-nowrap ${timeClass}`}>{timeLabel}</span>
+                  </div>
+                </div>
+              );
+            }
           })}
         </div>
       </CardContent>

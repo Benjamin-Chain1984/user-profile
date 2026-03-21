@@ -32,9 +32,11 @@ export type EnteralEscalationType = 'rn' | 'gp' | 'monitoring' | 'other';
 export interface FeedingScheduleEntry {
   id: string;
   time: string;
+  type: 'feed' | 'flush';
   feed_ml: number;
   flush_before_ml: number;
   flush_after_ml: number;
+  flush_ml?: number; // standalone flush volume
 }
 
 export interface EnteralConfig {
