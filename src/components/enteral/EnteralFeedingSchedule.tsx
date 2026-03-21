@@ -117,16 +117,15 @@ export function EnteralFeedingSchedule({ schedule, onChange, readOnly = false }:
             Feeding Schedule
           </CardTitle>
           {!readOnly && (
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button variant="ghost" size="sm" onClick={loadDefaults} className="text-xs">
                 Load Example
               </Button>
               <Button variant="outline" size="sm" onClick={addFeed} className="gap-1">
-                <Plus className="h-3.5 w-3.5" /> Add Feed
+                <Plus className="h-3.5 w-3.5" /> Feed
               </Button>
-              <Button variant="outline" size="sm" onClick={addFlush} className="gap-1">
-                <Plus className="h-3.5 w-3.5" />
-                <Droplets className="h-3.5 w-3.5" /> Add Flush
+              <Button variant="outline" size="sm" onClick={addFlush} className="gap-1 text-blue-600">
+                <Plus className="h-3.5 w-3.5" /> Flush
               </Button>
             </div>
           )}
