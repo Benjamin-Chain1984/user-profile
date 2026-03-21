@@ -239,6 +239,7 @@ export function VitalTilesDashboard({ clientId, onVitalClick }: VitalTilesDashbo
               status={vitalData.heart_rate.status}
               lastRecordedAt={vitalData.heart_rate.lastRecordedAt}
               trend={vitalData.heart_rate.trend}
+              hasAlteredCriteria={!!criteriaMap['heart_rate']?.approved_at}
               onClick={() => onVitalClick?.('heart_rate')}
             />
           )}
