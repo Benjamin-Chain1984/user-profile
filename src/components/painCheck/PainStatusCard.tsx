@@ -76,17 +76,35 @@ function NextDueBanner({ info }: { info: NextDueInfo }) {
     return () => clearInterval(interval);
   }, []);
 
-  // Don't show countdown for overdue (already reflected in traffic light)
-  if (!info.dueDate || info.isOverdue) return null;
+  if (!info.dueDate && !info.hasAssessments) {
+    // No assessments yet
+    return (
+      <div className="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm">
+        <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+        <span className="font-medium text-destructive">No assessments recorded — begin an assessment now</span>
+      </div>
+    );
+  }
 
+  if (!info.dueDate) return null;
+
+  const overdue = info.isOverdue;
   const countdown = formatDistanceToNow(info.dueDate);
 
   return (
-    <div className="flex items-center gap-2 rounded-lg bg-background/60 px-3 py-2 text-sm">
-      <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+    <div className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+      overdue ? 'bg-destructive/10' : 'bg-background/60'
+    }`}>
+      {overdue ? (
+        <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+      ) : (
+        <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+      )}
       <div className="flex-1 min-w-0">
-        <span className="font-medium">
-          {info.isReassessment ? 'Reassessment due' : 'Next assessment due'}
+        <span className={`font-medium ${overdue ? 'text-destructive' : ''}`}>
+          {overdue
+            ? (info.isReassessment ? 'Reassessment overdue' : 'Assessment overdue')
+            : (info.isReassessment ? 'Reassessment due' : 'Next assessment due')}
         </span>
         {info.reason && (
           <span className="text-xs text-muted-foreground ml-1.5">
@@ -95,7 +113,9 @@ function NextDueBanner({ info }: { info: NextDueInfo }) {
         )}
       </div>
       <div className="text-right shrink-0">
-        <span className="font-semibold">{countdown}</span>
+        <span className={`font-semibold ${overdue ? 'text-destructive' : ''}`}>
+          {overdue ? `Overdue by ${countdown}` : countdown}
+        </span>
       </div>
     </div>
   );
