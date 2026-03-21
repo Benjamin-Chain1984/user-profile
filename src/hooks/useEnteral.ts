@@ -152,6 +152,64 @@ export function useLogEnteralFeed(clientId?: string) {
   });
 }
 
+/**
+ * Combined mutation: logs a feed entry AND its associated before/after flushes
+ * into the enteral_flush_logs table so they count toward flush totals.
+ */
+export function useLogEnteralFeedWithFlushes(clientId?: string) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (payload: {
+      feed: Partial<EnteralFeedLog>;
+      flushBeforeMl: number;
+      flushAfterMl: number;
+    }) => {
+      const { feed, flushBeforeMl, flushAfterMl } = payload;
+      const common = { client_id: clientId || null, created_by: user?.id || null };
+
+      // Insert feed log
+      const { error: feedErr } = await supabase.from('enteral_feed_logs').insert({
+        ...feed,
+        ...common,
+      } as any);
+      if (feedErr) throw feedErr;
+
+      // Insert flush-before log (if > 0)
+      if (flushBeforeMl > 0) {
+        const { error } = await supabase.from('enteral_flush_logs').insert({
+          flush_reason: 'flush_before_feed',
+          flush_volume_ml: flushBeforeMl,
+          notes: null,
+          ...common,
+        } as any);
+        if (error) throw error;
+      }
+
+      // Insert flush-after log (if > 0)
+      if (flushAfterMl > 0) {
+        const { error } = await supabase.from('enteral_flush_logs').insert({
+          flush_reason: 'flush_after_feed',
+          flush_volume_ml: flushAfterMl,
+          notes: null,
+          ...common,
+        } as any);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['enteral-feed-logs'] });
+      queryClient.invalidateQueries({ queryKey: ['enteral-flush-logs'] });
+      toast({ title: 'Feed logged', description: 'Feed and flushes recorded successfully.' });
+    },
+    onError: (err: any) => {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    },
+  });
+}
+
 // ── Medication Logs ─────────────────────────────────────────────
 export function useEnteralMedicationLogs(clientId?: string) {
   return useQuery({

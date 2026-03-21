@@ -1,5 +1,6 @@
 /**
  * Enteral Feed Log Form
+ * Combines flush-before → feed → flush-after into a single workflow.
  */
 
 import { useState, useMemo } from 'react';
@@ -10,9 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, CheckCircle2, Info } from 'lucide-react';
-import { useLogEnteralFeed } from '@/hooks/useEnteral';
+import { Info, CheckCircle2, Droplets } from 'lucide-react';
+import { useLogEnteralFeedWithFlushes } from '@/hooks/useEnteral';
 import { useCurrentStaff } from '@/hooks/useCurrentStaff';
 import { FEED_METHODS, type EnteralConfig } from '@/types/enteral';
 
@@ -25,19 +25,20 @@ interface EnteralFeedLogFormProps {
 
 export function EnteralFeedLogForm({ clientId, config, open, onOpenChange }: EnteralFeedLogFormProps) {
   const { staffName } = useCurrentStaff();
-  const logFeed = useLogEnteralFeed(clientId);
+  const logFeedWithFlushes = useLogEnteralFeedWithFlushes(clientId);
 
   const [scheduledTime, setScheduledTime] = useState('');
+  const [flushBefore, setFlushBefore] = useState('');
   const [feedVolume, setFeedVolume] = useState('');
+  const [flushAfter, setFlushAfter] = useState('');
   const [rate, setRate] = useState('');
   const [notes, setNotes] = useState('');
   const [positionConfirmed, setPositionConfirmed] = useState(false);
 
-  // Method comes from config - not user-selectable
   const configMethod = config?.feeding_type || null;
   const methodLabel = FEED_METHODS.find(m => m.value === configMethod)?.label || configMethod;
 
-  // Derive all unique times from the feeding schedule configured in settings
+  // Derive schedule times
   const scheduleTimes = useMemo(() => {
     const times = new Set<string>();
     if (Array.isArray(config?.feeding_schedule)) {
@@ -53,42 +54,63 @@ export function EnteralFeedLogForm({ clientId, config, open, onOpenChange }: Ent
     return Array.from(times).sort();
   }, [config?.feeding_schedule, config?.feed_schedule_times]);
 
-  // Get recommended feed amount from feeding schedule
+  // Get recommended feed amount
   const recommendedAmount = useMemo(() => {
     if (!config?.feeding_schedule || !Array.isArray(config.feeding_schedule)) return null;
-    const formulaFeeds = config.feeding_schedule.filter(
-      (e: any) => e.activity === 'formula_feed'
-    );
+    const formulaFeeds = config.feeding_schedule.filter((e: any) => e.activity === 'formula_feed');
     if (formulaFeeds.length === 0) return null;
     if (scheduledTime) {
       const match = formulaFeeds.find((e: any) => e.time === scheduledTime);
       if (match) return (match as any).amount_ml;
     }
-    const amounts = formulaFeeds.map((e: any) => (e as any).amount_ml);
-    return amounts[0] || null;
+    return (formulaFeeds[0] as any).amount_ml || null;
   }, [config?.feeding_schedule, scheduledTime]);
+
+  // Pre-fill flush defaults from config when form opens or config changes
+  const defaultFlushBefore = config?.flush_before_feed_ml || 30;
+  const defaultFlushAfter = config?.flush_after_feed_ml || 30;
+
+  // Set defaults when dialog opens
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen) {
+      setFlushBefore(String(defaultFlushBefore));
+      setFlushAfter(String(defaultFlushAfter));
+    }
+    onOpenChange(isOpen);
+  };
 
   const resetForm = () => {
     setScheduledTime('');
+    setFlushBefore('');
     setFeedVolume('');
+    setFlushAfter('');
     setRate('');
     setNotes('');
     setPositionConfirmed(false);
   };
 
+  const flushBeforeVal = parseInt(flushBefore) || 0;
+  const feedVal = parseInt(feedVolume) || 0;
+  const flushAfterVal = parseInt(flushAfter) || 0;
+  const totalVolume = flushBeforeVal + feedVal + flushAfterVal;
+
   const handleSubmit = () => {
     if (!feedVolume || !positionConfirmed) return;
 
-    logFeed.mutate({
-      scheduled_time: scheduledTime || null,
-      feed_volume_ml: parseInt(feedVolume),
-      rate_ml_per_hour: rate ? parseInt(rate) : null,
-      flush_given_ml: 0,
-      method: (configMethod || null) as any,
-      position_confirmed: positionConfirmed,
-      position_angle: null,
-      position_override_reason: null,
-      notes: notes || null,
+    logFeedWithFlushes.mutate({
+      feed: {
+        scheduled_time: scheduledTime || null,
+        feed_volume_ml: feedVal,
+        rate_ml_per_hour: rate ? parseInt(rate) : null,
+        flush_given_ml: flushBeforeVal + flushAfterVal,
+        method: (configMethod || null) as any,
+        position_confirmed: positionConfirmed,
+        position_angle: null,
+        position_override_reason: null,
+        notes: notes || null,
+      },
+      flushBeforeMl: flushBeforeVal,
+      flushAfterMl: flushAfterVal,
     }, {
       onSuccess: () => {
         resetForm();
@@ -98,7 +120,7 @@ export function EnteralFeedLogForm({ clientId, config, open, onOpenChange }: Ent
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Log Feed</DialogTitle>
@@ -159,9 +181,27 @@ export function EnteralFeedLogForm({ clientId, config, open, onOpenChange }: Ent
             </div>
           )}
 
-          {/* Feed Volume */}
-          <div className="space-y-2">
-            <Label>Feed Volume (mL) *</Label>
+          {/* Step 1: Flush Before Feed */}
+          <div className="space-y-2 rounded-lg border border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/30 p-3">
+            <div className="flex items-center gap-2">
+              <Droplets className="h-4 w-4 text-blue-500" />
+              <Label className="text-sm font-semibold">Step 1 — Water Flush Before Feed (mL)</Label>
+            </div>
+            <Input
+              type="number"
+              min={0}
+              value={flushBefore}
+              onChange={e => setFlushBefore(e.target.value)}
+              placeholder={`e.g. ${defaultFlushBefore}`}
+            />
+            <p className="text-xs text-muted-foreground">Prescribed: {defaultFlushBefore}mL before feed</p>
+          </div>
+
+          {/* Step 2: Feed Volume */}
+          <div className="space-y-2 rounded-lg border border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/30 p-3">
+            <div className="flex items-center gap-2">
+              <Label className="text-sm font-semibold">Step 2 — Feed Volume (mL) *</Label>
+            </div>
             <Input
               type="number"
               min={0}
@@ -169,6 +209,31 @@ export function EnteralFeedLogForm({ clientId, config, open, onOpenChange }: Ent
               onChange={e => setFeedVolume(e.target.value)}
               placeholder={recommendedAmount ? `e.g. ${recommendedAmount}` : 'e.g. 250'}
             />
+          </div>
+
+          {/* Step 3: Flush After Feed */}
+          <div className="space-y-2 rounded-lg border border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/30 p-3">
+            <div className="flex items-center gap-2">
+              <Droplets className="h-4 w-4 text-blue-500" />
+              <Label className="text-sm font-semibold">Step 3 — Water Flush After Feed (mL)</Label>
+            </div>
+            <Input
+              type="number"
+              min={0}
+              value={flushAfter}
+              onChange={e => setFlushAfter(e.target.value)}
+              placeholder={`e.g. ${defaultFlushAfter}`}
+            />
+            <p className="text-xs text-muted-foreground">Prescribed: {defaultFlushAfter}mL after feed</p>
+          </div>
+
+          {/* Total Summary */}
+          <div className="rounded-lg border bg-muted/40 p-3 text-sm space-y-1">
+            <p className="font-semibold">Total Volume Summary</p>
+            <div className="flex justify-between"><span className="text-muted-foreground">Flush before</span><span>{flushBeforeVal} mL</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Feed</span><span>{feedVal} mL</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Flush after</span><span>{flushAfterVal} mL</span></div>
+            <div className="flex justify-between font-semibold border-t pt-1 mt-1"><span>Total</span><span>{totalVolume} mL</span></div>
           </div>
 
           {/* Rate - only for continuous/pump */}
@@ -196,10 +261,10 @@ export function EnteralFeedLogForm({ clientId, config, open, onOpenChange }: Ent
 
           <Button
             onClick={handleSubmit}
-            disabled={!feedVolume || !positionConfirmed || logFeed.isPending}
+            disabled={!feedVolume || !positionConfirmed || logFeedWithFlushes.isPending}
             className="w-full"
           >
-            {logFeed.isPending ? 'Saving...' : 'Log Feed'}
+            {logFeedWithFlushes.isPending ? 'Saving...' : 'Log Feed'}
           </Button>
         </div>
       </DialogContent>
