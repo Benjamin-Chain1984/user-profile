@@ -15,8 +15,8 @@ import { Plus, Trash2, Save } from 'lucide-react';
 import { RestrictedSection } from '@/components/ui/restricted-section';
 import { ModuleDisclaimer } from '@/components/module/ModuleDisclaimer';
 import { useEnteralConfig, useSaveEnteralConfig, useEnteralMedications, useSaveEnteralMedication } from '@/hooks/useEnteral';
-import { TUBE_TYPES, FORMULA_OPTIONS, FEEDING_TYPES, type TubeType, type FeedingType, type FeedingScheduleEntry } from '@/types/enteral';
-import { EnteralFeedingSchedule, DEFAULT_SCHEDULE } from './EnteralFeedingSchedule';
+import { TUBE_TYPES, FORMULA_OPTIONS, FEEDING_TYPES, type TubeType, type FeedingType } from '@/types/enteral';
+import { EnteralFeedingSchedule, DEFAULT_SCHEDULE, type FeedingScheduleEntry } from './EnteralFeedingSchedule';
 
 interface EnteralConfigSettingsProps {
   clientId?: string;
