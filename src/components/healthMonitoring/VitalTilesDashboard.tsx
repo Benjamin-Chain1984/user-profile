@@ -171,10 +171,21 @@ export function VitalTilesDashboard({ clientId, onVitalClick }: VitalTilesDashbo
           </CardTitle>
           <div className="flex items-center gap-2">
             {hasActiveAlteredCriteria && (
-              <Badge variant="outline" className="text-xs border-amber-300 bg-amber-50 text-amber-700">
-                <AlertTriangle className="h-3 w-3 mr-1" />
-                Altered Criteria
-              </Badge>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="outline" className="text-xs border-amber-300 bg-amber-50 text-amber-700 cursor-help gap-1">
+                      <AlertTriangle className="h-3 w-3" />
+                      Altered Criteria
+                      <HelpCircle className="h-3 w-3 opacity-60" />
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[260px] text-xs leading-relaxed">
+                    <p>A reading that is different from the person's usual normal, based on limits set by their doctor or specialist.</p>
+                    <p className="mt-1 font-medium">👉 Compare to the person's approved baseline, not standard numbers.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
             <span className={`text-sm font-medium ${getOverallStatusColor()}`}>
               {getOverallStatusText()}
