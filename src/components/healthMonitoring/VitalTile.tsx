@@ -56,6 +56,7 @@ export function VitalTile({
   status,
   lastRecordedAt,
   trend,
+  hasAlteredCriteria,
   onClick,
   className,
 }: VitalTileProps) {
