@@ -200,6 +200,7 @@ export function VitalTilesDashboard({ clientId, onVitalClick }: VitalTilesDashbo
               status={vitalData.temperature.status}
               lastRecordedAt={vitalData.temperature.lastRecordedAt}
               trend={vitalData.temperature.trend}
+              hasAlteredCriteria={!!criteriaMap['temperature']?.approved_at}
               onClick={() => onVitalClick?.('temperature')}
             />
           )}
