@@ -427,6 +427,35 @@ export function useAlteredCriteria(clientId?: string) {
     },
   });
 
+  const deactivateCriteria = useMutation({
+    mutationFn: async (vitalType: VitalType) => {
+      if (!user?.id) throw new Error('Not authenticated');
+
+      const existing = criteria.find(c => c.vital_type === vitalType);
+      if (!existing) return null;
+
+      const { data, error } = await supabase
+        .from('vital_sign_altered_criteria')
+        .update({
+          is_active: false,
+          updated_by: user.id,
+        })
+        .eq('id', existing.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['alteredCriteria', clientId] });
+      toast({ title: 'Criteria disabled', description: 'Altered criteria has been deactivated.' });
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
   // Convert to a map for easy lookup
   const criteriaMap = criteria.reduce((acc, c) => {
     acc[c.vital_type] = c;
@@ -440,6 +469,7 @@ export function useAlteredCriteria(clientId?: string) {
     error,
     upsertCriteria: upsertCriteria.mutate,
     approveCriteria: approveCriteria.mutate,
+    deactivateCriteria: deactivateCriteria.mutate,
     isUpdating: upsertCriteria.isPending,
   };
 }

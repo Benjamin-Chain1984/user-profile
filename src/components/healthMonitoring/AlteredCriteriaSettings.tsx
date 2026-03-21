@@ -447,7 +447,7 @@ interface AlteredCriteriaSettingsProps {
 
 export function AlteredCriteriaSettings({ clientId }: AlteredCriteriaSettingsProps) {
   const { isAdmin } = useRoleAccess();
-  const { criteria, criteriaMap, upsertCriteria, approveCriteria, isUpdating } = useAlteredCriteria(clientId);
+  const { criteria, criteriaMap, upsertCriteria, approveCriteria, deactivateCriteria, isUpdating } = useAlteredCriteria(clientId);
   const [enabledVitals, setEnabledVitals] = useState<Record<VitalType, boolean>>({
     temperature: !!criteriaMap['temperature'],
     bp_systolic: !!criteriaMap['bp_systolic'],
@@ -463,9 +463,14 @@ export function AlteredCriteriaSettings({ clientId }: AlteredCriteriaSettingsPro
   const activeCriteria = criteria.filter(c => c.approved_at);
 
   const toggleAlteredCriteria = (vitalType: VitalType) => {
+    const isCurrentlyEnabled = enabledVitals[vitalType] || !!criteriaMap[vitalType];
+    if (isCurrentlyEnabled && criteriaMap[vitalType]) {
+      // Deactivate in DB
+      deactivateCriteria(vitalType);
+    }
     setEnabledVitals(prev => ({
       ...prev,
-      [vitalType]: !prev[vitalType]
+      [vitalType]: !isCurrentlyEnabled,
     }));
   };
 
