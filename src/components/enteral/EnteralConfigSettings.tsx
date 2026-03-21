@@ -118,9 +118,7 @@ export function EnteralConfigSettings({ clientId }: EnteralConfigSettingsProps) 
       position_angle_min: parseInt(positionAngle) || 30,
       position_maintain_mins: parseInt(positionMaintain) || 30,
       apply_position_to_medication: applyPositionToMed,
-      feed_schedule_times: feedingSchedule
-        .filter(e => e.activity === 'formula_feed')
-        .map(e => e.time),
+      feed_schedule_times: feedingSchedule.map(e => e.time),
       feeding_schedule: feedingSchedule,
       grace_window_mins: parseInt(graceWindow) || 60,
       missed_feed_red_threshold: parseInt(missedFeedThreshold) || 2,
