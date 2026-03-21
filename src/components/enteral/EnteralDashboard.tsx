@@ -171,13 +171,22 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
             {statusResult.tubeChangeDays !== null ? (
               <>
                 <div className={`text-lg font-bold ${statusResult.tubeChangeOverdue ? 'text-destructive' : statusResult.tubeChangeDays <= 7 ? 'text-warning' : ''}`}>
-                  {statusResult.tubeChangeOverdue ? `${Math.abs(statusResult.tubeChangeDays)}d overdue` : `${statusResult.tubeChangeDays}d`}
+                  {statusResult.tubeChangeOverdue ? `${Math.abs(statusResult.tubeChangeDays)}d overdue` : `Due in ${statusResult.tubeChangeDays} Days`}
                 </div>
                 <div className="space-y-0.5 text-xs text-muted-foreground">
                   <p>{tubeLabel}</p>
                   {config?.tube_size_fr && <p>Size: {config.tube_size_fr} Fr</p>}
-                  {config?.tube_inserted_date && <p>Inserted: {config.tube_inserted_date}</p>}
+                  {config?.tube_inserted_date && (
+                    <p>Inserted: {format(parseISO(config.tube_inserted_date), 'dd/MM/yyyy')}</p>
+                  )}
+                  {config?.next_tube_change_due && (
+                    <p>Next due: {format(parseISO(config.next_tube_change_due), 'dd/MM/yyyy')}</p>
+                  )}
                   {config?.tube_change_interval_days && <p>Change every {Math.round(config.tube_change_interval_days / 7)} weeks</p>}
+                </div>
+                <div className="mt-1 flex items-center gap-1 text-[10px] font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded px-2 py-1">
+                  <AlertTriangle className="h-3 w-3 flex-shrink-0" />
+                  Must be changed by Health Professional only
                 </div>
               </>
             ) : (
