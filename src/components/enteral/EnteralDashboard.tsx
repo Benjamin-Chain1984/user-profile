@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertTriangle, Clock, TrendingUp, Settings, Plus, Droplets, Pill, CheckCircle2, Armchair, Waves } from 'lucide-react';
+import { AlertTriangle, Clock, TrendingUp, Settings, Plus, Droplets, Pill, CheckCircle2, Armchair, Waves, Activity } from 'lucide-react';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { useProfile } from '@/contexts/ProfileContext';
 import { MonitoringPausedBanner } from '@/components/monitoring';
@@ -16,7 +16,9 @@ import { RoleTabsTrigger } from '@/components/ui/role-tabs-trigger';
 import { StatusBadge } from '@/components/ideal/StatusBadge';
 import { useEnteralConfig, useEnteralFeedLogs, useEnteralMedicationLogs, useEnteralStomaChecks, useEnteralMedications, useEnteralFlushLogs } from '@/hooks/useEnteral';
 import { calculateEnteralStatus } from '@/utils/enteralStatusCalculator';
-import { tubeRequiresStomaCheck, TUBE_TYPES } from '@/types/enteral';
+import { tubeRequiresStomaCheck, TUBE_TYPES, calculateEnteralStomaStatus } from '@/types/enteral';
+import type { EnteralStomaFinding, EnteralStomaPainLevel } from '@/types/enteral';
+import { differenceInHours, parseISO } from 'date-fns';
 
 import { EnteralTrafficLightCard } from './EnteralTrafficLightCard';
 import { EnteralFeedLogForm } from './EnteralFeedLogForm';
@@ -166,13 +168,62 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-xs text-muted-foreground mb-1">Flush / Hydration</div>
-            <div className="text-lg font-bold">{statusResult.todayFlushVolume}ml</div>
-            <p className="text-xs text-muted-foreground">Feed flushes</p>
-          </CardContent>
-        </Card>
+        {showStomaSection && (() => {
+          const lastStoma = stomaChecks.length > 0 ? stomaChecks[0] : null;
+          const hoursSince = lastStoma ? differenceInHours(new Date(), parseISO(lastStoma.event_occurred_at)) : null;
+          const stomaStatus = lastStoma
+            ? calculateEnteralStomaStatus(lastStoma.findings as EnteralStomaFinding[], lastStoma.pain_level as EnteralStomaPainLevel, hoursSince)
+            : 'green';
+          const statusLabel = stomaStatus === 'red' ? 'Action Required' : stomaStatus === 'amber' ? 'Monitor' : 'IDEAL';
+          const statusMessage = lastStoma
+            ? (lastStoma.findings as string[])?.filter(f => f !== 'clean_and_dry').length > 0
+              ? `Findings: ${(lastStoma.findings as string[]).filter(f => f !== 'clean_and_dry').join(', ').replace(/_/g, ' ')}`
+              : 'No concerns noted'
+            : 'No checks logged';
+          const hoursAgo = hoursSince !== null
+            ? hoursSince < 1 ? 'Just now'
+            : hoursSince < 24 ? `${Math.round(hoursSince)}h ago`
+            : `${Math.round(hoursSince / 24)}d ago`
+            : null;
+
+          return (
+            <Card>
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Activity className="h-3.5 w-3.5 text-primary" />
+                    Daily Stoma Check
+                  </div>
+                  <StatusBadge status={stomaStatus === 'red' ? 'action' : stomaStatus === 'amber' ? 'monitor' : 'stable'} size="sm" />
+                </div>
+                <div className={`text-lg font-bold ${
+                  stomaStatus === 'red' ? 'text-destructive' :
+                  stomaStatus === 'amber' ? 'text-warning' : ''
+                }`}>
+                  {statusLabel}
+                </div>
+                <p className="text-xs text-muted-foreground">{statusMessage}</p>
+                {hoursAgo && (
+                  <p className="text-xs text-muted-foreground">Last checked: {hoursAgo}</p>
+                )}
+                <Button onClick={() => setShowStomaForm(true)} size="sm" className="w-full gap-2 mt-1" variant="outline">
+                  <Activity className="h-3.5 w-3.5" />
+                  Log Stoma Check
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })()}
+
+        {!showStomaSection && (
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-xs text-muted-foreground mb-1">Flush / Hydration</div>
+              <div className="text-lg font-bold">{statusResult.todayFlushVolume}ml</div>
+              <p className="text-xs text-muted-foreground">Feed flushes</p>
+            </CardContent>
+          </Card>
+        )}
 
         {showMedSection && (
           <Card>
