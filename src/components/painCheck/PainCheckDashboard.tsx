@@ -274,90 +274,6 @@ export function PainCheckDashboard() {
         </CardContent>
       </Card>
 
-      {/* Next Assessment Due Card */}
-      {nextDueInfo && (
-        <Card className={`border-l-4 ${
-          nextDueInfo.urgency === 'red'
-            ? 'border-l-destructive bg-destructive/5'
-            : nextDueInfo.urgency === 'dark-amber'
-              ? 'border-l-orange-600 bg-orange-600/5'
-              : nextDueInfo.isReassessment
-                ? 'border-l-amber-500 bg-amber-500/5'
-                : nextDueInfo.isOverdue
-                  ? 'border-l-destructive bg-destructive/5'
-                  : 'border-l-success bg-success/5'
-        }`}>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {nextDueInfo.urgency === 'red' ? (
-                  <AlertTriangle className="h-6 w-6 text-destructive" />
-                ) : nextDueInfo.urgency === 'dark-amber' ? (
-                  <AlertTriangle className="h-6 w-6 text-orange-600" />
-                ) : nextDueInfo.isReassessment ? (
-                  <AlertTriangle className="h-6 w-6 text-amber-500" />
-                ) : nextDueInfo.isOverdue ? (
-                  <CalendarClock className="h-6 w-6 text-destructive" />
-                ) : (
-                  <CheckCircle2 className="h-6 w-6 text-success" />
-                )}
-                <div>
-                  <p className="text-sm font-medium">
-                    {nextDueInfo.urgency === 'red'
-                      ? 'Urgent Clinical Review Required'
-                      : nextDueInfo.urgency === 'dark-amber'
-                        ? 'Action Required — Seek Advice'
-                        : nextDueInfo.isReassessment
-                          ? 'Reassessment Required'
-                          : nextDueInfo.isOverdue
-                            ? 'Assessment Overdue'
-                            : 'Next Assessment Due'}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {nextDueInfo.isReassessment ? nextDueInfo.label : `Schedule: ${nextDueInfo.label}`}
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                {!nextDueInfo.hasAssessments ? (
-                  <p className="text-sm font-semibold text-destructive">No assessments recorded</p>
-                ) : nextDueInfo.dueDate ? (
-                  <>
-                    <p className={`text-sm font-semibold ${
-                      nextDueInfo.urgency === 'red' ? 'text-destructive'
-                      : nextDueInfo.urgency === 'dark-amber' ? 'text-orange-600'
-                      : nextDueInfo.isReassessment || nextDueInfo.isOverdue ? 'text-amber-600'
-                      : 'text-foreground'
-                    }`}>
-                      {nextDueInfo.isOverdue
-                        ? `Overdue by ${formatDistanceToNow(nextDueInfo.dueDate)}`
-                        : `Due in ${formatDistanceToNow(nextDueInfo.dueDate)}`
-                      }
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {format(nextDueInfo.dueDate, 'PPp')}
-                    </p>
-                  </>
-                ) : null}
-              </div>
-            </div>
-            {nextDueInfo.reason && (
-              <div className="mt-2 px-9">
-                <p className={`text-xs font-medium rounded px-2 py-1 inline-block ${
-                  nextDueInfo.urgency === 'red'
-                    ? 'text-destructive bg-destructive/10'
-                    : nextDueInfo.urgency === 'dark-amber'
-                      ? 'text-orange-700 bg-orange-100/60'
-                      : 'text-amber-700 bg-amber-100/60'
-                }`}>
-                  {nextDueInfo.urgency === 'red' ? '🔴' : nextDueInfo.urgency === 'dark-amber' ? '🟠' : '🟡'} {nextDueInfo.reason}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
       {/* Traffic Light Status Card */}
       <PainStatusCard
         latestAbbey={latestAbbey}
@@ -365,6 +281,7 @@ export function PainCheckDashboard() {
         abbeyTrend={getAbbeyTrend()}
         painadTrend={getPainadTrend()}
         enabledTools={enabledTools}
+        nextDueInfo={nextDueInfo}
       />
 
       {/* Active Action Plan — shown above tabs when pain detected */}

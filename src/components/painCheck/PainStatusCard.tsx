@@ -2,11 +2,23 @@
  * Pain Assessment Status Card - Uses shared TrafficLightStatusCard
  */
 
+import { useState, useEffect } from 'react';
 import { TrafficLightStatusCard } from '@/components/shared/TrafficLightStatusCard';
 import { toTrafficLight } from '@/types/trafficLight';
 import { AbbeyPainAssessment, getSeverityLabel, getSeverityColor } from '@/types/painAssessment';
 import { PainadAssessment, getPainadSeverityLabel, getPainadSeverityColor } from '@/types/painad';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Clock, AlertTriangle } from 'lucide-react';
+import { format, formatDistanceToNow, isPast } from 'date-fns';
+
+interface NextDueInfo {
+  dueDate: Date | null;
+  isOverdue: boolean;
+  label: string;
+  hasAssessments: boolean;
+  reason: string | null;
+  isReassessment: boolean;
+  urgency: 'amber' | 'dark-amber' | 'red' | null;
+}
 
 interface PainStatusCardProps {
   latestAbbey: AbbeyPainAssessment | null;
@@ -14,6 +26,7 @@ interface PainStatusCardProps {
   abbeyTrend: 'improving' | 'worsening' | 'stable';
   painadTrend: 'improving' | 'worsening' | 'stable';
   enabledTools: string[];
+  nextDueInfo?: NextDueInfo | null;
 }
 
 function mapSeverityToStatus(severity: string | undefined): string {
@@ -55,7 +68,43 @@ function TrendIndicator({ direction }: { direction: 'improving' | 'worsening' | 
   );
 }
 
-export function PainStatusCard({ latestAbbey, latestPainad, abbeyTrend, painadTrend, enabledTools }: PainStatusCardProps) {
+function NextDueBanner({ info }: { info: NextDueInfo }) {
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => setTick(t => t + 1), 30_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Don't show countdown for overdue (already reflected in traffic light)
+  if (!info.dueDate || info.isOverdue) return null;
+
+  const countdown = formatDistanceToNow(info.dueDate);
+
+  return (
+    <div className="flex items-center gap-2 rounded-lg bg-background/60 px-3 py-2 text-sm">
+      <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+      <div className="flex-1 min-w-0">
+        <span className="font-medium">
+          {info.isReassessment ? 'Reassessment due' : 'Next assessment due'}
+        </span>
+        {info.reason && (
+          <span className="text-xs text-muted-foreground ml-1.5">
+            ({info.reason})
+          </span>
+        )}
+      </div>
+      <div className="text-right shrink-0">
+        <span className="font-semibold">{countdown}</span>
+        <span className="text-xs text-muted-foreground ml-1">
+          ({format(info.dueDate, 'h:mm a')})
+        </span>
+      </div>
+    </div>
+  );
+}
+
+export function PainStatusCard({ latestAbbey, latestPainad, abbeyTrend, painadTrend, enabledTools, nextDueInfo }: PainStatusCardProps) {
   // Determine worst severity across enabled tools
   const statuses: string[] = [];
   const severities: (string | undefined)[] = [];
@@ -92,8 +141,11 @@ export function PainStatusCard({ latestAbbey, latestPainad, abbeyTrend, painadTr
       reason={reason}
       lastUpdated={lastUpdated}
     >
+      {/* Next due countdown */}
+      {nextDueInfo && <NextDueBanner info={nextDueInfo} />}
+
       {/* Per-tool breakdown */}
-      <div className="grid sm:grid-cols-2 gap-4">
+      <div className="grid sm:grid-cols-2 gap-4 mt-3">
         {enabledTools.includes('abbey') && (
           <div className="flex items-center justify-between gap-2">
             <div>
