@@ -213,6 +213,7 @@ export function VitalTilesDashboard({ clientId, onVitalClick }: VitalTilesDashbo
               status={vitalData.bp.status}
               lastRecordedAt={vitalData.bp.lastRecordedAt}
               trend={vitalData.bp.trend}
+              hasAlteredCriteria={!!criteriaMap['bp_systolic']?.approved_at || !!criteriaMap['bp_diastolic']?.approved_at}
               onClick={() => onVitalClick?.('bp_systolic')}
             />
           )}
