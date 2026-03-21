@@ -27,6 +27,7 @@ interface VitalTileProps {
   status: VitalStatus | null;
   lastRecordedAt?: string;
   trend?: 'up' | 'down' | 'stable' | null;
+  hasAlteredCriteria?: boolean;
   onClick?: () => void;
   className?: string;
 }
