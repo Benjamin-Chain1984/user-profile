@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertTriangle, Clock, TrendingUp, Settings, Plus, Droplets, Pill, CheckCircle2, Armchair, Waves } from 'lucide-react';
+import { AlertTriangle, Clock, TrendingUp, Settings, Plus, Droplets, Pill, CheckCircle2, Armchair, Waves, Activity } from 'lucide-react';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { useProfile } from '@/contexts/ProfileContext';
 import { MonitoringPausedBanner } from '@/components/monitoring';
