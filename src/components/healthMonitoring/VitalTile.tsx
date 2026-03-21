@@ -206,6 +206,7 @@ export function BloodPressureTile({
   status,
   lastRecordedAt,
   trend,
+  hasAlteredCriteria,
   onClick,
   className,
 }: BpTileProps) {
