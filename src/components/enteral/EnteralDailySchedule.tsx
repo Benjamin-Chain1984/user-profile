@@ -1,12 +1,12 @@
 /**
- * Enteral Daily Schedule - Shows today's feeding schedule with completion tracking
- * Supports both grouped feeds (Feed 1, Feed 2...) and standalone flushes
+ * Enteral Daily Schedule - Today's feeding/flush timeline with completion tracking
+ * Reads directly from saved feeding_schedule config entries
  */
 
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, AlertCircle, Clock, Droplets, Apple } from 'lucide-react';
+import { CheckCircle2, Circle, AlertTriangle, Clock, Droplets, Apple } from 'lucide-react';
 import type { FeedingScheduleEntry } from './EnteralFeedingSchedule';
 import type { EnteralFeedLog } from '@/types/enteral';
 
@@ -19,7 +19,7 @@ interface EnteralDailyScheduleProps {
 
 interface ScheduleSlot {
   entry: FeedingScheduleEntry;
-  feedNumber?: number;
+  label: string;
   dueAt: Date;
   completed: boolean;
   late: boolean;
@@ -29,6 +29,10 @@ interface ScheduleSlot {
 
 function getLocalDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function formatTime(date: Date): string {
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 export function EnteralDailySchedule({ schedule, feedLogs, flushLogs = [], graceMinutes = 60 }: EnteralDailyScheduleProps) {
@@ -49,7 +53,7 @@ export function EnteralDailySchedule({ schedule, feedLogs, flushLogs = [], grace
     return schedule.map((entry) => {
       const isFeed = (entry.type || 'feed') === 'feed';
       if (isFeed) feedCounter++;
-      const feedNumber = isFeed ? feedCounter : undefined;
+      const label = isFeed ? `Feed ${feedCounter}` : 'Water Flush';
       const dueAt = new Date(`${todayStr}T${entry.time}:00`);
 
       let matchedTime: Date | undefined;
@@ -66,7 +70,6 @@ export function EnteralDailySchedule({ schedule, feedLogs, flushLogs = [], grace
           matchedTime = new Date(todayFeedLogs[idx].event_occurred_at);
         }
       } else {
-        // Match standalone flush
         const idx = todayFlushLogs.findIndex((log, i) => {
           if (usedFlushIds.has(i)) return false;
           const logTime = new Date(log.event_occurred_at);
@@ -84,7 +87,7 @@ export function EnteralDailySchedule({ schedule, feedLogs, flushLogs = [], grace
 
       return {
         entry,
-        feedNumber,
+        label,
         dueAt,
         completed,
         late: isPastDue && minutesOverdue < graceMinutes,
@@ -95,123 +98,112 @@ export function EnteralDailySchedule({ schedule, feedLogs, flushLogs = [], grace
   }, [schedule, feedLogs, flushLogs, todayStr, graceMinutes, now]);
 
   const completedCount = slots.filter(s => s.completed).length;
-  const missedCount = slots.filter(s => s.missed).length;
-  const lateCount = slots.filter(s => s.late).length;
+  const totalCount = slots.length;
 
-  if (schedule.length === 0) return null;
+  if (totalCount === 0) return null;
 
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between flex-wrap gap-2">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
             <Clock className="h-4 w-4 text-primary" />
             Today's Schedule
           </CardTitle>
-          <Badge variant="outline" className="text-xs">
-            {completedCount}/{slots.length} completed
+          <Badge variant={completedCount === totalCount ? 'default' : 'secondary'} className="text-xs font-medium">
+            {completedCount} / {totalCount}
           </Badge>
         </div>
-        {(missedCount > 0 || lateCount > 0) && (
-          <div className="flex gap-2 mt-1">
-            {lateCount > 0 && (
-              <Badge variant="outline" className="text-xs border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-700">
-                {lateCount} late
-              </Badge>
-            )}
-            {missedCount > 0 && (
-              <Badge variant="outline" className="text-xs border-destructive/30 bg-destructive/5 text-destructive">
-                {missedCount} missed
-              </Badge>
-            )}
-          </div>
-        )}
       </CardHeader>
-      <CardContent>
-        <div className="space-y-2 max-h-[400px] overflow-y-auto">
-          {slots.map((slot) => {
+      <CardContent className="px-4 pb-4">
+        {/* Timeline */}
+        <div className="relative">
+          {slots.map((slot, idx) => {
             const isFeed = (slot.entry.type || 'feed') === 'feed';
+            const isLast = idx === slots.length - 1;
 
-            const statusBg = slot.completed
-              ? 'bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800'
-              : slot.missed
-              ? 'bg-destructive/5 border-destructive/20'
-              : slot.late
-              ? 'bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-700'
-              : isFeed
-              ? 'bg-muted/30 border-border'
-              : 'bg-blue-50/30 border-blue-200 dark:bg-blue-950/20 dark:border-blue-800';
+            return (
+              <div key={slot.entry.id} className="relative flex gap-3">
+                {/* Timeline line + dot */}
+                <div className="flex flex-col items-center">
+                  <div className="flex-shrink-0">
+                    {slot.completed ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    ) : slot.missed ? (
+                      <AlertTriangle className="h-5 w-5 text-destructive" />
+                    ) : slot.late ? (
+                      <AlertTriangle className="h-5 w-5 text-amber-500" />
+                    ) : (
+                      <Circle className="h-5 w-5 text-muted-foreground/40" />
+                    )}
+                  </div>
+                  {!isLast && (
+                    <div className={`w-px flex-1 min-h-[16px] ${slot.completed ? 'bg-green-300 dark:bg-green-700' : 'bg-border'}`} />
+                  )}
+                </div>
 
-            const statusIcon = slot.completed ? (
-              <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
-            ) : slot.missed ? (
-              <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
-            ) : slot.late ? (
-              <AlertCircle className="h-4 w-4 text-amber-500 flex-shrink-0" />
-            ) : (
-              <div className="h-4 w-4 rounded-full border-2 flex-shrink-0 border-muted-foreground/40" />
+                {/* Content */}
+                <div className={`flex-1 pb-4 ${isLast ? 'pb-0' : ''}`}>
+                  {/* Time + Label row */}
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2">
+                      {isFeed ? (
+                        <Apple className="h-3.5 w-3.5 text-amber-600" />
+                      ) : (
+                        <Droplets className="h-3.5 w-3.5 text-blue-500" />
+                      )}
+                      <span className={`text-sm font-semibold ${
+                        slot.completed ? 'text-muted-foreground' : 
+                        slot.missed ? 'text-destructive' : 
+                        slot.late ? 'text-amber-600 dark:text-amber-400' : 
+                        'text-foreground'
+                      }`}>
+                        {slot.label}
+                      </span>
+                    </div>
+                    <span className={`text-xs font-mono ${
+                      slot.completed ? 'text-green-600' :
+                      slot.missed ? 'text-destructive' :
+                      slot.late ? 'text-amber-600' :
+                      'text-muted-foreground'
+                    }`}>
+                      {slot.completed
+                        ? `✓ ${formatTime(slot.completedAt!)}`
+                        : slot.missed
+                        ? `Missed`
+                        : slot.late
+                        ? `Due ${formatTime(slot.dueAt)}`
+                        : formatTime(slot.dueAt)
+                      }
+                    </span>
+                  </div>
+
+                  {/* Detail row */}
+                  {isFeed ? (
+                    <div className={`flex gap-1.5 ${slot.completed ? 'opacity-50' : ''}`}>
+                      <div className="flex-1 rounded bg-blue-50 dark:bg-blue-950/30 px-2 py-1 text-center">
+                        <p className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">Flush</p>
+                        <p className="text-xs font-bold text-blue-700 dark:text-blue-300">{slot.entry.flush_before_ml}ml</p>
+                      </div>
+                      <div className="flex-1 rounded bg-amber-50 dark:bg-amber-950/30 px-2 py-1 text-center">
+                        <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">Feed</p>
+                        <p className="text-xs font-bold text-amber-700 dark:text-amber-300">{slot.entry.feed_ml}ml</p>
+                      </div>
+                      <div className="flex-1 rounded bg-blue-50 dark:bg-blue-950/30 px-2 py-1 text-center">
+                        <p className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">Flush</p>
+                        <p className="text-xs font-bold text-blue-700 dark:text-blue-300">{slot.entry.flush_after_ml}ml</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={`flex items-center gap-1.5 ${slot.completed ? 'opacity-50' : ''}`}>
+                      <div className="rounded bg-blue-50 dark:bg-blue-950/30 px-3 py-1">
+                        <span className="text-xs font-bold text-blue-700 dark:text-blue-300">{slot.entry.flush_ml || 0} mL</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             );
-
-            const timeLabel = slot.completed
-              ? `✓ ${slot.completedAt!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-              : slot.missed
-              ? `Missed ${slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-              : slot.late
-              ? `Late ${slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-              : slot.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-            const timeClass = slot.completed ? 'text-green-600' : slot.missed ? 'text-destructive font-medium' : slot.late ? 'text-amber-600 font-medium' : 'text-muted-foreground';
-
-            if (isFeed) {
-              return (
-                <div key={slot.entry.id} className={`rounded-lg border p-3 transition-colors ${statusBg}`}>
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <div className="flex items-center gap-2">
-                      {statusIcon}
-                      <Apple className="h-3.5 w-3.5 text-amber-600 flex-shrink-0" />
-                      <span className={`text-sm font-semibold ${slot.completed ? 'line-through text-muted-foreground' : slot.missed ? 'text-destructive' : slot.late ? 'text-amber-700 dark:text-amber-400' : ''}`}>
-                        Feed {slot.feedNumber}
-                      </span>
-                    </div>
-                    <span className={`text-xs whitespace-nowrap ${timeClass}`}>{timeLabel}</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-1.5 text-center">
-                    <div className="rounded bg-blue-50/80 dark:bg-blue-950/20 px-1.5 py-1">
-                      <Droplets className="h-3 w-3 mx-auto text-blue-500" />
-                      <p className="text-[10px] text-muted-foreground">Flush</p>
-                      <p className="text-xs font-semibold text-blue-600 dark:text-blue-400">{slot.entry.flush_before_ml} mL</p>
-                    </div>
-                    <div className="rounded bg-amber-50/80 dark:bg-amber-950/20 px-1.5 py-1">
-                      <Apple className="h-3 w-3 mx-auto text-amber-600" />
-                      <p className="text-[10px] text-muted-foreground">Feed</p>
-                      <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">{slot.entry.feed_ml} mL</p>
-                    </div>
-                    <div className="rounded bg-blue-50/80 dark:bg-blue-950/20 px-1.5 py-1">
-                      <Droplets className="h-3 w-3 mx-auto text-blue-500" />
-                      <p className="text-[10px] text-muted-foreground">Flush</p>
-                      <p className="text-xs font-semibold text-blue-600 dark:text-blue-400">{slot.entry.flush_after_ml} mL</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            } else {
-              // Standalone flush
-              return (
-                <div key={slot.entry.id} className={`rounded-lg border p-3 transition-colors ${statusBg}`}>
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      {statusIcon}
-                      <Droplets className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
-                      <span className={`text-sm font-semibold ${slot.completed ? 'line-through text-muted-foreground' : slot.missed ? 'text-destructive' : slot.late ? 'text-amber-700 dark:text-amber-400' : 'text-blue-700 dark:text-blue-400'}`}>
-                        Water Flush
-                      </span>
-                      <span className="text-xs font-medium text-blue-600 dark:text-blue-400">{slot.entry.flush_ml || 0} mL</span>
-                    </div>
-                    <span className={`text-xs whitespace-nowrap ${timeClass}`}>{timeLabel}</span>
-                  </div>
-                </div>
-              );
-            }
           })}
         </div>
       </CardContent>
