@@ -87,7 +87,7 @@ export function EnteralConfigSettings({ clientId }: EnteralConfigSettingsProps) 
       setScheduleTimesStr(config.feed_schedule_times?.join(',') || '');
       setFeedingSchedule(
         Array.isArray(config.feeding_schedule) && config.feeding_schedule.length > 0
-          ? config.feeding_schedule
+          ? migrateScheduleFormat(config.feeding_schedule as any[])
           : []
       );
       setGraceWindow(String(config.grace_window_mins));

@@ -69,7 +69,7 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
   // Schedule-based targets
   const schedule = useMemo(() => {
     if (Array.isArray(config?.feeding_schedule) && config.feeding_schedule.length > 0) {
-      return config.feeding_schedule;
+      return migrateScheduleFormat(config.feeding_schedule as any[]);
     }
     return [];
   }, [config?.feeding_schedule]);
