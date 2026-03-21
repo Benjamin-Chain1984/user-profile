@@ -152,14 +152,14 @@ export function EnteralFeedLogForm({ clientId, config, open, onOpenChange }: Ent
           </div>
 
           {/* Scheduled Time */}
-          {scheduleTimes.length > 0 && (
+          {feedScheduleEntries.length > 0 && (
             <div className="space-y-2">
-              <Label>Scheduled Time</Label>
+              <Label>Scheduled Feed</Label>
               <Select value={scheduledTime} onValueChange={setScheduledTime}>
-                <SelectTrigger><SelectValue placeholder="Select scheduled time" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select scheduled feed" /></SelectTrigger>
                 <SelectContent>
-                  {scheduleTimes.map(t => (
-                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  {feedScheduleEntries.map(entry => (
+                    <SelectItem key={entry.id} value={entry.time}>{entry.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
