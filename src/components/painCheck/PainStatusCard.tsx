@@ -96,9 +96,6 @@ function NextDueBanner({ info }: { info: NextDueInfo }) {
       </div>
       <div className="text-right shrink-0">
         <span className="font-semibold">{countdown}</span>
-        <span className="text-xs text-muted-foreground ml-1">
-          ({format(info.dueDate, 'h:mm a')})
-        </span>
       </div>
     </div>
   );
