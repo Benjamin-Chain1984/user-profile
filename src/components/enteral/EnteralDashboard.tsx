@@ -16,7 +16,9 @@ import { RoleTabsTrigger } from '@/components/ui/role-tabs-trigger';
 import { StatusBadge } from '@/components/ideal/StatusBadge';
 import { useEnteralConfig, useEnteralFeedLogs, useEnteralMedicationLogs, useEnteralStomaChecks, useEnteralMedications, useEnteralFlushLogs } from '@/hooks/useEnteral';
 import { calculateEnteralStatus } from '@/utils/enteralStatusCalculator';
-import { tubeRequiresStomaCheck, TUBE_TYPES } from '@/types/enteral';
+import { tubeRequiresStomaCheck, TUBE_TYPES, calculateEnteralStomaStatus } from '@/types/enteral';
+import type { EnteralStomaFinding, EnteralStomaPainLevel } from '@/types/enteral';
+import { differenceInHours, parseISO } from 'date-fns';
 
 import { EnteralTrafficLightCard } from './EnteralTrafficLightCard';
 import { EnteralFeedLogForm } from './EnteralFeedLogForm';
