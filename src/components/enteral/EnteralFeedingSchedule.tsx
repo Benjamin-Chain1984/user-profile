@@ -119,7 +119,7 @@ export function EnteralFeedingSchedule({ schedule, onChange, readOnly = false }:
                       type="time"
                       value={entry.time}
                       onChange={e => updateFeed(entry.id, 'time', e.target.value)}
-                      className="h-7 w-[100px] text-sm"
+                      className="h-8 w-[110px] text-sm"
                     />
                   )}
                 </div>
