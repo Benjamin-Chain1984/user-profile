@@ -38,33 +38,29 @@ export function EnteralFeedLogForm({ clientId, config, open, onOpenChange }: Ent
   const configMethod = config?.feeding_type || null;
   const methodLabel = FEED_METHODS.find(m => m.value === configMethod)?.label || configMethod;
 
-  // Derive schedule times
-  const scheduleTimes = useMemo(() => {
-    const times = new Set<string>();
-    if (Array.isArray(config?.feeding_schedule)) {
-      for (const entry of config.feeding_schedule) {
-        if ((entry as any).time) times.add((entry as any).time);
-      }
-    }
-    if (times.size === 0 && Array.isArray(config?.feed_schedule_times)) {
-      for (const t of config.feed_schedule_times) {
-        times.add(t);
-      }
-    }
-    return Array.from(times).sort();
-  }, [config?.feeding_schedule, config?.feed_schedule_times]);
+  // Derive feed schedule entries (only type === 'feed')
+  const feedScheduleEntries = useMemo(() => {
+    if (!Array.isArray(config?.feeding_schedule)) return [];
+    return config.feeding_schedule
+      .filter((entry: any) => entry.type === 'feed')
+      .sort((a: any, b: any) => (a.time || '').localeCompare(b.time || ''))
+      .map((entry: any, idx: number) => ({
+        id: entry.id,
+        time: entry.time || '',
+        label: `Feed ${idx + 1} — ${entry.time || 'No time'}`,
+        feed_ml: entry.feed_ml || 0,
+        flush_before_ml: entry.flush_before_ml || 0,
+        flush_after_ml: entry.flush_after_ml || 0,
+      }));
+  }, [config?.feeding_schedule]);
 
-  // Get recommended feed amount
-  const recommendedAmount = useMemo(() => {
-    if (!config?.feeding_schedule || !Array.isArray(config.feeding_schedule)) return null;
-    const formulaFeeds = config.feeding_schedule.filter((e: any) => e.activity === 'formula_feed');
-    if (formulaFeeds.length === 0) return null;
-    if (scheduledTime) {
-      const match = formulaFeeds.find((e: any) => e.time === scheduledTime);
-      if (match) return (match as any).amount_ml;
-    }
-    return (formulaFeeds[0] as any).amount_ml || null;
-  }, [config?.feeding_schedule, scheduledTime]);
+  // Get recommended amounts based on selected scheduled time
+  const selectedEntry = useMemo(() => {
+    if (!scheduledTime) return null;
+    return feedScheduleEntries.find(e => e.time === scheduledTime) || null;
+  }, [feedScheduleEntries, scheduledTime]);
+
+  const recommendedAmount = selectedEntry?.feed_ml || null;
 
   // Pre-fill flush defaults from config when form opens or config changes
   const defaultFlushBefore = config?.flush_before_feed_ml || 30;
