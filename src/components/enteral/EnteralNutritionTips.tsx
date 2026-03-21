@@ -140,26 +140,6 @@ export function EnteralNutritionTips() {
           </ul>
         </CardContent>
       </Card>
-
-      {/* Other Feeding Schedules (Reference) */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-amber-500" />
-            Other Feeding Schedules (For Reference)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-3">
-            {OTHER_SCHEDULES.map((item, i) => (
-              <li key={i}>
-                <p className="text-sm font-medium">{item.label}:</p>
-                <p className="text-sm text-muted-foreground">{item.example}</p>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
     </div>
   );
 }
