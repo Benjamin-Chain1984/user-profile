@@ -200,6 +200,7 @@ export function VitalTilesDashboard({ clientId, onVitalClick }: VitalTilesDashbo
               status={vitalData.temperature.status}
               lastRecordedAt={vitalData.temperature.lastRecordedAt}
               trend={vitalData.temperature.trend}
+              hasAlteredCriteria={!!criteriaMap['temperature']?.approved_at}
               onClick={() => onVitalClick?.('temperature')}
             />
           )}
@@ -212,6 +213,7 @@ export function VitalTilesDashboard({ clientId, onVitalClick }: VitalTilesDashbo
               status={vitalData.bp.status}
               lastRecordedAt={vitalData.bp.lastRecordedAt}
               trend={vitalData.bp.trend}
+              hasAlteredCriteria={!!criteriaMap['bp_systolic']?.approved_at || !!criteriaMap['bp_diastolic']?.approved_at}
               onClick={() => onVitalClick?.('bp_systolic')}
             />
           )}
@@ -224,6 +226,7 @@ export function VitalTilesDashboard({ clientId, onVitalClick }: VitalTilesDashbo
               status={vitalData.oxygen.status}
               lastRecordedAt={vitalData.oxygen.lastRecordedAt}
               trend={vitalData.oxygen.trend}
+              hasAlteredCriteria={!!criteriaMap['oxygen']?.approved_at}
               onClick={() => onVitalClick?.('oxygen')}
             />
           )}
@@ -236,6 +239,7 @@ export function VitalTilesDashboard({ clientId, onVitalClick }: VitalTilesDashbo
               status={vitalData.heart_rate.status}
               lastRecordedAt={vitalData.heart_rate.lastRecordedAt}
               trend={vitalData.heart_rate.trend}
+              hasAlteredCriteria={!!criteriaMap['heart_rate']?.approved_at}
               onClick={() => onVitalClick?.('heart_rate')}
             />
           )}
@@ -248,6 +252,7 @@ export function VitalTilesDashboard({ clientId, onVitalClick }: VitalTilesDashbo
               status={vitalData.respiratory.status}
               lastRecordedAt={vitalData.respiratory.lastRecordedAt}
               trend={vitalData.respiratory.trend}
+              hasAlteredCriteria={!!criteriaMap['respiratory']?.approved_at}
               onClick={() => onVitalClick?.('respiratory')}
             />
           )}

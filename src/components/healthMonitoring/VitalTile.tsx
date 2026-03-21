@@ -4,6 +4,7 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { 
   Thermometer, 
@@ -14,7 +15,8 @@ import {
   Timer,
   TrendingUp,
   TrendingDown,
-  Minus
+  Minus,
+  AlertTriangle
 } from 'lucide-react';
 import { type VitalType, type VitalStatus, VITAL_THRESHOLDS } from '@/types/healthMonitoring';
 import { formatDistanceToNow } from 'date-fns';
@@ -25,6 +27,7 @@ interface VitalTileProps {
   status: VitalStatus | null;
   lastRecordedAt?: string;
   trend?: 'up' | 'down' | 'stable' | null;
+  hasAlteredCriteria?: boolean;
   onClick?: () => void;
   className?: string;
 }
@@ -53,6 +56,7 @@ export function VitalTile({
   status,
   lastRecordedAt,
   trend,
+  hasAlteredCriteria,
   onClick,
   className,
 }: VitalTileProps) {
@@ -134,9 +138,26 @@ export function VitalTile({
           </div>
 
           {/* Status Badge */}
-          <Badge className={cn('text-xs shrink-0', getStatusBadgeStyles())}>
-            {getStatusLabel()}
-          </Badge>
+          <div className="flex flex-col items-end gap-1">
+            <Badge className={cn('text-xs shrink-0', getStatusBadgeStyles())}>
+              {getStatusLabel()}
+            </Badge>
+            {hasAlteredCriteria && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="outline" className="text-[10px] border-amber-300 bg-amber-50 text-amber-700 cursor-help gap-0.5">
+                      <AlertTriangle className="h-2.5 w-2.5" />
+                      Altered
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[240px] text-xs">
+                    <p>Using altered criteria set by a medical professional for this person.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
         </div>
 
         {/* Footer info */}
@@ -174,6 +195,7 @@ interface BpTileProps {
   status: VitalStatus | null;
   lastRecordedAt?: string;
   trend?: 'up' | 'down' | 'stable' | null;
+  hasAlteredCriteria?: boolean;
   onClick?: () => void;
   className?: string;
 }
@@ -184,6 +206,7 @@ export function BloodPressureTile({
   status,
   lastRecordedAt,
   trend,
+  hasAlteredCriteria,
   onClick,
   className,
 }: BpTileProps) {
@@ -257,9 +280,26 @@ export function BloodPressureTile({
             </div>
           </div>
 
-          <Badge className={cn('text-xs shrink-0', getStatusBadgeStyles())}>
-            {getStatusLabel()}
-          </Badge>
+          <div className="flex flex-col items-end gap-1">
+            <Badge className={cn('text-xs shrink-0', getStatusBadgeStyles())}>
+              {getStatusLabel()}
+            </Badge>
+            {hasAlteredCriteria && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="outline" className="text-[10px] border-amber-300 bg-amber-50 text-amber-700 cursor-help gap-0.5">
+                      <AlertTriangle className="h-2.5 w-2.5" />
+                      Altered
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[240px] text-xs">
+                    <p>Using altered criteria set by a medical professional for this person.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/50">
