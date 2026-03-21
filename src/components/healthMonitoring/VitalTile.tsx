@@ -15,7 +15,8 @@ import {
   Timer,
   TrendingUp,
   TrendingDown,
-  Minus
+  Minus,
+  AlertTriangle
 } from 'lucide-react';
 import { type VitalType, type VitalStatus, VITAL_THRESHOLDS } from '@/types/healthMonitoring';
 import { formatDistanceToNow } from 'date-fns';
