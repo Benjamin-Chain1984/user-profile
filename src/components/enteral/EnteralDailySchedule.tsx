@@ -153,7 +153,7 @@ export function EnteralDailySchedule({ schedule, feedLogs, flushLogs = [], grace
                         <Droplets className="h-3.5 w-3.5 text-blue-500" />
                       )}
                       <span className={`text-sm font-semibold ${
-                        slot.completed ? 'text-muted-foreground' : 
+                        slot.completed ? 'text-muted-foreground line-through' : 
                         slot.missed ? 'text-destructive' : 
                         slot.late ? 'text-amber-600 dark:text-amber-400' : 
                         'text-foreground'
