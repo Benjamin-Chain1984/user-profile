@@ -18,7 +18,7 @@ import { useEnteralConfig, useEnteralFeedLogs, useEnteralMedicationLogs, useEnte
 import { calculateEnteralStatus } from '@/utils/enteralStatusCalculator';
 import { tubeRequiresStomaCheck, TUBE_TYPES, calculateEnteralStomaStatus } from '@/types/enteral';
 import type { EnteralStomaFinding, EnteralStomaPainLevel } from '@/types/enteral';
-import { differenceInHours, parseISO } from 'date-fns';
+import { differenceInHours, parseISO, format } from 'date-fns';
 
 import { EnteralTrafficLightCard } from './EnteralTrafficLightCard';
 import { EnteralFeedLogForm } from './EnteralFeedLogForm';
