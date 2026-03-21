@@ -187,9 +187,6 @@ export function VitalTilesDashboard({ clientId, onVitalClick }: VitalTilesDashbo
                 </Tooltip>
               </TooltipProvider>
             )}
-            <span className={`text-sm font-medium ${getOverallStatusColor()}`}>
-              {getOverallStatusText()}
-            </span>
           </div>
         </div>
       </CardHeader>
