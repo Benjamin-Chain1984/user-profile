@@ -46,6 +46,84 @@ export function getScheduleTotals(schedule: FeedingScheduleEntry[]) {
   return { formulaTotal, flushTotal, grandTotal: formulaTotal + flushTotal };
 }
 
+/**
+ * Convert old-format schedule entries (activity/amount_ml) to new format (type/feed_ml/flush_before_ml/flush_after_ml).
+ * Groups consecutive water_flush → formula_feed → water_flush into a single "feed" entry.
+ * Standalone water_flush entries become "flush" entries.
+ */
+export function migrateScheduleFormat(raw: any[]): FeedingScheduleEntry[] {
+  if (!Array.isArray(raw) || raw.length === 0) return [];
+
+  // Already new format — has `type` field with 'feed' or 'flush'
+  const first = raw[0];
+  if (first.type === 'feed' || first.type === 'flush') {
+    return raw as FeedingScheduleEntry[];
+  }
+
+  // Old format uses `activity`: 'formula_feed' | 'water_flush'
+  if (!first.activity) return raw as FeedingScheduleEntry[];
+
+  const result: FeedingScheduleEntry[] = [];
+  let i = 0;
+
+  while (i < raw.length) {
+    const entry = raw[i];
+
+    if (entry.activity === 'formula_feed') {
+      // Look backwards for a preceding flush, and forwards for a following flush
+      const prevFlush = i > 0 && raw[i - 1].activity === 'water_flush'
+        ? raw[i - 1].amount_ml || 0 : 0;
+      const nextFlush = i + 1 < raw.length && raw[i + 1].activity === 'water_flush'
+        ? raw[i + 1].amount_ml || 0 : 0;
+
+      // Check if prev flush was already consumed by a prior feed
+      const usePrev = i > 0 && raw[i - 1].activity === 'water_flush' && !raw[i - 1]._consumed;
+
+      result.push({
+        id: entry.id || crypto.randomUUID(),
+        time: entry.time,
+        type: 'feed',
+        feed_ml: entry.amount_ml || 0,
+        flush_before_ml: usePrev ? prevFlush : 0,
+        flush_after_ml: nextFlush,
+      });
+
+      // Mark consumed
+      if (usePrev && i > 0) raw[i - 1]._consumed = true;
+      if (nextFlush && i + 1 < raw.length) {
+        raw[i + 1]._consumed = true;
+        i += 2; // skip the next flush
+      } else {
+        i++;
+      }
+    } else if (entry.activity === 'water_flush') {
+      if (!entry._consumed) {
+        // Standalone flush (not attached to a feed)
+        // But check if the NEXT entry is a formula_feed — if so, skip; it will be consumed
+        if (i + 1 < raw.length && raw[i + 1].activity === 'formula_feed') {
+          // Will be consumed as flush_before by the next iteration
+          i++;
+          continue;
+        }
+        result.push({
+          id: entry.id || crypto.randomUUID(),
+          time: entry.time,
+          type: 'flush',
+          feed_ml: 0,
+          flush_before_ml: 0,
+          flush_after_ml: 0,
+          flush_ml: entry.amount_ml || 0,
+        });
+      }
+      i++;
+    } else {
+      i++;
+    }
+  }
+
+  return result;
+}
+
 export { DEFAULT_SCHEDULE };
 
 /** Helper to get entry total mL */

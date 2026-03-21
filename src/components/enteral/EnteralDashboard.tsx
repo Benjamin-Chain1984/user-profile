@@ -26,7 +26,7 @@ import { EnteralFlushLogForm } from './EnteralFlushLogForm';
 import { EnteralConfigSettings } from './EnteralConfigSettings';
 import { EnteralHistory } from './EnteralHistory';
 import { EnteralLevelInfographic } from './EnteralLevelInfographic';
-import { EnteralFeedingSchedule, getScheduleTotals } from './EnteralFeedingSchedule';
+import { EnteralFeedingSchedule, getScheduleTotals, migrateScheduleFormat } from './EnteralFeedingSchedule';
 import { EnteralNutritionTips } from './EnteralNutritionTips';
 import { EnteralDailySchedule } from './EnteralDailySchedule';
 import { PositioningCheckPanel } from '@/components/iddsi/PositioningCheckPanel';
@@ -69,7 +69,7 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
   // Schedule-based targets
   const schedule = useMemo(() => {
     if (Array.isArray(config?.feeding_schedule) && config.feeding_schedule.length > 0) {
-      return config.feeding_schedule;
+      return migrateScheduleFormat(config.feeding_schedule as any[]);
     }
     return [];
   }, [config?.feeding_schedule]);

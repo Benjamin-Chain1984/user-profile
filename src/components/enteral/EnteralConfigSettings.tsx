@@ -16,7 +16,7 @@ import { RestrictedSection } from '@/components/ui/restricted-section';
 import { ModuleDisclaimer } from '@/components/module/ModuleDisclaimer';
 import { useEnteralConfig, useSaveEnteralConfig, useEnteralMedications, useSaveEnteralMedication } from '@/hooks/useEnteral';
 import { TUBE_TYPES, FORMULA_OPTIONS, FEEDING_TYPES, type TubeType, type FeedingType } from '@/types/enteral';
-import { EnteralFeedingSchedule, DEFAULT_SCHEDULE, type FeedingScheduleEntry } from './EnteralFeedingSchedule';
+import { EnteralFeedingSchedule, DEFAULT_SCHEDULE, migrateScheduleFormat, type FeedingScheduleEntry } from './EnteralFeedingSchedule';
 
 interface EnteralConfigSettingsProps {
   clientId?: string;
@@ -87,7 +87,7 @@ export function EnteralConfigSettings({ clientId }: EnteralConfigSettingsProps) 
       setScheduleTimesStr(config.feed_schedule_times?.join(',') || '');
       setFeedingSchedule(
         Array.isArray(config.feeding_schedule) && config.feeding_schedule.length > 0
-          ? config.feeding_schedule
+          ? migrateScheduleFormat(config.feeding_schedule as any[])
           : []
       );
       setGraceWindow(String(config.grace_window_mins));
