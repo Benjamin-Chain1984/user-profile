@@ -81,6 +81,14 @@ export function HealthMonitoringStatusCard({ clientId }: HealthMonitoringStatusC
     respiratory: <Wind className="h-3 w-3" />,
   };
 
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const nextDue = useMemo(() => getNextDueVital(computed.perVitalStatuses), [computed.perVitalStatuses, now]);
+
   const enabledVitals = computed.perVitalStatuses.filter(v => v.enabled);
 
   return (
@@ -89,6 +97,20 @@ export function HealthMonitoringStatusCard({ clientId }: HealthMonitoringStatusC
       reason={computed.message}
       lastUpdated={computed.latestEntry?.event_occurred_at}
     >
+      {/* Next vital due countdown */}
+      {nextDue && (
+        <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg bg-background/50 border border-current/10">
+          <Activity className="h-4 w-4 text-primary flex-shrink-0" />
+          <div className="flex-1 text-sm">
+            <span className="font-medium">Next: {nextDue.label}</span>
+            <span className="text-muted-foreground"> at {nextDue.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+          </div>
+          <div className="flex items-center gap-1 text-sm font-bold text-primary">
+            <Clock className="h-3.5 w-3.5" />
+            {formatCountdown(nextDue.dueAt.getTime() - now)}
+          </div>
+        </div>
+      )}
       {/* Config missing warning */}
       {computed.configMissing && (
         <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3 mb-3">
