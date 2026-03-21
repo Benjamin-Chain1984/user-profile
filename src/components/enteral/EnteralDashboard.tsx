@@ -242,11 +242,6 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
         </TabsList>
 
         <TabsContent value="tracking" className="space-y-4">
-          {/* Read-only schedule viewer */}
-          {schedule.length > 0 && (
-            <EnteralFeedingSchedule schedule={schedule} readOnly />
-          )}
-
           <EnteralHistory clientId={clientId} />
 
           {/* Tips section */}
