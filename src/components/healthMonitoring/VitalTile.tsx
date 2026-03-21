@@ -294,8 +294,9 @@ export function BloodPressureTile({
                         <Badge variant="outline" className="text-[10px] border-amber-300 bg-amber-50 text-amber-700 cursor-help gap-0.5">
                       <AlertTriangle className="h-2.5 w-2.5" />
                       Altered
-                    </Badge>
-                  </TooltipTrigger>
+                        </Badge>
+                      </span>
+                    </TooltipTrigger>
                   <TooltipContent side="bottom" className="max-w-[240px] text-xs">
                     <p>Using altered criteria set by a medical professional for this person.</p>
                   </TooltipContent>
