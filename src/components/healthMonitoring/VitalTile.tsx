@@ -289,8 +289,9 @@ export function BloodPressureTile({
             {hasAlteredCriteria && (
               <TooltipProvider>
                 <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Badge variant="outline" className="text-[10px] border-amber-300 bg-amber-50 text-amber-700 cursor-help gap-0.5">
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex">
+                        <Badge variant="outline" className="text-[10px] border-amber-300 bg-amber-50 text-amber-700 cursor-help gap-0.5">
                       <AlertTriangle className="h-2.5 w-2.5" />
                       Altered
                     </Badge>
