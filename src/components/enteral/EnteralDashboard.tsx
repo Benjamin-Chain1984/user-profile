@@ -176,9 +176,8 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
                 <div className="space-y-0.5 text-xs text-muted-foreground">
                   <p>{tubeLabel}</p>
                   {config?.tube_size_fr && <p>Size: {config.tube_size_fr} Fr</p>}
-                  {config?.tube_brand && <p>Brand: {config.tube_brand}</p>}
                   {config?.tube_inserted_date && <p>Inserted: {config.tube_inserted_date}</p>}
-                  {config?.change_frequency_weeks && <p>Change every {config.change_frequency_weeks} weeks</p>}
+                  {config?.tube_change_interval_days && <p>Change every {Math.round(config.tube_change_interval_days / 7)} weeks</p>}
                 </div>
               </>
             ) : (
