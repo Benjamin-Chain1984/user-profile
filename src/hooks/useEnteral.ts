@@ -20,8 +20,18 @@ export function useEnteralConfig(clientId?: string) {
   return useQuery({
     queryKey: ['enteral-config', clientId],
     queryFn: async () => {
-      let query = supabase.from('enteral_config').select('*');
-      if (clientId) query = query.eq('client_id', clientId);
+      let query = supabase
+        .from('enteral_config')
+        .select('*')
+        .order('updated_at', { ascending: false })
+        .limit(1);
+
+      if (clientId) {
+        query = query.eq('client_id', clientId);
+      } else {
+        query = query.is('client_id', null);
+      }
+
       const { data, error } = await query.limit(1).maybeSingle();
       if (error) throw error;
       return data as unknown as EnteralConfig | null;
@@ -37,7 +47,12 @@ export function useSaveEnteralConfig(clientId?: string) {
   return useMutation({
     mutationFn: async (config: Partial<EnteralConfig>) => {
       // Check for existing config first (NULL client_id can't use onConflict)
-      let query = supabase.from('enteral_config').select('id');
+      let query = supabase
+        .from('enteral_config')
+        .select('id')
+        .order('updated_at', { ascending: false })
+        .limit(1);
+
       if (clientId) {
         query = query.eq('client_id', clientId);
       } else {
