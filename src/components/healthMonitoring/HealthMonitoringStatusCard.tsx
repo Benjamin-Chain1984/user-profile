@@ -2,18 +2,43 @@
  * HealthMonitoringStatusCard - Uses shared TrafficLightStatusCard
  */
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Activity, Heart, Thermometer, Wind, Timer, AlertCircle, Clock, CheckCircle } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Activity, Heart, Thermometer, Wind, AlertCircle, Clock, CheckCircle } from 'lucide-react';
 import { useVitalSignEntries, useVitalSignAlerts, useAlteredCriteria } from '@/hooks/useHealthMonitoring';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { computeHealthMonitoringStatus } from '@/utils/computeHealthMonitoringStatus';
+import type { PerVitalStatus } from '@/utils/computeHealthMonitoringStatus';
 import type { VitalSignConfig } from '@/types/healthMonitoring';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { TrafficLightStatusCard } from '@/components/shared/TrafficLightStatusCard';
 import { toTrafficLight } from '@/types/trafficLight';
+
+function getNextDueVital(vitals: PerVitalStatus[]): { label: string; dueAt: Date } | null {
+  const now = Date.now();
+  let earliest: { label: string; dueAt: Date } | null = null;
+
+  for (const v of vitals) {
+    if (!v.enabled || !v.expectedIntervalHours) continue;
+    const intervalMs = v.expectedIntervalHours * 3600000;
+    const lastMs = v.lastRecordedAt ? new Date(v.lastRecordedAt).getTime() : 0;
+    const dueMs = lastMs > 0 ? lastMs + intervalMs : now; // if never recorded, due now
+    if (dueMs <= now) continue; // already overdue, skip
+    if (!earliest || dueMs < earliest.dueAt.getTime()) {
+      earliest = { label: v.label, dueAt: new Date(dueMs) };
+    }
+  }
+  return earliest;
+}
+
+function formatCountdown(ms: number): string {
+  const totalMins = Math.max(0, Math.floor(ms / 60000));
+  const h = Math.floor(totalMins / 60);
+  const m = totalMins % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
 
 interface HealthMonitoringStatusCardProps {
   clientId?: string;
@@ -56,6 +81,14 @@ export function HealthMonitoringStatusCard({ clientId }: HealthMonitoringStatusC
     respiratory: <Wind className="h-3 w-3" />,
   };
 
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const nextDue = useMemo(() => getNextDueVital(computed.perVitalStatuses), [computed.perVitalStatuses, now]);
+
   const enabledVitals = computed.perVitalStatuses.filter(v => v.enabled);
 
   return (
@@ -64,6 +97,20 @@ export function HealthMonitoringStatusCard({ clientId }: HealthMonitoringStatusC
       reason={computed.message}
       lastUpdated={computed.latestEntry?.event_occurred_at}
     >
+      {/* Next vital due countdown */}
+      {nextDue && (
+        <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg bg-background/50 border border-current/10">
+          <Activity className="h-4 w-4 text-primary flex-shrink-0" />
+          <div className="flex-1 text-sm">
+            <span className="font-medium">Next: {nextDue.label}</span>
+            <span className="text-muted-foreground"> at {nextDue.dueAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+          </div>
+          <div className="flex items-center gap-1 text-sm font-bold text-primary">
+            <Clock className="h-3.5 w-3.5" />
+            {formatCountdown(nextDue.dueAt.getTime() - now)}
+          </div>
+        </div>
+      )}
       {/* Config missing warning */}
       {computed.configMissing && (
         <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3 mb-3">
