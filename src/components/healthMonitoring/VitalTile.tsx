@@ -280,9 +280,26 @@ export function BloodPressureTile({
             </div>
           </div>
 
-          <Badge className={cn('text-xs shrink-0', getStatusBadgeStyles())}>
-            {getStatusLabel()}
-          </Badge>
+          <div className="flex flex-col items-end gap-1">
+            <Badge className={cn('text-xs shrink-0', getStatusBadgeStyles())}>
+              {getStatusLabel()}
+            </Badge>
+            {hasAlteredCriteria && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="outline" className="text-[10px] border-amber-300 bg-amber-50 text-amber-700 cursor-help gap-0.5">
+                      <AlertTriangle className="h-2.5 w-2.5" />
+                      Altered
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[240px] text-xs">
+                    <p>Using altered criteria set by a medical professional for this person.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/50">
