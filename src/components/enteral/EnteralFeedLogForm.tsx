@@ -155,7 +155,15 @@ export function EnteralFeedLogForm({ clientId, config, open, onOpenChange }: Ent
           {feedScheduleEntries.length > 0 && (
             <div className="space-y-2">
               <Label>Scheduled Feed</Label>
-              <Select value={scheduledTime} onValueChange={setScheduledTime}>
+              <Select value={scheduledTime} onValueChange={(val) => {
+                setScheduledTime(val);
+                const match = feedScheduleEntries.find(e => e.time === val);
+                if (match) {
+                  setFlushBefore(String(match.flush_before_ml || defaultFlushBefore));
+                  setFeedVolume(String(match.feed_ml || ''));
+                  setFlushAfter(String(match.flush_after_ml || defaultFlushAfter));
+                }
+              }}>
                 <SelectTrigger><SelectValue placeholder="Select scheduled feed" /></SelectTrigger>
                 <SelectContent>
                   {feedScheduleEntries.map(entry => (
