@@ -2,18 +2,43 @@
  * HealthMonitoringStatusCard - Uses shared TrafficLightStatusCard
  */
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Activity, Heart, Thermometer, Wind, Timer, AlertCircle, Clock, CheckCircle } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Activity, Heart, Thermometer, Wind, AlertCircle, Clock, CheckCircle } from 'lucide-react';
 import { useVitalSignEntries, useVitalSignAlerts, useAlteredCriteria } from '@/hooks/useHealthMonitoring';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { computeHealthMonitoringStatus } from '@/utils/computeHealthMonitoringStatus';
+import type { PerVitalStatus } from '@/utils/computeHealthMonitoringStatus';
 import type { VitalSignConfig } from '@/types/healthMonitoring';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { TrafficLightStatusCard } from '@/components/shared/TrafficLightStatusCard';
 import { toTrafficLight } from '@/types/trafficLight';
+
+function getNextDueVital(vitals: PerVitalStatus[]): { label: string; dueAt: Date } | null {
+  const now = Date.now();
+  let earliest: { label: string; dueAt: Date } | null = null;
+
+  for (const v of vitals) {
+    if (!v.enabled || !v.expectedIntervalHours) continue;
+    const intervalMs = v.expectedIntervalHours * 3600000;
+    const lastMs = v.lastRecordedAt ? new Date(v.lastRecordedAt).getTime() : 0;
+    const dueMs = lastMs > 0 ? lastMs + intervalMs : now; // if never recorded, due now
+    if (dueMs <= now) continue; // already overdue, skip
+    if (!earliest || dueMs < earliest.dueAt.getTime()) {
+      earliest = { label: v.label, dueAt: new Date(dueMs) };
+    }
+  }
+  return earliest;
+}
+
+function formatCountdown(ms: number): string {
+  const totalMins = Math.max(0, Math.floor(ms / 60000));
+  const h = Math.floor(totalMins / 60);
+  const m = totalMins % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
 
 interface HealthMonitoringStatusCardProps {
   clientId?: string;
