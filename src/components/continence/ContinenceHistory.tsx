@@ -141,9 +141,11 @@ export function ContinenceHistory({ clientId }: ContinenceHistoryProps) {
                           </div>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          <Badge variant="outline">
-                            Reason: {getChangeReasonLabel(change.change_reason)}
-                          </Badge>
+                          {change.change_reason.split(',').map((r) => (
+                            <Badge key={r} variant="outline">
+                              {getChangeReasonLabel(r.trim())}
+                            </Badge>
+                          ))}
                           {renderOnBehalfBadge(change)}
                         </div>
                         {change.notes && (

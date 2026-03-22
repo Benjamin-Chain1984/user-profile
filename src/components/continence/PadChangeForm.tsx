@@ -74,7 +74,7 @@ export function PadChangeForm({
   const [scheduledTime, setScheduledTime] = useState('');
   const [padType, setPadType] = useState<PadType>('pull_up');
   const [padCondition, setPadCondition] = useState<PadCondition>('dry');
-  const [changeReason, setChangeReason] = useState<ChangeReason>('scheduled');
+  const [changeReasons, setChangeReasons] = useState<ChangeReason[]>(['scheduled']);
   const [notes, setNotes] = useState('');
 
   // On behalf of
@@ -116,10 +116,18 @@ export function PadChangeForm({
   const handleScheduleTimeChange = (value: string) => {
     setScheduledTime(value);
     if (value === 'unscheduled') {
-      setChangeReason('other');
-    } else {
-      setChangeReason('scheduled');
+      setChangeReasons(prev => prev.filter(r => r !== 'scheduled'));
+    } else if (!changeReasons.includes('scheduled')) {
+      setChangeReasons(prev => [...prev, 'scheduled']);
     }
+  };
+
+  const toggleChangeReason = (reason: ChangeReason) => {
+    setChangeReasons(prev =>
+      prev.includes(reason)
+        ? prev.filter(r => r !== reason)
+        : [...prev, reason]
+    );
   };
 
   const isOnBehalfUsed = onBehalfName.trim() !== '' || onBehalfReason !== '';
@@ -141,10 +149,9 @@ export function PadChangeForm({
       await addChange.mutateAsync({
         pad_type: padType,
         pad_condition: padCondition,
-        change_reason: changeReason,
+        change_reason: changeReasons.join(',') as ChangeReason,
         scheduled_time: isScheduled ? scheduledTime : null,
         notes: notes || undefined,
-        event_occurred_at: new Date().toISOString(),
         recorded_on_behalf_of_name: isOnBehalfUsed ? onBehalfName : undefined,
         recorded_on_behalf_of_role: isOnBehalfUsed ? onBehalfRole : undefined,
         recorded_on_behalf_of_reason: isOnBehalfUsed
@@ -169,7 +176,7 @@ export function PadChangeForm({
     setScheduledTime('');
     setPadType('pull_up');
     setPadCondition('dry');
-    setChangeReason('scheduled');
+    setChangeReasons(['scheduled']);
     setNotes('');
     setOnBehalfOpen(false);
     setOnBehalfName('');
@@ -337,9 +344,9 @@ export function PadChangeForm({
                   <Button
                     key={reason.value}
                     type="button"
-                    variant={changeReason === reason.value ? 'default' : 'outline'}
+                    variant={changeReasons.includes(reason.value) ? 'default' : 'outline'}
                     className="justify-start"
-                    onClick={() => setChangeReason(reason.value)}
+                    onClick={() => toggleChangeReason(reason.value)}
                   >
                     {reason.label}
                   </Button>
