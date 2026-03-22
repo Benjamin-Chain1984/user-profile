@@ -282,7 +282,7 @@ export function useEnteralFlushLogs(clientId?: string) {
       if (clientId) query = query.eq('client_id', clientId);
       const { data, error } = await query;
       if (error) throw error;
-      return (data || []) as any[];
+      return enrichWithStaffNames((data || []) as any[]);
     },
   });
 }
