@@ -121,7 +121,7 @@ export function EnteralFlushLogForm({ clientId, config, open, onOpenChange }: En
                 <SelectTrigger><SelectValue placeholder="Select scheduled time" /></SelectTrigger>
                 <SelectContent>
                   {scheduleTimes.map(t => (
-                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
