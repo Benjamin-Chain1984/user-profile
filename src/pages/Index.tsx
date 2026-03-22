@@ -34,7 +34,8 @@ function AppContent() {
             <ProfileHeader />
             
             {/* Pause/Resume Button */}
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2 flex-wrap">
+              <UndoButton />
               <PauseResumeButton
                 isPaused={isMonitoringPaused}
                 onPause={pauseMonitoring}

@@ -21,7 +21,8 @@ export type AuditAction =
   | 'PHONE_CHANGED'
    | 'ACCESS_DENIED_ROLE'
    | 'MONITORING_PAUSED'
-   | 'MONITORING_RESUMED';
+   | 'MONITORING_RESUMED'
+   | 'UNDO_ENTRY';
 
 export interface AuditEvent {
   id: string;
