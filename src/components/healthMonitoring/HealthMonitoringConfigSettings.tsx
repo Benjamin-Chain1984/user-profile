@@ -12,17 +12,49 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Link } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { 
   User, Bell, AlertTriangle, Activity, Settings, ShieldAlert, 
-  Thermometer, Heart, Wind, Gauge, Clock
+  Thermometer, Heart, Wind, Gauge, Clock, Scale, Droplets, Moon, Stethoscope
 } from 'lucide-react';
 import { useVitalSignConfig } from '@/hooks/useHealthMonitoring';
 import { AlteredCriteriaSettings } from './AlteredCriteriaSettings';
 import { MONITORING_FREQUENCIES } from '@/types/ideal';
 import { cn } from '@/lib/utils';
+
+const RELATED_MODULES = [
+  {
+    id: 'pain-assessment',
+    name: 'Pain Assessment',
+    description: 'Identify discomfort that may correlate with vital sign changes',
+    icon: Stethoscope,
+    path: '/module/pain-check'
+  },
+  {
+    id: 'fluid-balance',
+    name: 'Hydration / Fluid Balance',
+    description: 'Monitor fluid intake that impacts blood pressure and hydration',
+    icon: Droplets,
+    path: '/module/hydration'
+  },
+  {
+    id: 'weight',
+    name: 'Weight Chart',
+    description: 'Track weight changes that may affect cardiovascular health',
+    icon: Scale,
+    path: '/module/weight'
+  },
+  {
+    id: 'health-prevention',
+    name: 'Health Prevention',
+    description: 'Proactive screening and immunisation tracking',
+    icon: Heart,
+    path: '/module/health-prevention'
+  },
+];
 
 const configSchema = z.object({
   temperature_enabled: z.boolean(),
@@ -348,15 +380,34 @@ export function HealthMonitoringConfigSettings({ clientId }: HealthMonitoringCon
         {/* Related Modules */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Works Well With</CardTitle>
+            <CardTitle className="text-lg">Other Recommended Related Modules</CardTitle>
+            <CardDescription>
+              Comprehensive care involves monitoring multiple aspects of health
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="outline">Pain Assessment</Badge>
-              <Badge variant="outline">Fluid Balance</Badge>
-              <Badge variant="outline">Weight & BMI</Badge>
-              <Badge variant="outline">Health Prevention</Badge>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {RELATED_MODULES.map((module) => (
+                <Link 
+                  key={module.id} 
+                  to={module.path}
+                  className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                >
+                  <div className="p-2 rounded-md bg-primary/10">
+                    <module.icon className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm">{module.name}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">
+                      {module.description}
+                    </p>
+                  </div>
+                </Link>
+              ))}
             </div>
+            <p className="text-xs text-muted-foreground mt-4">
+              Always consult a healthcare professional to ensure modules are clinically valid and set according to individual need.
+            </p>
           </CardContent>
         </Card>
 
