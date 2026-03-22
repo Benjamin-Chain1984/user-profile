@@ -74,7 +74,7 @@ export function PadChangeForm({
   const [scheduledTime, setScheduledTime] = useState('');
   const [padType, setPadType] = useState<PadType>('pull_up');
   const [padCondition, setPadCondition] = useState<PadCondition>('dry');
-  const [changeReason, setChangeReason] = useState<ChangeReason>('scheduled');
+  const [changeReasons, setChangeReasons] = useState<ChangeReason[]>(['scheduled']);
   const [notes, setNotes] = useState('');
 
   // On behalf of
