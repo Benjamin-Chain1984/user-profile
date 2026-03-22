@@ -116,10 +116,18 @@ export function PadChangeForm({
   const handleScheduleTimeChange = (value: string) => {
     setScheduledTime(value);
     if (value === 'unscheduled') {
-      setChangeReason('other');
-    } else {
-      setChangeReason('scheduled');
+      setChangeReasons(prev => prev.filter(r => r !== 'scheduled'));
+    } else if (!changeReasons.includes('scheduled')) {
+      setChangeReasons(prev => [...prev, 'scheduled']);
     }
+  };
+
+  const toggleChangeReason = (reason: ChangeReason) => {
+    setChangeReasons(prev =>
+      prev.includes(reason)
+        ? prev.filter(r => r !== reason)
+        : [...prev, reason]
+    );
   };
 
   const isOnBehalfUsed = onBehalfName.trim() !== '' || onBehalfReason !== '';
