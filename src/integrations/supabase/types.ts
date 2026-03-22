@@ -2081,6 +2081,7 @@ export type Database = {
           recorded_on_behalf_of_name: string | null
           recorded_on_behalf_of_reason: string | null
           recorded_on_behalf_of_role: string | null
+          scheduled_time: string | null
           undone_at: string | null
           undone_by: string | null
         }
@@ -2101,6 +2102,7 @@ export type Database = {
           recorded_on_behalf_of_name?: string | null
           recorded_on_behalf_of_reason?: string | null
           recorded_on_behalf_of_role?: string | null
+          scheduled_time?: string | null
           undone_at?: string | null
           undone_by?: string | null
         }
@@ -2121,6 +2123,7 @@ export type Database = {
           recorded_on_behalf_of_name?: string | null
           recorded_on_behalf_of_reason?: string | null
           recorded_on_behalf_of_role?: string | null
+          scheduled_time?: string | null
           undone_at?: string | null
           undone_by?: string | null
         }
