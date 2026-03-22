@@ -176,7 +176,7 @@ export function PadChangeForm({
     setScheduledTime('');
     setPadType('pull_up');
     setPadCondition('dry');
-    setChangeReason('scheduled');
+    setChangeReasons(['scheduled']);
     setNotes('');
     setOnBehalfOpen(false);
     setOnBehalfName('');
