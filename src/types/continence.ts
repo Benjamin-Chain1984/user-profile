@@ -49,6 +49,7 @@ export interface PadChangeLog {
   pad_type: PadType;
   pad_condition: PadCondition;
   change_reason: ChangeReason;
+  scheduled_time: string | null;
   notes: string | null;
   recorded_on_behalf_of_name: string | null;
   recorded_on_behalf_of_role: string | null;

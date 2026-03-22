@@ -1,8 +1,8 @@
 /**
- * Pad Change Form - Log pad changes with optional on-behalf-of
+ * Pad Change Form - Log pad changes with scheduled time dropdown
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -49,6 +49,7 @@ import {
   PadCondition,
   ChangeReason,
 } from '@/types/continence';
+import { useCurrentStaff } from '@/hooks/useCurrentStaff';
 import { format } from 'date-fns';
 
 interface PadChangeFormProps {
@@ -68,16 +69,13 @@ export function PadChangeForm({
 }: PadChangeFormProps) {
   const { addChange } = usePadChanges(clientId);
   const { config } = useContinenceConfig(clientId);
+  const { staffName } = useCurrentStaff();
 
+  const [scheduledTime, setScheduledTime] = useState('');
   const [padType, setPadType] = useState<PadType>('pull_up');
   const [padCondition, setPadCondition] = useState<PadCondition>('dry');
   const [changeReason, setChangeReason] = useState<ChangeReason>('scheduled');
   const [notes, setNotes] = useState('');
-  
-  // Event occurred at
-  const [eventDate, setEventDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [eventTime, setEventTime] = useState(format(new Date(), 'HH:mm'));
-  const [showEventTime, setShowEventTime] = useState(false);
 
   // On behalf of
   const [onBehalfOpen, setOnBehalfOpen] = useState(false);
@@ -90,7 +88,39 @@ export function PadChangeForm({
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const enableOnBehalf = config?.enable_uti_testing !== undefined; // Placeholder - should check enable_log_on_behalf
+  const enableOnBehalf = config?.enable_uti_testing !== undefined;
+
+  // Build schedule time dropdown from config
+  const scheduleTimes = useMemo(() => {
+    const items: { value: string; label: string }[] = [];
+
+    if (config?.schedule_type === 'fixed_times' && Array.isArray(config.fixed_times)) {
+      for (const time of config.fixed_times) {
+        items.push({ value: time, label: `Scheduled Pad Change — ${time}` });
+      }
+    } else if (config?.schedule_type === 'hourly' && config.interval_hours) {
+      // Generate hourly slots starting from 00:00
+      for (let h = 0; h < 24; h += config.interval_hours) {
+        const t = `${String(h).padStart(2, '0')}:00`;
+        items.push({ value: t, label: `Scheduled Pad Change — ${t}` });
+      }
+    }
+
+    items.sort((a, b) => a.value.localeCompare(b.value));
+    // Always add unscheduled option
+    items.push({ value: 'unscheduled', label: 'Unscheduled Pad Change' });
+    return items;
+  }, [config?.schedule_type, config?.fixed_times, config?.interval_hours]);
+
+  // Auto-set change reason based on schedule selection
+  const handleScheduleTimeChange = (value: string) => {
+    setScheduledTime(value);
+    if (value === 'unscheduled') {
+      setChangeReason('other');
+    } else {
+      setChangeReason('scheduled');
+    }
+  };
 
   const isOnBehalfUsed = onBehalfName.trim() !== '' || onBehalfReason !== '';
   const isOnBehalfValid = !isOnBehalfUsed || (onBehalfName.trim() !== '' && onBehalfReason !== '');
@@ -106,28 +136,26 @@ export function PadChangeForm({
   const submitEntry = async () => {
     setIsSubmitting(true);
     try {
-      const eventOccurredAt = showEventTime || isOnBehalfUsed
-        ? new Date(`${eventDate}T${eventTime}`).toISOString()
-        : new Date().toISOString();
+      const isScheduled = scheduledTime && scheduledTime !== 'unscheduled';
 
       await addChange.mutateAsync({
         pad_type: padType,
         pad_condition: padCondition,
         change_reason: changeReason,
+        scheduled_time: isScheduled ? scheduledTime : null,
         notes: notes || undefined,
-        event_occurred_at: eventOccurredAt,
+        event_occurred_at: new Date().toISOString(),
         recorded_on_behalf_of_name: isOnBehalfUsed ? onBehalfName : undefined,
         recorded_on_behalf_of_role: isOnBehalfUsed ? onBehalfRole : undefined,
-        recorded_on_behalf_of_reason: isOnBehalfUsed 
-          ? (onBehalfReason === 'other' ? otherReason : onBehalfReason) 
+        recorded_on_behalf_of_reason: isOnBehalfUsed
+          ? (onBehalfReason === 'other' ? otherReason : onBehalfReason)
           : undefined,
       });
 
       resetForm();
       onOpenChange(false);
       onComplete?.();
-      
-      // Prompt skin check after pad change
+
       if (promptSkinCheck) {
         promptSkinCheck();
       }
@@ -138,13 +166,11 @@ export function PadChangeForm({
   };
 
   const resetForm = () => {
+    setScheduledTime('');
     setPadType('pull_up');
     setPadCondition('dry');
     setChangeReason('scheduled');
     setNotes('');
-    setEventDate(format(new Date(), 'yyyy-MM-dd'));
-    setEventTime(format(new Date(), 'HH:mm'));
-    setShowEventTime(false);
     setOnBehalfOpen(false);
     setOnBehalfName('');
     setOnBehalfRole('');
@@ -164,6 +190,28 @@ export function PadChangeForm({
           </DialogHeader>
 
           <div className="space-y-6 py-4">
+            {/* Logged by */}
+            <div className="text-sm text-muted-foreground">
+              Logged by: <strong>{staffName}</strong>
+            </div>
+
+            {/* Scheduled Time Dropdown */}
+            <div className="space-y-2">
+              <Label>Pad Change Schedule</Label>
+              <Select value={scheduledTime} onValueChange={handleScheduleTimeChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select scheduled time" />
+                </SelectTrigger>
+                <SelectContent>
+                  {scheduleTimes.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* On Behalf Of Section */}
             {enableOnBehalf && (
               <Collapsible open={onBehalfOpen} onOpenChange={setOnBehalfOpen}>
@@ -241,69 +289,8 @@ export function PadChangeForm({
                       />
                     </div>
                   )}
-
-                  {/* Event Occurred At (shown when on behalf is used) */}
-                  <div className="space-y-2 pt-2 border-t">
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <Label>Event Occurred At</Label>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Use the time the pad change actually occurred. This will update the monitoring timeline and alerts.
-                    </p>
-                    <div className="flex gap-2">
-                      <Input
-                        type="date"
-                        value={eventDate}
-                        onChange={(e) => setEventDate(e.target.value)}
-                        className="flex-1"
-                      />
-                      <Input
-                        type="time"
-                        value={eventTime}
-                        onChange={(e) => setEventTime(e.target.value)}
-                        className="w-32"
-                      />
-                    </div>
-                  </div>
                 </CollapsibleContent>
               </Collapsible>
-            )}
-
-            {/* Late Entry Option (when not using on behalf) */}
-            {!onBehalfOpen && (
-              <div className="space-y-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-2 text-muted-foreground"
-                  onClick={() => setShowEventTime(!showEventTime)}
-                >
-                  <Clock className="h-4 w-4" />
-                  {showEventTime ? 'Hide' : 'Log'} Late Entry
-                </Button>
-                {showEventTime && (
-                  <div className="p-4 bg-muted/50 rounded-lg border space-y-2">
-                    <p className="text-xs text-muted-foreground">
-                      Use the time the pad change actually occurred.
-                    </p>
-                    <div className="flex gap-2">
-                      <Input
-                        type="date"
-                        value={eventDate}
-                        onChange={(e) => setEventDate(e.target.value)}
-                        className="flex-1"
-                      />
-                      <Input
-                        type="time"
-                        value={eventTime}
-                        onChange={(e) => setEventTime(e.target.value)}
-                        className="w-32"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
             )}
 
             {/* Pad Type */}
