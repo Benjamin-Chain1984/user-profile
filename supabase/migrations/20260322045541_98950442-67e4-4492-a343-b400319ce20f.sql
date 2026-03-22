@@ -1,0 +1,1 @@
+ALTER TABLE public.enteral_flush_logs ADD COLUMN scheduled_time text DEFAULT NULL;

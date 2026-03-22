@@ -293,7 +293,7 @@ export function useLogEnteralFlush(clientId?: string) {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async (entry: { flush_reason: string; flush_volume_ml: number; notes: string | null }) => {
+    mutationFn: async (entry: { flush_reason: string; flush_volume_ml: number; notes: string | null; scheduled_time?: string | null }) => {
       const { error } = await supabase.from('enteral_flush_logs').insert({
         ...entry,
         client_id: clientId || null,

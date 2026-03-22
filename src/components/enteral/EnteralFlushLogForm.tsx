@@ -86,10 +86,12 @@ export function EnteralFlushLogForm({ clientId, config, open, onOpenChange }: En
   const handleSubmit = () => {
     if (!flushReason || !flushVolume) return;
 
+    const isScheduled = scheduledTime && scheduledTime !== 'extra_water';
     logFlush.mutate({
       flush_reason: flushReason,
       flush_volume_ml: parseInt(flushVolume),
       notes: notes || null,
+      scheduled_time: isScheduled ? scheduledTime : null,
     }, {
       onSuccess: () => {
         resetForm();
