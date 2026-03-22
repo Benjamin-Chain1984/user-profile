@@ -70,10 +70,19 @@ export function EnteralDailySchedule({ schedule, feedLogs, flushLogs = [], grace
           matchedTime = new Date(todayFeedLogs[idx].event_occurred_at);
         }
       } else {
+        // For standalone flush schedule slots, match any flush log that:
+        // 1. Falls within the grace window of the scheduled time, OR
+        // 2. Has a flush_reason of 'routine_flush' or 'extra_hydration' and is the closest unmatched flush
         const idx = todayFlushLogs.findIndex((log, i) => {
           if (usedFlushIds.has(i)) return false;
-          const logTime = new Date(log.event_occurred_at);
-          return Math.abs(logTime.getTime() - dueAt.getTime()) <= graceMs && log.flush_volume_ml > 0;
+          if (log.flush_volume_ml <= 0) return false;
+          // Exclude feed-related flushes — those are captured via feed logs
+          const reason = log.flush_reason || '';
+          if (reason === 'flush_before_feed' || reason === 'flush_after_feed') return false;
+          const logTime = new Date(log.event_occurred_at).getTime();
+          const dueTime = dueAt.getTime();
+          // Match if within grace window OR if the flush was logged after the due time (late administration)
+          return Math.abs(logTime - dueTime) <= graceMs || (logTime >= dueTime && logTime <= dueTime + graceMs * 3);
         });
         if (idx !== -1) {
           usedFlushIds.add(idx);
