@@ -39,21 +39,27 @@ export function EnteralFlushLogForm({ clientId, config, open, onOpenChange }: En
   const [flushVolume, setFlushVolume] = useState('');
   const [notes, setNotes] = useState('');
 
-  // Derive all unique times from the feeding schedule configured in settings
+  // Derive scheduled standalone flush times from the feeding schedule
   const scheduleTimes = useMemo(() => {
-    const times = new Set<string>();
+    const items: { value: string; label: string }[] = [];
     if (Array.isArray(config?.feeding_schedule)) {
       for (const entry of config.feeding_schedule) {
-        if ((entry as any).time) times.add((entry as any).time);
+        const e = entry as any;
+        if (e.type === 'flush' && e.time) {
+          items.push({ value: e.time, label: `Scheduled Flush — ${e.time}` });
+        }
       }
     }
     // Fallback to legacy feed_schedule_times if feeding_schedule is empty
-    if (times.size === 0 && Array.isArray(config?.feed_schedule_times)) {
+    if (items.length === 0 && Array.isArray(config?.feed_schedule_times)) {
       for (const t of config.feed_schedule_times) {
-        times.add(t);
+        items.push({ value: t, label: `Scheduled Flush — ${t}` });
       }
     }
-    return Array.from(times).sort();
+    items.sort((a, b) => a.value.localeCompare(b.value));
+    // Always add Extra Water option
+    items.push({ value: 'extra_water', label: 'Extra Water (unscheduled)' });
+    return items;
   }, [config?.feeding_schedule, config?.feed_schedule_times]);
 
   // Set default volume based on reason and config
@@ -115,7 +121,7 @@ export function EnteralFlushLogForm({ clientId, config, open, onOpenChange }: En
                 <SelectTrigger><SelectValue placeholder="Select scheduled time" /></SelectTrigger>
                 <SelectContent>
                   {scheduleTimes.map(t => (
-                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
