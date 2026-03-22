@@ -25,6 +25,37 @@ import { AlteredCriteriaSettings } from './AlteredCriteriaSettings';
 import { MONITORING_FREQUENCIES } from '@/types/ideal';
 import { cn } from '@/lib/utils';
 
+const RELATED_MODULES = [
+  {
+    id: 'pain-assessment',
+    name: 'Pain Assessment',
+    description: 'Identify discomfort that may correlate with vital sign changes',
+    icon: Stethoscope,
+    path: '/module/pain-check'
+  },
+  {
+    id: 'fluid-balance',
+    name: 'Hydration / Fluid Balance',
+    description: 'Monitor fluid intake that impacts blood pressure and hydration',
+    icon: Droplets,
+    path: '/module/hydration'
+  },
+  {
+    id: 'weight',
+    name: 'Weight Chart',
+    description: 'Track weight changes that may affect cardiovascular health',
+    icon: Scale,
+    path: '/module/weight'
+  },
+  {
+    id: 'health-prevention',
+    name: 'Health Prevention',
+    description: 'Proactive screening and immunisation tracking',
+    icon: Heart,
+    path: '/module/health-prevention'
+  },
+];
+
 const configSchema = z.object({
   temperature_enabled: z.boolean(),
   bp_enabled: z.boolean(),
