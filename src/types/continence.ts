@@ -7,7 +7,7 @@ export type UTITestingFrequency = 'fortnightly' | 'weekly' | 'twice_weekly' | 'i
 export type SkinCheckFrequency = 'daily' | 'twice_daily' | 'three_times_daily' | 'every_pad_change';
 
 export type PadType = 'pull_up' | 'all_in_one' | 'insert_pad' | 'night_pad' | 'other';
-export type PadCondition = 'dry' | 'lightly_wet' | 'soaked' | 'soiled_urine' | 'soiled_faeces' | 'mixed';
+export type PadCondition = 'dry' | 'lightly_wet' | 'soaked' | 'pad_damaged' | 'soiled_faeces' | 'mixed';
 export type ChangeReason = 'scheduled' | 'wet' | 'soiled' | 'smell' | 'skin_irritation' | 'other';
 
 export type SkinArea = 'groin' | 'perineum' | 'buttocks' | 'inner_thighs' | 'sacrum' | 'skin_folds' | 'other';
