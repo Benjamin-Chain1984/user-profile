@@ -52,26 +52,26 @@ export function EnteralHistory({ clientId }: EnteralHistoryProps) {
   const { data: stomaChecks = [] } = useEnteralStomaChecks(clientId);
   const { data: flushLogs = [] } = useEnteralFlushLogs(clientId);
 
-  const [feedFilter, setFeedFilter] = useState('7d');
-  const [feedShowAll, setFeedShowAll] = useState(false);
-  const [flushFilter, setFlushFilter] = useState('7d');
-  const [flushShowAll, setFlushShowAll] = useState(false);
+  const [activityFilter, setActivityFilter] = useState('7d');
+  const [activityShowAll, setActivityShowAll] = useState(false);
   const [stomaFilter, setStomaFilter] = useState('7d');
   const [stomaShowAll, setStomaShowAll] = useState(false);
 
-  const filteredFeeds = useMemo(() => {
-    const cutoff = getFilterCutoff(feedFilter);
-    return cutoff ? feedLogs.filter(e => new Date(e.event_occurred_at) >= cutoff) : feedLogs;
-  }, [feedLogs, feedFilter]);
+  // Combine feeds and flushes into a single chronological list
+  const combinedActivity = useMemo(() => {
+    const feedItems = feedLogs.map(log => ({ ...log, _type: 'feed' as const }));
+    const flushItems = flushLogs.map((log: any) => ({ ...log, _type: 'flush' as const }));
+    return [...feedItems, ...flushItems].sort(
+      (a, b) => new Date(b.event_occurred_at).getTime() - new Date(a.event_occurred_at).getTime()
+    );
+  }, [feedLogs, flushLogs]);
 
-  const displayedFeeds = feedShowAll ? filteredFeeds : filteredFeeds.slice(0, DISPLAY_LIMIT);
+  const filteredActivity = useMemo(() => {
+    const cutoff = getFilterCutoff(activityFilter);
+    return cutoff ? combinedActivity.filter(e => new Date(e.event_occurred_at) >= cutoff) : combinedActivity;
+  }, [combinedActivity, activityFilter]);
 
-  const filteredFlushes = useMemo(() => {
-    const cutoff = getFilterCutoff(flushFilter);
-    return cutoff ? flushLogs.filter((e: any) => new Date(e.event_occurred_at) >= cutoff) : flushLogs;
-  }, [flushLogs, flushFilter]);
-
-  const displayedFlushes = flushShowAll ? filteredFlushes : filteredFlushes.slice(0, DISPLAY_LIMIT);
+  const displayedActivity = activityShowAll ? filteredActivity : filteredActivity.slice(0, DISPLAY_LIMIT);
 
   const filteredStoma = useMemo(() => {
     const cutoff = getFilterCutoff(stomaFilter);
