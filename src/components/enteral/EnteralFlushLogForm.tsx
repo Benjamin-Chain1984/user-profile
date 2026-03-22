@@ -14,8 +14,6 @@ import { useCurrentStaff } from '@/hooks/useCurrentStaff';
 import type { EnteralConfig } from '@/types/enteral';
 
 const FLUSH_REASONS = [
-  { value: 'flush_before_feed', label: 'Flush Before Feed' },
-  { value: 'flush_after_feed', label: 'Flush After Feed' },
   { value: 'flush_before_medication', label: 'Flush Before Medication' },
   { value: 'flush_after_medication', label: 'Flush After Medication' },
   { value: 'routine_flush', label: 'Routine Flush' },
