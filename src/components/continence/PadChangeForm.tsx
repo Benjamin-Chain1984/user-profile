@@ -148,8 +148,10 @@ export function PadChangeForm({
 
       await addChange.mutateAsync({
         pad_type: padType,
-        change_reason: changeReasons.join(','),
-        event_occurred_at: new Date().toISOString(),
+        pad_condition: padCondition,
+        change_reason: changeReasons.join(',') as ChangeReason,
+        scheduled_time: isScheduled ? scheduledTime : null,
+        notes: notes || undefined,
         recorded_on_behalf_of_name: isOnBehalfUsed ? onBehalfName : undefined,
         recorded_on_behalf_of_role: isOnBehalfUsed ? onBehalfRole : undefined,
         recorded_on_behalf_of_reason: isOnBehalfUsed
