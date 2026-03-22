@@ -1,0 +1,1 @@
+ALTER TABLE public.continence_pad_changes ADD COLUMN scheduled_time text DEFAULT NULL;

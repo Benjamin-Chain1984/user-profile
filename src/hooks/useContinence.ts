@@ -132,6 +132,7 @@ export function usePadChanges(clientId?: string) {
       pad_type: PadType;
       pad_condition: PadCondition;
       change_reason: ChangeReason;
+      scheduled_time?: string | null;
       notes?: string;
       event_occurred_at?: string;
       recorded_on_behalf_of_name?: string;
@@ -143,6 +144,7 @@ export function usePadChanges(clientId?: string) {
         pad_type: entry.pad_type,
         pad_condition: entry.pad_condition,
         change_reason: entry.change_reason,
+        scheduled_time: entry.scheduled_time || null,
         notes: entry.notes || null,
         event_occurred_at: entry.event_occurred_at || new Date().toISOString(),
         recorded_on_behalf_of_name: entry.recorded_on_behalf_of_name || null,

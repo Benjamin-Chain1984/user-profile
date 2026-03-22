@@ -149,9 +149,12 @@ export function ContinenceHistory({ clientId }: ContinenceHistoryProps) {
                         {change.notes && (
                           <p className="text-sm text-muted-foreground">{change.notes}</p>
                         )}
-                        <p className="text-xs text-muted-foreground">
-                          Logged {format(new Date(change.created_at), 'PPp')}
-                        </p>
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          {format(new Date(change.event_occurred_at), 'dd/MM/yy HH:mm')}
+                          {change.scheduled_time
+                            ? ` • Sched: ${change.scheduled_time}`
+                            : ' • Unscheduled'}
+                        </div>
                       </div>
                     </div>
                   ))}
