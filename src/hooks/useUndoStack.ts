@@ -112,6 +112,8 @@ export function useUndoStack() {
   const { data: undoStack = [], isLoading } = useQuery({
     queryKey: ['undo-stack', clientId],
     queryFn: async () => {
+      // Query entries matching the active client OR with null client_id
+      // (some modules store data without client scoping)
       let query = supabase
         .from('undo_action_records')
         .select('*')
@@ -120,7 +122,7 @@ export function useUndoStack() {
         .limit(20);
 
       if (clientId) {
-        query = query.eq('client_id', clientId);
+        query = query.or(`client_id.eq.${clientId},client_id.is.null`);
       } else {
         query = query.is('client_id', null);
       }
