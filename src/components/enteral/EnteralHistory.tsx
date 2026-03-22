@@ -168,6 +168,7 @@ export function EnteralHistory({ clientId }: EnteralHistoryProps) {
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5">
                         {format(new Date(entry.event_occurred_at), 'dd/MM/yy HH:mm')}
+                        {entry.scheduled_time && ` • Sched: ${entry.scheduled_time}`}
                       </div>
                       {entry.notes && (
                         <div className="text-xs text-muted-foreground mt-0.5 italic">{entry.notes}</div>
