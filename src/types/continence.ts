@@ -154,7 +154,7 @@ export const PAD_CONDITIONS: { value: PadCondition; label: string }[] = [
   { value: 'dry', label: 'Dry' },
   { value: 'lightly_wet', label: 'Lightly Wet' },
   { value: 'soaked', label: 'Soaked' },
-  { value: 'soiled_urine', label: 'Soiled (Urine)' },
+  { value: 'pad_damaged', label: 'Pad Damaged' },
   { value: 'soiled_faeces', label: 'Soiled (Faeces)' },
   { value: 'mixed', label: 'Mixed' },
 ];
