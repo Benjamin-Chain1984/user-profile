@@ -52,26 +52,26 @@ export function EnteralHistory({ clientId }: EnteralHistoryProps) {
   const { data: stomaChecks = [] } = useEnteralStomaChecks(clientId);
   const { data: flushLogs = [] } = useEnteralFlushLogs(clientId);
 
-  const [feedFilter, setFeedFilter] = useState('7d');
-  const [feedShowAll, setFeedShowAll] = useState(false);
-  const [flushFilter, setFlushFilter] = useState('7d');
-  const [flushShowAll, setFlushShowAll] = useState(false);
+  const [activityFilter, setActivityFilter] = useState('7d');
+  const [activityShowAll, setActivityShowAll] = useState(false);
   const [stomaFilter, setStomaFilter] = useState('7d');
   const [stomaShowAll, setStomaShowAll] = useState(false);
 
-  const filteredFeeds = useMemo(() => {
-    const cutoff = getFilterCutoff(feedFilter);
-    return cutoff ? feedLogs.filter(e => new Date(e.event_occurred_at) >= cutoff) : feedLogs;
-  }, [feedLogs, feedFilter]);
+  // Combine feeds and flushes into a single chronological list
+  const combinedActivity = useMemo(() => {
+    const feedItems = feedLogs.map(log => ({ ...log, _type: 'feed' as const }));
+    const flushItems = flushLogs.map((log: any) => ({ ...log, _type: 'flush' as const }));
+    return [...feedItems, ...flushItems].sort(
+      (a, b) => new Date(b.event_occurred_at).getTime() - new Date(a.event_occurred_at).getTime()
+    );
+  }, [feedLogs, flushLogs]);
 
-  const displayedFeeds = feedShowAll ? filteredFeeds : filteredFeeds.slice(0, DISPLAY_LIMIT);
+  const filteredActivity = useMemo(() => {
+    const cutoff = getFilterCutoff(activityFilter);
+    return cutoff ? combinedActivity.filter(e => new Date(e.event_occurred_at) >= cutoff) : combinedActivity;
+  }, [combinedActivity, activityFilter]);
 
-  const filteredFlushes = useMemo(() => {
-    const cutoff = getFilterCutoff(flushFilter);
-    return cutoff ? flushLogs.filter((e: any) => new Date(e.event_occurred_at) >= cutoff) : flushLogs;
-  }, [flushLogs, flushFilter]);
-
-  const displayedFlushes = flushShowAll ? filteredFlushes : filteredFlushes.slice(0, DISPLAY_LIMIT);
+  const displayedActivity = activityShowAll ? filteredActivity : filteredActivity.slice(0, DISPLAY_LIMIT);
 
   const filteredStoma = useMemo(() => {
     const cutoff = getFilterCutoff(stomaFilter);
@@ -81,13 +81,10 @@ export function EnteralHistory({ clientId }: EnteralHistoryProps) {
   const displayedStoma = stomaShowAll ? filteredStoma : filteredStoma.slice(0, DISPLAY_LIMIT);
 
   return (
-    <Tabs defaultValue="feeds" className="space-y-4">
+    <Tabs defaultValue="activity" className="space-y-4">
       <TabsList>
-        <TabsTrigger value="feeds" className="gap-2">
-          <Apple className="h-4 w-4" /> Feeds
-        </TabsTrigger>
-        <TabsTrigger value="flushes" className="gap-2">
-          <Droplets className="h-4 w-4" /> Flushes
+        <TabsTrigger value="activity" className="gap-2">
+          <Apple className="h-4 w-4" /> Feeds & Flushes
         </TabsTrigger>
         <TabsTrigger value="medications" className="gap-2">
           <Pill className="h-4 w-4" /> Medications
@@ -97,20 +94,20 @@ export function EnteralHistory({ clientId }: EnteralHistoryProps) {
         </TabsTrigger>
       </TabsList>
 
-      {/* Feeds */}
-      <TabsContent value="feeds">
+      {/* Feeds & Flushes combined */}
+      <TabsContent value="activity">
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <CardTitle className="text-lg">Feed Log</CardTitle>
+              <CardTitle className="text-lg">Feed & Flush Log</CardTitle>
               <div className="flex gap-1">
                 {TIME_FILTERS.map(f => (
                   <Button
                     key={f.value}
-                    variant={feedFilter === f.value ? 'default' : 'outline'}
+                    variant={activityFilter === f.value ? 'default' : 'outline'}
                     size="sm"
                     className="text-xs h-7 px-2"
-                    onClick={() => { setFeedFilter(f.value); setFeedShowAll(false); }}
+                    onClick={() => { setActivityFilter(f.value); setActivityShowAll(false); }}
                   >
                     {f.label}
                   </Button>
@@ -119,106 +116,74 @@ export function EnteralHistory({ clientId }: EnteralHistoryProps) {
             </div>
           </CardHeader>
           <CardContent className="space-y-2">
-            {displayedFeeds.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">No feed entries found.</p>
+            {displayedActivity.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No feed or flush entries found.</p>
             ) : (
-              displayedFeeds.map(log => (
-                <div key={log.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                  <div>
-                    <div className="text-sm font-medium">{log.feed_volume_ml}ml feed + {log.flush_given_ml}ml flush</div>
-                    <div className="text-xs text-muted-foreground">
-                      {format(new Date(log.event_occurred_at), 'dd/MM/yy HH:mm')}
-                      {log.method && ` • ${log.method}`}
-                      {log.scheduled_time && ` • Sched: ${log.scheduled_time}`}
-                    </div>
-                    {(log as any).staff_name && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                        <User className="h-3 w-3" />
-                        <span>{(log as any).staff_name}</span>
+              displayedActivity.map((entry: any) => {
+                if (entry._type === 'feed') {
+                  return (
+                    <div key={`feed-${entry.id}`} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                      <div>
+                        <div className="text-sm font-medium flex items-center gap-2">
+                          <Apple className="h-3.5 w-3.5 text-amber-600" />
+                          {entry.feed_volume_ml}ml feed + {entry.flush_given_ml}ml flush
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {format(new Date(entry.event_occurred_at), 'dd/MM/yy HH:mm')}
+                          {entry.method && ` • ${entry.method}`}
+                          {entry.scheduled_time && ` • Sched: ${entry.scheduled_time}`}
+                        </div>
+                        {entry.staff_name && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                            <User className="h-3 w-3" />
+                            <span>{entry.staff_name}</span>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  {log.position_confirmed && (
-                    <Badge variant="outline" className="text-xs">✓ Position</Badge>
-                  )}
-                </div>
-              ))
-            )}
-            {filteredFeeds.length > DISPLAY_LIMIT && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full text-xs"
-                onClick={() => setFeedShowAll(!feedShowAll)}
-              >
-                {feedShowAll ? 'Show less' : `Show all (${filteredFeeds.length})`}
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      {/* Flushes */}
-      <TabsContent value="flushes">
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <CardTitle className="text-lg">Flush Log</CardTitle>
-              <div className="flex gap-1">
-                {TIME_FILTERS.map(f => (
-                  <Button
-                    key={f.value}
-                    variant={flushFilter === f.value ? 'default' : 'outline'}
-                    size="sm"
-                    className="text-xs h-7 px-2"
-                    onClick={() => { setFlushFilter(f.value); setFlushShowAll(false); }}
-                  >
-                    {f.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {displayedFlushes.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">No flush entries found.</p>
-            ) : (
-              displayedFlushes.map((log: any) => (
-                <div key={log.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                  <div>
-                    <div className="text-sm font-medium flex items-center gap-2">
-                      <Droplets className="h-3.5 w-3.5 text-blue-500" />
-                      {log.flush_volume_ml}ml
-                      {log.flush_reason && (
-                        <Badge variant="secondary" className="text-xs font-normal">
-                          {FLUSH_REASON_LABELS[log.flush_reason] || log.flush_reason.replace(/_/g, ' ')}
-                        </Badge>
+                      {entry.position_confirmed && (
+                        <Badge variant="outline" className="text-xs">✓ Position</Badge>
                       )}
                     </div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      {format(new Date(log.event_occurred_at), 'dd/MM/yy HH:mm')}
-                    </div>
-                    {log.notes && (
-                      <div className="text-xs text-muted-foreground mt-0.5 italic">{log.notes}</div>
-                    )}
-                    {log.staff_name && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                        <User className="h-3 w-3" />
-                        <span>{log.staff_name}</span>
+                  );
+                }
+                // Flush entry
+                return (
+                  <div key={`flush-${entry.id}`} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div>
+                      <div className="text-sm font-medium flex items-center gap-2">
+                        <Droplets className="h-3.5 w-3.5 text-blue-500" />
+                        {entry.flush_volume_ml}ml flush
+                        {entry.flush_reason && (
+                          <Badge variant="secondary" className="text-xs font-normal">
+                            {FLUSH_REASON_LABELS[entry.flush_reason] || entry.flush_reason.replace(/_/g, ' ')}
+                          </Badge>
+                        )}
                       </div>
-                    )}
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {format(new Date(entry.event_occurred_at), 'dd/MM/yy HH:mm')}
+                      </div>
+                      {entry.notes && (
+                        <div className="text-xs text-muted-foreground mt-0.5 italic">{entry.notes}</div>
+                      )}
+                      {entry.staff_name && (
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                          <User className="h-3 w-3" />
+                          <span>{entry.staff_name}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
-            {filteredFlushes.length > DISPLAY_LIMIT && (
+            {filteredActivity.length > DISPLAY_LIMIT && (
               <Button
                 variant="ghost"
                 size="sm"
                 className="w-full text-xs"
-                onClick={() => setFlushShowAll(!flushShowAll)}
+                onClick={() => setActivityShowAll(!activityShowAll)}
               >
-                {flushShowAll ? 'Show less' : `Show all (${filteredFlushes.length})`}
+                {activityShowAll ? 'Show less' : `Show all (${filteredActivity.length})`}
               </Button>
             )}
           </CardContent>
