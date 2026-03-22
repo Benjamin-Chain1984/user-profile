@@ -202,23 +202,6 @@ export function PadChangeForm({
               Logged by: <strong>{staffName}</strong>
             </div>
 
-            {/* Scheduled Time Dropdown */}
-            <div className="space-y-2">
-              <Label>Pad Change Schedule</Label>
-              <Select value={scheduledTime} onValueChange={handleScheduleTimeChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select scheduled time" />
-                </SelectTrigger>
-                <SelectContent>
-                  {scheduleTimes.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* On Behalf Of Section */}
             {enableOnBehalf && (
               <Collapsible open={onBehalfOpen} onOpenChange={setOnBehalfOpen}>
@@ -299,6 +282,24 @@ export function PadChangeForm({
                 </CollapsibleContent>
               </Collapsible>
             )}
+
+            {/* Scheduled Time Dropdown */}
+            <div className="space-y-2">
+              <Label>Pad Change Schedule</Label>
+              <Select value={scheduledTime} onValueChange={handleScheduleTimeChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select scheduled time" />
+                </SelectTrigger>
+                <SelectContent>
+                  {scheduleTimes.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
 
             {/* Pad Type */}
             <div className="space-y-2">
