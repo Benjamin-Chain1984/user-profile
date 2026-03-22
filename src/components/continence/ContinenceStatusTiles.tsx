@@ -131,12 +131,18 @@ function PadChangeTile({
 
       // Build slots with completion status
       const slots = scheduledTimes.map((dueAt) => {
+        const dueTimeStr = format(dueAt, 'HH:mm');
         const matchingChange = todayChanges.find((c) => {
+          // Primary match: use the scheduled_time field saved on the record
+          if ((c as any).scheduled_time) {
+            return (c as any).scheduled_time === dueTimeStr;
+          }
+          // Fallback: time proximity match for legacy entries without scheduled_time
           const t = new Date(c.event_occurred_at);
           const halfInterval =
             config.schedule_type === 'hourly'
               ? (config.interval_hours * 60) / 2
-              : 60; // +/- 1 hour for fixed
+              : 60;
           return Math.abs(differenceInMinutes(t, dueAt)) < halfInterval;
         });
         return {
