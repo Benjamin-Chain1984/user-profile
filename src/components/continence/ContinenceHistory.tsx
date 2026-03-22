@@ -48,7 +48,7 @@ export function ContinenceHistory({ clientId }: ContinenceHistoryProps) {
       case 'lightly_wet':
         return 'bg-blue-100 text-blue-800';
       case 'soaked':
-      case 'soiled_urine':
+      case 'pad_damaged':
       case 'soiled_faeces':
       case 'mixed':
         return 'bg-amber-100 text-amber-800';
