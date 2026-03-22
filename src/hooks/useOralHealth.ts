@@ -146,7 +146,7 @@ export function useOralHealthTaskLogs(clientId?: string) {
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ['oralHealthTaskLogs', clientId],
     queryFn: async () => {
-      let query = supabase.from('oral_health_task_logs').select('*').order('log_date', { ascending: false }).limit(100);
+      let query = supabase.from('oral_health_task_logs').select('*').eq('is_undone', false).order('log_date', { ascending: false }).limit(100);
       if (clientId) query = query.eq('client_id', clientId);
       else query = query.is('client_id', null);
       const { data, error } = await query;
@@ -208,7 +208,7 @@ export function useOralHealthAssessments(clientId?: string) {
   const { data: assessments = [], isLoading } = useQuery({
     queryKey: ['oralHealthAssessments', clientId],
     queryFn: async () => {
-      let query = supabase.from('oral_health_assessments').select('*').order('created_at', { ascending: false }).limit(50);
+      let query = supabase.from('oral_health_assessments').select('*').eq('is_undone', false).order('created_at', { ascending: false }).limit(50);
       if (clientId) query = query.eq('client_id', clientId);
       else query = query.is('client_id', null);
       const { data, error } = await query;

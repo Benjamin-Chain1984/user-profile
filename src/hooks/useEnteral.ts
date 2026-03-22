@@ -144,7 +144,7 @@ export function useEnteralFeedLogs(clientId?: string) {
   return useQuery({
     queryKey: ['enteral-feed-logs', clientId],
     queryFn: async () => {
-      let query = supabase.from('enteral_feed_logs').select('*').order('event_occurred_at', { ascending: false }).limit(100);
+      let query = supabase.from('enteral_feed_logs').select('*').eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(100);
       if (clientId) query = query.eq('client_id', clientId);
       const { data, error } = await query;
       if (error) throw error;
@@ -240,7 +240,7 @@ export function useEnteralMedicationLogs(clientId?: string) {
   return useQuery({
     queryKey: ['enteral-med-logs', clientId],
     queryFn: async () => {
-      let query = supabase.from('enteral_medication_logs').select('*').order('event_occurred_at', { ascending: false }).limit(100);
+      let query = supabase.from('enteral_medication_logs').select('*').eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(100);
       if (clientId) query = query.eq('client_id', clientId);
       const { data, error } = await query;
       if (error) throw error;
@@ -278,7 +278,7 @@ export function useEnteralFlushLogs(clientId?: string) {
   return useQuery({
     queryKey: ['enteral-flush-logs', clientId],
     queryFn: async () => {
-      let query = supabase.from('enteral_flush_logs').select('*').order('event_occurred_at', { ascending: false }).limit(100);
+      let query = supabase.from('enteral_flush_logs').select('*').eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(100);
       if (clientId) query = query.eq('client_id', clientId);
       const { data, error } = await query;
       if (error) throw error;
@@ -316,7 +316,7 @@ export function useEnteralStomaChecks(clientId?: string) {
   return useQuery({
     queryKey: ['enteral-stoma-checks', clientId],
     queryFn: async () => {
-      let query = supabase.from('enteral_stoma_checks').select('*').order('event_occurred_at', { ascending: false }).limit(50);
+      let query = supabase.from('enteral_stoma_checks').select('*').eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(50);
       if (clientId) query = query.eq('client_id', clientId);
       const { data, error } = await query;
       if (error) throw error;

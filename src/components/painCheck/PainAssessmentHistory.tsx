@@ -222,7 +222,7 @@ export function PainAssessmentHistory({ assessments, painadAssessments = [], loa
       try {
         const assessmentIds = assessments.map((a) => a.id);
         if (assessmentIds.length > 0) {
-          const { data: actions } = await supabase.from('pain_action_records').select('*').in('assessment_id', assessmentIds);
+          const { data: actions } = await supabase.from('pain_action_records').select('*').eq('is_undone', false).in('assessment_id', assessmentIds);
           if (actions) {
             const grouped: Record<string, PainActionRecord[]> = {};
             actions.forEach((action) => {

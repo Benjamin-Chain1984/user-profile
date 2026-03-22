@@ -73,6 +73,7 @@ export function usePressureReliefEvents(clientId?: string) {
       let query = supabase
         .from('pressure_relief_events')
         .select('*')
+        .eq('is_undone', false)
         .order('event_occurred_at', { ascending: false })
         .limit(100);
       if (clientId) query = query.eq('client_id', clientId);
