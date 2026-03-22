@@ -100,6 +100,7 @@ export function useSeizureEvents(clientId?: string, limit = 100) {
       let query = supabase
         .from('seizure_events')
         .select('*')
+        .eq('is_undone', false)
         .order('event_occurred_at', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(limit);
@@ -161,6 +162,7 @@ export function useSeizureActions(clientId?: string) {
       let query = supabase
         .from('seizure_actions')
         .select('*')
+        .eq('is_undone', false)
         .order('created_at', { ascending: false })
         .limit(50);
       if (clientId) query = query.eq('client_id', clientId);

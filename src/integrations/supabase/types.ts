@@ -23,6 +23,7 @@ export type Database = {
           edited_at: string | null
           edited_by: string | null
           id: string
+          is_undone: boolean
           notes: string | null
           pain_type: string
           q1_vocalization: number
@@ -34,6 +35,8 @@ export type Database = {
           severity: string
           total_score: number
           trigger_reason: string | null
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           client_id?: string | null
@@ -43,6 +46,7 @@ export type Database = {
           edited_at?: string | null
           edited_by?: string | null
           id?: string
+          is_undone?: boolean
           notes?: string | null
           pain_type: string
           q1_vocalization: number
@@ -54,6 +58,8 @@ export type Database = {
           severity: string
           total_score: number
           trigger_reason?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           client_id?: string | null
@@ -63,6 +69,7 @@ export type Database = {
           edited_at?: string | null
           edited_by?: string | null
           id?: string
+          is_undone?: boolean
           notes?: string | null
           pain_type?: string
           q1_vocalization?: number
@@ -74,6 +81,8 @@ export type Database = {
           severity?: string
           total_score?: number
           trigger_reason?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -185,9 +194,12 @@ export type Database = {
           edited_at: string | null
           edited_by: string | null
           id: string
+          is_undone: boolean
           location: string | null
           next_due_date: string | null
           notes: string | null
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           client_id?: string | null
@@ -199,9 +211,12 @@ export type Database = {
           edited_at?: string | null
           edited_by?: string | null
           id?: string
+          is_undone?: boolean
           location?: string | null
           next_due_date?: string | null
           notes?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           client_id?: string | null
@@ -213,9 +228,12 @@ export type Database = {
           edited_at?: string | null
           edited_by?: string | null
           id?: string
+          is_undone?: boolean
           location?: string | null
           next_due_date?: string | null
           notes?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -608,6 +626,9 @@ export type Database = {
           edited_by: string | null
           escalation_reason: string
           id: string
+          is_undone: boolean
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           advice_received?: string | null
@@ -623,6 +644,9 @@ export type Database = {
           edited_by?: string | null
           escalation_reason: string
           id?: string
+          is_undone?: boolean
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           advice_received?: string | null
@@ -638,6 +662,9 @@ export type Database = {
           edited_by?: string | null
           escalation_reason?: string
           id?: string
+          is_undone?: boolean
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -669,12 +696,15 @@ export type Database = {
           event_occurred_at: string | null
           id: string
           indicators: Json | null
+          is_undone: boolean
           notes: string | null
           observed_status: string
           recorded_on_behalf_of_name: string | null
           recorded_on_behalf_of_reason: string | null
           recorded_on_behalf_of_role: string | null
           stool_size: string | null
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           bristol_type: number
@@ -688,12 +718,15 @@ export type Database = {
           event_occurred_at?: string | null
           id?: string
           indicators?: Json | null
+          is_undone?: boolean
           notes?: string | null
           observed_status?: string
           recorded_on_behalf_of_name?: string | null
           recorded_on_behalf_of_reason?: string | null
           recorded_on_behalf_of_role?: string | null
           stool_size?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           bristol_type?: number
@@ -707,12 +740,15 @@ export type Database = {
           event_occurred_at?: string | null
           id?: string
           indicators?: Json | null
+          is_undone?: boolean
           notes?: string | null
           observed_status?: string
           recorded_on_behalf_of_name?: string | null
           recorded_on_behalf_of_reason?: string | null
           recorded_on_behalf_of_role?: string | null
           stool_size?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -736,6 +772,7 @@ export type Database = {
           edited_at: string | null
           edited_by: string | null
           id: string
+          is_undone: boolean
           medication_id: string | null
           medication_name: string
           monitoring_end_time: string | null
@@ -743,6 +780,8 @@ export type Database = {
           outcome_bristol_type: number | null
           outcome_recorded_at: string | null
           prior_bristol_type: number | null
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           administration_time?: string
@@ -755,6 +794,7 @@ export type Database = {
           edited_at?: string | null
           edited_by?: string | null
           id?: string
+          is_undone?: boolean
           medication_id?: string | null
           medication_name: string
           monitoring_end_time?: string | null
@@ -762,6 +802,8 @@ export type Database = {
           outcome_bristol_type?: number | null
           outcome_recorded_at?: string | null
           prior_bristol_type?: number | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           administration_time?: string
@@ -774,6 +816,7 @@ export type Database = {
           edited_at?: string | null
           edited_by?: string | null
           id?: string
+          is_undone?: boolean
           medication_id?: string | null
           medication_name?: string
           monitoring_end_time?: string | null
@@ -781,6 +824,8 @@ export type Database = {
           outcome_bristol_type?: number | null
           outcome_recorded_at?: string | null
           prior_bristol_type?: number | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -863,12 +908,15 @@ export type Database = {
           edited_at: string | null
           edited_by: string | null
           id: string
+          is_undone: boolean
           location: string | null
           next_due_date: string | null
           notes: string | null
           outcome_known: boolean | null
           screening_type: string
           status: string
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           client_id?: string | null
@@ -880,12 +928,15 @@ export type Database = {
           edited_at?: string | null
           edited_by?: string | null
           id?: string
+          is_undone?: boolean
           location?: string | null
           next_due_date?: string | null
           notes?: string | null
           outcome_known?: boolean | null
           screening_type: string
           status?: string
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           client_id?: string | null
@@ -897,12 +948,15 @@ export type Database = {
           edited_at?: string | null
           edited_by?: string | null
           id?: string
+          is_undone?: boolean
           location?: string | null
           next_due_date?: string | null
           notes?: string | null
           outcome_known?: boolean | null
           screening_type?: string
           status?: string
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -983,9 +1037,12 @@ export type Database = {
           escalated_to: string | null
           event_occurred_at: string
           id: string
+          is_undone: boolean
           notes: string | null
           outcome: string | null
           symptoms: string[]
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           actions_taken?: string[]
@@ -999,9 +1056,12 @@ export type Database = {
           escalated_to?: string | null
           event_occurred_at?: string
           id?: string
+          is_undone?: boolean
           notes?: string | null
           outcome?: string | null
           symptoms?: string[]
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           actions_taken?: string[]
@@ -1015,9 +1075,12 @@ export type Database = {
           escalated_to?: string | null
           event_occurred_at?: string
           id?: string
+          is_undone?: boolean
           notes?: string | null
           outcome?: string | null
           symptoms?: string[]
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -1042,8 +1105,11 @@ export type Database = {
           edited_by: string | null
           event_occurred_at: string
           id: string
+          is_undone: boolean
           notes: string | null
           tubing_changed: boolean
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           bag_type: string
@@ -1057,8 +1123,11 @@ export type Database = {
           edited_by?: string | null
           event_occurred_at?: string
           id?: string
+          is_undone?: boolean
           notes?: string | null
           tubing_changed?: boolean
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           bag_type?: string
@@ -1072,8 +1141,11 @@ export type Database = {
           edited_by?: string | null
           event_occurred_at?: string
           id?: string
+          is_undone?: boolean
           notes?: string | null
           tubing_changed?: boolean
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -1367,10 +1439,13 @@ export type Database = {
           edited_by: string | null
           event_occurred_at: string
           id: string
+          is_undone: boolean
           notes: string | null
           recorded_on_behalf_of_name: string | null
           recorded_on_behalf_of_reason: string | null
           recorded_on_behalf_of_role: string | null
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           catheter_size?: string | null
@@ -1384,10 +1459,13 @@ export type Database = {
           edited_by?: string | null
           event_occurred_at?: string
           id?: string
+          is_undone?: boolean
           notes?: string | null
           recorded_on_behalf_of_name?: string | null
           recorded_on_behalf_of_reason?: string | null
           recorded_on_behalf_of_role?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           catheter_size?: string | null
@@ -1401,10 +1479,13 @@ export type Database = {
           edited_by?: string | null
           event_occurred_at?: string
           id?: string
+          is_undone?: boolean
           notes?: string | null
           recorded_on_behalf_of_name?: string | null
           recorded_on_behalf_of_reason?: string | null
           recorded_on_behalf_of_role?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -1555,11 +1636,14 @@ export type Database = {
           flush_solution: string | null
           flush_volume_ml: number | null
           id: string
+          is_undone: boolean
           notes: string | null
           output_description: string | null
           person_response: string | null
           return_volume_ml: number | null
           training_confirmed: boolean
+          undone_at: string | null
+          undone_by: string | null
           urine_appearance: string | null
         }
         Insert: {
@@ -1576,11 +1660,14 @@ export type Database = {
           flush_solution?: string | null
           flush_volume_ml?: number | null
           id?: string
+          is_undone?: boolean
           notes?: string | null
           output_description?: string | null
           person_response?: string | null
           return_volume_ml?: number | null
           training_confirmed?: boolean
+          undone_at?: string | null
+          undone_by?: string | null
           urine_appearance?: string | null
         }
         Update: {
@@ -1597,11 +1684,14 @@ export type Database = {
           flush_solution?: string | null
           flush_volume_ml?: number | null
           id?: string
+          is_undone?: boolean
           notes?: string | null
           output_description?: string | null
           person_response?: string | null
           return_volume_ml?: number | null
           training_confirmed?: boolean
+          undone_at?: string | null
+          undone_by?: string | null
           urine_appearance?: string | null
         }
         Relationships: [
@@ -1631,6 +1721,7 @@ export type Database = {
           findings: string[] | null
           granulation: boolean
           id: string
+          is_undone: boolean
           leaking: boolean
           maceration: boolean
           notes: string | null
@@ -1640,6 +1731,8 @@ export type Database = {
           status_level: string | null
           stoma_condition: string
           swelling: boolean
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           action_taken?: string | null
@@ -1657,6 +1750,7 @@ export type Database = {
           findings?: string[] | null
           granulation?: boolean
           id?: string
+          is_undone?: boolean
           leaking?: boolean
           maceration?: boolean
           notes?: string | null
@@ -1666,6 +1760,8 @@ export type Database = {
           status_level?: string | null
           stoma_condition: string
           swelling?: boolean
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           action_taken?: string | null
@@ -1683,6 +1779,7 @@ export type Database = {
           findings?: string[] | null
           granulation?: boolean
           id?: string
+          is_undone?: boolean
           leaking?: boolean
           maceration?: boolean
           notes?: string | null
@@ -1692,6 +1789,8 @@ export type Database = {
           status_level?: string | null
           stoma_condition?: string
           swelling?: boolean
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -1911,7 +2010,10 @@ export type Database = {
           edited_by: string | null
           gloves_wipes_level: string
           id: string
+          is_undone: boolean
           notes: string | null
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           barrier_creams_level: string
@@ -1927,7 +2029,10 @@ export type Database = {
           edited_by?: string | null
           gloves_wipes_level: string
           id?: string
+          is_undone?: boolean
           notes?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           barrier_creams_level?: string
@@ -1943,7 +2048,10 @@ export type Database = {
           edited_by?: string | null
           gloves_wipes_level?: string
           id?: string
+          is_undone?: boolean
           notes?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -1966,12 +2074,15 @@ export type Database = {
           edited_by: string | null
           event_occurred_at: string
           id: string
+          is_undone: boolean
           notes: string | null
           pad_condition: string
           pad_type: string
           recorded_on_behalf_of_name: string | null
           recorded_on_behalf_of_reason: string | null
           recorded_on_behalf_of_role: string | null
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           change_reason: string
@@ -1983,12 +2094,15 @@ export type Database = {
           edited_by?: string | null
           event_occurred_at?: string
           id?: string
+          is_undone?: boolean
           notes?: string | null
           pad_condition: string
           pad_type: string
           recorded_on_behalf_of_name?: string | null
           recorded_on_behalf_of_reason?: string | null
           recorded_on_behalf_of_role?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           change_reason?: string
@@ -2000,12 +2114,15 @@ export type Database = {
           edited_by?: string | null
           event_occurred_at?: string
           id?: string
+          is_undone?: boolean
           notes?: string | null
           pad_condition?: string
           pad_type?: string
           recorded_on_behalf_of_name?: string | null
           recorded_on_behalf_of_reason?: string | null
           recorded_on_behalf_of_role?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -2033,6 +2150,7 @@ export type Database = {
           escalation_notes: string | null
           event_occurred_at: string
           id: string
+          is_undone: boolean
           moisture_status: string
           notes: string | null
           pad_change_id: string | null
@@ -2040,6 +2158,8 @@ export type Database = {
           recorded_on_behalf_of_reason: string | null
           recorded_on_behalf_of_role: string | null
           skin_condition: string
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           areas_checked?: string[]
@@ -2056,6 +2176,7 @@ export type Database = {
           escalation_notes?: string | null
           event_occurred_at?: string
           id?: string
+          is_undone?: boolean
           moisture_status: string
           notes?: string | null
           pad_change_id?: string | null
@@ -2063,6 +2184,8 @@ export type Database = {
           recorded_on_behalf_of_reason?: string | null
           recorded_on_behalf_of_role?: string | null
           skin_condition: string
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           areas_checked?: string[]
@@ -2079,6 +2202,7 @@ export type Database = {
           escalation_notes?: string | null
           event_occurred_at?: string
           id?: string
+          is_undone?: boolean
           moisture_status?: string
           notes?: string | null
           pad_change_id?: string | null
@@ -2086,6 +2210,8 @@ export type Database = {
           recorded_on_behalf_of_reason?: string | null
           recorded_on_behalf_of_role?: string | null
           skin_condition?: string
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -2114,11 +2240,14 @@ export type Database = {
           edited_by: string | null
           escalated_to: string | null
           id: string
+          is_undone: boolean
           notes: string | null
           symptoms: string[]
           test_date: string
           test_result: string
           test_time: string
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           client_id?: string | null
@@ -2129,11 +2258,14 @@ export type Database = {
           edited_by?: string | null
           escalated_to?: string | null
           id?: string
+          is_undone?: boolean
           notes?: string | null
           symptoms?: string[]
           test_date?: string
           test_result: string
           test_time?: string
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           client_id?: string | null
@@ -2144,11 +2276,14 @@ export type Database = {
           edited_by?: string | null
           escalated_to?: string | null
           id?: string
+          is_undone?: boolean
           notes?: string | null
           symptoms?: string[]
           test_date?: string
           test_result?: string
           test_time?: string
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -2347,6 +2482,7 @@ export type Database = {
           feed_volume_ml: number
           flush_given_ml: number
           id: string
+          is_undone: boolean
           method: string | null
           notes: string | null
           position_angle: number | null
@@ -2354,6 +2490,8 @@ export type Database = {
           position_override_reason: string | null
           rate_ml_per_hour: number | null
           scheduled_time: string | null
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           client_id?: string | null
@@ -2366,6 +2504,7 @@ export type Database = {
           feed_volume_ml: number
           flush_given_ml?: number
           id?: string
+          is_undone?: boolean
           method?: string | null
           notes?: string | null
           position_angle?: number | null
@@ -2373,6 +2512,8 @@ export type Database = {
           position_override_reason?: string | null
           rate_ml_per_hour?: number | null
           scheduled_time?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           client_id?: string | null
@@ -2385,6 +2526,7 @@ export type Database = {
           feed_volume_ml?: number
           flush_given_ml?: number
           id?: string
+          is_undone?: boolean
           method?: string | null
           notes?: string | null
           position_angle?: number | null
@@ -2392,6 +2534,8 @@ export type Database = {
           position_override_reason?: string | null
           rate_ml_per_hour?: number | null
           scheduled_time?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -2415,8 +2559,11 @@ export type Database = {
           flush_reason: string
           flush_volume_ml: number
           id: string
+          is_undone: boolean
           notes: string | null
           scheduled_time: string | null
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           client_id?: string | null
@@ -2429,8 +2576,11 @@ export type Database = {
           flush_reason: string
           flush_volume_ml?: number
           id?: string
+          is_undone?: boolean
           notes?: string | null
           scheduled_time?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           client_id?: string | null
@@ -2443,8 +2593,11 @@ export type Database = {
           flush_reason?: string
           flush_volume_ml?: number
           id?: string
+          is_undone?: boolean
           notes?: string | null
           scheduled_time?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -2531,11 +2684,14 @@ export type Database = {
           flush_after_ml: number
           flush_before_ml: number
           id: string
+          is_undone: boolean
           medication_config_id: string | null
           medication_name: string
           notes: string | null
           position_confirmed: boolean
           scheduled_time: string | null
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           client_id?: string | null
@@ -2549,11 +2705,14 @@ export type Database = {
           flush_after_ml?: number
           flush_before_ml?: number
           id?: string
+          is_undone?: boolean
           medication_config_id?: string | null
           medication_name: string
           notes?: string | null
           position_confirmed?: boolean
           scheduled_time?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           client_id?: string | null
@@ -2567,11 +2726,14 @@ export type Database = {
           flush_after_ml?: number
           flush_before_ml?: number
           id?: string
+          is_undone?: boolean
           medication_config_id?: string | null
           medication_name?: string
           notes?: string | null
           position_confirmed?: boolean
           scheduled_time?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -2603,9 +2765,12 @@ export type Database = {
           event_occurred_at: string
           findings: string[]
           id: string
+          is_undone: boolean
           notes: string | null
           pain_level: string
           status_level: string
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           action_taken?: string | null
@@ -2619,9 +2784,12 @@ export type Database = {
           event_occurred_at?: string
           findings?: string[]
           id?: string
+          is_undone?: boolean
           notes?: string | null
           pain_level?: string
           status_level?: string
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           action_taken?: string | null
@@ -2635,9 +2803,12 @@ export type Database = {
           event_occurred_at?: string
           findings?: string[]
           id?: string
+          is_undone?: boolean
           notes?: string | null
           pain_level?: string
           status_level?: string
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -2827,7 +2998,10 @@ export type Database = {
           edited_by: string | null
           escalation_reason: string
           id: string
+          is_undone: boolean
           seizure_event_id: string | null
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           advice_received?: string | null
@@ -2843,7 +3017,10 @@ export type Database = {
           edited_by?: string | null
           escalation_reason: string
           id?: string
+          is_undone?: boolean
           seizure_event_id?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           advice_received?: string | null
@@ -2859,7 +3036,10 @@ export type Database = {
           edited_by?: string | null
           escalation_reason?: string
           id?: string
+          is_undone?: boolean
           seizure_event_id?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -3025,10 +3205,13 @@ export type Database = {
           fluid_type: string
           id: string
           is_self_reported: boolean
+          is_undone: boolean
           notes: string | null
           recorded_on_behalf_of_name: string | null
           recorded_on_behalf_of_reason: string | null
           recorded_on_behalf_of_role: string | null
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           amount_ml: number
@@ -3042,10 +3225,13 @@ export type Database = {
           fluid_type: string
           id?: string
           is_self_reported?: boolean
+          is_undone?: boolean
           notes?: string | null
           recorded_on_behalf_of_name?: string | null
           recorded_on_behalf_of_reason?: string | null
           recorded_on_behalf_of_role?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           amount_ml?: number
@@ -3059,10 +3245,13 @@ export type Database = {
           fluid_type?: string
           id?: string
           is_self_reported?: boolean
+          is_undone?: boolean
           notes?: string | null
           recorded_on_behalf_of_name?: string | null
           recorded_on_behalf_of_reason?: string | null
           recorded_on_behalf_of_role?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -3085,12 +3274,15 @@ export type Database = {
           edited_by: string | null
           event_occurred_at: string
           id: string
+          is_undone: boolean
           is_unmeasured: boolean
           notes: string | null
           output_type: string
           recorded_on_behalf_of_name: string | null
           recorded_on_behalf_of_reason: string | null
           recorded_on_behalf_of_role: string | null
+          undone_at: string | null
+          undone_by: string | null
           urine_colour: number | null
         }
         Insert: {
@@ -3103,12 +3295,15 @@ export type Database = {
           edited_by?: string | null
           event_occurred_at?: string
           id?: string
+          is_undone?: boolean
           is_unmeasured?: boolean
           notes?: string | null
           output_type: string
           recorded_on_behalf_of_name?: string | null
           recorded_on_behalf_of_reason?: string | null
           recorded_on_behalf_of_role?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
           urine_colour?: number | null
         }
         Update: {
@@ -3121,12 +3316,15 @@ export type Database = {
           edited_by?: string | null
           event_occurred_at?: string
           id?: string
+          is_undone?: boolean
           is_unmeasured?: boolean
           notes?: string | null
           output_type?: string
           recorded_on_behalf_of_name?: string | null
           recorded_on_behalf_of_reason?: string | null
           recorded_on_behalf_of_role?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
           urine_colour?: number | null
         }
         Relationships: [
@@ -3269,10 +3467,13 @@ export type Database = {
           edited_by: string | null
           fatigue_dizziness: boolean
           id: string
+          is_undone: boolean
           nausea_vomiting: boolean
           notes: string | null
           swelling: boolean
           thirst_dry_mouth: boolean
+          undone_at: string | null
+          undone_by: string | null
           urine_colour: number | null
         }
         Insert: {
@@ -3286,10 +3487,13 @@ export type Database = {
           edited_by?: string | null
           fatigue_dizziness?: boolean
           id?: string
+          is_undone?: boolean
           nausea_vomiting?: boolean
           notes?: string | null
           swelling?: boolean
           thirst_dry_mouth?: boolean
+          undone_at?: string | null
+          undone_by?: string | null
           urine_colour?: number | null
         }
         Update: {
@@ -3303,10 +3507,13 @@ export type Database = {
           edited_by?: string | null
           fatigue_dizziness?: boolean
           id?: string
+          is_undone?: boolean
           nausea_vomiting?: boolean
           notes?: string | null
           swelling?: boolean
           thirst_dry_mouth?: boolean
+          undone_at?: string | null
+          undone_by?: string | null
           urine_colour?: number | null
         }
         Relationships: [
@@ -3537,12 +3744,15 @@ export type Database = {
           event_occurred_at: string
           fatigue: boolean
           id: string
+          is_undone: boolean
           meal_completion_pct: number | null
           notes: string | null
           pocketing: boolean
           refusal: boolean
           severity: string
           throat_clearing: boolean
+          undone_at: string | null
+          undone_by: string | null
           wet_voice: boolean
         }
         Insert: {
@@ -3557,12 +3767,15 @@ export type Database = {
           event_occurred_at?: string
           fatigue?: boolean
           id?: string
+          is_undone?: boolean
           meal_completion_pct?: number | null
           notes?: string | null
           pocketing?: boolean
           refusal?: boolean
           severity?: string
           throat_clearing?: boolean
+          undone_at?: string | null
+          undone_by?: string | null
           wet_voice?: boolean
         }
         Update: {
@@ -3577,12 +3790,15 @@ export type Database = {
           event_occurred_at?: string
           fatigue?: boolean
           id?: string
+          is_undone?: boolean
           meal_completion_pct?: number | null
           notes?: string | null
           pocketing?: boolean
           refusal?: boolean
           severity?: string
           throat_clearing?: boolean
+          undone_at?: string | null
+          undone_by?: string | null
           wet_voice?: boolean
         }
         Relationships: [
@@ -3842,12 +4058,15 @@ export type Database = {
           escalation_contact: string | null
           gums: string
           id: string
+          is_undone: boolean
           lips: string
           mouth_annotations: Json | null
           overall_status: string
           roof_of_mouth: string
           teeth: string
           tongue: string
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           action_notes?: string | null
@@ -3866,12 +4085,15 @@ export type Database = {
           escalation_contact?: string | null
           gums?: string
           id?: string
+          is_undone?: boolean
           lips?: string
           mouth_annotations?: Json | null
           overall_status?: string
           roof_of_mouth?: string
           teeth?: string
           tongue?: string
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           action_notes?: string | null
@@ -3890,12 +4112,15 @@ export type Database = {
           escalation_contact?: string | null
           gums?: string
           id?: string
+          is_undone?: boolean
           lips?: string
           mouth_annotations?: Json | null
           overall_status?: string
           roof_of_mouth?: string
           teeth?: string
           tongue?: string
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -4179,9 +4404,12 @@ export type Database = {
           edited_at: string | null
           edited_by: string | null
           id: string
+          is_undone: boolean
           log_date: string
           notes: string | null
           period: string
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           client_id?: string | null
@@ -4192,9 +4420,12 @@ export type Database = {
           edited_at?: string | null
           edited_by?: string | null
           id?: string
+          is_undone?: boolean
           log_date?: string
           notes?: string | null
           period: string
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           client_id?: string | null
@@ -4205,9 +4436,12 @@ export type Database = {
           edited_at?: string | null
           edited_by?: string | null
           id?: string
+          is_undone?: boolean
           log_date?: string
           notes?: string | null
           period?: string
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -4229,8 +4463,11 @@ export type Database = {
           edited_at: string | null
           edited_by: string | null
           id: string
+          is_undone: boolean
           outcome: string | null
           outcome_recorded_at: string | null
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           action_taken: string
@@ -4241,8 +4478,11 @@ export type Database = {
           edited_at?: string | null
           edited_by?: string | null
           id?: string
+          is_undone?: boolean
           outcome?: string | null
           outcome_recorded_at?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           action_taken?: string
@@ -4253,8 +4493,11 @@ export type Database = {
           edited_at?: string | null
           edited_by?: string | null
           id?: string
+          is_undone?: boolean
           outcome?: string | null
           outcome_recorded_at?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -4275,6 +4518,7 @@ export type Database = {
           edited_at: string | null
           edited_by: string | null
           id: string
+          is_undone: boolean
           notes: string | null
           pain_type: string
           q1_breathing: number
@@ -4285,6 +4529,8 @@ export type Database = {
           severity: string
           total_score: number
           trigger_reason: string | null
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           client_id?: string | null
@@ -4294,6 +4540,7 @@ export type Database = {
           edited_at?: string | null
           edited_by?: string | null
           id?: string
+          is_undone?: boolean
           notes?: string | null
           pain_type: string
           q1_breathing: number
@@ -4304,6 +4551,8 @@ export type Database = {
           severity: string
           total_score: number
           trigger_reason?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           client_id?: string | null
@@ -4313,6 +4562,7 @@ export type Database = {
           edited_at?: string | null
           edited_by?: string | null
           id?: string
+          is_undone?: boolean
           notes?: string | null
           pain_type?: string
           q1_breathing?: number
@@ -4323,6 +4573,8 @@ export type Database = {
           severity?: string
           total_score?: number
           trigger_reason?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -4379,9 +4631,12 @@ export type Database = {
           head_midline: boolean
           hips_at_back: boolean
           id: string
+          is_undone: boolean
           notes: string | null
           person_upright: boolean
           status: string
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           angle_degrees: number
@@ -4397,9 +4652,12 @@ export type Database = {
           head_midline?: boolean
           hips_at_back?: boolean
           id?: string
+          is_undone?: boolean
           notes?: string | null
           person_upright?: boolean
           status?: string
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           angle_degrees?: number
@@ -4415,9 +4673,12 @@ export type Database = {
           head_midline?: boolean
           hips_at_back?: boolean
           id?: string
+          is_undone?: boolean
           notes?: string | null
           person_upright?: boolean
           status?: string
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -4550,6 +4811,9 @@ export type Database = {
           edited_by: string | null
           escalation_reason: string
           id: string
+          is_undone: boolean
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           advice_received?: string | null
@@ -4565,6 +4829,9 @@ export type Database = {
           edited_by?: string | null
           escalation_reason: string
           id?: string
+          is_undone?: boolean
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           advice_received?: string | null
@@ -4580,6 +4847,9 @@ export type Database = {
           edited_by?: string | null
           escalation_reason?: string
           id?: string
+          is_undone?: boolean
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -4612,12 +4882,15 @@ export type Database = {
           escalation_required: boolean | null
           event_occurred_at: string
           id: string
+          is_undone: boolean
           issue_details: string | null
           issues: string[] | null
           notes: string | null
           position_completed: string
           position_recommended: string | null
           scheduled_time: string | null
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           client_id?: string | null
@@ -4632,12 +4905,15 @@ export type Database = {
           escalation_required?: boolean | null
           event_occurred_at?: string
           id?: string
+          is_undone?: boolean
           issue_details?: string | null
           issues?: string[] | null
           notes?: string | null
           position_completed: string
           position_recommended?: string | null
           scheduled_time?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           client_id?: string | null
@@ -4652,12 +4928,15 @@ export type Database = {
           escalation_required?: boolean | null
           event_occurred_at?: string
           id?: string
+          is_undone?: boolean
           issue_details?: string | null
           issues?: string[] | null
           notes?: string | null
           position_completed?: string
           position_recommended?: string | null
           scheduled_time?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -5023,6 +5302,7 @@ export type Database = {
           escalation_completed: boolean
           id: string
           injuries_noted: string | null
+          is_undone: boolean
           medication_dose: string | null
           medication_name: string | null
           medication_route: string | null
@@ -5031,6 +5311,8 @@ export type Database = {
           time_administered: string | null
           total_recovery_time_minutes: number | null
           total_seizure_duration_minutes: number | null
+          undone_at: string | null
+          undone_by: string | null
           witness_name: string | null
         }
         Insert: {
@@ -5049,6 +5331,7 @@ export type Database = {
           escalation_completed?: boolean
           id?: string
           injuries_noted?: string | null
+          is_undone?: boolean
           medication_dose?: string | null
           medication_name?: string | null
           medication_route?: string | null
@@ -5057,6 +5340,8 @@ export type Database = {
           time_administered?: string | null
           total_recovery_time_minutes?: number | null
           total_seizure_duration_minutes?: number | null
+          undone_at?: string | null
+          undone_by?: string | null
           witness_name?: string | null
         }
         Update: {
@@ -5075,6 +5360,7 @@ export type Database = {
           escalation_completed?: boolean
           id?: string
           injuries_noted?: string | null
+          is_undone?: boolean
           medication_dose?: string | null
           medication_name?: string | null
           medication_route?: string | null
@@ -5083,6 +5369,8 @@ export type Database = {
           time_administered?: string | null
           total_recovery_time_minutes?: number | null
           total_seizure_duration_minutes?: number | null
+          undone_at?: string | null
+          undone_by?: string | null
           witness_name?: string | null
         }
         Relationships: [
@@ -5114,6 +5402,7 @@ export type Database = {
           edited_by: string | null
           event_occurred_at: string
           id: string
+          is_undone: boolean
           notes: string | null
           observation_type: string
           recovery: string[]
@@ -5122,6 +5411,8 @@ export type Database = {
           seizure_type: string
           trigger_other: string | null
           triggers: string[]
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           client_id?: string | null
@@ -5134,6 +5425,7 @@ export type Database = {
           edited_by?: string | null
           event_occurred_at?: string
           id?: string
+          is_undone?: boolean
           notes?: string | null
           observation_type?: string
           recovery?: string[]
@@ -5142,6 +5434,8 @@ export type Database = {
           seizure_type?: string
           trigger_other?: string | null
           triggers?: string[]
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           client_id?: string | null
@@ -5154,6 +5448,7 @@ export type Database = {
           edited_by?: string | null
           event_occurred_at?: string
           id?: string
+          is_undone?: boolean
           notes?: string | null
           observation_type?: string
           recovery?: string[]
@@ -5162,6 +5457,8 @@ export type Database = {
           seizure_type?: string
           trigger_other?: string | null
           triggers?: string[]
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -5183,9 +5480,12 @@ export type Database = {
           edited_by: string | null
           event_occurred_at: string
           id: string
+          is_undone: boolean
           notes: string | null
           overall_status: string
           scheduled_time: string | null
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           client_id?: string | null
@@ -5196,9 +5496,12 @@ export type Database = {
           edited_by?: string | null
           event_occurred_at?: string
           id?: string
+          is_undone?: boolean
           notes?: string | null
           overall_status?: string
           scheduled_time?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           client_id?: string | null
@@ -5209,9 +5512,12 @@ export type Database = {
           edited_by?: string | null
           event_occurred_at?: string
           id?: string
+          is_undone?: boolean
           notes?: string | null
           overall_status?: string
           scheduled_time?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -5228,10 +5534,13 @@ export type Database = {
           created_at: string
           finding_type: string
           id: string
+          is_undone: boolean
           location: string
           notes: string | null
           session_id: string
           severity: string
+          undone_at: string | null
+          undone_by: string | null
           x_percent: number | null
           y_percent: number | null
         }
@@ -5239,10 +5548,13 @@ export type Database = {
           created_at?: string
           finding_type: string
           id?: string
+          is_undone?: boolean
           location: string
           notes?: string | null
           session_id: string
           severity?: string
+          undone_at?: string | null
+          undone_by?: string | null
           x_percent?: number | null
           y_percent?: number | null
         }
@@ -5250,10 +5562,13 @@ export type Database = {
           created_at?: string
           finding_type?: string
           id?: string
+          is_undone?: boolean
           location?: string
           notes?: string | null
           session_id?: string
           severity?: string
+          undone_at?: string | null
+          undone_by?: string | null
           x_percent?: number | null
           y_percent?: number | null
         }
@@ -5400,12 +5715,15 @@ export type Database = {
           estimated_hours_slept: number
           event_occurred_at: string
           id: string
+          is_undone: boolean
           notes: string | null
           number_of_awakenings: number
           recorded_on_behalf_of_name: string | null
           recorded_on_behalf_of_reason: string | null
           recorded_on_behalf_of_role: string | null
           restlessness: boolean
+          undone_at: string | null
+          undone_by: string | null
           wake_time: string
         }
         Insert: {
@@ -5428,12 +5746,15 @@ export type Database = {
           estimated_hours_slept: number
           event_occurred_at?: string
           id?: string
+          is_undone?: boolean
           notes?: string | null
           number_of_awakenings?: number
           recorded_on_behalf_of_name?: string | null
           recorded_on_behalf_of_reason?: string | null
           recorded_on_behalf_of_role?: string | null
           restlessness?: boolean
+          undone_at?: string | null
+          undone_by?: string | null
           wake_time: string
         }
         Update: {
@@ -5456,12 +5777,15 @@ export type Database = {
           estimated_hours_slept?: number
           event_occurred_at?: string
           id?: string
+          is_undone?: boolean
           notes?: string | null
           number_of_awakenings?: number
           recorded_on_behalf_of_name?: string | null
           recorded_on_behalf_of_reason?: string | null
           recorded_on_behalf_of_role?: string | null
           restlessness?: boolean
+          undone_at?: string | null
+          undone_by?: string | null
           wake_time?: string
         }
         Relationships: [
@@ -5601,6 +5925,59 @@ export type Database = {
         }
         Relationships: []
       }
+      undo_action_records: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          entry_id: string
+          entry_snapshot: Json
+          entry_type: string
+          id: string
+          is_undone: boolean
+          module_name: string
+          table_name: string
+          undone_at: string | null
+          undone_by: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          entry_id: string
+          entry_snapshot?: Json
+          entry_type: string
+          id?: string
+          is_undone?: boolean
+          module_name: string
+          table_name: string
+          undone_at?: string | null
+          undone_by?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          entry_id?: string
+          entry_snapshot?: Json
+          entry_type?: string
+          id?: string
+          is_undone?: boolean
+          module_name?: string
+          table_name?: string
+          undone_at?: string | null
+          undone_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "undo_action_records_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -5633,9 +6010,12 @@ export type Database = {
           edited_by: string | null
           given_by: string | null
           id: string
+          is_undone: boolean
           next_due_date: string | null
           notes: string | null
           status: string
+          undone_at: string | null
+          undone_by: string | null
           vaccination_type: string
           vaccine_brand: string | null
         }
@@ -5649,9 +6029,12 @@ export type Database = {
           edited_by?: string | null
           given_by?: string | null
           id?: string
+          is_undone?: boolean
           next_due_date?: string | null
           notes?: string | null
           status?: string
+          undone_at?: string | null
+          undone_by?: string | null
           vaccination_type: string
           vaccine_brand?: string | null
         }
@@ -5665,9 +6048,12 @@ export type Database = {
           edited_by?: string | null
           given_by?: string | null
           id?: string
+          is_undone?: boolean
           next_due_date?: string | null
           notes?: string | null
           status?: string
+          undone_at?: string | null
+          undone_by?: string | null
           vaccination_type?: string
           vaccine_brand?: string | null
         }
@@ -5700,7 +6086,10 @@ export type Database = {
           follow_up_due_at: string | null
           follow_up_required: boolean | null
           id: string
+          is_undone: boolean
           outcome: string | null
+          undone_at: string | null
+          undone_by: string | null
           vital_entry_id: string | null
         }
         Insert: {
@@ -5721,7 +6110,10 @@ export type Database = {
           follow_up_due_at?: string | null
           follow_up_required?: boolean | null
           id?: string
+          is_undone?: boolean
           outcome?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
           vital_entry_id?: string | null
         }
         Update: {
@@ -5742,7 +6134,10 @@ export type Database = {
           follow_up_due_at?: string | null
           follow_up_required?: boolean | null
           id?: string
+          is_undone?: boolean
           outcome?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
           vital_entry_id?: string | null
         }
         Relationships: [
@@ -6028,6 +6423,7 @@ export type Database = {
           heart_rate: number | null
           heart_rate_status: string | null
           id: string
+          is_undone: boolean
           notes: string | null
           overall_status: string
           oxygen_saturation: number | null
@@ -6040,6 +6436,8 @@ export type Database = {
           symptoms: string[] | null
           temperature_celsius: number | null
           temperature_status: string | null
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           bp_diastolic?: number | null
@@ -6055,6 +6453,7 @@ export type Database = {
           heart_rate?: number | null
           heart_rate_status?: string | null
           id?: string
+          is_undone?: boolean
           notes?: string | null
           overall_status?: string
           oxygen_saturation?: number | null
@@ -6067,6 +6466,8 @@ export type Database = {
           symptoms?: string[] | null
           temperature_celsius?: number | null
           temperature_status?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           bp_diastolic?: number | null
@@ -6082,6 +6483,7 @@ export type Database = {
           heart_rate?: number | null
           heart_rate_status?: string | null
           id?: string
+          is_undone?: boolean
           notes?: string | null
           overall_status?: string
           oxygen_saturation?: number | null
@@ -6094,6 +6496,8 @@ export type Database = {
           symptoms?: string[] | null
           temperature_celsius?: number | null
           temperature_status?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
@@ -6298,12 +6702,15 @@ export type Database = {
           event_occurred_at: string
           height_used_cm: number | null
           id: string
+          is_undone: boolean
           meal_timing: string | null
           notes: string | null
           recorded_on_behalf_of_name: string | null
           recorded_on_behalf_of_reason: string | null
           recorded_on_behalf_of_role: string | null
           time_of_day: string | null
+          undone_at: string | null
+          undone_by: string | null
           weight_kg: number
           wheelchair_context: string | null
         }
@@ -6319,12 +6726,15 @@ export type Database = {
           event_occurred_at?: string
           height_used_cm?: number | null
           id?: string
+          is_undone?: boolean
           meal_timing?: string | null
           notes?: string | null
           recorded_on_behalf_of_name?: string | null
           recorded_on_behalf_of_reason?: string | null
           recorded_on_behalf_of_role?: string | null
           time_of_day?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
           weight_kg: number
           wheelchair_context?: string | null
         }
@@ -6340,12 +6750,15 @@ export type Database = {
           event_occurred_at?: string
           height_used_cm?: number | null
           id?: string
+          is_undone?: boolean
           meal_timing?: string | null
           notes?: string | null
           recorded_on_behalf_of_name?: string | null
           recorded_on_behalf_of_reason?: string | null
           recorded_on_behalf_of_role?: string | null
           time_of_day?: string | null
+          undone_at?: string | null
+          undone_by?: string | null
           weight_kg?: number
           wheelchair_context?: string | null
         }

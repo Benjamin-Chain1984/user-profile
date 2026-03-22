@@ -112,6 +112,7 @@ export function useVitalSignEntries(clientId?: string, limit = 50) {
       let query = supabase
         .from('vital_sign_entries')
         .select('*')
+        .eq('is_undone', false)
         .order('event_occurred_at', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(limit);
@@ -536,6 +537,7 @@ export function useVitalSignActionLogs(clientId?: string, alertId?: string) {
       let query = supabase
         .from('vital_sign_action_logs')
         .select('*')
+        .eq('is_undone', false)
         .order('event_occurred_at', { ascending: false })
         .limit(50);
 

@@ -110,6 +110,7 @@ export function useHealthPrevention(options: UseHealthPreventionOptions = {}) {
       const { data, error } = await supabase
         .from('cancer_screening_records')
         .select('*')
+        .eq('is_undone', false)
         .eq('client_id', clientId)
         .order('created_at', { ascending: false });
 
@@ -148,6 +149,7 @@ export function useHealthPrevention(options: UseHealthPreventionOptions = {}) {
       const { data, error } = await supabase
         .from('vaccination_records')
         .select('*')
+        .eq('is_undone', false)
         .eq('client_id', clientId)
         .order('created_at', { ascending: false });
 
@@ -223,6 +225,7 @@ export function useHealthPrevention(options: UseHealthPreventionOptions = {}) {
       const { data, error } = await supabase
         .from('annual_health_assessment_records')
         .select('*')
+        .eq('is_undone', false)
         .eq('client_id', clientId)
         .order('date_completed', { ascending: false });
       if (error) {

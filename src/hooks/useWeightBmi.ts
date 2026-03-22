@@ -45,6 +45,7 @@ export function useWeightBmi(clientId?: string) {
       const { data: entriesData, error: entriesError } = await supabase
         .from('weight_entries')
         .select('*')
+        .eq('is_undone', false)
         .order('event_occurred_at', { ascending: false })
         .limit(100);
 

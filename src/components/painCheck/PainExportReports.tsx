@@ -111,6 +111,7 @@ export function PainExportReports({ assessments, painadAssessments = [], onClose
         const { data: actions } = await supabase
           .from('pain_action_records')
           .select('*')
+          .eq('is_undone', false)
           .in('assessment_id', assessmentIds);
 
         const actionsMap: Record<string, PainActionRecord[]> = {};

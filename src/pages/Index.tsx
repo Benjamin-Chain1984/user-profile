@@ -11,6 +11,7 @@ import { IndustryResources } from '@/components/ideal/IndustryResources';
 import { AppHeader } from '@/components/ideal/AppHeader';
 import { useProfile } from '@/contexts/ProfileContext';
 import { PauseResumeButton, MonitoringPausedBanner } from '@/components/monitoring';
+import { UndoButton } from '@/components/undo';
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState('home');
@@ -33,7 +34,8 @@ function AppContent() {
             <ProfileHeader />
             
             {/* Pause/Resume Button */}
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2 flex-wrap">
+              <UndoButton />
               <PauseResumeButton
                 isPaused={isMonitoringPaused}
                 onPause={pauseMonitoring}

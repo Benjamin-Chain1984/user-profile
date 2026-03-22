@@ -27,6 +27,7 @@ export function usePainadAssessments(clientId?: string) {
       let query = supabase
         .from('painad_assessments')
         .select('*')
+        .eq('is_undone', false)
         .order('created_at', { ascending: false });
 
       if (clientId) {

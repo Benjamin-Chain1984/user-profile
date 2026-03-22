@@ -121,6 +121,7 @@ export function useCatheterChanges(clientId?: string) {
       const query = supabase
         .from('catheter_change_logs')
         .select('*')
+        .eq('is_undone', false)
         .order('event_occurred_at', { ascending: false })
         .limit(100);
       if (clientId) {
@@ -186,6 +187,7 @@ export function useFlushLogs(clientId?: string) {
       const query = supabase
         .from('catheter_flush_logs')
         .select('*')
+        .eq('is_undone', false)
         .order('event_occurred_at', { ascending: false })
         .limit(100);
       if (clientId) {
@@ -285,6 +287,7 @@ export function useStomaChecks(clientId?: string) {
       const query = supabase
         .from('catheter_stoma_checks')
         .select('*')
+        .eq('is_undone', false)
         .order('event_occurred_at', { ascending: false })
         .limit(100);
       if (clientId) {
@@ -400,6 +403,7 @@ export function useBagChanges(clientId?: string) {
       const query = supabase
         .from('catheter_bag_change_logs')
         .select('*')
+        .eq('is_undone', false)
         .order('event_occurred_at', { ascending: false })
         .limit(100);
       if (clientId) {
@@ -672,6 +676,7 @@ export function useAutonomicRiskLogs(clientId?: string) {
       const query = supabase
         .from('catheter_autonomic_risk_logs')
         .select('*')
+        .eq('is_undone', false)
         .order('event_occurred_at', { ascending: false })
         .limit(50);
       if (clientId) {

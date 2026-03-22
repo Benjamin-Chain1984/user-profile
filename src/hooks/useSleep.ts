@@ -97,6 +97,7 @@ export function useSleepEntries(clientId?: string, limit = 50) {
       let query = supabase
         .from('sleep_entries')
         .select('*')
+        .eq('is_undone', false)
         .order('event_occurred_at', { ascending: false })
         .limit(limit);
 

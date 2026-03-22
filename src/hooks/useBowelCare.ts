@@ -231,6 +231,7 @@ export function useBowelLogs(clientId?: string, limit = 50) {
       let query = supabase
         .from('bowel_log_entries')
         .select('*')
+        .eq('is_undone', false)
         .order('event_occurred_at', { ascending: false })
         .limit(limit);
       
@@ -336,6 +337,7 @@ export function usePrnAdministrations(clientId?: string) {
       let query = supabase
         .from('bowel_prn_administrations')
         .select('*')
+        .eq('is_undone', false)
         .order('administration_time', { ascending: false })
         .limit(50);
       
@@ -550,6 +552,7 @@ export function useEscalationRecords(clientId?: string) {
       const { data, error } = await supabase
         .from('bowel_escalation_records')
         .select('*')
+        .eq('is_undone', false)
         .eq('client_id', clientId || '')
         .order('contact_time', { ascending: false })
         .limit(50);

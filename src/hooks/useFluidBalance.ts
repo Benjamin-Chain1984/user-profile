@@ -63,6 +63,7 @@ export function useFluidBalance(clientId?: string): UseFluidBalanceReturn {
       let intakeQuery = supabase
         .from('fluid_intake_entries')
         .select('*')
+        .eq('is_undone', false)
         .gte('event_occurred_at', thirtyDaysAgo.toISOString())
         .order('event_occurred_at', { ascending: false });
       
@@ -78,6 +79,7 @@ export function useFluidBalance(clientId?: string): UseFluidBalanceReturn {
       let outputQuery = supabase
         .from('fluid_output_entries')
         .select('*')
+        .eq('is_undone', false)
         .gte('event_occurred_at', thirtyDaysAgo.toISOString())
         .order('event_occurred_at', { ascending: false });
       
@@ -93,6 +95,7 @@ export function useFluidBalance(clientId?: string): UseFluidBalanceReturn {
       let symptomQuery = supabase
         .from('hydration_symptom_checks')
         .select('*')
+        .eq('is_undone', false)
         .gte('check_date', thirtyDaysAgo.toISOString().split('T')[0])
         .order('check_date', { ascending: false });
       

@@ -34,6 +34,7 @@ export function usePainAssessments(clientId?: string) {
       let query = supabase
         .from('abbey_pain_assessments')
         .select('*')
+        .eq('is_undone', false)
         .order('created_at', { ascending: false });
 
       if (clientId) {
@@ -207,6 +208,7 @@ export function usePainAssessments(clientId?: string) {
       const { data, error } = await supabase
         .from('pain_action_records')
         .select('*')
+        .eq('is_undone', false)
         .eq('assessment_id', assessmentId)
         .order('created_at', { ascending: false });
 

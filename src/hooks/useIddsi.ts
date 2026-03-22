@@ -101,6 +101,7 @@ export function useMealtimeObservations(clientId?: string) {
     const { data, error } = await supabase
       .from('mealtime_observations')
       .select('*')
+      .eq('is_undone', false)
       .eq('client_id', cId)
       .order('event_occurred_at', { ascending: false })
       .limit(50);
@@ -170,6 +171,7 @@ export function usePositioningChecks(clientId?: string) {
     const { data, error } = await supabase
       .from('positioning_checks')
       .select('*')
+      .eq('is_undone', false)
       .eq('client_id', cId)
       .order('event_occurred_at', { ascending: false })
       .limit(50);

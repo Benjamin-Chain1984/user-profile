@@ -115,6 +115,7 @@ export function usePadChanges(clientId?: string) {
       const query = supabase
         .from('continence_pad_changes')
         .select('*')
+        .eq('is_undone', false)
         .order('event_occurred_at', { ascending: false })
         .limit(100);
       if (clientId) {
@@ -181,6 +182,7 @@ export function useSkinChecks(clientId?: string) {
       const query = supabase
         .from('continence_skin_checks')
         .select('*')
+        .eq('is_undone', false)
         .order('event_occurred_at', { ascending: false })
         .limit(100);
       if (clientId) {
@@ -277,6 +279,7 @@ export function useConsumablesChecks(clientId?: string) {
       const query = supabase
         .from('continence_consumables_checks')
         .select('*')
+        .eq('is_undone', false)
         .order('check_date', { ascending: false })
         .limit(50);
       if (clientId) {
@@ -351,6 +354,7 @@ export function useUTITests(clientId?: string) {
       const query = supabase
         .from('continence_uti_tests')
         .select('*')
+        .eq('is_undone', false)
         .order('test_date', { ascending: false })
         .limit(50);
       if (clientId) {
