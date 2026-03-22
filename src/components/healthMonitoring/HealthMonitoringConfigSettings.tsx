@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { 
   User, Bell, AlertTriangle, Activity, Settings, ShieldAlert, 
-  Thermometer, Heart, Wind, Gauge, Clock
+  Thermometer, Heart, Wind, Gauge, Clock, Scale, Droplets, Moon, Stethoscope
 } from 'lucide-react';
 import { useVitalSignConfig } from '@/hooks/useHealthMonitoring';
 import { AlteredCriteriaSettings } from './AlteredCriteriaSettings';
