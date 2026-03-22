@@ -344,9 +344,9 @@ export function PadChangeForm({
                   <Button
                     key={reason.value}
                     type="button"
-                    variant={changeReason === reason.value ? 'default' : 'outline'}
+                    variant={changeReasons.includes(reason.value) ? 'default' : 'outline'}
                     className="justify-start"
-                    onClick={() => setChangeReason(reason.value)}
+                    onClick={() => toggleChangeReason(reason.value)}
                   >
                     {reason.label}
                   </Button>
