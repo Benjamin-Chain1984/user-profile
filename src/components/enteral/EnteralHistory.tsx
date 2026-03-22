@@ -60,7 +60,14 @@ export function EnteralHistory({ clientId }: EnteralHistoryProps) {
   // Combine feeds and flushes into a single chronological list
   const combinedActivity = useMemo(() => {
     const feedItems = feedLogs.map(log => ({ ...log, _type: 'feed' as const }));
-    const flushItems = flushLogs.map((log: any) => ({ ...log, _type: 'flush' as const }));
+    // Exclude feed-related flushes (flush_before_feed, flush_after_feed) since
+    // those volumes are already displayed within the feed entry itself
+    const flushItems = flushLogs
+      .filter((log: any) => {
+        const reason = log.flush_reason || '';
+        return reason !== 'flush_before_feed' && reason !== 'flush_after_feed';
+      })
+      .map((log: any) => ({ ...log, _type: 'flush' as const }));
     return [...feedItems, ...flushItems].sort(
       (a, b) => new Date(b.event_occurred_at).getTime() - new Date(a.event_occurred_at).getTime()
     );
