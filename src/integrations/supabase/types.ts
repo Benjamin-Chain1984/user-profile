@@ -2416,6 +2416,7 @@ export type Database = {
           flush_volume_ml: number
           id: string
           notes: string | null
+          scheduled_time: string | null
         }
         Insert: {
           client_id?: string | null
@@ -2429,6 +2430,7 @@ export type Database = {
           flush_volume_ml?: number
           id?: string
           notes?: string | null
+          scheduled_time?: string | null
         }
         Update: {
           client_id?: string | null
@@ -2442,6 +2444,7 @@ export type Database = {
           flush_volume_ml?: number
           id?: string
           notes?: string | null
+          scheduled_time?: string | null
         }
         Relationships: [
           {
