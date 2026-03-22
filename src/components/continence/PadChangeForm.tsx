@@ -202,6 +202,87 @@ export function PadChangeForm({
               Logged by: <strong>{staffName}</strong>
             </div>
 
+            {/* On Behalf Of Section */}
+            {enableOnBehalf && (
+              <Collapsible open={onBehalfOpen} onOpenChange={setOnBehalfOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between gap-2"
+                  >
+                    <div className="flex items-center gap-2">
+                      <UserPlus className="h-4 w-4" />
+                      <span>Recorded on Behalf Of</span>
+                    </div>
+                    {onBehalfOpen ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-4 space-y-4 p-4 bg-muted/50 rounded-lg border">
+                  <div className="space-y-2">
+                    <Label htmlFor="onBehalfName">
+                      Staff Name <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="onBehalfName"
+                      placeholder="Enter staff member's name"
+                      value={onBehalfName}
+                      onChange={(e) => setOnBehalfName(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="onBehalfRole">Staff Role (Optional)</Label>
+                    <Select value={onBehalfRole} onValueChange={setOnBehalfRole}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select role..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STAFF_ROLES.map((role) => (
+                          <SelectItem key={role.value} value={role.value}>
+                            {role.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="onBehalfReason">
+                      Reason <span className="text-destructive">*</span>
+                    </Label>
+                    <Select value={onBehalfReason} onValueChange={setOnBehalfReason}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select reason..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ON_BEHALF_REASONS.map((reason) => (
+                          <SelectItem key={reason.value} value={reason.value}>
+                            {reason.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {onBehalfReason === 'other' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="otherReason">Specify Reason</Label>
+                      <Input
+                        id="otherReason"
+                        placeholder="Enter reason..."
+                        value={otherReason}
+                        onChange={(e) => setOtherReason(e.target.value)}
+                      />
+                    </div>
+                  )}
+                </CollapsibleContent>
+              </Collapsible>
+            )}
+
             {/* Scheduled Time Dropdown */}
             <div className="space-y-2">
               <Label>Pad Change Schedule</Label>
