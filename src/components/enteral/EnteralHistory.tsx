@@ -1,5 +1,5 @@
 /**
- * Enteral Nutrition History - Feed logs and stoma checks
+ * Enteral Nutrition History - Feed logs, flush logs, medication logs, and stoma checks
  */
 
 import { useState, useMemo } from 'react';
@@ -7,9 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useEnteralFeedLogs, useEnteralMedicationLogs, useEnteralStomaChecks } from '@/hooks/useEnteral';
+import { useEnteralFeedLogs, useEnteralMedicationLogs, useEnteralStomaChecks, useEnteralFlushLogs } from '@/hooks/useEnteral';
 import { format, subHours, subDays, subMonths, subYears } from 'date-fns';
-import { Apple, Pill, CheckCircle2, User } from 'lucide-react';
+import { Apple, Pill, CheckCircle2, User, Droplets } from 'lucide-react';
 
 const DISPLAY_LIMIT = 5;
 
@@ -20,6 +20,16 @@ const TIME_FILTERS = [
   { label: '1y', value: '1y' },
   { label: 'All', value: 'all' },
 ] as const;
+
+const FLUSH_REASON_LABELS: Record<string, string> = {
+  flush_before_feed: 'Before Feed',
+  flush_after_feed: 'After Feed',
+  flush_before_medication: 'Before Medication',
+  flush_after_medication: 'After Medication',
+  routine_flush: 'Routine Flush',
+  extra_hydration: 'Extra Hydration',
+  tube_blocked: 'Tube Blocked',
+};
 
 function getFilterCutoff(filter: string): Date | null {
   const now = new Date();
@@ -40,19 +50,28 @@ export function EnteralHistory({ clientId }: EnteralHistoryProps) {
   const { data: feedLogs = [] } = useEnteralFeedLogs(clientId);
   const { data: medLogs = [] } = useEnteralMedicationLogs(clientId);
   const { data: stomaChecks = [] } = useEnteralStomaChecks(clientId);
+  const { data: flushLogs = [] } = useEnteralFlushLogs(clientId);
 
   const [feedFilter, setFeedFilter] = useState('7d');
   const [feedShowAll, setFeedShowAll] = useState(false);
+  const [flushFilter, setFlushFilter] = useState('7d');
+  const [flushShowAll, setFlushShowAll] = useState(false);
   const [stomaFilter, setStomaFilter] = useState('7d');
   const [stomaShowAll, setStomaShowAll] = useState(false);
 
   const filteredFeeds = useMemo(() => {
     const cutoff = getFilterCutoff(feedFilter);
-    const filtered = cutoff ? feedLogs.filter(e => new Date(e.event_occurred_at) >= cutoff) : feedLogs;
-    return filtered;
+    return cutoff ? feedLogs.filter(e => new Date(e.event_occurred_at) >= cutoff) : feedLogs;
   }, [feedLogs, feedFilter]);
 
   const displayedFeeds = feedShowAll ? filteredFeeds : filteredFeeds.slice(0, DISPLAY_LIMIT);
+
+  const filteredFlushes = useMemo(() => {
+    const cutoff = getFilterCutoff(flushFilter);
+    return cutoff ? flushLogs.filter((e: any) => new Date(e.event_occurred_at) >= cutoff) : flushLogs;
+  }, [flushLogs, flushFilter]);
+
+  const displayedFlushes = flushShowAll ? filteredFlushes : filteredFlushes.slice(0, DISPLAY_LIMIT);
 
   const filteredStoma = useMemo(() => {
     const cutoff = getFilterCutoff(stomaFilter);
@@ -66,6 +85,9 @@ export function EnteralHistory({ clientId }: EnteralHistoryProps) {
       <TabsList>
         <TabsTrigger value="feeds" className="gap-2">
           <Apple className="h-4 w-4" /> Feeds
+        </TabsTrigger>
+        <TabsTrigger value="flushes" className="gap-2">
+          <Droplets className="h-4 w-4" /> Flushes
         </TabsTrigger>
         <TabsTrigger value="medications" className="gap-2">
           <Pill className="h-4 w-4" /> Medications
@@ -130,6 +152,73 @@ export function EnteralHistory({ clientId }: EnteralHistoryProps) {
                 onClick={() => setFeedShowAll(!feedShowAll)}
               >
                 {feedShowAll ? 'Show less' : `Show all (${filteredFeeds.length})`}
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      {/* Flushes */}
+      <TabsContent value="flushes">
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <CardTitle className="text-lg">Flush Log</CardTitle>
+              <div className="flex gap-1">
+                {TIME_FILTERS.map(f => (
+                  <Button
+                    key={f.value}
+                    variant={flushFilter === f.value ? 'default' : 'outline'}
+                    size="sm"
+                    className="text-xs h-7 px-2"
+                    onClick={() => { setFlushFilter(f.value); setFlushShowAll(false); }}
+                  >
+                    {f.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {displayedFlushes.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No flush entries found.</p>
+            ) : (
+              displayedFlushes.map((log: any) => (
+                <div key={log.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                  <div>
+                    <div className="text-sm font-medium flex items-center gap-2">
+                      <Droplets className="h-3.5 w-3.5 text-blue-500" />
+                      {log.flush_volume_ml}ml
+                      {log.flush_reason && (
+                        <Badge variant="secondary" className="text-xs font-normal">
+                          {FLUSH_REASON_LABELS[log.flush_reason] || log.flush_reason.replace(/_/g, ' ')}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {format(new Date(log.event_occurred_at), 'dd/MM/yy HH:mm')}
+                    </div>
+                    {log.notes && (
+                      <div className="text-xs text-muted-foreground mt-0.5 italic">{log.notes}</div>
+                    )}
+                    {log.staff_name && (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                        <User className="h-3 w-3" />
+                        <span>{log.staff_name}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+            {filteredFlushes.length > DISPLAY_LIMIT && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full text-xs"
+                onClick={() => setFlushShowAll(!flushShowAll)}
+              >
+                {flushShowAll ? 'Show less' : `Show all (${filteredFlushes.length})`}
               </Button>
             )}
           </CardContent>
