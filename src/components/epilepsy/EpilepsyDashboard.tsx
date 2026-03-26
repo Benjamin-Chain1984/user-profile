@@ -108,6 +108,14 @@ export function EpilepsyDashboard({ clientId }: EpilepsyDashboardProps) {
       {/* Status Card */}
       <EpilepsyStatusCard clientId={clientId} />
 
+      {/* Duration Escalation Timeline */}
+      {statusInfo.durationEscalation.isActive && (
+        <DurationEscalationTimeline
+          escalation={statusInfo.durationEscalation}
+          durationThreshold={statusInfo.durationThreshold}
+        />
+      )}
+
       {/* Timeline Graph */}
       <SeizureTimelineGraph clientId={clientId} />
 
