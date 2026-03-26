@@ -1,10 +1,15 @@
 /**
  * Epilepsy Status Calculator - Rolling window logic
  * Red > Amber > IDEAL hierarchy
+ * 
+ * Duration breach escalation:
+ *   0–24h after event → Red
+ *   24–48h after event → Amber
+ *   48h+ → clears (IDEAL if no other triggers)
  */
 
-import type { SeizureEvent, EpilepsyConfig, EpilepsyAlert, EpilepsyStatusInfo } from '@/types/epilepsy';
-import { differenceInMinutes, differenceInDays } from 'date-fns';
+import type { SeizureEvent, EpilepsyConfig, EpilepsyAlert, EpilepsyStatusInfo, DurationEscalationInfo } from '@/types/epilepsy';
+import { differenceInMinutes, differenceInDays, differenceInHours } from 'date-fns';
 
 interface CalculateParams {
   events: SeizureEvent[];
@@ -18,6 +23,59 @@ function windowToMinutes(value: number, unit: string): number {
 
 function windowLabel(value: number, unit: string): string {
   return `${value} ${unit}`;
+}
+
+const NO_ESCALATION: DurationEscalationInfo = {
+  isActive: false,
+  triggerEventDate: null,
+  phase: null,
+  hoursRemaining: 0,
+  hoursElapsed: 0,
+};
+
+/**
+ * Find the most recent seizure that exceeded duration threshold
+ * and compute whether its timed escalation (Red 24h → Amber 24h) is still active.
+ */
+function computeDurationEscalation(
+  events: SeizureEvent[],
+  durationThreshold: number,
+  now: Date
+): DurationEscalationInfo {
+  // Find events that exceeded the duration threshold, sorted newest first
+  const breachEvents = events
+    .filter(e => {
+      const dur = e.duration_minutes + e.duration_seconds / 60;
+      return dur >= durationThreshold;
+    })
+    .sort((a, b) => new Date(b.event_occurred_at).getTime() - new Date(a.event_occurred_at).getTime());
+
+  if (breachEvents.length === 0) return NO_ESCALATION;
+
+  const latest = breachEvents[0];
+  const eventDate = new Date(latest.event_occurred_at);
+  const hoursElapsed = differenceInMinutes(now, eventDate) / 60;
+
+  if (hoursElapsed >= 48) return NO_ESCALATION;
+
+  if (hoursElapsed < 24) {
+    return {
+      isActive: true,
+      triggerEventDate: latest.event_occurred_at,
+      phase: 'red',
+      hoursRemaining: Math.max(0, 24 - hoursElapsed),
+      hoursElapsed,
+    };
+  }
+
+  // 24-48h
+  return {
+    isActive: true,
+    triggerEventDate: latest.event_occurred_at,
+    phase: 'amber',
+    hoursRemaining: Math.max(0, 48 - hoursElapsed),
+    hoursElapsed,
+  };
 }
 
 export function calculateEpilepsyStatus({ events, config, alerts }: CalculateParams): EpilepsyStatusInfo {
@@ -54,6 +112,9 @@ export function calculateEpilepsyStatus({ events, config, alerts }: CalculatePar
     return dur > max ? dur : max;
   }, 0);
 
+  // Compute timed duration escalation
+  const durationEscalation = computeDurationEscalation(events, durationThreshold, now);
+
   const baseInfo = {
     amberThreshold: amberCount,
     redThreshold: redCount,
@@ -61,6 +122,7 @@ export function calculateEpilepsyStatus({ events, config, alerts }: CalculatePar
     seizuresInWindow,
     longestDurationInWindow,
     durationThreshold,
+    durationEscalation,
   };
 
   if (events.length === 0) {
@@ -91,12 +153,11 @@ export function calculateEpilepsyStatus({ events, config, alerts }: CalculatePar
     ...baseInfo,
   };
 
-  // 1️⃣ Duration threshold → Red
-  const latestDuration = latest.duration_minutes + latest.duration_seconds / 60;
-  if (latestDuration >= durationThreshold) {
+  // 1️⃣ Duration threshold → timed escalation (Red 24h → Amber 24h)
+  if (durationEscalation.isActive && durationEscalation.phase === 'red') {
     return {
       status: 'action',
-      message: `Red: Seizure duration (${latestDuration.toFixed(1)} min) exceeds ${durationThreshold} min threshold.`,
+      message: `Red: Seizure exceeded ${durationThreshold} min threshold — Red phase (${Math.ceil(durationEscalation.hoursRemaining)}h remaining).`,
       needsPrnPrompt: true,
       ...commonFields,
     };
@@ -112,7 +173,17 @@ export function calculateEpilepsyStatus({ events, config, alerts }: CalculatePar
     };
   }
 
-  // 3️⃣ Amber frequency threshold
+  // 3️⃣ Duration escalation amber phase (24-48h)
+  if (durationEscalation.isActive && durationEscalation.phase === 'amber') {
+    return {
+      status: 'monitor',
+      message: `Amber: Post-duration-breach monitoring — Amber phase (${Math.ceil(durationEscalation.hoursRemaining)}h remaining).`,
+      needsPrnPrompt: false,
+      ...commonFields,
+    };
+  }
+
+  // 4️⃣ Amber frequency threshold
   if (eventsInAmberWindow.length >= amberCount) {
     return {
       status: 'monitor',
@@ -122,7 +193,7 @@ export function calculateEpilepsyStatus({ events, config, alerts }: CalculatePar
     };
   }
 
-  // 4️⃣ Check for injury or emergency on latest event
+  // 5️⃣ Check for injury or emergency on latest event
   const hasInjury = latest.recovery.includes('Injured (notes required)');
   const hasEmergency = latest.recovery.includes('Emergency support required');
   if (hasInjury || hasEmergency) {
@@ -134,7 +205,7 @@ export function calculateEpilepsyStatus({ events, config, alerts }: CalculatePar
     };
   }
 
-  // 5️⃣ Unresolved alerts → Amber
+  // 6️⃣ Unresolved alerts → Amber
   if (activeAlerts.length > 0) {
     return {
       status: 'monitor',
@@ -144,7 +215,7 @@ export function calculateEpilepsyStatus({ events, config, alerts }: CalculatePar
     };
   }
 
-  // 6️⃣ IDEAL
+  // 7️⃣ IDEAL
   return {
     status: 'ideal',
     message: daysSince === 0
