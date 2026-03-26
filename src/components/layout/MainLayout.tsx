@@ -26,7 +26,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                 <img 
                   src={idealLogo} 
                   alt="IDEAL" 
-                  className="h-8 w-auto" 
+                  className="h-12 w-auto" 
                 />
               </div>
               <ViewAsToggle />
