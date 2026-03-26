@@ -81,6 +81,21 @@ export function ContinenceHistory({ clientId }: ContinenceHistoryProps) {
   const { tests: utiTests, loading: utiLoading } = useUTITests(clientId);
   const { checks: consumablesChecks, loading: consumablesLoading } = useConsumablesChecks(clientId);
 
+  const [padFilter, setPadFilter] = useState('7d');
+
+  const filteredChanges = useMemo(() => {
+    const cutoff = getFilterDate(padFilter);
+    return changes.filter((c) => isAfter(new Date(c.event_occurred_at), cutoff));
+  }, [changes, padFilter]);
+
+  // Resolve staff names for pad changes
+  const padStaffIds = useMemo(() => {
+    const ids = new Set<string>();
+    filteredChanges.forEach((c) => { if (c.created_by) ids.add(c.created_by); });
+    return Array.from(ids);
+  }, [filteredChanges]);
+  const { data: staffNames = {} } = useStaffNames(padStaffIds);
+
   const getPadTypeLabel = (value: string) => PAD_TYPES.find((t) => t.value === value)?.label || value;
   const getPadConditionLabel = (value: string) => PAD_CONDITIONS.find((c) => c.value === value)?.label || value;
   const getChangeReasonLabel = (value: string) => CHANGE_REASONS.find((r) => r.value === value)?.label || value;
