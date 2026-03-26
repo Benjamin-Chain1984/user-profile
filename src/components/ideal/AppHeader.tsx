@@ -1,4 +1,4 @@
-const idealLogo = '/logo-design-new.png';
+const idealLogo = '/Ideal-logo.png';
 
 export function AppHeader() {
   return (

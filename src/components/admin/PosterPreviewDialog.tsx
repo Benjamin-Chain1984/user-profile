@@ -274,7 +274,7 @@ export function PosterPreviewDialog({
         <div ref={posterRef} className="bg-white border border-border rounded-lg p-6 space-y-4 text-foreground">
           {/* Header */}
           <div className="flex items-center gap-2 border-b border-border pb-2">
-            <img src="/logo-design-new.png" alt="IDEAL" className="h-6 w-auto" />
+            <img src="/Ideal-logo.png" alt="IDEAL" className="h-6 w-auto" />
             <div>
               <p className="text-[10px] font-bold tracking-wide leading-tight">IDEAL</p>
               <p className="text-[6px] text-muted-foreground leading-tight">Intelligent Data for Everyday Activities &amp; Lifestyle</p>
