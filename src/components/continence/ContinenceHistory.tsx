@@ -2,12 +2,14 @@
  * Continence History - Timeline of pad changes and skin checks
  */
 
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePadChanges, useSkinChecks, useUTITests, useConsumablesChecks } from '@/hooks/useContinence';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow, subDays, subMonths, isAfter } from 'date-fns';
 import {
   Clock,
   Droplets,
@@ -16,6 +18,7 @@ import {
   Package,
   UserPlus,
   AlertTriangle,
+  User,
 } from 'lucide-react';
 import {
   PAD_TYPES,
@@ -25,6 +28,48 @@ import {
   PadChangeLog,
   SkinCheck,
 } from '@/types/continence';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+
+const TIME_FILTERS = [
+  { value: '24h', label: 'Last 24 hours' },
+  { value: '7d', label: 'Last 7 days' },
+  { value: '14d', label: 'Last 14 days' },
+  { value: '1m', label: 'Last month' },
+  { value: '6m', label: 'Last 6 months' },
+  { value: '12m', label: 'Last 12 months' },
+];
+
+function getFilterDate(filter: string): Date {
+  const now = new Date();
+  switch (filter) {
+    case '24h': return subDays(now, 1);
+    case '7d': return subDays(now, 7);
+    case '14d': return subDays(now, 14);
+    case '1m': return subMonths(now, 1);
+    case '6m': return subMonths(now, 6);
+    case '12m': return subMonths(now, 12);
+    default: return subDays(now, 7);
+  }
+}
+
+function useStaffNames(userIds: string[]) {
+  return useQuery({
+    queryKey: ['staff-names', userIds.sort().join(',')],
+    queryFn: async () => {
+      if (userIds.length === 0) return {} as Record<string, string>;
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', userIds);
+      const map: Record<string, string> = {};
+      (data || []).forEach((p) => { map[p.id] = p.full_name || 'Unknown'; });
+      return map;
+    },
+    enabled: userIds.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+}
 
 interface ContinenceHistoryProps {
   clientId?: string;
@@ -35,6 +80,21 @@ export function ContinenceHistory({ clientId }: ContinenceHistoryProps) {
   const { checks: skinChecks, loading: skinLoading } = useSkinChecks(clientId);
   const { tests: utiTests, loading: utiLoading } = useUTITests(clientId);
   const { checks: consumablesChecks, loading: consumablesLoading } = useConsumablesChecks(clientId);
+
+  const [padFilter, setPadFilter] = useState('7d');
+
+  const filteredChanges = useMemo(() => {
+    const cutoff = getFilterDate(padFilter);
+    return changes.filter((c) => isAfter(new Date(c.event_occurred_at), cutoff));
+  }, [changes, padFilter]);
+
+  // Resolve staff names for pad changes
+  const padStaffIds = useMemo(() => {
+    const ids = new Set<string>();
+    filteredChanges.forEach((c) => { if (c.created_by) ids.add(c.created_by); });
+    return Array.from(ids);
+  }, [filteredChanges]);
+  const { data: staffNames = {} } = useStaffNames(padStaffIds);
 
   const getPadTypeLabel = (value: string) => PAD_TYPES.find((t) => t.value === value)?.label || value;
   const getPadConditionLabel = (value: string) => PAD_CONDITIONS.find((c) => c.value === value)?.label || value;
@@ -108,18 +168,32 @@ export function ContinenceHistory({ clientId }: ContinenceHistoryProps) {
       <TabsContent value="pad-changes">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Recent Pad Changes</CardTitle>
-            <CardDescription>Last 100 entries</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">Recent Pad Changes</CardTitle>
+                <CardDescription>{filteredChanges.length} entries</CardDescription>
+              </div>
+              <Select value={padFilter} onValueChange={setPadFilter}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIME_FILTERS.map((f) => (
+                    <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[400px] pr-4">
               {changesLoading ? (
                 <p className="text-muted-foreground">Loading...</p>
-              ) : changes.length === 0 ? (
-                <p className="text-muted-foreground">No pad changes logged yet.</p>
+              ) : filteredChanges.length === 0 ? (
+                <p className="text-muted-foreground">No pad changes in this period.</p>
               ) : (
                 <div className="space-y-4">
-                  {changes.map((change) => (
+                  {filteredChanges.map((change) => (
                     <div
                       key={change.id}
                       className="flex items-start gap-4 p-4 rounded-lg border bg-card"
@@ -148,6 +222,12 @@ export function ContinenceHistory({ clientId }: ContinenceHistoryProps) {
                           ))}
                           {renderOnBehalfBadge(change)}
                         </div>
+                        {change.created_by && staffNames[change.created_by] && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <User className="h-3 w-3" />
+                            Logged by: {staffNames[change.created_by]}
+                          </div>
+                        )}
                         {change.notes && (
                           <p className="text-sm text-muted-foreground">{change.notes}</p>
                         )}
