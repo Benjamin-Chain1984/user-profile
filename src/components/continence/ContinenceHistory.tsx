@@ -168,18 +168,32 @@ export function ContinenceHistory({ clientId }: ContinenceHistoryProps) {
       <TabsContent value="pad-changes">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Recent Pad Changes</CardTitle>
-            <CardDescription>Last 100 entries</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">Recent Pad Changes</CardTitle>
+                <CardDescription>{filteredChanges.length} entries</CardDescription>
+              </div>
+              <Select value={padFilter} onValueChange={setPadFilter}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIME_FILTERS.map((f) => (
+                    <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[400px] pr-4">
               {changesLoading ? (
                 <p className="text-muted-foreground">Loading...</p>
-              ) : changes.length === 0 ? (
-                <p className="text-muted-foreground">No pad changes logged yet.</p>
+              ) : filteredChanges.length === 0 ? (
+                <p className="text-muted-foreground">No pad changes in this period.</p>
               ) : (
                 <div className="space-y-4">
-                  {changes.map((change) => (
+                  {filteredChanges.map((change) => (
                     <div
                       key={change.id}
                       className="flex items-start gap-4 p-4 rounded-lg border bg-card"
@@ -208,6 +222,12 @@ export function ContinenceHistory({ clientId }: ContinenceHistoryProps) {
                           ))}
                           {renderOnBehalfBadge(change)}
                         </div>
+                        {change.created_by && staffNames[change.created_by] && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <User className="h-3 w-3" />
+                            Logged by: {staffNames[change.created_by]}
+                          </div>
+                        )}
                         {change.notes && (
                           <p className="text-sm text-muted-foreground">{change.notes}</p>
                         )}
