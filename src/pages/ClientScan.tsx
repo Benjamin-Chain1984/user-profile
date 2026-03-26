@@ -33,7 +33,7 @@ import {
   Smartphone
 } from 'lucide-react';
 
-const idealLogo = '/logo-design-new.png';
+const idealLogo = '/Ideal-logo.png';
 const QR_REDIRECT_KEY = 'ideal_qr_redirect';
 const PHONE_SESSION_KEY = 'ideal_phone_session';
 
