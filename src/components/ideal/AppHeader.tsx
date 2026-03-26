@@ -7,7 +7,7 @@ export function AppHeader() {
         <img 
           src={idealLogo} 
           alt="IDEAL - Intelligent Data for Everyday Activities and Lifestyle" 
-          className="h-10 sm:h-14 w-auto" 
+          className="h-14 sm:h-20 w-auto" 
         />
       </div>
     </header>
