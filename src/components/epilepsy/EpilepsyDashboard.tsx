@@ -32,6 +32,7 @@ export function EpilepsyDashboard({ clientId }: EpilepsyDashboardProps) {
   const [showExport, setShowExport] = useState(false);
   const [showEmergencyPanel, setShowEmergencyPanel] = useState(false);
   const { config } = useEpilepsyConfig(clientId);
+  const statusInfo = useEpilepsyStatus(clientId);
   const { isAdmin } = useRoleAccess();
   const { isMonitoringPaused, monitoringStatus } = useProfile();
 
