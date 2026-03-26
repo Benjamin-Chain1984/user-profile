@@ -38,20 +38,33 @@ function ToggleOption({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={() => onChange(!value)}
-      className={`flex items-center justify-between p-3 rounded-lg border transition-all text-left w-full ${
-        value
-          ? 'border-destructive/50 bg-destructive/5'
-          : 'border-border hover:border-primary/30'
-      }`}
-    >
-      <span className="text-sm font-medium">{label}</span>
-      <span className={`text-sm font-medium ${value ? 'text-destructive' : 'text-muted-foreground'}`}>
-        {value ? 'Yes' : 'No'}
-      </span>
-    </button>
+    <div className="space-y-1.5">
+      <p className="text-sm font-medium">{label}</p>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => onChange(false)}
+          className={`p-2.5 rounded-lg border text-sm font-medium text-center transition-all ${
+            !value
+              ? 'border-primary bg-primary/10 text-primary'
+              : 'border-border hover:border-primary/30 text-muted-foreground'
+          }`}
+        >
+          No
+        </button>
+        <button
+          type="button"
+          onClick={() => onChange(true)}
+          className={`p-2.5 rounded-lg border text-sm font-medium text-center transition-all ${
+            value
+              ? 'border-destructive bg-destructive/10 text-destructive'
+              : 'border-border hover:border-primary/30 text-muted-foreground'
+          }`}
+        >
+          Yes
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -150,10 +163,10 @@ export function MealtimeObservationForm({ clientId, open, onOpenChange }: Props)
           </div>
 
           {/* Toggle options */}
-          <div className="space-y-2">
+          <div className="space-y-4">
             <ToggleOption label="Wet voice?" value={wetVoice} onChange={setWetVoice} />
-            <ToggleOption label="Throat clearing?" value={throatClearing} onChange={setThroatClearing} />
-            <ToggleOption label="Pocketing?" value={pocketing} onChange={setPocketing} />
+            <ToggleOption label="Coughing during / after meals?" value={throatClearing} onChange={setThroatClearing} />
+            <ToggleOption label="Storing food inside the mouth without swallowing it?" value={pocketing} onChange={setPocketing} />
             <ToggleOption label="Fatigue?" value={fatigue} onChange={setFatigue} />
             <ToggleOption label="Refusal?" value={refusal} onChange={setRefusal} />
           </div>
