@@ -165,10 +165,10 @@ export function MealtimeObservationForm({ clientId, open, onOpenChange }: Props)
           {/* Toggle options */}
           <div className="space-y-4">
             <ToggleOption label="Wet voice?" value={wetVoice} onChange={setWetVoice} />
-            <ToggleOption label="Coughing during / after meals?" value={throatClearing} onChange={setThroatClearing} />
+            <ToggleOption label="Clearing throat?" value={throatClearing} onChange={setThroatClearing} />
             <ToggleOption label="Storing food inside the mouth without swallowing it?" value={pocketing} onChange={setPocketing} />
             <ToggleOption label="Fatigue?" value={fatigue} onChange={setFatigue} />
-            <ToggleOption label="Refusal?" value={refusal} onChange={setRefusal} />
+            <ToggleOption label="Not wanting to eat / drink?" value={refusal} onChange={setRefusal} />
           </div>
 
           {/* Meal Completion */}
