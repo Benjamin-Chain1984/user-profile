@@ -184,6 +184,19 @@ export const FREQUENCY_OPTIONS = [
   { value: 'unknown', label: 'Unknown' },
 ];
 
+export interface DurationEscalationInfo {
+  /** Whether a timed escalation from a duration breach is active */
+  isActive: boolean;
+  /** The seizure event that triggered it */
+  triggerEventDate: string | null;
+  /** Current phase: 'red' (0-24h), 'amber' (24-48h), or null (expired) */
+  phase: 'red' | 'amber' | null;
+  /** Hours remaining in the current phase */
+  hoursRemaining: number;
+  /** Total hours elapsed since the triggering event */
+  hoursElapsed: number;
+}
+
 export interface EpilepsyStatusInfo {
   status: EpilepsyStatus;
   message: string;
@@ -197,4 +210,5 @@ export interface EpilepsyStatusInfo {
   longestDurationInWindow: number;
   durationThreshold: number;
   needsPrnPrompt: boolean;
+  durationEscalation: DurationEscalationInfo;
 }

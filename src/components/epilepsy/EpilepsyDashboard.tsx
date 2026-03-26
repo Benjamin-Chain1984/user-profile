@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { EpilepsyStatusCard } from './EpilepsyStatusCard';
+import { DurationEscalationTimeline } from './DurationEscalationTimeline';
 import { KnownSeizuresSummary } from './KnownSeizuresSummary';
 import { SeizureLogForm } from './SeizureLogForm';
 import { SeizureTimelineGraph } from './SeizureTimelineGraph';
@@ -15,7 +16,7 @@ import { EpilepsyTrends } from './EpilepsyTrends';
 import { EpilepsyConfigSettings } from './EpilepsyConfigSettings';
 import { EpilepsyExportReports } from './EpilepsyExportReports';
 import { EmergencySeizurePanel } from './EmergencySeizurePanel';
-import { useEpilepsyConfig } from '@/hooks/useEpilepsy';
+import { useEpilepsyConfig, useEpilepsyStatus } from '@/hooks/useEpilepsy';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { useProfile } from '@/contexts/ProfileContext';
 import { MonitoringPausedBanner } from '@/components/monitoring';
@@ -31,6 +32,7 @@ export function EpilepsyDashboard({ clientId }: EpilepsyDashboardProps) {
   const [showExport, setShowExport] = useState(false);
   const [showEmergencyPanel, setShowEmergencyPanel] = useState(false);
   const { config } = useEpilepsyConfig(clientId);
+  const statusInfo = useEpilepsyStatus(clientId);
   const { isAdmin } = useRoleAccess();
   const { isMonitoringPaused, monitoringStatus } = useProfile();
 
@@ -105,6 +107,14 @@ export function EpilepsyDashboard({ clientId }: EpilepsyDashboardProps) {
 
       {/* Status Card */}
       <EpilepsyStatusCard clientId={clientId} />
+
+      {/* Duration Escalation Timeline */}
+      {statusInfo.durationEscalation.isActive && (
+        <DurationEscalationTimeline
+          escalation={statusInfo.durationEscalation}
+          durationThreshold={statusInfo.durationThreshold}
+        />
+      )}
 
       {/* Timeline Graph */}
       <SeizureTimelineGraph clientId={clientId} />
