@@ -135,7 +135,13 @@ export function PainStatusCard({ latestAbbey, latestPainad, abbeyTrend, painadTr
     severities.push(latestPainad.severity as string);
   }
 
-  const worstStatus = statuses.length > 0 ? getWorstStatus(statuses) : 'ideal';
+  let worstStatus = statuses.length > 0 ? getWorstStatus(statuses) : 'ideal';
+
+  // If assessment is overdue, escalate to at least 'monitor' (amber)
+  if (nextDueInfo?.isOverdue && worstStatus === 'ideal') {
+    worstStatus = 'monitor';
+  }
+
   const trafficLight = toTrafficLight(worstStatus);
 
   // Pick the worst severity for the message
