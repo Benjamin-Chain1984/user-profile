@@ -72,6 +72,30 @@ export function calculateOralHealthStatus({ assessments, taskLogs, config }: Cal
     };
   }
 
+  // AM/PM deadline check: flag amber if AM not logged by 11am, PM not logged by 10pm
+  const todayStr = format(now, 'yyyy-MM-dd');
+  const currentHour = now.getHours();
+  const todayLogs = taskLogs.filter(l => l.log_date === todayStr);
+
+  const amCompleted = todayLogs.some(l => l.period === 'am' && l.completed);
+  const pmCompleted = todayLogs.some(l => l.period === 'pm' && l.completed);
+
+  if (currentHour >= 11 && !amCompleted) {
+    return {
+      status: 'monitor',
+      message: 'Morning oral care not completed by 11:00 AM.',
+      lastEntry: 'AM oral care overdue',
+    };
+  }
+
+  if (currentHour >= 22 && !pmCompleted) {
+    return {
+      status: 'monitor',
+      message: 'Night oral care not completed by 10:00 PM.',
+      lastEntry: 'PM oral care overdue',
+    };
+  }
+
   // Compliance monitoring
   if (config.enable_compliance_monitoring && taskLogs.length > 0) {
     const last7Days = taskLogs.filter(l => differenceInDays(now, parseISO(l.log_date)) <= 7);
