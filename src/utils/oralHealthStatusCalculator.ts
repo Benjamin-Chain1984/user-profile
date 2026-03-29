@@ -3,7 +3,7 @@
  */
 
 import type { OralHealthAssessment, OralHealthTaskLog, OralHealthConfig, OralHealthStatusInfo } from '@/types/oralHealth';
-import { differenceInDays, differenceInHours, parseISO } from 'date-fns';
+import { differenceInDays, differenceInHours, parseISO, format, startOfDay } from 'date-fns';
 
 interface CalculateParams {
   assessments: OralHealthAssessment[];
