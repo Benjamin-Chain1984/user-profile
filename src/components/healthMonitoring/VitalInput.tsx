@@ -53,9 +53,17 @@ export function VitalInput({
     
     // Add some padding for critical zones
     const padding = (max - min) * 0.1;
+    let computedMin = Math.floor(min - padding);
+    let computedMax = Math.ceil(max + padding);
+    
+    // SpO2 cannot exceed 100%
+    if (vitalType === 'oxygen') {
+      computedMax = 100;
+    }
+    
     return {
-      min: Math.floor(min - padding),
-      max: Math.ceil(max + padding),
+      min: computedMin,
+      max: computedMax,
     };
   };
 
@@ -73,7 +81,10 @@ export function VitalInput({
     
     const parsed = parseFloat(newInputValue);
     if (!isNaN(parsed)) {
-      onChange(parsed);
+      // Clamp SpO2 to 100
+      const clamped = vitalType === 'oxygen' ? Math.min(parsed, 100) : parsed;
+      onChange(clamped);
+      if (clamped !== parsed) setInputValue(clamped.toString());
     } else if (newInputValue === '') {
       onChange(null);
     }
