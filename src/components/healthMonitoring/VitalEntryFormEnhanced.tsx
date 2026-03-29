@@ -44,7 +44,7 @@ const formSchema = z.object({
   temperature_celsius: z.number().nullable(),
   bp_systolic: z.number().nullable(),
   bp_diastolic: z.number().nullable(),
-  oxygen_saturation: z.number().nullable(),
+  oxygen_saturation: z.number().max(100, 'SpO₂ cannot exceed 100%').nullable(),
   heart_rate: z.number().nullable(),
   respiratory_rate: z.number().nullable(),
   symptoms: z.array(z.string()),

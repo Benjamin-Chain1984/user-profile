@@ -80,6 +80,11 @@ export function VitalReelPicker({
       max = greenMax + 20 * threshold.step;
     }
     
+    // SpO2 cannot exceed 100%
+    if (vitalType === 'oxygen') {
+      max = Math.min(max, 100);
+    }
+    
     const result: number[] = [];
     for (let v = min; v <= max; v += threshold.step) {
       result.push(Math.round(v * 10) / 10);
