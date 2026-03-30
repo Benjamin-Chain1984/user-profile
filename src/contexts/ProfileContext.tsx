@@ -397,7 +397,28 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         painadResult.data ? { ...painadResult.data, tool: 'painad' as const } : null,
       ].filter(Boolean) as Array<{ total_score: number; severity: string; created_at: string; tool: 'abbey' | 'painad' }>;
 
-      if (candidates.length === 0) return;
+      // Check overdue status from config
+      const config = configResult.data;
+      const overdueEnabled = config?.overdue_alert_enabled ?? true;
+      const overdueThresholdDays = config?.overdue_threshold_days ?? 30;
+
+      // Determine most recent assessment date across both tools
+      const mostRecentDate = candidates.length > 0
+        ? new Date(candidates.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0].created_at)
+        : null;
+
+      const isOverdue = overdueEnabled && (
+        !mostRecentDate || differenceInDays(new Date(), mostRecentDate) >= overdueThresholdDays
+      );
+
+      if (candidates.length === 0) {
+        // No assessments at all — check overdue
+        if (isOverdue) {
+          setLatestPainData(null);
+          updateModuleStatus('pain-check', 'monitor', 'Assessment overdue – no assessments recorded');
+        }
+        return;
+      }
 
       const best = candidates.sort((a, b) => {
         const rankDiff = (SEVERITY_RANK[b.severity] ?? 0) - (SEVERITY_RANK[a.severity] ?? 0);
@@ -405,11 +426,18 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       })[0];
 
       const severity = best.severity as PainSeverity;
-      const status = painSeverityToStatus(severity);
+      let status = painSeverityToStatus(severity);
       const timeAgo = formatDistanceToNow(new Date(best.created_at), { addSuffix: true });
       const toolLabel = best.tool === 'painad' ? 'PAINAD' : 'Abbey';
 
-      const statusMessage = `${toolLabel} • ${getSeverityLabel(severity)} • ${timeAgo}`;
+      // If overdue, escalate to at least 'monitor'
+      if (isOverdue && status === 'stable') {
+        status = 'monitor';
+      }
+
+      const statusMessage = isOverdue && status === 'monitor' && severity === 'no_pain'
+        ? `Assessment overdue • Last: ${timeAgo}`
+        : `${toolLabel} • ${getSeverityLabel(severity)} • ${timeAgo}`;
 
       setLatestPainData({ severity, score: best.total_score, timestamp: best.created_at });
       updateModuleStatus('pain-check', status, statusMessage);
