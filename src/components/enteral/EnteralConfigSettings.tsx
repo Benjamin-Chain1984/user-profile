@@ -203,12 +203,18 @@ export function EnteralConfigSettings({ clientId }: EnteralConfigSettingsProps) 
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Alert Lead Time (days)</Label>
-                <Input type="number" value={alertLeadDays} onChange={e => setAlertLeadDays(e.target.value)} />
+                <Label className="flex items-center gap-1.5">
+                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-400" />
+                  Amber if ≤ X days remaining
+                </Label>
+                <Input type="number" value={alertLeadDays} onChange={e => setAlertLeadDays(e.target.value)} min="1" />
               </div>
               <div className="space-y-2">
-                <Label>Overdue Threshold (days)</Label>
-                <Input type="number" value={overdueDays} onChange={e => setOverdueDays(e.target.value)} />
+                <Label className="flex items-center gap-1.5">
+                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-destructive" />
+                  Red if ≥ X days overdue
+                </Label>
+                <Input type="number" value={overdueDays} onChange={e => setOverdueDays(e.target.value)} min="1" />
               </div>
             </div>
           </CardContent>

@@ -121,7 +121,7 @@ export function calculateEnteralStatus(input: EnteralStatusInput): EnteralStatus
   else if (missedFeeds > 0) {
     status = 'monitor';
     message = `${missedFeeds} feed(s) late – attend when possible.`;
-  } else if (tubeChangeDays !== null && tubeChangeDays <= (config?.tube_change_alert_lead_days ?? 7)) {
+  } else if (tubeChangeDays !== null && tubeChangeDays <= amberLeadDays) {
     status = 'monitor';
     message = `Tube change due in ${tubeChangeDays} day(s).`;
   } else if (stomaStatus === 'amber') {
