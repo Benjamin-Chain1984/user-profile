@@ -85,10 +85,12 @@ export function calculateEnteralStatus(input: EnteralStatusInput): EnteralStatus
   // Tube change
   let tubeChangeDays: number | null = null;
   let tubeChangeOverdue = false;
+  const amberLeadDays = config?.tube_change_alert_lead_days ?? 7;
+  const redOverdueDays = config?.tube_change_overdue_days ?? 1;
   if (config?.next_tube_change_due) {
     tubeChangeDays = differenceInDays(parseISO(config.next_tube_change_due), now);
-    const overdueDays = config.tube_change_overdue_days || 1;
-    tubeChangeOverdue = tubeChangeDays < -overdueDays + 1;
+    // Red when X or more days past the due date
+    tubeChangeOverdue = tubeChangeDays <= -redOverdueDays;
   }
 
   // Stoma check status
@@ -119,7 +121,7 @@ export function calculateEnteralStatus(input: EnteralStatusInput): EnteralStatus
   else if (missedFeeds > 0) {
     status = 'monitor';
     message = `${missedFeeds} feed(s) late – attend when possible.`;
-  } else if (tubeChangeDays !== null && tubeChangeDays <= (config?.tube_change_alert_lead_days ?? 7)) {
+  } else if (tubeChangeDays !== null && tubeChangeDays <= amberLeadDays) {
     status = 'monitor';
     message = `Tube change due in ${tubeChangeDays} day(s).`;
   } else if (stomaStatus === 'amber') {

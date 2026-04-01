@@ -164,7 +164,7 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
               <StatusBadge
                 status={
                   statusResult.tubeChangeOverdue ? 'action'
-                  : statusResult.tubeChangeDays !== null && statusResult.tubeChangeDays <= 7 ? 'monitor'
+                  : statusResult.tubeChangeDays !== null && statusResult.tubeChangeDays <= (config?.tube_change_alert_lead_days ?? 7) ? 'monitor'
                   : 'stable'
                 }
                 size="sm"
@@ -172,7 +172,7 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
             </div>
             {statusResult.tubeChangeDays !== null ? (
               <>
-                <div className={`text-lg font-bold ${statusResult.tubeChangeOverdue ? 'text-destructive' : statusResult.tubeChangeDays <= 7 ? 'text-warning' : ''}`}>
+                <div className={`text-lg font-bold ${statusResult.tubeChangeOverdue ? 'text-destructive' : statusResult.tubeChangeDays <= (config?.tube_change_alert_lead_days ?? 7) ? 'text-warning' : ''}`}>
                   {statusResult.tubeChangeOverdue ? `${Math.abs(statusResult.tubeChangeDays)}d overdue` : `Due in ${statusResult.tubeChangeDays} Days`}
                 </div>
                 <div className="space-y-0.5 text-xs text-muted-foreground">
