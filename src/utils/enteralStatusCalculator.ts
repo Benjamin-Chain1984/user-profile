@@ -53,7 +53,7 @@ export function calculateEnteralStatus(input: EnteralStatusInput): EnteralStatus
   let formulaScheduleTimes: string[] = [];
   if (Array.isArray(config?.feeding_schedule) && config.feeding_schedule.length > 0) {
     formulaScheduleTimes = config.feeding_schedule
-      .filter((e: any) => e.activity === 'formula_feed')
+      .filter((e: any) => (e.type || 'feed') === 'feed')
       .map((e: any) => e.time);
   } else if (config?.feed_schedule_times) {
     formulaScheduleTimes = config.feed_schedule_times;
