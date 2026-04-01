@@ -346,16 +346,71 @@ export function useLogEnteralTubeChange(clientId?: string) {
 
   return useMutation({
     mutationFn: async (entry: { tube_type: string; tube_size_fr: string | null; change_reason: string; changed_by_professional: string; notes: string | null }) => {
+      const now = new Date().toISOString();
+
+      // 1. Insert tube change log
       const { error } = await supabase.from('enteral_tube_change_logs').insert({
         ...entry,
         client_id: clientId || null,
         created_by: user?.id || null,
       } as any);
       if (error) throw error;
+
+      // 2. Update enteral_config: reset tube_inserted_date & recalculate next_tube_change_due
+      let configQuery = supabase
+        .from('enteral_config')
+        .select('id, tube_change_interval_days')
+        .order('updated_at', { ascending: false })
+        .limit(1);
+      if (clientId) {
+        configQuery = configQuery.eq('client_id', clientId);
+      } else {
+        configQuery = configQuery.is('client_id', null);
+      }
+      const { data: configRow } = await configQuery.maybeSingle();
+
+      if (configRow?.id) {
+        const intervalDays = configRow.tube_change_interval_days || 0;
+        const insertedDate = now.split('T')[0]; // YYYY-MM-DD
+        let nextDue: string | null = null;
+        if (intervalDays > 0) {
+          const d = new Date();
+          d.setDate(d.getDate() + intervalDays);
+          nextDue = d.toISOString().split('T')[0];
+        }
+
+        const { error: updateErr } = await supabase
+          .from('enteral_config')
+          .update({
+            tube_type: entry.tube_type,
+            tube_size_fr: entry.tube_size_fr,
+            tube_inserted_date: insertedDate,
+            next_tube_change_due: nextDue,
+            updated_by: user?.id || null,
+          } as any)
+          .eq('id', configRow.id);
+        if (updateErr) throw updateErr;
+      }
+
+      // 3. Write audit event
+      if (user?.id) {
+        await supabase.rpc('log_audit_event', {
+          p_actor_user_id: user.id,
+          p_action: 'enteral_tube_change_logged',
+          p_client_id: clientId || null,
+          p_metadata_json: {
+            tube_type: entry.tube_type,
+            tube_size_fr: entry.tube_size_fr,
+            change_reason: entry.change_reason,
+            changed_by_professional: entry.changed_by_professional,
+          },
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['enteral-tube-change-logs'] });
-      toast({ title: 'Tube change logged', description: 'Tube change recorded successfully.' });
+      queryClient.invalidateQueries({ queryKey: ['enteral-config'] });
+      toast({ title: 'Tube change logged', description: 'Tube insertion date and next due date have been reset.' });
     },
     onError: (err: any) => {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
