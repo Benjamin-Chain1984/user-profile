@@ -9,3 +9,4 @@ export { EnteralLevelInfographic } from './EnteralLevelInfographic';
 export { EnteralFeedingSchedule } from './EnteralFeedingSchedule';
 export { EnteralNutritionTips } from './EnteralNutritionTips';
 export { EnteralDailySchedule } from './EnteralDailySchedule';
+export { EnteralTubeChangeForm } from './EnteralTubeChangeForm';

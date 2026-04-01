@@ -325,6 +325,44 @@ export function useEnteralStomaChecks(clientId?: string) {
   });
 }
 
+// ── Tube Change Logs ────────────────────────────────────────────
+export function useEnteralTubeChangeLogs(clientId?: string) {
+  return useQuery({
+    queryKey: ['enteral-tube-change-logs', clientId],
+    queryFn: async () => {
+      let query = supabase.from('enteral_tube_change_logs').select('*').eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(50);
+      if (clientId) query = query.eq('client_id', clientId);
+      const { data, error } = await query;
+      if (error) throw error;
+      return enrichWithStaffNames((data || []) as any[]);
+    },
+  });
+}
+
+export function useLogEnteralTubeChange(clientId?: string) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (entry: { tube_type: string; tube_size_fr: string | null; change_reason: string; changed_by_professional: string; notes: string | null }) => {
+      const { error } = await supabase.from('enteral_tube_change_logs').insert({
+        ...entry,
+        client_id: clientId || null,
+        created_by: user?.id || null,
+      } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['enteral-tube-change-logs'] });
+      toast({ title: 'Tube change logged', description: 'Tube change recorded successfully.' });
+    },
+    onError: (err: any) => {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    },
+  });
+}
+
 export function useLogEnteralStomaCheck(clientId?: string) {
   const queryClient = useQueryClient();
   const { toast } = useToast();

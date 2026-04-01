@@ -2823,6 +2823,71 @@ export type Database = {
           },
         ]
       }
+      enteral_tube_change_logs: {
+        Row: {
+          change_reason: string
+          changed_by_professional: string | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          edit_reason: string | null
+          edited_at: string | null
+          edited_by: string | null
+          event_occurred_at: string
+          id: string
+          is_undone: boolean
+          notes: string | null
+          tube_size_fr: string | null
+          tube_type: string
+          undone_at: string | null
+          undone_by: string | null
+        }
+        Insert: {
+          change_reason: string
+          changed_by_professional?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          id?: string
+          is_undone?: boolean
+          notes?: string | null
+          tube_size_fr?: string | null
+          tube_type: string
+          undone_at?: string | null
+          undone_by?: string | null
+        }
+        Update: {
+          change_reason?: string
+          changed_by_professional?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          edit_reason?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          event_occurred_at?: string
+          id?: string
+          is_undone?: boolean
+          notes?: string | null
+          tube_size_fr?: string | null
+          tube_type?: string
+          undone_at?: string | null
+          undone_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enteral_tube_change_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       epilepsy_alerts: {
         Row: {
           acknowledged_at: string | null

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertTriangle, Clock, TrendingUp, Settings, Plus, Droplets, Pill, CheckCircle2, Armchair, Waves, Activity } from 'lucide-react';
+import { AlertTriangle, Clock, TrendingUp, Settings, Plus, Droplets, Pill, CheckCircle2, Armchair, Waves, Activity, RefreshCw } from 'lucide-react';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { useProfile } from '@/contexts/ProfileContext';
 import { MonitoringPausedBanner } from '@/components/monitoring';
@@ -30,6 +30,7 @@ import { EnteralHistory } from './EnteralHistory';
 import { EnteralLevelInfographic } from './EnteralLevelInfographic';
 import { EnteralFeedingSchedule, getScheduleTotals, migrateScheduleFormat } from './EnteralFeedingSchedule';
 import { EnteralNutritionTips } from './EnteralNutritionTips';
+import { EnteralTubeChangeForm } from './EnteralTubeChangeForm';
 import { EnteralDailySchedule } from './EnteralDailySchedule';
 import { PositioningCheckPanel } from '@/components/iddsi/PositioningCheckPanel';
 
@@ -46,6 +47,7 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
   const [showStomaForm, setShowStomaForm] = useState(false);
   const [showMedForm, setShowMedForm] = useState(false);
   const [showPositioning, setShowPositioning] = useState(false);
+  const [showTubeChangeForm, setShowTubeChangeForm] = useState(false);
 
   const { data: config } = useEnteralConfig(clientId);
   const { data: feedLogs = [] } = useEnteralFeedLogs(clientId);
@@ -298,6 +300,9 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
             <CheckCircle2 className="h-4 w-4" /> Stoma Check
           </Button>
         )}
+        <Button variant="outline" onClick={() => setShowTubeChangeForm(true)} className="gap-2">
+          <RefreshCw className="h-4 w-4" /> Log Tube Change
+        </Button>
       </div>
 
       {/* Main Tabs */}
@@ -374,6 +379,14 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
           onOpenChange={setShowMedForm}
         />
       )}
+
+      <EnteralTubeChangeForm
+        clientId={clientId}
+        currentTubeType={config?.tube_type}
+        currentTubeSizeFr={config?.tube_size_fr}
+        open={showTubeChangeForm}
+        onOpenChange={setShowTubeChangeForm}
+      />
 
       {/* Footer */}
       <p className="text-xs text-muted-foreground text-center pt-4">
