@@ -18,7 +18,7 @@ import { HealthPreventionHistory } from './HealthPreventionHistory';
 import { HealthPreventionExportReports } from './HealthPreventionExportReports';
 import { HEALTH_PREVENTION_DISCLAIMER } from '@/types/healthPrevention';
 import { Loader2, ExternalLink, Activity } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export function HealthPreventionDashboard() {
   const { isAdmin } = useRoleAccess();
