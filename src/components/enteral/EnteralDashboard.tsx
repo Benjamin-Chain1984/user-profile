@@ -30,6 +30,7 @@ import { EnteralHistory } from './EnteralHistory';
 import { EnteralLevelInfographic } from './EnteralLevelInfographic';
 import { EnteralFeedingSchedule, getScheduleTotals, migrateScheduleFormat } from './EnteralFeedingSchedule';
 import { EnteralNutritionTips } from './EnteralNutritionTips';
+import { EnteralTubeChangeForm } from './EnteralTubeChangeForm';
 import { EnteralDailySchedule } from './EnteralDailySchedule';
 import { PositioningCheckPanel } from '@/components/iddsi/PositioningCheckPanel';
 
