@@ -164,7 +164,7 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
               <StatusBadge
                 status={
                   statusResult.tubeChangeOverdue ? 'action'
-                  : statusResult.tubeChangeDays !== null && statusResult.tubeChangeDays <= 7 ? 'monitor'
+                  : statusResult.tubeChangeDays !== null && statusResult.tubeChangeDays <= (config?.tube_change_alert_lead_days ?? 7) ? 'monitor'
                   : 'stable'
                 }
                 size="sm"
