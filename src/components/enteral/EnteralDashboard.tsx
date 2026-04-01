@@ -384,6 +384,7 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
         clientId={clientId}
         currentTubeType={config?.tube_type}
         currentTubeSizeFr={config?.tube_size_fr}
+        currentTubeChangeIntervalDays={config?.tube_change_interval_days}
         open={showTubeChangeForm}
         onOpenChange={setShowTubeChangeForm}
       />
