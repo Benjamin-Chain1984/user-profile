@@ -300,6 +300,9 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
             <CheckCircle2 className="h-4 w-4" /> Stoma Check
           </Button>
         )}
+        <Button variant="outline" onClick={() => setShowTubeChangeForm(true)} className="gap-2">
+          <RefreshCw className="h-4 w-4" /> Log Tube Change
+        </Button>
       </div>
 
       {/* Main Tabs */}
