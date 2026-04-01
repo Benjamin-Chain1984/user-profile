@@ -104,6 +104,26 @@ export function HealthPreventionDashboard() {
         onLogAssessment={logAssessment}
       />
 
+      {/* Good Health Prevention Tips */}
+      <Card className="bg-muted/30 border-primary/20">
+        <CardContent className="pt-4 pb-4 space-y-3">
+          <h4 className="text-sm font-semibold flex items-center gap-2">
+            💡 Good Health Prevention Tips
+          </h4>
+          <ul className="text-sm text-muted-foreground space-y-2">
+            <li className="flex items-start gap-2"><span className="text-primary mt-0.5">•</span>See your GP regularly – don't wait until you are sick</li>
+            <li className="flex items-start gap-2"><span className="text-primary mt-0.5">•</span>Stay up to date with vaccines and health checks</li>
+            <li className="flex items-start gap-2"><span className="text-primary mt-0.5">•</span>Eat healthy food and drink enough water</li>
+            <li className="flex items-start gap-2"><span className="text-primary mt-0.5">•</span>Keep active – move your body every day</li>
+            <li className="flex items-start gap-2"><span className="text-primary mt-0.5">•</span>Get good sleep and rest</li>
+            <li className="flex items-start gap-2"><span className="text-primary mt-0.5">•</span>Look after your mental health – talk to someone if needed</li>
+            <li className="flex items-start gap-2"><span className="text-primary mt-0.5">•</span>Keep clean – shower, oral care, skin care</li>
+            <li className="flex items-start gap-2"><span className="text-primary mt-0.5">•</span>Follow care plans and take medications as prescribed</li>
+            <li className="flex items-start gap-2"><span className="text-primary mt-0.5">•</span>Watch for changes – report concerns early</li>
+          </ul>
+        </CardContent>
+      </Card>
+
       {/* References & Guidelines */}
       <Card className="bg-muted/30">
         <CardContent className="pt-4 pb-4 space-y-3">
