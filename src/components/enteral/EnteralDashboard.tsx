@@ -380,6 +380,14 @@ export function EnteralDashboard({ clientId }: EnteralDashboardProps) {
         />
       )}
 
+      <EnteralTubeChangeForm
+        clientId={clientId}
+        currentTubeType={config?.tube_type}
+        currentTubeSizeFr={config?.tube_size_fr}
+        open={showTubeChangeForm}
+        onOpenChange={setShowTubeChangeForm}
+      />
+
       {/* Footer */}
       <p className="text-xs text-muted-foreground text-center pt-4">
         Follow the person's Enteral Nutrition and Medication Plan. Seek medical advice if concerns arise.
