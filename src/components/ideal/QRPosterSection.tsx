@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import smartwatchImg from '@/assets/smartwatch-alerts.png';
 import { useProfile } from '@/contexts/ProfileContext';
 import { QRCodeSVG } from 'qrcode.react';
 import { QrCode, FileText, Download, Printer, RefreshCw, Loader2 } from 'lucide-react';
