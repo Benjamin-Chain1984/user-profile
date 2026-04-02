@@ -890,6 +890,16 @@ export default function ClientScanPage() {
     );
   }
 
+  // Auto-redirect to client dashboard on success
+  useEffect(() => {
+    if (step === 'success' && client) {
+      const timer = setTimeout(() => {
+        navigate('/', { replace: true });
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [step, client, navigate]);
+
 
 
 
