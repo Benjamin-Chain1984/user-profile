@@ -379,19 +379,24 @@ export default function ClientPosterPage() {
           {/* ── Section 3 — Wearable Alerts ── */}
           <div className="border-t border-border pt-4 mb-5">
             <h2 className="text-sm font-bold text-foreground mb-2 uppercase tracking-wide">Smart Wearable Alerts</h2>
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 text-[10px] mb-2">
-              <div className="flex items-center gap-2">
-                <span className="inline-block w-4 h-4 rounded-full bg-orange-500 shrink-0 border border-orange-600" />
-                <span className="text-muted-foreground"><strong className="text-foreground">Amber</strong> — Monitor / Action May Be Needed</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="inline-block w-4 h-4 rounded-full bg-red-600 shrink-0 border border-red-700" />
-                <span className="text-muted-foreground"><strong className="text-foreground">Red</strong> — Urgent Attention Required</span>
+            <div className="flex items-start gap-4">
+              <img src={smartwatchImg} alt="IoT Smartwatch" className="w-16 h-16 object-contain shrink-0" />
+              <div>
+                <div className="flex flex-col gap-2 text-[10px] mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-block w-4 h-4 rounded-full bg-orange-500 shrink-0 border border-orange-600" />
+                    <span className="text-muted-foreground"><strong className="text-foreground">Amber</strong> — Monitor / Action May Be Needed</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-block w-4 h-4 rounded-full bg-red-600 shrink-0 border border-red-700" />
+                    <span className="text-muted-foreground"><strong className="text-foreground">Red</strong> — Urgent Attention Required</span>
+                  </div>
+                </div>
+                <p className="text-[9px] text-muted-foreground">
+                  Alerts are generated automatically based on the person's health data recorded in IDEAL.
+                </p>
               </div>
             </div>
-            <p className="text-[9px] text-muted-foreground">
-              Alerts are generated automatically based on the person's health data recorded in IDEAL.
-            </p>
           </div>
 
           {/* ── Section 4 — QR Code ── */}
