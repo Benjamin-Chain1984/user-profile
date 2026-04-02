@@ -374,6 +374,9 @@ export function useUTITests(clientId?: string) {
       test_result: UTIResult;
       escalated_to?: EscalatedTo;
       notes?: string;
+      recorded_on_behalf_of_name?: string;
+      recorded_on_behalf_of_role?: string;
+      recorded_on_behalf_of_reason?: string;
     }) => {
       const { error } = await supabase.from('continence_uti_tests').insert({
         client_id: clientId || null,
@@ -383,6 +386,9 @@ export function useUTITests(clientId?: string) {
         test_result: entry.test_result,
         escalated_to: entry.escalated_to || null,
         notes: entry.notes || null,
+        recorded_on_behalf_of_name: entry.recorded_on_behalf_of_name || null,
+        recorded_on_behalf_of_role: entry.recorded_on_behalf_of_role || null,
+        recorded_on_behalf_of_reason: entry.recorded_on_behalf_of_reason || null,
         created_by: user?.id,
       });
       if (error) throw error;
