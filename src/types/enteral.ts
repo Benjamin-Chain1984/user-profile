@@ -136,6 +136,8 @@ export interface EnteralFeedLog {
   edited_by: string | null;
   edit_reason: string | null;
 }
+
+export interface EnteralStomaCheck {
   id: string;
   client_id: string | null;
   event_occurred_at: string;
