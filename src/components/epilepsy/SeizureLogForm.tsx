@@ -49,6 +49,7 @@ export function SeizureLogForm({ clientId, open, onOpenChange }: SeizureLogFormP
 
   const handleSubmit = () => {
     const eventOccurredAt = new Date(`${date}T${time}`).toISOString();
+    const active = isOnBehalfActive(onBehalfData);
     addEvent({
       event_occurred_at: eventOccurredAt,
       duration_minutes: durationMin,
@@ -61,6 +62,9 @@ export function SeizureLogForm({ clientId, open, onOpenChange }: SeizureLogFormP
       recovery_notes: recoveryNotes || null,
       observation_type: observationType,
       notes: notes || null,
+      recorded_on_behalf_of_name: active ? onBehalfData.onBehalfName : null,
+      recorded_on_behalf_of_role: active ? onBehalfData.onBehalfRole : null,
+      recorded_on_behalf_of_reason: active ? onBehalfData.onBehalfReason : null,
     });
     onOpenChange(false);
     // Reset
