@@ -237,7 +237,7 @@ export function QRPosterSection() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!hasCheckedStorage ? (
+        {!hasLoaded ? (
           <div className="flex items-center justify-center py-4">
             <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
           </div>
