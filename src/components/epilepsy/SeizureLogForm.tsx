@@ -77,6 +77,7 @@ export function SeizureLogForm({ clientId, open, onOpenChange }: SeizureLogFormP
     setSelectedRecovery([]);
     setRecoveryNotes('');
     setNotes('');
+    setOnBehalfData({ onBehalfUserId: null, onBehalfName: null, onBehalfRole: null, onBehalfReason: null });
   };
 
   return (
