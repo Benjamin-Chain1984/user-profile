@@ -37,6 +37,7 @@ export function SeizureLogForm({ clientId, open, onOpenChange }: SeizureLogFormP
   const [observationType, setObservationType] = useState('observed');
   const [notes, setNotes] = useState('');
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [onBehalfData, setOnBehalfData] = useState<OnBehalfData>({ onBehalfUserId: null, onBehalfName: null, onBehalfRole: null, onBehalfReason: null });
 
   const toggleTrigger = (t: string) => {
     setSelectedTriggers(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
