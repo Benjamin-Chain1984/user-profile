@@ -138,6 +138,9 @@ export function SleepLogForm({ clientId, open, onOpenChange }: SleepLogFormProps
         </DialogHeader>
 
         <div className="space-y-5">
+          {/* On Behalf Of */}
+          <OnBehalfSelector value={onBehalfData} onChange={setOnBehalfData} />
+
           {/* Bedtime & Wake time */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

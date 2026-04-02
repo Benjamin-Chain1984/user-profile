@@ -88,6 +88,9 @@ export function SeizureLogForm({ clientId, open, onOpenChange }: SeizureLogFormP
         </DialogHeader>
 
         <div className="space-y-5">
+          {/* On Behalf Of */}
+          <OnBehalfSelector value={onBehalfData} onChange={setOnBehalfData} />
+
           {/* Date & Time */}
           <div className="grid grid-cols-2 gap-3">
             <div>
