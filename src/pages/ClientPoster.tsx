@@ -18,8 +18,7 @@ import { toast } from 'sonner';
 import { ProfileAvatar } from '@/components/ideal/ProfileAvatar';
 import jsPDF from 'jspdf';
 
-/** Must match the key used by QRPosterSection */
-const TOKEN_STORAGE_PREFIX = 'ideal_profile_qr_token_';
+/** Token is now loaded from the database, not localStorage */
 
 const HEALTH_AREAS = [
   'Bowel care', 'Fluid balance', 'Pain', 'Sleep',
