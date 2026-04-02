@@ -378,7 +378,9 @@ export default function ClientPosterPage() {
           <div className="border-t border-border pt-4 mb-5">
             <h2 className="text-base font-bold text-foreground mb-2 uppercase tracking-wide">Smart Wearable Alerts</h2>
             <div className="flex items-start gap-4">
-              <img src={smartwatchImg} alt="IoT Smartwatch" className="w-24 h-24 object-contain shrink-0" />
+              <div className="flex items-center justify-center shrink-0">
+                <img src={smartwatchImg} alt="IoT Smartwatch" className="block h-24 w-auto max-w-full object-contain" />
+              </div>
               <div>
                 <div className="flex flex-col gap-2 text-xs mb-2">
                   <div className="flex items-center gap-2">
