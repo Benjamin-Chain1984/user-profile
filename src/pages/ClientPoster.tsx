@@ -21,10 +21,6 @@ import jsPDF from 'jspdf';
 
 /** Token is now loaded from the database, not localStorage */
 
-const HEALTH_AREAS = [
-  'Bowel care', 'Fluid balance', 'Pain', 'Sleep',
-  'Nutrition', 'Vital signs', 'Skin integrity', 'Preventive health',
-];
 
 interface ClientData {
   id: string;
@@ -134,11 +130,19 @@ export default function ClientPosterPage() {
       );
       pdf.text(desc, m, y);
       y += desc.length * 4 + 4;
-      HEALTH_AREAS.forEach((mod) => { pdf.text(`•  ${mod}`, m + 4, y); y += 4; });
-      y += 2;
-      pdf.setFont('helvetica', 'italic');
-      pdf.text('IDEAL highlights early warning signs and supports timely action.', m, y);
-      y += 8;
+
+      const cueLines = pdf.splitTextToSize(
+        'Visual cues signal when the person requires care or there is a healthcare concern. Scan the QR code and follow the advice to clear the alert.',
+        cw
+      );
+      pdf.text(cueLines, m, y);
+      y += cueLines.length * 4 + 2;
+      const checkLines = pdf.splitTextToSize(
+        'You should be checking this QR code regularly to check for scheduled support requirements.',
+        cw
+      );
+      pdf.text(checkLines, m, y);
+      y += checkLines.length * 4 + 8;
 
       // Section 3 — Wearable Alerts (with smartwatch image)
       pdf.setDrawColor(220);
@@ -366,13 +370,11 @@ export default function ClientPosterPage() {
               IDEAL is a smart health monitoring system that helps support workers, families,
               and clinicians provide safer, more responsive care.
             </p>
-            <div className="grid grid-cols-3 gap-x-4 gap-y-0.5 text-[9px] text-muted-foreground mb-2">
-              {HEALTH_AREAS.map((item) => (
-                <span key={item}>• {item}</span>
-              ))}
-            </div>
-            <p className="text-[10px] text-muted-foreground italic">
-              IDEAL highlights early warning signs and supports timely action.
+            <p className="text-[10px] text-muted-foreground leading-relaxed mb-2">
+              Visual cues signal when the person requires care or there is a healthcare concern. Scan the QR code and follow the advice to clear the alert.
+            </p>
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              You should be checking this QR code regularly to check for scheduled support requirements.
             </p>
           </div>
 
