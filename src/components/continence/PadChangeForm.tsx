@@ -72,6 +72,7 @@ export function PadChangeForm({
   const { staffName } = useCurrentStaff();
 
   const [scheduledTime, setScheduledTime] = useState('');
+  const [unscheduledTime, setUnscheduledTime] = useState(format(new Date(), 'HH:mm'));
   const [padType, setPadType] = useState<PadType>('pull_up');
   const [padCondition, setPadCondition] = useState<PadCondition>('dry');
   const [changeReasons, setChangeReasons] = useState<ChangeReason[]>(['scheduled']);
