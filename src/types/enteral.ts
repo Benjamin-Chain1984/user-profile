@@ -127,14 +127,15 @@ export interface EnteralFeedLog {
   event_occurred_at: string;
   position_confirmed: boolean;
   notes: string | null;
+  recorded_on_behalf_of_name: string | null;
+  recorded_on_behalf_of_role: string | null;
+  recorded_on_behalf_of_reason: string | null;
   created_at: string;
   created_by: string | null;
   edited_at: string | null;
   edited_by: string | null;
   edit_reason: string | null;
 }
-
-export interface EnteralStomaCheck {
   id: string;
   client_id: string | null;
   event_occurred_at: string;
