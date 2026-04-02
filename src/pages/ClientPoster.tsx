@@ -21,10 +21,6 @@ import jsPDF from 'jspdf';
 
 /** Token is now loaded from the database, not localStorage */
 
-const HEALTH_AREAS = [
-  'Bowel care', 'Fluid balance', 'Pain', 'Sleep',
-  'Nutrition', 'Vital signs', 'Skin integrity', 'Preventive health',
-];
 
 interface ClientData {
   id: string;
