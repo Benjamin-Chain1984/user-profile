@@ -169,6 +169,9 @@ export interface PressureReliefEvent {
   escalation_advice: string | null;
   notes: string | null;
   completed_by_name: string | null;
+  recorded_on_behalf_of_name: string | null;
+  recorded_on_behalf_of_role: string | null;
+  recorded_on_behalf_of_reason: string | null;
   created_at: string;
   created_by: string | null;
   edited_at: string | null;
@@ -183,6 +186,9 @@ export interface SkinCheckSession {
   notes: string | null;
   event_occurred_at: string;
   scheduled_time: string | null;
+  recorded_on_behalf_of_name: string | null;
+  recorded_on_behalf_of_role: string | null;
+  recorded_on_behalf_of_reason: string | null;
   created_at: string;
   created_by: string | null;
   edited_at: string | null;

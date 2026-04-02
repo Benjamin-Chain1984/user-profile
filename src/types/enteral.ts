@@ -107,6 +107,9 @@ export interface EnteralFeedLog {
   position_angle: number | null;
   position_override_reason: string | null;
   notes: string | null;
+  recorded_on_behalf_of_name: string | null;
+  recorded_on_behalf_of_role: string | null;
+  recorded_on_behalf_of_reason: string | null;
   created_at: string;
   created_by: string | null;
   edited_at: string | null;
@@ -126,6 +129,9 @@ export interface EnteralMedicationLog {
   event_occurred_at: string;
   position_confirmed: boolean;
   notes: string | null;
+  recorded_on_behalf_of_name: string | null;
+  recorded_on_behalf_of_role: string | null;
+  recorded_on_behalf_of_reason: string | null;
   created_at: string;
   created_by: string | null;
   edited_at: string | null;
@@ -143,6 +149,9 @@ export interface EnteralStomaCheck {
   escalation_type: EnteralEscalationType | null;
   action_taken: string | null;
   notes: string | null;
+  recorded_on_behalf_of_name: string | null;
+  recorded_on_behalf_of_role: string | null;
+  recorded_on_behalf_of_reason: string | null;
   created_at: string;
   created_by: string | null;
   edited_at: string | null;

@@ -16,6 +16,7 @@ import { AWAKE_PERIOD_OPTIONS, ASSISTANCE_TYPES, AWAKENING_REASONS, estimateAwak
 import type { AwakePeriodLength, AwakeningEvent, AwakeningReason } from '@/types/sleep';
 import { differenceInMinutes } from 'date-fns';
 import { Loader2, Moon, AlertTriangle, Plus, Trash2 } from 'lucide-react';
+import { OnBehalfSelector, type OnBehalfData, isOnBehalfActive } from '@/components/shared/OnBehalfSelector';
 
 interface SleepLogFormProps {
   clientId?: string;
@@ -41,6 +42,7 @@ export function SleepLogForm({ clientId, open, onOpenChange }: SleepLogFormProps
   const [notes, setNotes] = useState('');
   const [showSeizurePrompt, setShowSeizurePrompt] = useState(false);
   const [showPainPrompt, setShowPainPrompt] = useState(false);
+  const [onBehalfData, setOnBehalfData] = useState<OnBehalfData>({ onBehalfUserId: null, onBehalfName: null, onBehalfRole: null, onBehalfReason: null });
 
   // Auto-calculate hours
   const estimatedHours = useMemo(() => {
@@ -91,6 +93,7 @@ export function SleepLogForm({ clientId, open, onOpenChange }: SleepLogFormProps
       wakeDatetime.setDate(wakeDatetime.getDate() + 1);
     }
 
+    const active = isOnBehalfActive(onBehalfData);
     addEntry({
       bedtime: bedDatetime,
       wake_time: wakeDatetime.toISOString(),
@@ -105,6 +108,9 @@ export function SleepLogForm({ clientId, open, onOpenChange }: SleepLogFormProps
       assistance_other_text: assistanceTypes.includes('other') ? assistanceOther : null,
       notes: notes || null,
       event_occurred_at: new Date().toISOString(),
+      recorded_on_behalf_of_name: active ? onBehalfData.onBehalfName : null,
+      recorded_on_behalf_of_role: active ? onBehalfData.onBehalfRole : null,
+      recorded_on_behalf_of_reason: active ? onBehalfData.onBehalfReason : null,
     });
 
     // Reset form
@@ -117,6 +123,7 @@ export function SleepLogForm({ clientId, open, onOpenChange }: SleepLogFormProps
     setAssistanceTypes([]);
     setAssistanceOther('');
     setNotes('');
+    setOnBehalfData({ onBehalfUserId: null, onBehalfName: null, onBehalfRole: null, onBehalfReason: null });
     onOpenChange(false);
   };
 
@@ -131,6 +138,9 @@ export function SleepLogForm({ clientId, open, onOpenChange }: SleepLogFormProps
         </DialogHeader>
 
         <div className="space-y-5">
+          {/* On Behalf Of */}
+          <OnBehalfSelector value={onBehalfData} onChange={setOnBehalfData} />
+
           {/* Bedtime & Wake time */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

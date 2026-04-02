@@ -14,6 +14,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { useSeizureEvents } from '@/hooks/useEpilepsy';
 import { SEIZURE_TYPES, SEIZURE_TRIGGERS, RECOVERY_OPTIONS } from '@/types/epilepsy';
 import { Info, ChevronDown, ChevronUp } from 'lucide-react';
+import { OnBehalfSelector, type OnBehalfData, isOnBehalfActive } from '@/components/shared/OnBehalfSelector';
 
 interface SeizureLogFormProps {
   clientId?: string;
@@ -36,6 +37,7 @@ export function SeizureLogForm({ clientId, open, onOpenChange }: SeizureLogFormP
   const [observationType, setObservationType] = useState('observed');
   const [notes, setNotes] = useState('');
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [onBehalfData, setOnBehalfData] = useState<OnBehalfData>({ onBehalfUserId: null, onBehalfName: null, onBehalfRole: null, onBehalfReason: null });
 
   const toggleTrigger = (t: string) => {
     setSelectedTriggers(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
@@ -47,6 +49,7 @@ export function SeizureLogForm({ clientId, open, onOpenChange }: SeizureLogFormP
 
   const handleSubmit = () => {
     const eventOccurredAt = new Date(`${date}T${time}`).toISOString();
+    const active = isOnBehalfActive(onBehalfData);
     addEvent({
       event_occurred_at: eventOccurredAt,
       duration_minutes: durationMin,
@@ -59,6 +62,9 @@ export function SeizureLogForm({ clientId, open, onOpenChange }: SeizureLogFormP
       recovery_notes: recoveryNotes || null,
       observation_type: observationType,
       notes: notes || null,
+      recorded_on_behalf_of_name: active ? onBehalfData.onBehalfName : null,
+      recorded_on_behalf_of_role: active ? onBehalfData.onBehalfRole : null,
+      recorded_on_behalf_of_reason: active ? onBehalfData.onBehalfReason : null,
     });
     onOpenChange(false);
     // Reset
@@ -71,6 +77,7 @@ export function SeizureLogForm({ clientId, open, onOpenChange }: SeizureLogFormP
     setSelectedRecovery([]);
     setRecoveryNotes('');
     setNotes('');
+    setOnBehalfData({ onBehalfUserId: null, onBehalfName: null, onBehalfRole: null, onBehalfReason: null });
   };
 
   return (
@@ -81,6 +88,9 @@ export function SeizureLogForm({ clientId, open, onOpenChange }: SeizureLogFormP
         </DialogHeader>
 
         <div className="space-y-5">
+          {/* On Behalf Of */}
+          <OnBehalfSelector value={onBehalfData} onChange={setOnBehalfData} />
+
           {/* Date & Time */}
           <div className="grid grid-cols-2 gap-3">
             <div>

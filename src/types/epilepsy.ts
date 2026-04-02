@@ -54,6 +54,9 @@ export interface SeizureEvent {
   recovery_notes: string | null;
   observation_type: string;
   notes: string | null;
+  recorded_on_behalf_of_name: string | null;
+  recorded_on_behalf_of_role: string | null;
+  recorded_on_behalf_of_reason: string | null;
   created_at: string;
   created_by: string | null;
   edited_at: string | null;
