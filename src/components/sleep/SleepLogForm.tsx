@@ -42,6 +42,7 @@ export function SleepLogForm({ clientId, open, onOpenChange }: SleepLogFormProps
   const [notes, setNotes] = useState('');
   const [showSeizurePrompt, setShowSeizurePrompt] = useState(false);
   const [showPainPrompt, setShowPainPrompt] = useState(false);
+  const [onBehalfData, setOnBehalfData] = useState<OnBehalfData>({ onBehalfUserId: null, onBehalfName: null, onBehalfRole: null, onBehalfReason: null });
 
   // Auto-calculate hours
   const estimatedHours = useMemo(() => {
