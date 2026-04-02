@@ -146,12 +146,14 @@ export function PadChangeForm({
     setIsSubmitting(true);
     try {
       const isScheduled = scheduledTime && scheduledTime !== 'unscheduled';
+      const effectiveTime = isScheduled ? scheduledTime : (scheduledTime === 'unscheduled' ? unscheduledTime : null);
 
       await addChange.mutateAsync({
         pad_type: padType,
         pad_condition: padCondition,
         change_reason: changeReasons.join(',') as ChangeReason,
         scheduled_time: isScheduled ? scheduledTime : null,
+        event_occurred_at: scheduledTime === 'unscheduled' && unscheduledTime ? unscheduledTime : undefined,
         notes: notes || undefined,
         recorded_on_behalf_of_name: isOnBehalfUsed ? onBehalfName : undefined,
         recorded_on_behalf_of_role: isOnBehalfUsed ? onBehalfRole : undefined,
