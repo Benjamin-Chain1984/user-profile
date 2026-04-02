@@ -366,13 +366,11 @@ export default function ClientPosterPage() {
               IDEAL is a smart health monitoring system that helps support workers, families,
               and clinicians provide safer, more responsive care.
             </p>
-            <div className="grid grid-cols-3 gap-x-4 gap-y-0.5 text-[9px] text-muted-foreground mb-2">
-              {HEALTH_AREAS.map((item) => (
-                <span key={item}>• {item}</span>
-              ))}
-            </div>
-            <p className="text-[10px] text-muted-foreground italic">
-              IDEAL highlights early warning signs and supports timely action.
+            <p className="text-[10px] text-muted-foreground leading-relaxed mb-2">
+              Visual cues signal when the person requires care or there is a healthcare concern. Scan the QR code and follow the advice to clear the alert.
+            </p>
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              You should be checking this QR code regularly to check for scheduled support requirements.
             </p>
           </div>
 
