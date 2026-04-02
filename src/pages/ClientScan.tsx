@@ -505,6 +505,16 @@ export default function ClientScanPage() {
     handleSendOtp();
   };
 
+  // Auto-redirect to client dashboard on success
+  useEffect(() => {
+    if (step === 'success' && client) {
+      const timer = setTimeout(() => {
+        navigate('/', { replace: true });
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [step, client, navigate]);
+
   // === RENDER STEPS ===
 
   // Checking auth state
