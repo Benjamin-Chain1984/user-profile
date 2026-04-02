@@ -730,7 +730,7 @@ function UTITestTile({
   }
 
   const lastTime = lastTest
-    ? formatDistanceToNow(parseISO(lastTest.test_date), { addSuffix: true })
+    ? formatDistanceToNow(parseISO(lastTest.created_at), { addSuffix: true })
     : null;
 
   return (
