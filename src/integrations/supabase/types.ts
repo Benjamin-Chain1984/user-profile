@@ -2293,6 +2293,9 @@ export type Database = {
           id: string
           is_undone: boolean
           notes: string | null
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
           symptoms: string[]
           test_date: string
           test_result: string
@@ -2311,6 +2314,9 @@ export type Database = {
           id?: string
           is_undone?: boolean
           notes?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           symptoms?: string[]
           test_date?: string
           test_result: string
@@ -2329,6 +2335,9 @@ export type Database = {
           id?: string
           is_undone?: boolean
           notes?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           symptoms?: string[]
           test_date?: string
           test_result?: string
