@@ -132,7 +132,13 @@ export function QRPosterSection() {
         cw
       );
       pdf.text(cueLines, m, y);
-      y += cueLines.length * 4 + 8;
+      y += cueLines.length * 4 + 2;
+      const checkLines = pdf.splitTextToSize(
+        'You should be checking this QR code regularly to check for scheduled support requirements.',
+        cw
+      );
+      pdf.text(checkLines, m, y);
+      y += checkLines.length * 4 + 8;
 
       // Section 3 — Wearable Alerts
       pdf.setDrawColor(220);
