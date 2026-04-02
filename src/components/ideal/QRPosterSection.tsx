@@ -72,7 +72,6 @@ export function QRPosterSection() {
   if (!profile) return null;
 
   const handleRegenerate = async () => {
-    localStorage.removeItem(storageKey);
     setQrToken(null);
     await generateNewToken();
     toast.success('QR code regenerated. Previous QR codes are now invalid.');
