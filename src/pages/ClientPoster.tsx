@@ -130,11 +130,19 @@ export default function ClientPosterPage() {
       );
       pdf.text(desc, m, y);
       y += desc.length * 4 + 4;
-      HEALTH_AREAS.forEach((mod) => { pdf.text(`•  ${mod}`, m + 4, y); y += 4; });
-      y += 2;
-      pdf.setFont('helvetica', 'italic');
-      pdf.text('IDEAL highlights early warning signs and supports timely action.', m, y);
-      y += 8;
+
+      const cueLines = pdf.splitTextToSize(
+        'Visual cues signal when the person requires care or there is a healthcare concern. Scan the QR code and follow the advice to clear the alert.',
+        cw
+      );
+      pdf.text(cueLines, m, y);
+      y += cueLines.length * 4 + 2;
+      const checkLines = pdf.splitTextToSize(
+        'You should be checking this QR code regularly to check for scheduled support requirements.',
+        cw
+      );
+      pdf.text(checkLines, m, y);
+      y += checkLines.length * 4 + 8;
 
       // Section 3 — Wearable Alerts (with smartwatch image)
       pdf.setDrawColor(220);
