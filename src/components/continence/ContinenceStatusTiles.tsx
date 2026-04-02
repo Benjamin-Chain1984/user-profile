@@ -454,7 +454,7 @@ function SkinCheckTile({
     }, [config, checks, changes, lastCheck, now, skinCheckFrequency]);
 
   let status: HealthStatus = 'stable';
-  let statusLabel = 'Healthy';
+  let statusLabel = 'On Track';
   let statusMessage: string | null = null;
 
   // Clinical findings from last check take highest priority
@@ -487,7 +487,6 @@ function SkinCheckTile({
         : null;
     }
   } else if (isOverdue && status !== 'action') {
-    // Already flagged clinical finding but also missed — add note
     if (skinCheckFrequency === 'every_pad_change' && missedPadChanges > 0) {
       statusMessage = `${statusMessage ? statusMessage + ' · ' : ''}${missedPadChanges} check${missedPadChanges > 1 ? 's' : ''} missed`;
     }
