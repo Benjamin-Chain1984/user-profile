@@ -900,19 +900,6 @@ export default function ClientScanPage() {
     );
   }
 
-  // Auto-redirect to client dashboard on success
-  useEffect(() => {
-    if (step === 'success' && client) {
-      const timer = setTimeout(() => {
-        navigate('/', { replace: true });
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [step, client, navigate]);
-
-
-
-
   if (step === 'success' && client) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
