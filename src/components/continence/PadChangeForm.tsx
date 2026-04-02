@@ -72,6 +72,7 @@ export function PadChangeForm({
   const { staffName } = useCurrentStaff();
 
   const [scheduledTime, setScheduledTime] = useState('');
+  const [unscheduledTime, setUnscheduledTime] = useState(format(new Date(), 'HH:mm'));
   const [padType, setPadType] = useState<PadType>('pull_up');
   const [padCondition, setPadCondition] = useState<PadCondition>('dry');
   const [changeReasons, setChangeReasons] = useState<ChangeReason[]>(['scheduled']);
@@ -145,12 +146,14 @@ export function PadChangeForm({
     setIsSubmitting(true);
     try {
       const isScheduled = scheduledTime && scheduledTime !== 'unscheduled';
+      const effectiveTime = isScheduled ? scheduledTime : (scheduledTime === 'unscheduled' ? unscheduledTime : null);
 
       await addChange.mutateAsync({
         pad_type: padType,
         pad_condition: padCondition,
         change_reason: changeReasons.join(',') as ChangeReason,
         scheduled_time: isScheduled ? scheduledTime : null,
+        event_occurred_at: scheduledTime === 'unscheduled' && unscheduledTime ? unscheduledTime : undefined,
         notes: notes || undefined,
         recorded_on_behalf_of_name: isOnBehalfUsed ? onBehalfName : undefined,
         recorded_on_behalf_of_role: isOnBehalfUsed ? onBehalfRole : undefined,
@@ -174,6 +177,7 @@ export function PadChangeForm({
 
   const resetForm = () => {
     setScheduledTime('');
+    setUnscheduledTime(format(new Date(), 'HH:mm'));
     setPadType('pull_up');
     setPadCondition('dry');
     setChangeReasons(['scheduled']);
@@ -299,6 +303,22 @@ export function PadChangeForm({
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Time entry for unscheduled changes */}
+            {scheduledTime === 'unscheduled' && (
+              <div className="space-y-2">
+                <Label htmlFor="unscheduledTime" className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Time Occurred
+                </Label>
+                <Input
+                  id="unscheduledTime"
+                  type="time"
+                  value={unscheduledTime}
+                  onChange={(e) => setUnscheduledTime(e.target.value)}
+                />
+              </div>
+            )}
 
 
             {/* Pad Type */}
