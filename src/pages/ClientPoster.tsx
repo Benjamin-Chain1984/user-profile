@@ -350,37 +350,37 @@ export default function ClientPosterPage() {
           style={{ minHeight: '297mm', padding: '12mm 15mm' }}
         >
           {/* ── Header with logo ── */}
-          <div className="flex items-center gap-2 border-b border-border pb-3 mb-4">
-            <img src="/Ideal-logo.png" alt="IDEAL" className="h-8 w-auto" />
+          <div className="flex items-center gap-2 border-b border-border pb-3 mb-5">
+            <img src="/Ideal-logo.png" alt="IDEAL" className="h-14 w-auto" />
           </div>
 
           {/* ── Section 1 — Title ── */}
-          <h1 className="text-lg font-extrabold text-foreground text-center mb-6 leading-snug tracking-tight">
+          <h1 className="text-2xl font-extrabold text-foreground text-center mb-6 leading-snug tracking-tight">
             IDEAL — Intelligent Data for<br />Everyday Activities &amp; Lifestyle
           </h1>
 
           {/* ── Section 2 — What is IDEAL? ── */}
           <div className="mb-5">
-            <h2 className="text-sm font-bold text-foreground mb-2 uppercase tracking-wide">What is IDEAL?</h2>
-            <p className="text-[10px] text-muted-foreground leading-relaxed mb-3">
+            <h2 className="text-base font-bold text-foreground mb-2 uppercase tracking-wide">What is IDEAL?</h2>
+            <p className="text-xs text-muted-foreground leading-relaxed mb-3">
               IDEAL is a smart health monitoring system that helps support workers, families,
               and clinicians provide safer, more responsive care.
             </p>
-            <p className="text-[10px] text-muted-foreground leading-relaxed mb-2">
+            <p className="text-xs text-muted-foreground leading-relaxed mb-2">
               Visual cues signal when the person requires care or there is a healthcare concern. Scan the QR code and follow the advice to clear the alert.
             </p>
-            <p className="text-[10px] text-muted-foreground leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               You should be checking this QR code regularly to check for scheduled support requirements.
             </p>
           </div>
 
           {/* ── Section 3 — Wearable Alerts ── */}
           <div className="border-t border-border pt-4 mb-5">
-            <h2 className="text-sm font-bold text-foreground mb-2 uppercase tracking-wide">Smart Wearable Alerts</h2>
+            <h2 className="text-base font-bold text-foreground mb-2 uppercase tracking-wide">Smart Wearable Alerts</h2>
             <div className="flex items-start gap-4">
-              <img src={smartwatchImg} alt="IoT Smartwatch" className="w-16 h-16 object-contain shrink-0" />
+              <img src={smartwatchImg} alt="IoT Smartwatch" className="w-24 h-24 object-contain shrink-0" />
               <div>
-                <div className="flex flex-col gap-2 text-[10px] mb-2">
+                <div className="flex flex-col gap-2 text-xs mb-2">
                   <div className="flex items-center gap-2">
                     <span className="inline-block w-4 h-4 rounded-full bg-orange-500 shrink-0 border border-orange-600" />
                     <span className="text-muted-foreground"><strong className="text-foreground">Amber</strong> — Monitor / Action May Be Needed</span>
@@ -390,7 +390,7 @@ export default function ClientPosterPage() {
                     <span className="text-muted-foreground"><strong className="text-foreground">Red</strong> — Urgent Attention Required</span>
                   </div>
                 </div>
-                <p className="text-[9px] text-muted-foreground">
+                <p className="text-[10px] text-muted-foreground">
                   Alerts are generated automatically based on the person's health data recorded in IDEAL.
                 </p>
               </div>
