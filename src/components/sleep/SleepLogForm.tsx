@@ -123,6 +123,7 @@ export function SleepLogForm({ clientId, open, onOpenChange }: SleepLogFormProps
     setAssistanceTypes([]);
     setAssistanceOther('');
     setNotes('');
+    setOnBehalfData({ onBehalfUserId: null, onBehalfName: null, onBehalfRole: null, onBehalfReason: null });
     onOpenChange(false);
   };
 
