@@ -116,6 +116,8 @@ export interface EnteralFeedLog {
   edited_by: string | null;
   edit_reason: string | null;
 }
+
+export interface EnteralMedicationLog {
   id: string;
   client_id: string | null;
   medication_config_id: string | null;
