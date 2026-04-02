@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-const smartwatchImg = '/IoT wearable.png';
+const smartwatchImg = '/iot-wearable.png';
 import { useProfile } from '@/contexts/ProfileContext';
 import { QRCodeSVG } from 'qrcode.react';
 import { QrCode, FileText, Download, Printer, RefreshCw, Loader2 } from 'lucide-react';

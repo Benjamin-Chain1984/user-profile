@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState, useRef } from 'react';
-const smartwatchImg = '/IoT wearable.png';
+const smartwatchImg = '/iot-wearable.png';
 import { useParams, useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { supabase } from '@/integrations/supabase/client';
