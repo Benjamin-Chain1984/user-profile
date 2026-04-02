@@ -352,10 +352,6 @@ export default function ClientPosterPage() {
           {/* ── Header with logo ── */}
           <div className="flex items-center gap-2 border-b border-border pb-3 mb-4">
             <img src="/Ideal-logo.png" alt="IDEAL" className="h-8 w-auto" />
-            <div>
-              <p className="text-xs font-bold text-foreground tracking-wide leading-tight">IDEAL</p>
-              <p className="text-[7px] text-muted-foreground leading-tight">Intelligent Data for Everyday Activities &amp; Lifestyle</p>
-            </div>
           </div>
 
           {/* ── Section 1 — Title ── */}
