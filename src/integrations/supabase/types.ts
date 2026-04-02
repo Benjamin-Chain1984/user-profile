@@ -1817,6 +1817,7 @@ export type Database = {
           photo_url: string | null
           poster_qr_token_created_at: string
           poster_qr_token_hash: string
+          poster_qr_token_plain: string | null
           poster_qr_token_rotated_at: string | null
           preferred_name: string
           primary_contact_number: string | null
@@ -1841,6 +1842,7 @@ export type Database = {
           photo_url?: string | null
           poster_qr_token_created_at?: string
           poster_qr_token_hash: string
+          poster_qr_token_plain?: string | null
           poster_qr_token_rotated_at?: string | null
           preferred_name: string
           primary_contact_number?: string | null
@@ -1865,6 +1867,7 @@ export type Database = {
           photo_url?: string | null
           poster_qr_token_created_at?: string
           poster_qr_token_hash?: string
+          poster_qr_token_plain?: string | null
           poster_qr_token_rotated_at?: string | null
           preferred_name?: string
           primary_contact_number?: string | null

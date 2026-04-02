@@ -18,8 +18,7 @@ import { toast } from 'sonner';
 import { ProfileAvatar } from '@/components/ideal/ProfileAvatar';
 import jsPDF from 'jspdf';
 
-/** Must match the key used by QRPosterSection */
-const TOKEN_STORAGE_PREFIX = 'ideal_profile_qr_token_';
+/** Token is now loaded from the database, not localStorage */
 
 const HEALTH_AREAS = [
   'Bowel care', 'Fluid balance', 'Pain', 'Sleep',
@@ -43,9 +42,7 @@ export default function ClientPosterPage() {
   const [error, setError] = useState<string | null>(null);
   const posterRef = useRef<HTMLDivElement>(null);
 
-  const storageKey = `${TOKEN_STORAGE_PREFIX}${clientId || ''}`;
-
-  // Fetch client data + load token from same localStorage key as QRPosterSection
+  // Fetch client data + load token from database
   useEffect(() => {
     if (!clientId) { setError('Client ID not provided'); setLoading(false); return; }
 
@@ -53,16 +50,13 @@ export default function ClientPosterPage() {
       try {
         const { data, error: fetchError } = await supabase
           .from('clients')
-          .select('id, preferred_name, short_bio, photo_url, status')
+          .select('id, preferred_name, short_bio, photo_url, status, poster_qr_token_plain')
           .eq('id', clientId)
           .single();
         if (fetchError) throw fetchError;
         if (!data) throw new Error('Client not found');
         setClient(data);
-
-        // Read the SAME token stored by the Profile QRPosterSection — never generate
-        const stored = localStorage.getItem(storageKey);
-        setQrToken(stored);
+        setQrToken((data as any).poster_qr_token_plain || null);
       } catch (err) {
         console.error('Error fetching client:', err);
         setError('Unable to load client details');
@@ -70,9 +64,9 @@ export default function ClientPosterPage() {
         setLoading(false);
       }
     })();
-  }, [clientId, storageKey]);
+  }, [clientId]);
 
-  // Realtime: if token is rotated in Profile, refresh
+  // Realtime: if token is rotated in Profile, refresh from DB
   useEffect(() => {
     if (!clientId) return;
     const channel = supabase
@@ -80,14 +74,13 @@ export default function ClientPosterPage() {
       .on('postgres_changes', {
         event: 'UPDATE', schema: 'public', table: 'clients',
         filter: `id=eq.${clientId}`,
-      }, () => {
-        // Re-read from localStorage (QRPosterSection writes here on regenerate)
-        const freshToken = localStorage.getItem(storageKey);
-        setQrToken(freshToken);
+      }, (payload: any) => {
+        const newToken = payload.new?.poster_qr_token_plain;
+        if (newToken) setQrToken(newToken);
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [clientId, storageKey]);
+  }, [clientId]);
 
   const qrUrl = qrToken ? clientTokenService.generatePosterQrUrl(qrToken) : '';
 

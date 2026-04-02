@@ -9,18 +9,15 @@ import jsPDF from 'jspdf';
 import { supabase } from '@/integrations/supabase/client';
 import { generateSecureToken, hashToken } from '@/services/clientToken';
 
-const TOKEN_STORAGE_PREFIX = 'ideal_profile_qr_token_';
-
 export function QRPosterSection() {
   const { profile } = useProfile();
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [hasCheckedStorage, setHasCheckedStorage] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
 
   const profileId = profile?.id;
   const profileName = profile?.fullName ?? '';
-  const storageKey = `${TOKEN_STORAGE_PREFIX}${profileId || ''}`;
   const qrCodeValue = qrToken ? `${window.location.origin}/c/${qrToken}` : '';
 
   const generateNewToken = useCallback(async () => {
@@ -32,7 +29,7 @@ export function QRPosterSection() {
 
       const { error } = await supabase
         .from('clients')
-        .update({ poster_qr_token_hash: tokenHash } as any)
+        .update({ poster_qr_token_hash: tokenHash, poster_qr_token_plain: token } as any)
         .eq('id', profileId)
         .select('id')
         .single();
@@ -42,7 +39,6 @@ export function QRPosterSection() {
         throw error;
       }
 
-      localStorage.setItem(storageKey, token);
       setQrToken(token);
     } catch (err) {
       console.error('[QR] Failed to generate QR token:', err);
@@ -50,22 +46,32 @@ export function QRPosterSection() {
     } finally {
       setIsGenerating(false);
     }
-  }, [profileId, storageKey]);
+  }, [profileId]);
 
-  // Load existing token from localStorage on mount — never auto-generate
+  // Load existing token from database on mount
   useEffect(() => {
     if (!profileId) return;
-    const stored = localStorage.getItem(storageKey);
-    if (stored) {
-      setQrToken(stored);
-    }
-    setHasCheckedStorage(true);
-  }, [profileId, storageKey]);
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('clients')
+          .select('poster_qr_token_plain')
+          .eq('id', profileId)
+          .single();
+        if ((data as any)?.poster_qr_token_plain) {
+          setQrToken((data as any).poster_qr_token_plain);
+        }
+      } catch (err) {
+        console.error('[QR] Failed to load token:', err);
+      } finally {
+        setHasLoaded(true);
+      }
+    })();
+  }, [profileId]);
 
   if (!profile) return null;
 
   const handleRegenerate = async () => {
-    localStorage.removeItem(storageKey);
     setQrToken(null);
     await generateNewToken();
     toast.success('QR code regenerated. Previous QR codes are now invalid.');
@@ -231,7 +237,7 @@ export function QRPosterSection() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!hasCheckedStorage ? (
+        {!hasLoaded ? (
           <div className="flex items-center justify-center py-4">
             <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
           </div>

@@ -109,7 +109,8 @@ export function ClientFormDialog({
           photo_url: formData.photo_url.trim() || null,
           status: formData.status,
           poster_qr_token_hash: tokenHash,
-        });
+          poster_qr_token_plain: token,
+        } as any);
 
         if (error) throw error;
         toast.success('Client created successfully. Generate a poster to get the QR code.');

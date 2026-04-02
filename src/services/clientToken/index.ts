@@ -110,8 +110,9 @@ class ClientTokenServiceImpl implements ClientTokenService {
         .from('clients')
         .update({
           poster_qr_token_hash: newTokenHash,
+          poster_qr_token_plain: newToken,
           poster_qr_token_rotated_at: new Date().toISOString(),
-        })
+        } as any)
         .eq('id', clientId);
 
       if (error) {
