@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useState, useRef } from 'react';
+import smartwatchImg from '@/assets/smartwatch-alerts.png';
 import { useParams, useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { supabase } from '@/integrations/supabase/client';
@@ -139,30 +140,48 @@ export default function ClientPosterPage() {
       pdf.text('IDEAL highlights early warning signs and supports timely action.', m, y);
       y += 8;
 
-      // Section 3 — Wearable Alerts
+      // Section 3 — Wearable Alerts (with smartwatch image)
       pdf.setDrawColor(220);
       pdf.line(m, y, pw - m, y);
       y += 6;
+
+      const watchImgSize = 20;
+      try {
+        const watchImgEl = new Image();
+        await new Promise<void>((resolve) => {
+          watchImgEl.onload = () => resolve();
+          watchImgEl.onerror = () => resolve();
+          watchImgEl.src = smartwatchImg;
+        });
+        if (watchImgEl.complete && watchImgEl.naturalWidth > 0) {
+          const wCanvas = document.createElement('canvas');
+          wCanvas.width = 200; wCanvas.height = 200;
+          const wCtx = wCanvas.getContext('2d');
+          if (wCtx) { wCtx.drawImage(watchImgEl, 0, 0, 200, 200); }
+          pdf.addImage(wCanvas.toDataURL('image/png'), 'PNG', m, y, watchImgSize, watchImgSize);
+        }
+      } catch { /* skip watch image */ }
+
+      const alertTextX = m + watchImgSize + 4;
+      const alertTextW = cw - watchImgSize - 4;
+
       pdf.setFontSize(12);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(40);
-      pdf.text('Smart Wearable Alerts', m, y);
-      y += 6;
+      pdf.text('Smart Wearable Alerts', alertTextX, y + 4);
       pdf.setFontSize(9);
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(60);
       pdf.setFillColor(255, 165, 0);
-      pdf.circle(m + 3, y - 1, 2, 'F');
-      pdf.text('Amber — Monitor / Action May Be Needed', m + 8, y);
-      y += 5;
+      pdf.circle(alertTextX + 3, y + 9, 2, 'F');
+      pdf.text('Amber — Monitor / Action May Be Needed', alertTextX + 8, y + 10);
       pdf.setFillColor(220, 38, 38);
-      pdf.circle(m + 3, y - 1, 2, 'F');
-      pdf.text('Red — Urgent Attention Required', m + 8, y);
-      y += 5;
+      pdf.circle(alertTextX + 3, y + 14, 2, 'F');
+      pdf.text('Red — Urgent Attention Required', alertTextX + 8, y + 15);
       pdf.setTextColor(80);
-      const alertNote = pdf.splitTextToSize("Alerts are generated automatically based on the person's health data recorded in IDEAL.", cw);
-      pdf.text(alertNote, m, y);
-      y += alertNote.length * 4 + 8;
+      const alertNote = pdf.splitTextToSize("Alerts are generated automatically based on the person's health data recorded in IDEAL.", alertTextW);
+      pdf.text(alertNote, alertTextX, y + 20);
+      y += Math.max(watchImgSize, 20 + alertNote.length * 4) + 8;
 
       // Section 4 — QR Code + Client Name
       pdf.setDrawColor(220);
@@ -360,19 +379,24 @@ export default function ClientPosterPage() {
           {/* ── Section 3 — Wearable Alerts ── */}
           <div className="border-t border-border pt-4 mb-5">
             <h2 className="text-sm font-bold text-foreground mb-2 uppercase tracking-wide">Smart Wearable Alerts</h2>
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 text-[10px] mb-2">
-              <div className="flex items-center gap-2">
-                <span className="inline-block w-4 h-4 rounded-full bg-orange-500 shrink-0 border border-orange-600" />
-                <span className="text-muted-foreground"><strong className="text-foreground">Amber</strong> — Monitor / Action May Be Needed</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="inline-block w-4 h-4 rounded-full bg-red-600 shrink-0 border border-red-700" />
-                <span className="text-muted-foreground"><strong className="text-foreground">Red</strong> — Urgent Attention Required</span>
+            <div className="flex items-start gap-4">
+              <img src={smartwatchImg} alt="IoT Smartwatch" className="w-16 h-16 object-contain shrink-0" />
+              <div>
+                <div className="flex flex-col gap-2 text-[10px] mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-block w-4 h-4 rounded-full bg-orange-500 shrink-0 border border-orange-600" />
+                    <span className="text-muted-foreground"><strong className="text-foreground">Amber</strong> — Monitor / Action May Be Needed</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-block w-4 h-4 rounded-full bg-red-600 shrink-0 border border-red-700" />
+                    <span className="text-muted-foreground"><strong className="text-foreground">Red</strong> — Urgent Attention Required</span>
+                  </div>
+                </div>
+                <p className="text-[9px] text-muted-foreground">
+                  Alerts are generated automatically based on the person's health data recorded in IDEAL.
+                </p>
               </div>
             </div>
-            <p className="text-[9px] text-muted-foreground">
-              Alerts are generated automatically based on the person's health data recorded in IDEAL.
-            </p>
           </div>
 
           {/* ── Section 4 — QR Code ── */}
