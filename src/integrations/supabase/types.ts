@@ -32,6 +32,9 @@ export type Database = {
           q4_behavioral_change: number
           q5_physiological_change: number
           q6_physical_change: number
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
           severity: string
           total_score: number
           trigger_reason: string | null
@@ -55,6 +58,9 @@ export type Database = {
           q4_behavioral_change: number
           q5_physiological_change: number
           q6_physical_change: number
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           severity: string
           total_score: number
           trigger_reason?: string | null
@@ -78,6 +84,9 @@ export type Database = {
           q4_behavioral_change?: number
           q5_physiological_change?: number
           q6_physical_change?: number
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           severity?: string
           total_score?: number
           trigger_reason?: string | null
@@ -1107,6 +1116,9 @@ export type Database = {
           id: string
           is_undone: boolean
           notes: string | null
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
           tubing_changed: boolean
           undone_at: string | null
           undone_by: string | null
@@ -1125,6 +1137,9 @@ export type Database = {
           id?: string
           is_undone?: boolean
           notes?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           tubing_changed?: boolean
           undone_at?: string | null
           undone_by?: string | null
@@ -1143,6 +1158,9 @@ export type Database = {
           id?: string
           is_undone?: boolean
           notes?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           tubing_changed?: boolean
           undone_at?: string | null
           undone_by?: string | null
@@ -1640,6 +1658,9 @@ export type Database = {
           notes: string | null
           output_description: string | null
           person_response: string | null
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
           return_volume_ml: number | null
           training_confirmed: boolean
           undone_at: string | null
@@ -1664,6 +1685,9 @@ export type Database = {
           notes?: string | null
           output_description?: string | null
           person_response?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           return_volume_ml?: number | null
           training_confirmed?: boolean
           undone_at?: string | null
@@ -1688,6 +1712,9 @@ export type Database = {
           notes?: string | null
           output_description?: string | null
           person_response?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           return_volume_ml?: number | null
           training_confirmed?: boolean
           undone_at?: string | null
@@ -1727,6 +1754,9 @@ export type Database = {
           notes: string | null
           pain: boolean
           pain_level: string | null
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
           redness: boolean
           status_level: string | null
           stoma_condition: string
@@ -1756,6 +1786,9 @@ export type Database = {
           notes?: string | null
           pain?: boolean
           pain_level?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           redness?: boolean
           status_level?: string | null
           stoma_condition: string
@@ -1785,6 +1818,9 @@ export type Database = {
           notes?: string | null
           pain?: boolean
           pain_level?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           redness?: boolean
           status_level?: string | null
           stoma_condition?: string
@@ -2015,6 +2051,9 @@ export type Database = {
           id: string
           is_undone: boolean
           notes: string | null
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
           undone_at: string | null
           undone_by: string | null
         }
@@ -2034,6 +2073,9 @@ export type Database = {
           id?: string
           is_undone?: boolean
           notes?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           undone_at?: string | null
           undone_by?: string | null
         }
@@ -2053,6 +2095,9 @@ export type Database = {
           id?: string
           is_undone?: boolean
           notes?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           undone_at?: string | null
           undone_by?: string | null
         }
@@ -2495,6 +2540,9 @@ export type Database = {
           position_confirmed: boolean
           position_override_reason: string | null
           rate_ml_per_hour: number | null
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
           scheduled_time: string | null
           undone_at: string | null
           undone_by: string | null
@@ -2517,6 +2565,9 @@ export type Database = {
           position_confirmed?: boolean
           position_override_reason?: string | null
           rate_ml_per_hour?: number | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           scheduled_time?: string | null
           undone_at?: string | null
           undone_by?: string | null
@@ -2539,6 +2590,9 @@ export type Database = {
           position_confirmed?: boolean
           position_override_reason?: string | null
           rate_ml_per_hour?: number | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           scheduled_time?: string | null
           undone_at?: string | null
           undone_by?: string | null
@@ -2567,6 +2621,9 @@ export type Database = {
           id: string
           is_undone: boolean
           notes: string | null
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
           scheduled_time: string | null
           undone_at: string | null
           undone_by: string | null
@@ -2584,6 +2641,9 @@ export type Database = {
           id?: string
           is_undone?: boolean
           notes?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           scheduled_time?: string | null
           undone_at?: string | null
           undone_by?: string | null
@@ -2601,6 +2661,9 @@ export type Database = {
           id?: string
           is_undone?: boolean
           notes?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           scheduled_time?: string | null
           undone_at?: string | null
           undone_by?: string | null
@@ -2695,6 +2758,9 @@ export type Database = {
           medication_name: string
           notes: string | null
           position_confirmed: boolean
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
           scheduled_time: string | null
           undone_at: string | null
           undone_by: string | null
@@ -2716,6 +2782,9 @@ export type Database = {
           medication_name: string
           notes?: string | null
           position_confirmed?: boolean
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           scheduled_time?: string | null
           undone_at?: string | null
           undone_by?: string | null
@@ -2737,6 +2806,9 @@ export type Database = {
           medication_name?: string
           notes?: string | null
           position_confirmed?: boolean
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           scheduled_time?: string | null
           undone_at?: string | null
           undone_by?: string | null
@@ -2774,6 +2846,9 @@ export type Database = {
           is_undone: boolean
           notes: string | null
           pain_level: string
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
           status_level: string
           undone_at: string | null
           undone_by: string | null
@@ -2793,6 +2868,9 @@ export type Database = {
           is_undone?: boolean
           notes?: string | null
           pain_level?: string
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           status_level?: string
           undone_at?: string | null
           undone_by?: string | null
@@ -2812,6 +2890,9 @@ export type Database = {
           is_undone?: boolean
           notes?: string | null
           pain_level?: string
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           status_level?: string
           undone_at?: string | null
           undone_by?: string | null
@@ -2840,6 +2921,9 @@ export type Database = {
           id: string
           is_undone: boolean
           notes: string | null
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
           tube_size_fr: string | null
           tube_type: string
           undone_at: string | null
@@ -2858,6 +2942,9 @@ export type Database = {
           id?: string
           is_undone?: boolean
           notes?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           tube_size_fr?: string | null
           tube_type: string
           undone_at?: string | null
@@ -2876,6 +2963,9 @@ export type Database = {
           id?: string
           is_undone?: boolean
           notes?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           tube_size_fr?: string | null
           tube_type?: string
           undone_at?: string | null
@@ -3541,6 +3631,9 @@ export type Database = {
           is_undone: boolean
           nausea_vomiting: boolean
           notes: string | null
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
           swelling: boolean
           thirst_dry_mouth: boolean
           undone_at: string | null
@@ -3561,6 +3654,9 @@ export type Database = {
           is_undone?: boolean
           nausea_vomiting?: boolean
           notes?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           swelling?: boolean
           thirst_dry_mouth?: boolean
           undone_at?: string | null
@@ -3581,6 +3677,9 @@ export type Database = {
           is_undone?: boolean
           nausea_vomiting?: boolean
           notes?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           swelling?: boolean
           thirst_dry_mouth?: boolean
           undone_at?: string | null
@@ -3819,6 +3918,9 @@ export type Database = {
           meal_completion_pct: number | null
           notes: string | null
           pocketing: boolean
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
           refusal: boolean
           severity: string
           throat_clearing: boolean
@@ -3842,6 +3944,9 @@ export type Database = {
           meal_completion_pct?: number | null
           notes?: string | null
           pocketing?: boolean
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           refusal?: boolean
           severity?: string
           throat_clearing?: boolean
@@ -3865,6 +3970,9 @@ export type Database = {
           meal_completion_pct?: number | null
           notes?: string | null
           pocketing?: boolean
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           refusal?: boolean
           severity?: string
           throat_clearing?: boolean
@@ -4133,6 +4241,9 @@ export type Database = {
           lips: string
           mouth_annotations: Json | null
           overall_status: string
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
           roof_of_mouth: string
           teeth: string
           tongue: string
@@ -4160,6 +4271,9 @@ export type Database = {
           lips?: string
           mouth_annotations?: Json | null
           overall_status?: string
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           roof_of_mouth?: string
           teeth?: string
           tongue?: string
@@ -4187,6 +4301,9 @@ export type Database = {
           lips?: string
           mouth_annotations?: Json | null
           overall_status?: string
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           roof_of_mouth?: string
           teeth?: string
           tongue?: string
@@ -4479,6 +4596,9 @@ export type Database = {
           log_date: string
           notes: string | null
           period: string
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
           undone_at: string | null
           undone_by: string | null
         }
@@ -4495,6 +4615,9 @@ export type Database = {
           log_date?: string
           notes?: string | null
           period: string
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           undone_at?: string | null
           undone_by?: string | null
         }
@@ -4511,6 +4634,9 @@ export type Database = {
           log_date?: string
           notes?: string | null
           period?: string
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           undone_at?: string | null
           undone_by?: string | null
         }
@@ -4537,6 +4663,9 @@ export type Database = {
           is_undone: boolean
           outcome: string | null
           outcome_recorded_at: string | null
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
           undone_at: string | null
           undone_by: string | null
         }
@@ -4552,6 +4681,9 @@ export type Database = {
           is_undone?: boolean
           outcome?: string | null
           outcome_recorded_at?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           undone_at?: string | null
           undone_by?: string | null
         }
@@ -4567,6 +4699,9 @@ export type Database = {
           is_undone?: boolean
           outcome?: string | null
           outcome_recorded_at?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           undone_at?: string | null
           undone_by?: string | null
         }
@@ -4597,6 +4732,9 @@ export type Database = {
           q3_facial_expression: number
           q4_body_language: number
           q5_consolability: number
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
           severity: string
           total_score: number
           trigger_reason: string | null
@@ -4619,6 +4757,9 @@ export type Database = {
           q3_facial_expression: number
           q4_body_language: number
           q5_consolability: number
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           severity: string
           total_score: number
           trigger_reason?: string | null
@@ -4641,6 +4782,9 @@ export type Database = {
           q3_facial_expression?: number
           q4_body_language?: number
           q5_consolability?: number
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           severity?: string
           total_score?: number
           trigger_reason?: string | null
@@ -4959,6 +5103,9 @@ export type Database = {
           notes: string | null
           position_completed: string
           position_recommended: string | null
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
           scheduled_time: string | null
           undone_at: string | null
           undone_by: string | null
@@ -4982,6 +5129,9 @@ export type Database = {
           notes?: string | null
           position_completed: string
           position_recommended?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           scheduled_time?: string | null
           undone_at?: string | null
           undone_by?: string | null
@@ -5005,6 +5155,9 @@ export type Database = {
           notes?: string | null
           position_completed?: string
           position_recommended?: string | null
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           scheduled_time?: string | null
           undone_at?: string | null
           undone_by?: string | null
@@ -5476,6 +5629,9 @@ export type Database = {
           is_undone: boolean
           notes: string | null
           observation_type: string
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
           recovery: string[]
           recovery_notes: string | null
           seizure_category: string
@@ -5499,6 +5655,9 @@ export type Database = {
           is_undone?: boolean
           notes?: string | null
           observation_type?: string
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           recovery?: string[]
           recovery_notes?: string | null
           seizure_category?: string
@@ -5522,6 +5681,9 @@ export type Database = {
           is_undone?: boolean
           notes?: string | null
           observation_type?: string
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           recovery?: string[]
           recovery_notes?: string | null
           seizure_category?: string
@@ -5554,6 +5716,9 @@ export type Database = {
           is_undone: boolean
           notes: string | null
           overall_status: string
+          recorded_on_behalf_of_name: string | null
+          recorded_on_behalf_of_reason: string | null
+          recorded_on_behalf_of_role: string | null
           scheduled_time: string | null
           undone_at: string | null
           undone_by: string | null
@@ -5570,6 +5735,9 @@ export type Database = {
           is_undone?: boolean
           notes?: string | null
           overall_status?: string
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           scheduled_time?: string | null
           undone_at?: string | null
           undone_by?: string | null
@@ -5586,6 +5754,9 @@ export type Database = {
           is_undone?: boolean
           notes?: string | null
           overall_status?: string
+          recorded_on_behalf_of_name?: string | null
+          recorded_on_behalf_of_reason?: string | null
+          recorded_on_behalf_of_role?: string | null
           scheduled_time?: string | null
           undone_at?: string | null
           undone_by?: string | null
