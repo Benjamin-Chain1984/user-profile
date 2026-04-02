@@ -177,6 +177,7 @@ export function PadChangeForm({
 
   const resetForm = () => {
     setScheduledTime('');
+    setUnscheduledTime(format(new Date(), 'HH:mm'));
     setPadType('pull_up');
     setPadCondition('dry');
     setChangeReasons(['scheduled']);
