@@ -415,17 +415,20 @@ function SkinCheckTile({
           intervalHours = 0; // Not time-based
 
           // Count pad changes that don't have a paired skin check.
-          // Give a 30-min grace window for very recent pad changes (skin check still pending, not missed).
+          // Only consider pad changes that occurred AFTER the most recent skin check —
+          // once a new skin check is done, earlier unpaired pad changes are considered resolved.
+          const lastCheckTime = todayChecks.length > 0
+            ? Math.max(...todayChecks.map(c => new Date(c.event_occurred_at).getTime()))
+            : 0;
+
           missedPadChanges = todayPadChanges.filter((padChange) => {
             const padTime = new Date(padChange.event_occurred_at).getTime();
+            // If the most recent skin check is after this pad change, it's covered
+            if (lastCheckTime >= padTime) return false;
             const minutesSincePad = (now.getTime() - padTime) / 60_000;
             // Within 30-min grace window → pending, not missed yet
             if (minutesSincePad < 30) return false;
-            const hasPairedCheck = todayChecks.some((check) => {
-              const checkTime = new Date(check.event_occurred_at).getTime();
-              return checkTime >= padTime && checkTime <= padTime + 60 * 60 * 1000;
-            });
-            return !hasPairedCheck;
+            return true;
           }).length;
 
           frequencyLabel = 'Every pad change';
