@@ -127,12 +127,12 @@ export function QRPosterSection() {
       pdf.text(desc, m, y);
       y += desc.length * 4 + 4;
 
-      const modules = ['Bowel care', 'Fluid balance', 'Pain', 'Sleep', 'Nutrition', 'Vital signs', 'Skin integrity', 'Preventive health'];
-      modules.forEach((mod) => { pdf.text(`•  ${mod}`, m + 4, y); y += 4; });
-      y += 2;
-      pdf.setFont('helvetica', 'italic');
-      pdf.text('IDEAL highlights early warning signs and supports timely action.', m, y);
-      y += 8;
+      const cueLines = pdf.splitTextToSize(
+        'Visual cues signal when the person requires care or there is a healthcare concern. Scan the QR code and follow the advice to clear the alert.',
+        cw
+      );
+      pdf.text(cueLines, m, y);
+      y += cueLines.length * 4 + 8;
 
       // Section 3 — Wearable Alerts
       pdf.setDrawColor(220);
