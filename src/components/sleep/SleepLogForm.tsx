@@ -16,6 +16,7 @@ import { AWAKE_PERIOD_OPTIONS, ASSISTANCE_TYPES, AWAKENING_REASONS, estimateAwak
 import type { AwakePeriodLength, AwakeningEvent, AwakeningReason } from '@/types/sleep';
 import { differenceInMinutes } from 'date-fns';
 import { Loader2, Moon, AlertTriangle, Plus, Trash2 } from 'lucide-react';
+import { OnBehalfSelector, type OnBehalfData, isOnBehalfActive } from '@/components/shared/OnBehalfSelector';
 
 interface SleepLogFormProps {
   clientId?: string;
