@@ -505,6 +505,16 @@ export default function ClientScanPage() {
     handleSendOtp();
   };
 
+  // Auto-redirect to client dashboard on success
+  useEffect(() => {
+    if (step === 'success' && client) {
+      const timer = setTimeout(() => {
+        navigate('/', { replace: true });
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [step, client, navigate]);
+
   // === RENDER STEPS ===
 
   // Checking auth state
@@ -890,34 +900,17 @@ export default function ClientScanPage() {
     );
   }
 
-  // Success - show client overview with working navigation
   if (step === 'success' && client) {
-    const formatMfaExpiry = () => {
-      if (!mfaExpiresAt) return null;
-      const date = new Date(mfaExpiresAt);
-      return date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
-    };
-
     return (
-      <div className="min-h-screen bg-background p-4">
-        <div className="max-w-2xl mx-auto space-y-6">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <img src={idealLogo} alt="IDEAL" className="h-10 w-auto" />
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                {authState?.userName}
-              </span>
-              <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
-                Exit
-              </Button>
-            </div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+        <div className="w-full max-w-md space-y-6 text-center">
+          <div className="flex justify-center">
+            <img src={idealLogo} alt="IDEAL" className="h-14 w-auto" />
           </div>
 
-          {/* Access Granted Banner */}
-          <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-            <CheckCircle className="w-5 h-5 text-green-600 shrink-0" />
-            <div className="flex-1">
+          <div className="flex items-center justify-center gap-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+            <CheckCircle className="w-6 h-6 text-green-600 shrink-0" />
+            <div>
               <p className="font-medium text-green-800 dark:text-green-200">Access Granted</p>
               <p className="text-sm text-green-600 dark:text-green-400">
                 {accessMethod === 'trusted_device' 
@@ -925,97 +918,48 @@ export default function ClientScanPage() {
                   : 'Authenticated via SMS verification'}
               </p>
             </div>
-            {accessMethod === 'trusted_device' && (
-              <ShieldCheck className="w-5 h-5 text-green-600" />
-            )}
           </div>
 
-          {/* Device trust info */}
-          {mfaExpiresAt && (
-            <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg">
-              <Smartphone className="w-4 h-4 text-muted-foreground shrink-0" />
-              <p className="text-xs text-muted-foreground">
-                This device is verified until <strong>{formatMfaExpiry()}</strong>. No repeat codes needed until then.
-              </p>
+          <div className="flex items-center justify-center gap-4">
+            {client.photoUrl ? (
+              <img 
+                src={client.photoUrl} 
+                alt={client.preferredName} 
+                className="w-16 h-16 rounded-full object-cover border-2 border-primary"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <span className="text-2xl font-bold text-primary">
+                  {client.preferredName.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
+            <div className="text-left">
+              <p className="text-xl font-semibold">{client.preferredName}</p>
+              {client.shortBio && (
+                <p className="text-sm text-muted-foreground">{client.shortBio}</p>
+              )}
             </div>
-          )}
+          </div>
 
-          {/* Client Card */}
-          <Card className="border-border shadow-lg">
-            <CardHeader>
-              <div className="flex items-center gap-4">
-                {client.photoUrl ? (
-                  <img 
-                    src={client.photoUrl} 
-                    alt={client.preferredName} 
-                    className="w-20 h-20 rounded-full object-cover border-2 border-primary"
-                  />
-                ) : (
-                  <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-3xl font-bold text-primary">
-                      {client.preferredName.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                )}
-                <div>
-                  <CardTitle className="text-2xl">{client.preferredName}</CardTitle>
-                  {client.shortBio && (
-                    <CardDescription className="mt-1">{client.shortBio}</CardDescription>
-                  )}
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <h3 className="font-semibold text-foreground">Quick Actions</h3>
-              
-              <div className="grid grid-cols-2 gap-3">
-                <Button 
-                  className="h-auto py-4 flex flex-col items-center gap-2"
-                  onClick={() => navigate('/module/constipation')}
-                >
-                  <span className="text-lg">🚽</span>
-                  <span>Bowel Care</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-auto py-4 flex flex-col items-center gap-2"
-                  onClick={() => navigate('/module/health-monitoring')}
-                >
-                  <span className="text-lg">❤️</span>
-                  <span>Vitals</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-auto py-4 flex flex-col items-center gap-2"
-                  onClick={() => navigate('/module/pressure-area')}
-                >
-                  <span className="text-lg">🩹</span>
-                  <span>Pressure Area</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-auto py-4 flex flex-col items-center gap-2"
-                  onClick={() => navigate('/module/fluid-balance')}
-                >
-                  <span className="text-lg">💧</span>
-                  <span>Fluids</span>
-                </Button>
-              </div>
+          <div className="space-y-2">
+            <Loader2 className="w-5 h-5 animate-spin mx-auto text-primary" />
+            <p className="text-sm text-muted-foreground">
+              Redirecting to {client.preferredName}'s profile…
+            </p>
+          </div>
 
-              <Button 
-                variant="secondary" 
-                className="w-full mt-4"
-                onClick={() => navigate('/')}
-              >
-                Go to Dashboard
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </CardContent>
-          </Card>
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={() => navigate('/', { replace: true })}
+          >
+            Go to Dashboard Now
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
 
-          {/* Role info */}
           {authState?.roles && authState.roles.length > 0 && (
-            <p className="text-xs text-center text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Access level: {authState.roles.join(', ')}
             </p>
           )}
