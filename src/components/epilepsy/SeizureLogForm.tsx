@@ -14,6 +14,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { useSeizureEvents } from '@/hooks/useEpilepsy';
 import { SEIZURE_TYPES, SEIZURE_TRIGGERS, RECOVERY_OPTIONS } from '@/types/epilepsy';
 import { Info, ChevronDown, ChevronUp } from 'lucide-react';
+import { OnBehalfSelector, type OnBehalfData, isOnBehalfActive } from '@/components/shared/OnBehalfSelector';
 
 interface SeizureLogFormProps {
   clientId?: string;
