@@ -93,6 +93,7 @@ export function SleepLogForm({ clientId, open, onOpenChange }: SleepLogFormProps
       wakeDatetime.setDate(wakeDatetime.getDate() + 1);
     }
 
+    const active = isOnBehalfActive(onBehalfData);
     addEntry({
       bedtime: bedDatetime,
       wake_time: wakeDatetime.toISOString(),
@@ -107,6 +108,9 @@ export function SleepLogForm({ clientId, open, onOpenChange }: SleepLogFormProps
       assistance_other_text: assistanceTypes.includes('other') ? assistanceOther : null,
       notes: notes || null,
       event_occurred_at: new Date().toISOString(),
+      recorded_on_behalf_of_name: active ? onBehalfData.onBehalfName : null,
+      recorded_on_behalf_of_role: active ? onBehalfData.onBehalfRole : null,
+      recorded_on_behalf_of_reason: active ? onBehalfData.onBehalfReason : null,
     });
 
     // Reset form
