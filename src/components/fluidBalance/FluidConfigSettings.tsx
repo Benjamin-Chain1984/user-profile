@@ -62,6 +62,7 @@ export const FluidConfigSettings: React.FC<FluidConfigSettingsProps> = ({
       enable_output_logging: config?.enable_output_logging ?? true,
       day_boundary_time: config?.day_boundary_time || '00:00',
       dehydration_threshold_ml: config?.dehydration_threshold_ml ?? 0,
+      enable_balance_thresholds: config?.enable_balance_thresholds ?? true,
       overhydration_threshold_ml: config?.overhydration_threshold_ml || 1000,
       dehydration_warning_percent: config?.dehydration_warning_percent || 30,
       overhydration_warning_percent: config?.overhydration_warning_percent || 120,
