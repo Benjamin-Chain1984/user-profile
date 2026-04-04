@@ -274,14 +274,34 @@ export const FluidConfigSettings: React.FC<FluidConfigSettingsProps> = ({
                 <CardHeader>
                   <CardTitle>Balance Thresholds</CardTitle>
                   <CardDescription>
-                    Set thresholds for dehydration and overhydration alerts
+                    Set thresholds for dehydration and overhydration alerts based on fluid balance (intake minus output)
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <FormField
                     control={form.control}
-                    name="dehydration_threshold_ml"
+                    name="enable_balance_thresholds"
                     render={({ field }) => (
+                      <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                        <div>
+                          <FormLabel>Enable Balance Thresholds</FormLabel>
+                          <FormDescription>
+                            Trigger alerts when fluid balance (intake − output) exceeds set limits
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  {form.watch('enable_balance_thresholds') && (
+                    <>
+                      <FormField
+                        control={form.control}
+                        name="dehydration_threshold_ml"
+                        render={({ field }) => (
                       <FormItem>
                         <FormLabel>Dehydration Threshold (ml)</FormLabel>
                         <FormControl>
