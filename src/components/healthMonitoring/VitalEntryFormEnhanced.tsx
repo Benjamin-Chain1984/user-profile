@@ -621,6 +621,32 @@ export function VitalEntryFormEnhanced({
           value={redZoneDialog.value}
         />
       )}
+
+      {/* On Behalf Confirmation Dialog */}
+      <AlertDialog open={showOnBehalfConfirm} onOpenChange={setShowOnBehalfConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm On-Behalf Entry</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>You are recording this vital signs entry on behalf of another staff member:</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li><strong>Name:</strong> {onBehalfOfName}</li>
+                  {onBehalfOfRole && <li><strong>Role:</strong> {onBehalfOfRole}</li>}
+                  {onBehalfOfReason && <li><strong>Reason:</strong> {onBehalfOfReason}</li>}
+                </ul>
+                <p>Please confirm this is correct before saving.</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Go Back</AlertDialogCancel>
+            <AlertDialogAction onClick={() => submitEntry(form.getValues())}>
+              Confirm & Save
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
