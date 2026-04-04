@@ -115,8 +115,8 @@ export function calculateFluidStatus(
     }
   }
   
-  // PRIORITY 3: Check balance thresholds (if output logging enabled)
-  if (config.enable_output_logging) {
+  // PRIORITY 3: Check balance thresholds (if output logging enabled AND balance thresholds enabled)
+  if (config.enable_output_logging && (config.enable_balance_thresholds ?? true)) {
     // Overhydration balance threshold (RED)
     if (balance > config.overhydration_threshold_ml) {
       return {

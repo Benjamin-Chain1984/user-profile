@@ -302,50 +302,49 @@ export const FluidConfigSettings: React.FC<FluidConfigSettingsProps> = ({
                         control={form.control}
                         name="dehydration_threshold_ml"
                         render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Dehydration Threshold (ml)</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            {...field} 
-                            onChange={e => {
-                              const val = e.target.value;
-                              field.onChange(val === '' ? 0 : parseInt(val));
-                            }}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Alert when balance falls below this value. Default: 0ml
-                        </FormDescription>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="overhydration_threshold_ml"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Overhydration Threshold (ml)</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            {...field} 
-                            onChange={e => field.onChange(parseInt(e.target.value) || 1000)}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Alert when balance exceeds this (positive value). Default: +1000ml
-                        </FormDescription>
-                      </FormItem>
-                    )}
-                  />
-                  )}
+                          <FormItem>
+                            <FormLabel>Dehydration Threshold (ml)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                {...field} 
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  field.onChange(val === '' ? 0 : parseInt(val));
+                                }}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Alert when balance falls below this value. Default: 0ml
+                            </FormDescription>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="overhydration_threshold_ml"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Overhydration Threshold (ml)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                {...field} 
+                                onChange={e => field.onChange(parseInt(e.target.value) || 1000)}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Alert when balance exceeds this (positive value). Default: +1000ml
+                            </FormDescription>
+                          </FormItem>
+                        )}
+                      />
                     </>
                   )}
                 </CardContent>
               </Card>
-            
+            )}
             <Card className={isRestricted ? 'border-amber-200' : ''}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
