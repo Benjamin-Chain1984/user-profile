@@ -45,7 +45,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, Clock, User, Thermometer, Heart, Wind, Activity, Gauge } from 'lucide-react';
+import { AlertCircle, Clock, User, Thermometer, Heart, Wind, Activity, Gauge, ChevronUp, ChevronDown } from 'lucide-react';
 import { VitalReelPicker } from './VitalReelPicker';
 import { BloodPressureReelPicker } from './BloodPressureReelPicker';
 import { ObservationContextSelector, type ObservationContext } from './ObservationContextSelector';
