@@ -82,19 +82,26 @@ export function ContinenceHistory({ clientId }: ContinenceHistoryProps) {
   const { checks: consumablesChecks, loading: consumablesLoading } = useConsumablesChecks(clientId);
 
   const [padFilter, setPadFilter] = useState('7d');
+  const [skinFilter, setSkinFilter] = useState('7d');
 
   const filteredChanges = useMemo(() => {
     const cutoff = getFilterDate(padFilter);
     return changes.filter((c) => isAfter(new Date(c.event_occurred_at), cutoff));
   }, [changes, padFilter]);
 
-  // Resolve staff names for pad changes
-  const padStaffIds = useMemo(() => {
+  const filteredSkinChecks = useMemo(() => {
+    const cutoff = getFilterDate(skinFilter);
+    return skinChecks.filter((c) => isAfter(new Date(c.event_occurred_at), cutoff));
+  }, [skinChecks, skinFilter]);
+
+  // Resolve staff names for pad changes and skin checks
+  const allStaffIds = useMemo(() => {
     const ids = new Set<string>();
     filteredChanges.forEach((c) => { if (c.created_by) ids.add(c.created_by); });
+    filteredSkinChecks.forEach((c) => { if (c.created_by) ids.add(c.created_by); });
     return Array.from(ids);
-  }, [filteredChanges]);
-  const { data: staffNames = {} } = useStaffNames(padStaffIds);
+  }, [filteredChanges, filteredSkinChecks]);
+  const { data: staffNames = {} } = useStaffNames(allStaffIds);
 
   const getPadTypeLabel = (value: string) => PAD_TYPES.find((t) => t.value === value)?.label || value;
   const getPadConditionLabel = (value: string) => PAD_CONDITIONS.find((c) => c.value === value)?.label || value;
@@ -251,18 +258,32 @@ export function ContinenceHistory({ clientId }: ContinenceHistoryProps) {
       <TabsContent value="skin-checks">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Recent Skin Checks</CardTitle>
-            <CardDescription>Last 100 entries</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">Recent Skin Checks</CardTitle>
+                <CardDescription>{filteredSkinChecks.length} entries</CardDescription>
+              </div>
+              <Select value={skinFilter} onValueChange={setSkinFilter}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIME_FILTERS.map((f) => (
+                    <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[400px] pr-4">
               {skinLoading ? (
                 <p className="text-muted-foreground">Loading...</p>
-              ) : skinChecks.length === 0 ? (
-                <p className="text-muted-foreground">No skin checks logged yet.</p>
+              ) : filteredSkinChecks.length === 0 ? (
+                <p className="text-muted-foreground">No skin checks in this period.</p>
               ) : (
                 <div className="space-y-4">
-                  {skinChecks.map((check) => (
+                  {filteredSkinChecks.map((check) => (
                     <div
                       key={check.id}
                       className="flex items-start gap-4 p-4 rounded-lg border bg-card"
@@ -296,9 +317,18 @@ export function ContinenceHistory({ clientId }: ContinenceHistoryProps) {
                           ))}
                         </div>
                         {renderOnBehalfBadge(check)}
+                        {check.created_by && staffNames[check.created_by] && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <User className="h-3 w-3" />
+                            Logged by: {staffNames[check.created_by]}
+                          </div>
+                        )}
                         {check.notes && (
                           <p className="text-sm text-muted-foreground">{check.notes}</p>
                         )}
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          {format(new Date(check.event_occurred_at), 'dd/MM/yy HH:mm')}
+                        </div>
                       </div>
                     </div>
                   ))}
