@@ -94,13 +94,14 @@ export function ContinenceHistory({ clientId }: ContinenceHistoryProps) {
     return skinChecks.filter((c) => isAfter(new Date(c.event_occurred_at), cutoff));
   }, [skinChecks, skinFilter]);
 
-  // Resolve staff names for pad changes
-  const padStaffIds = useMemo(() => {
+  // Resolve staff names for pad changes and skin checks
+  const allStaffIds = useMemo(() => {
     const ids = new Set<string>();
     filteredChanges.forEach((c) => { if (c.created_by) ids.add(c.created_by); });
+    filteredSkinChecks.forEach((c) => { if (c.created_by) ids.add(c.created_by); });
     return Array.from(ids);
-  }, [filteredChanges]);
-  const { data: staffNames = {} } = useStaffNames(padStaffIds);
+  }, [filteredChanges, filteredSkinChecks]);
+  const { data: staffNames = {} } = useStaffNames(allStaffIds);
 
   const getPadTypeLabel = (value: string) => PAD_TYPES.find((t) => t.value === value)?.label || value;
   const getPadConditionLabel = (value: string) => PAD_CONDITIONS.find((c) => c.value === value)?.label || value;
