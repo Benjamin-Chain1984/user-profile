@@ -139,6 +139,7 @@ export function useMealtimeObservations(clientId?: string) {
     severity: string;
     notes: string;
     completed_by_name: string;
+    event_occurred_at?: string;
     recorded_on_behalf_of_name?: string | null;
     recorded_on_behalf_of_role?: string | null;
     recorded_on_behalf_of_reason?: string | null;
