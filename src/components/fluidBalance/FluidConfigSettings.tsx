@@ -62,6 +62,7 @@ export const FluidConfigSettings: React.FC<FluidConfigSettingsProps> = ({
       enable_output_logging: config?.enable_output_logging ?? true,
       day_boundary_time: config?.day_boundary_time || '00:00',
       dehydration_threshold_ml: config?.dehydration_threshold_ml ?? 0,
+      enable_balance_thresholds: config?.enable_balance_thresholds ?? true,
       overhydration_threshold_ml: config?.overhydration_threshold_ml || 1000,
       dehydration_warning_percent: config?.dehydration_warning_percent || 30,
       overhydration_warning_percent: config?.overhydration_warning_percent || 120,
@@ -273,56 +274,77 @@ export const FluidConfigSettings: React.FC<FluidConfigSettingsProps> = ({
                 <CardHeader>
                   <CardTitle>Balance Thresholds</CardTitle>
                   <CardDescription>
-                    Set thresholds for dehydration and overhydration alerts
+                    Set thresholds for dehydration and overhydration alerts based on fluid balance (intake minus output)
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <FormField
                     control={form.control}
-                    name="dehydration_threshold_ml"
+                    name="enable_balance_thresholds"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Dehydration Threshold (ml)</FormLabel>
+                      <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                        <div>
+                          <FormLabel>Enable Balance Thresholds</FormLabel>
+                          <FormDescription>
+                            Trigger alerts when fluid balance (intake − output) exceeds set limits
+                          </FormDescription>
+                        </div>
                         <FormControl>
-                          <Input 
-                            type="number" 
-                            {...field} 
-                            onChange={e => {
-                              const val = e.target.value;
-                              field.onChange(val === '' ? 0 : parseInt(val));
-                            }}
-                          />
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
                         </FormControl>
-                        <FormDescription>
-                          Alert when balance falls below this value. Default: 0ml
-                        </FormDescription>
                       </FormItem>
                     )}
                   />
-                  
-                  <FormField
-                    control={form.control}
-                    name="overhydration_threshold_ml"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Overhydration Threshold (ml)</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            {...field} 
-                            onChange={e => field.onChange(parseInt(e.target.value) || 1000)}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Alert when balance exceeds this (positive value). Default: +1000ml
-                        </FormDescription>
-                      </FormItem>
-                    )}
-                  />
+
+                  {form.watch('enable_balance_thresholds') && (
+                    <>
+                      <FormField
+                        control={form.control}
+                        name="dehydration_threshold_ml"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Dehydration Threshold (ml)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                {...field} 
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  field.onChange(val === '' ? 0 : parseInt(val));
+                                }}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Alert when balance falls below this value. Default: 0ml
+                            </FormDescription>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="overhydration_threshold_ml"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Overhydration Threshold (ml)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                {...field} 
+                                onChange={e => field.onChange(parseInt(e.target.value) || 1000)}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Alert when balance exceeds this (positive value). Default: +1000ml
+                            </FormDescription>
+                          </FormItem>
+                        )}
+                      />
+                    </>
+                  )}
                 </CardContent>
               </Card>
             )}
-            
             <Card className={isRestricted ? 'border-amber-200' : ''}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">

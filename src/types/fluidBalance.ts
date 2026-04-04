@@ -6,6 +6,7 @@ export interface FluidConfig {
   target_daily_intake_ml: number;
   enable_output_logging: boolean;
   day_boundary_time: string;
+  enable_balance_thresholds: boolean;
   dehydration_threshold_ml: number;
   overhydration_threshold_ml: number;
   // Percentage-based thresholds for status indicators
