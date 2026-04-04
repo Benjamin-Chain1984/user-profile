@@ -14,6 +14,21 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import {
   Form,
   FormControl,
   FormField,
@@ -25,12 +40,13 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, Clock, User, Thermometer, Heart, Wind, Activity, Gauge } from 'lucide-react';
+import { AlertCircle, Clock, User, Thermometer, Heart, Wind, Activity, Gauge, ChevronUp, ChevronDown } from 'lucide-react';
 import { VitalReelPicker } from './VitalReelPicker';
 import { BloodPressureReelPicker } from './BloodPressureReelPicker';
 import { ObservationContextSelector, type ObservationContext } from './ObservationContextSelector';
@@ -83,9 +99,22 @@ export function VitalEntryFormEnhanced({
   const { criteriaMap } = useAlteredCriteria(clientId);
   
   const [showOnBehalf, setShowOnBehalf] = useState(false);
+  const [onBehalfOfName, setOnBehalfOfName] = useState('');
+  const [onBehalfOfRole, setOnBehalfOfRole] = useState<string | null>(null);
+  const [onBehalfOfReason, setOnBehalfOfReason] = useState<string | null>(null);
+  const [showOnBehalfConfirm, setShowOnBehalfConfirm] = useState(false);
   const [showBackdated, setShowBackdated] = useState(false);
   const [activeTab, setActiveTab] = useState<string>(() => vitalTypeToTabId(initialVitalType));
   const [redZoneDialog, setRedZoneDialog] = useState<{ open: boolean; vitalType: VitalType; value: number } | null>(null);
+
+  const isOnBehalfOfActive = showOnBehalf && (onBehalfOfName || onBehalfOfRole || onBehalfOfReason);
+  
+  const validateOnBehalfOf = () => {
+    if (!isOnBehalfOfActive) return true;
+    if (!onBehalfOfName.trim()) return false;
+    if (!onBehalfOfReason) return false;
+    return true;
+  };
 
   // Update activeTab when initialVitalType changes (e.g., clicking different tiles)
   useEffect(() => {
@@ -134,6 +163,9 @@ export function VitalEntryFormEnhanced({
   const hasAlteredCriteria = Object.values(criteriaMap).some(c => c?.is_active);
 
   const onSubmit = (data: FormData) => {
+    // Validate on-behalf fields
+    if (isOnBehalfOfActive && !validateOnBehalfOf()) return;
+
     // Check for red zone values that need confirmation (except temperature)
     const redVitals: { type: VitalType; value: number }[] = [];
     
@@ -155,6 +187,12 @@ export function VitalEntryFormEnhanced({
       return;
     }
 
+    // If logging on behalf of someone, show confirmation dialog
+    if (isOnBehalfOfActive) {
+      setShowOnBehalfConfirm(true);
+      return;
+    }
+
     submitEntry(data);
   };
 
@@ -171,13 +209,17 @@ export function VitalEntryFormEnhanced({
         ? `Context: ${data.observation_context}. ${data.notes || ''}`.trim() 
         : data.notes || null,
       event_occurred_at: new Date(data.event_occurred_at).toISOString(),
-      recorded_on_behalf_of_name: showOnBehalf ? data.recorded_on_behalf_of_name || null : null,
-      recorded_on_behalf_of_role: showOnBehalf ? data.recorded_on_behalf_of_role || null : null,
-      recorded_on_behalf_of_reason: showOnBehalf ? data.recorded_on_behalf_of_reason || null : null,
+      recorded_on_behalf_of_name: isOnBehalfOfActive ? onBehalfOfName.trim() : null,
+      recorded_on_behalf_of_role: isOnBehalfOfActive ? onBehalfOfRole : null,
+      recorded_on_behalf_of_reason: isOnBehalfOfActive ? onBehalfOfReason : null,
     });
 
     form.reset();
     setShowOnBehalf(false);
+    setOnBehalfOfName('');
+    setOnBehalfOfRole(null);
+    setOnBehalfOfReason(null);
+    setShowOnBehalfConfirm(false);
     setShowBackdated(false);
     setRedZoneDialog(null);
     onOpenChange(false);
@@ -217,6 +259,85 @@ export function VitalEntryFormEnhanced({
           <ScrollArea className="max-h-[calc(95vh-160px)]">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 p-6 pt-2">
+                {/* Recorded on Behalf Of - Top of form (matches Bowel Care pattern) */}
+                {config.enable_log_on_behalf && (
+                  <Collapsible open={showOnBehalf} onOpenChange={setShowOnBehalf}>
+                    <CollapsibleTrigger asChild>
+                      <button
+                        type="button"
+                        className={cn(
+                          "flex items-center justify-between w-full p-3 rounded-lg border text-left transition-colors",
+                          showOnBehalf 
+                            ? "bg-blue-50 border-blue-200" 
+                            : "bg-muted/30 border-muted hover:bg-muted/50"
+                        )}
+                      >
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium text-sm">Recorded on Behalf Of</span>
+                        </div>
+                        {showOnBehalf ? (
+                          <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pt-3 space-y-4">
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="onBehalfName">Staff Name *</Label>
+                          <Input
+                            id="onBehalfName"
+                            placeholder="e.g., Jamie Brown"
+                            value={onBehalfOfName}
+                            onChange={(e) => setOnBehalfOfName(e.target.value)}
+                            disabled={isAdding}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Staff Role / Relationship</Label>
+                          <Select
+                            value={onBehalfOfRole || ''}
+                            onValueChange={(v) => setOnBehalfOfRole(v || null)}
+                            disabled={isAdding}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {STAFF_ROLES.map((role) => (
+                                <SelectItem key={role.value} value={role.value}>
+                                  {role.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Reason for Recording on Behalf *</Label>
+                        <Select
+                          value={onBehalfOfReason || ''}
+                          onValueChange={(v) => setOnBehalfOfReason(v || null)}
+                          disabled={isAdding}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select reason" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ON_BEHALF_REASONS.map((reason) => (
+                              <SelectItem key={reason.value} value={reason.value}>
+                                {reason.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
+
                 {/* Overall Status Preview */}
                 {hasAnyVital && (
                   <Card className={cn(
@@ -464,92 +585,6 @@ export function VitalEntryFormEnhanced({
                     />
                   )}
 
-                  {config.enable_log_on_behalf && (
-                    <>
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id="onBehalf"
-                          checked={showOnBehalf}
-                          onCheckedChange={(checked) => setShowOnBehalf(!!checked)}
-                        />
-                        <label htmlFor="onBehalf" className="text-sm flex items-center gap-1.5 cursor-pointer">
-                          <User className="h-4 w-4" />
-                          Log on behalf of another staff member
-                        </label>
-                      </div>
-
-                      {showOnBehalf && (
-                        <Card className="bg-muted/50">
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-sm">Staff Attribution</CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-3">
-                            <FormField
-                              control={form.control}
-                              name="recorded_on_behalf_of_name"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Staff Name</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Enter staff name" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="recorded_on_behalf_of_role"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Role</FormLabel>
-                                  <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select role" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {STAFF_ROLES.map((role) => (
-                                        <SelectItem key={role.value} value={role.value}>
-                                          {role.label}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="recorded_on_behalf_of_reason"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Reason</FormLabel>
-                                  <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select reason" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {ON_BEHALF_REASONS.map((reason) => (
-                                        <SelectItem key={reason.value} value={reason.value}>
-                                          {reason.label}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </CardContent>
-                        </Card>
-                      )}
-                    </>
-                  )}
                 </div>
 
                 {/* Safety Disclaimer */}
@@ -588,6 +623,32 @@ export function VitalEntryFormEnhanced({
           value={redZoneDialog.value}
         />
       )}
+
+      {/* On Behalf Confirmation Dialog */}
+      <AlertDialog open={showOnBehalfConfirm} onOpenChange={setShowOnBehalfConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm On-Behalf Entry</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>You are recording this vital signs entry on behalf of another staff member:</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li><strong>Name:</strong> {onBehalfOfName}</li>
+                  {onBehalfOfRole && <li><strong>Role:</strong> {onBehalfOfRole}</li>}
+                  {onBehalfOfReason && <li><strong>Reason:</strong> {onBehalfOfReason}</li>}
+                </ul>
+                <p>Please confirm this is correct before saving.</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Go Back</AlertDialogCancel>
+            <AlertDialogAction onClick={() => submitEntry(form.getValues())}>
+              Confirm & Save
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
