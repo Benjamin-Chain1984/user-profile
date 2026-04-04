@@ -19,9 +19,10 @@ import { SafeSwallowingStrategies } from './SafeSwallowingStrategies';
 import { IddsiHistory } from './IddsiHistory';
 import { IddsiConfigSettings } from './IddsiConfigSettings';
 import { IddsiStatusCard } from './IddsiStatusCard';
+import { IddsiExportReports } from './IddsiExportReports';
 import {
   AlertCircle, Settings, Clock, BarChart3,
-  Eye, Armchair, Brain, Plus,
+  Eye, Armchair, Brain, Plus, FileDown,
 } from 'lucide-react';
 
 interface IddsiDashboardProps {
@@ -49,6 +50,7 @@ export function IddsiDashboard({ clientId }: IddsiDashboardProps) {
   const [showPositioning, setShowPositioning] = useState(false);
   const [showStrategies, setShowStrategies] = useState(false);
   const [showObservation, setShowObservation] = useState(false);
+  const [showExport, setShowExport] = useState(false);
 
   const lastObs = observations.length > 0 ? observations[0] : null;
   const lastSeverity = lastObs?.severity || 'green';
@@ -98,15 +100,32 @@ export function IddsiDashboard({ clientId }: IddsiDashboardProps) {
   if (showStrategies) {
     return <SafeSwallowingStrategies onClose={() => setShowStrategies(false)} />;
   }
+  if (showExport) {
+    return <IddsiExportReports clientId={clientId} onClose={() => setShowExport(false)} />;
+  }
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold">IDDSI & Safe Swallowing</h2>
-        <p className="text-sm text-muted-foreground">
-          Food and fluid texture management & swallowing monitoring
-        </p>
+    <div className="space-y-6">
+      {/* Header Actions - matches Bowel Care layout */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-bold">IDDSI & Safe Swallowing</h2>
+          <p className="text-muted-foreground">
+            Food and fluid texture management & swallowing monitoring
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setShowExport(true)}>
+            <FileDown className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+          {config?.enableObservations && (
+            <Button onClick={() => setShowObservation(true)} disabled={isMonitoringPaused}>
+              <Plus className="h-4 w-4 mr-2" />
+              Log Mealtime Observation
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Monitoring Paused */}
@@ -198,14 +217,6 @@ export function IddsiDashboard({ clientId }: IddsiDashboardProps) {
           </button>
         ))}
       </div>
-
-      {/* ── Log Observation Button ── */}
-      {config?.enableObservations && (
-        <Button onClick={() => setShowObservation(true)} className="w-full gap-2">
-          <Plus className="h-4 w-4" />
-          Log Mealtime Observation
-        </Button>
-      )}
 
       {/* ── Tabs ── */}
       <Tabs defaultValue="tracking" className="space-y-3">
