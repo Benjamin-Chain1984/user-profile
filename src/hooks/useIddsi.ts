@@ -121,6 +121,9 @@ export function useMealtimeObservations(clientId?: string) {
         completedByName: d.completed_by_name,
         eventOccurredAt: d.event_occurred_at,
         createdAt: d.created_at,
+        createdBy: d.created_by,
+        recordedOnBehalfOfName: d.recorded_on_behalf_of_name,
+        recordedOnBehalfOfRole: d.recorded_on_behalf_of_role,
       })));
     }
     setLoading(false);
