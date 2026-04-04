@@ -539,23 +539,30 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const fetchFluidStatus = async () => {
     try {
       const { data: configData } = await supabase.from('fluid_config').select('*').maybeSingle();
-      const today = new Date().toISOString().split('T')[0];
-      const { data: intakeData, error } = await supabase.from('fluid_intake_entries').select('*').eq('is_undone', false).gte('event_occurred_at', today).order('event_occurred_at', { ascending: false });
+      // Fetch last 2 days to allow calculateDailyTotals to properly filter by day_boundary_time
+      const twoDaysAgo = new Date();
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+      const cutoff = twoDaysAgo.toISOString();
+      const { data: intakeData, error } = await supabase.from('fluid_intake_entries').select('*').eq('is_undone', false).gte('event_occurred_at', cutoff).order('event_occurred_at', { ascending: false });
       if (error) { console.error('Error fetching fluid intake:', error); return; }
 
       let outputData: FluidOutputEntry[] = [];
       if (configData?.enable_output_logging) {
-        const { data: outputs } = await supabase.from('fluid_output_entries').select('*').eq('is_undone', false).gte('event_occurred_at', today);
+        const { data: outputs } = await supabase.from('fluid_output_entries').select('*').eq('is_undone', false).gte('event_occurred_at', cutoff);
         outputData = (outputs || []) as unknown as FluidOutputEntry[];
       }
 
       const typedConfig = configData as unknown as FluidConfig | null;
       const typedIntake = (intakeData || []) as unknown as FluidIntakeEntry[];
-      const { status, message, percentOfTarget } = calculateFluidStatus(typedIntake, outputData, typedConfig);
+      const now = new Date();
+      const { status, message, percentOfTarget } = calculateFluidStatus(typedIntake, outputData, typedConfig, now);
       const moduleStatus = status === 'ideal' ? 'stable' : status === 'amber' ? 'monitor' : 'action';
 
       setLatestFluidData({ status: moduleStatus, message, timestamp: new Date().toISOString() });
-      const todayTotal = typedIntake.reduce((sum, e) => sum + e.amount_ml, 0);
+      // Use calculateDailyTotals for accurate today total (respects day_boundary_time)
+      const todayTotal = typedConfig
+        ? calculateDailyTotals(typedIntake, outputData, now, typedConfig).intake
+        : typedIntake.reduce((sum, e) => sum + e.amount_ml, 0);
       updateModuleStatus('fluid-balance', moduleStatus, `${todayTotal}ml today (${percentOfTarget}%)`);
     } catch (err) { console.error('Error in fetchFluidStatus:', err); }
   };
