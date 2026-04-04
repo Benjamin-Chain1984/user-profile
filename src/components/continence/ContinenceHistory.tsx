@@ -105,8 +105,9 @@ export function ContinenceHistory({ clientId }: ContinenceHistoryProps) {
     const ids = new Set<string>();
     filteredChanges.forEach((c) => { if (c.created_by) ids.add(c.created_by); });
     filteredSkinChecks.forEach((c) => { if (c.created_by) ids.add(c.created_by); });
+    filteredUTITests.forEach((t) => { if (t.created_by) ids.add(t.created_by); });
     return Array.from(ids);
-  }, [filteredChanges, filteredSkinChecks]);
+  }, [filteredChanges, filteredSkinChecks, filteredUTITests]);
   const { data: staffNames = {} } = useStaffNames(allStaffIds);
 
   const getPadTypeLabel = (value: string) => PAD_TYPES.find((t) => t.value === value)?.label || value;
