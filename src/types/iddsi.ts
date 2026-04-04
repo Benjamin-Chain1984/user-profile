@@ -37,6 +37,9 @@ export interface MealtimeObservation {
   completedByName: string;
   eventOccurredAt: string;
   createdAt: string;
+  createdBy: string | null;
+  recordedOnBehalfOfName: string | null;
+  recordedOnBehalfOfRole: string | null;
 }
 
 export interface PositioningCheck {
