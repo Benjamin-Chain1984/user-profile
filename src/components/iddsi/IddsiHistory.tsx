@@ -85,9 +85,9 @@ export function IddsiHistory({ clientId }: Props) {
         timestamp: o.eventOccurredAt,
         severity: o.severity,
         completedBy: o.completedByName,
-        createdBy: (o as any).createdBy || null,
-        recordedOnBehalfOfName: (o as any).recordedOnBehalfOfName || null,
-        recordedOnBehalfOfRole: (o as any).recordedOnBehalfOfRole || null,
+        createdBy: o.createdBy || null,
+        recordedOnBehalfOfName: o.recordedOnBehalfOfName || null,
+        recordedOnBehalfOfRole: o.recordedOnBehalfOfRole || null,
         data: o,
       })),
       ...checks.map(c => ({
