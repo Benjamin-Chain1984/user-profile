@@ -507,90 +507,81 @@ export function VitalEntryFormEnhanced({
                   )}
 
                   {config.enable_log_on_behalf && (
-                    <>
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id="onBehalf"
-                          checked={showOnBehalf}
-                          onCheckedChange={(checked) => setShowOnBehalf(!!checked)}
-                        />
-                        <label htmlFor="onBehalf" className="text-sm flex items-center gap-1.5 cursor-pointer">
-                          <User className="h-4 w-4" />
-                          Log on behalf of another staff member
-                        </label>
-                      </div>
-
-                      {showOnBehalf && (
-                        <Card className="bg-muted/50">
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-sm">Staff Attribution</CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-3">
-                            <FormField
-                              control={form.control}
-                              name="recorded_on_behalf_of_name"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Staff Name</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Enter staff name" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
+                    <Collapsible open={showOnBehalf} onOpenChange={setShowOnBehalf}>
+                      <CollapsibleTrigger asChild>
+                        <button
+                          type="button"
+                          className={cn(
+                            "flex items-center justify-between w-full p-3 rounded-lg border text-left transition-colors",
+                            showOnBehalf 
+                              ? "bg-blue-50 border-blue-200" 
+                              : "bg-muted/30 border-muted hover:bg-muted/50"
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium text-sm">Recorded on Behalf Of</span>
+                          </div>
+                          {showOnBehalf ? (
+                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="pt-3 space-y-4">
+                        <div className="grid sm:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="onBehalfName">Staff Name *</Label>
+                            <Input
+                              id="onBehalfName"
+                              placeholder="e.g., Jamie Brown"
+                              value={onBehalfOfName}
+                              onChange={(e) => setOnBehalfOfName(e.target.value)}
+                              disabled={isAdding}
                             />
-                            <FormField
-                              control={form.control}
-                              name="recorded_on_behalf_of_role"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Role</FormLabel>
-                                  <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select role" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {STAFF_ROLES.map((role) => (
-                                        <SelectItem key={role.value} value={role.value}>
-                                          {role.label}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="recorded_on_behalf_of_reason"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Reason</FormLabel>
-                                  <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select reason" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {ON_BEHALF_REASONS.map((reason) => (
-                                        <SelectItem key={reason.value} value={reason.value}>
-                                          {reason.label}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </CardContent>
-                        </Card>
-                      )}
-                    </>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Staff Role / Relationship</Label>
+                            <Select
+                              value={onBehalfOfRole || ''}
+                              onValueChange={(v) => setOnBehalfOfRole(v || null)}
+                              disabled={isAdding}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select role" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {STAFF_ROLES.map((role) => (
+                                  <SelectItem key={role.value} value={role.value}>
+                                    {role.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Reason for Recording on Behalf *</Label>
+                          <Select
+                            value={onBehalfOfReason || ''}
+                            onValueChange={(v) => setOnBehalfOfReason(v || null)}
+                            disabled={isAdding}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select reason" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {ON_BEHALF_REASONS.map((reason) => (
+                                <SelectItem key={reason.value} value={reason.value}>
+                                  {reason.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
                   )}
                 </div>
 
