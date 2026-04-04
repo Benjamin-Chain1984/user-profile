@@ -258,18 +258,32 @@ export function ContinenceHistory({ clientId }: ContinenceHistoryProps) {
       <TabsContent value="skin-checks">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Recent Skin Checks</CardTitle>
-            <CardDescription>Last 100 entries</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">Recent Skin Checks</CardTitle>
+                <CardDescription>{filteredSkinChecks.length} entries</CardDescription>
+              </div>
+              <Select value={skinFilter} onValueChange={setSkinFilter}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIME_FILTERS.map((f) => (
+                    <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[400px] pr-4">
               {skinLoading ? (
                 <p className="text-muted-foreground">Loading...</p>
-              ) : skinChecks.length === 0 ? (
-                <p className="text-muted-foreground">No skin checks logged yet.</p>
+              ) : filteredSkinChecks.length === 0 ? (
+                <p className="text-muted-foreground">No skin checks in this period.</p>
               ) : (
                 <div className="space-y-4">
-                  {skinChecks.map((check) => (
+                  {filteredSkinChecks.map((check) => (
                     <div
                       key={check.id}
                       className="flex items-start gap-4 p-4 rounded-lg border bg-card"
@@ -303,9 +317,18 @@ export function ContinenceHistory({ clientId }: ContinenceHistoryProps) {
                           ))}
                         </div>
                         {renderOnBehalfBadge(check)}
+                        {check.created_by && staffNames[check.created_by] && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <User className="h-3 w-3" />
+                            Logged by: {staffNames[check.created_by]}
+                          </div>
+                        )}
                         {check.notes && (
                           <p className="text-sm text-muted-foreground">{check.notes}</p>
                         )}
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          {format(new Date(check.event_occurred_at), 'dd/MM/yy HH:mm')}
+                        </div>
                       </div>
                     </div>
                   ))}
