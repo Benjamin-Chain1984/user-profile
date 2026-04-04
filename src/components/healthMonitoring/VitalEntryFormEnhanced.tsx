@@ -98,9 +98,22 @@ export function VitalEntryFormEnhanced({
   const { criteriaMap } = useAlteredCriteria(clientId);
   
   const [showOnBehalf, setShowOnBehalf] = useState(false);
+  const [onBehalfOfName, setOnBehalfOfName] = useState('');
+  const [onBehalfOfRole, setOnBehalfOfRole] = useState<string | null>(null);
+  const [onBehalfOfReason, setOnBehalfOfReason] = useState<string | null>(null);
+  const [showOnBehalfConfirm, setShowOnBehalfConfirm] = useState(false);
   const [showBackdated, setShowBackdated] = useState(false);
   const [activeTab, setActiveTab] = useState<string>(() => vitalTypeToTabId(initialVitalType));
   const [redZoneDialog, setRedZoneDialog] = useState<{ open: boolean; vitalType: VitalType; value: number } | null>(null);
+
+  const isOnBehalfOfActive = showOnBehalf && (onBehalfOfName || onBehalfOfRole || onBehalfOfReason);
+  
+  const validateOnBehalfOf = () => {
+    if (!isOnBehalfOfActive) return true;
+    if (!onBehalfOfName.trim()) return false;
+    if (!onBehalfOfReason) return false;
+    return true;
+  };
 
   // Update activeTab when initialVitalType changes (e.g., clicking different tiles)
   useEffect(() => {
