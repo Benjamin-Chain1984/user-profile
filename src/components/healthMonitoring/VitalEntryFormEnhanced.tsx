@@ -259,6 +259,85 @@ export function VitalEntryFormEnhanced({
           <ScrollArea className="max-h-[calc(95vh-160px)]">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 p-6 pt-2">
+                {/* Recorded on Behalf Of - Top of form (matches Bowel Care pattern) */}
+                {config.enable_log_on_behalf && (
+                  <Collapsible open={showOnBehalf} onOpenChange={setShowOnBehalf}>
+                    <CollapsibleTrigger asChild>
+                      <button
+                        type="button"
+                        className={cn(
+                          "flex items-center justify-between w-full p-3 rounded-lg border text-left transition-colors",
+                          showOnBehalf 
+                            ? "bg-blue-50 border-blue-200" 
+                            : "bg-muted/30 border-muted hover:bg-muted/50"
+                        )}
+                      >
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium text-sm">Recorded on Behalf Of</span>
+                        </div>
+                        {showOnBehalf ? (
+                          <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pt-3 space-y-4">
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="onBehalfName">Staff Name *</Label>
+                          <Input
+                            id="onBehalfName"
+                            placeholder="e.g., Jamie Brown"
+                            value={onBehalfOfName}
+                            onChange={(e) => setOnBehalfOfName(e.target.value)}
+                            disabled={isAdding}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Staff Role / Relationship</Label>
+                          <Select
+                            value={onBehalfOfRole || ''}
+                            onValueChange={(v) => setOnBehalfOfRole(v || null)}
+                            disabled={isAdding}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {STAFF_ROLES.map((role) => (
+                                <SelectItem key={role.value} value={role.value}>
+                                  {role.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Reason for Recording on Behalf *</Label>
+                        <Select
+                          value={onBehalfOfReason || ''}
+                          onValueChange={(v) => setOnBehalfOfReason(v || null)}
+                          disabled={isAdding}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select reason" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ON_BEHALF_REASONS.map((reason) => (
+                              <SelectItem key={reason.value} value={reason.value}>
+                                {reason.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
+
                 {/* Overall Status Preview */}
                 {hasAnyVital && (
                   <Card className={cn(
