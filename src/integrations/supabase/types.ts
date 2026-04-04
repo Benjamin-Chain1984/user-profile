@@ -3299,6 +3299,7 @@ export type Database = {
           day_boundary_time: string
           dehydration_threshold_ml: number
           dehydration_warning_percent: number
+          enable_balance_thresholds: boolean
           enable_output_logging: boolean
           escalation_recipients: string[] | null
           fluid_restriction_enabled: boolean
@@ -3319,6 +3320,7 @@ export type Database = {
           day_boundary_time?: string
           dehydration_threshold_ml?: number
           dehydration_warning_percent?: number
+          enable_balance_thresholds?: boolean
           enable_output_logging?: boolean
           escalation_recipients?: string[] | null
           fluid_restriction_enabled?: boolean
@@ -3339,6 +3341,7 @@ export type Database = {
           day_boundary_time?: string
           dehydration_threshold_ml?: number
           dehydration_warning_percent?: number
+          enable_balance_thresholds?: boolean
           enable_output_logging?: boolean
           escalation_recipients?: string[] | null
           fluid_restriction_enabled?: boolean
