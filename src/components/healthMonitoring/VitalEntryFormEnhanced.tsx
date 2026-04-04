@@ -162,6 +162,9 @@ export function VitalEntryFormEnhanced({
   const hasAlteredCriteria = Object.values(criteriaMap).some(c => c?.is_active);
 
   const onSubmit = (data: FormData) => {
+    // Validate on-behalf fields
+    if (isOnBehalfOfActive && !validateOnBehalfOf()) return;
+
     // Check for red zone values that need confirmation (except temperature)
     const redVitals: { type: VitalType; value: number }[] = [];
     
@@ -183,6 +186,12 @@ export function VitalEntryFormEnhanced({
       return;
     }
 
+    // If logging on behalf of someone, show confirmation dialog
+    if (isOnBehalfOfActive) {
+      setShowOnBehalfConfirm(true);
+      return;
+    }
+
     submitEntry(data);
   };
 
@@ -199,13 +208,17 @@ export function VitalEntryFormEnhanced({
         ? `Context: ${data.observation_context}. ${data.notes || ''}`.trim() 
         : data.notes || null,
       event_occurred_at: new Date(data.event_occurred_at).toISOString(),
-      recorded_on_behalf_of_name: showOnBehalf ? data.recorded_on_behalf_of_name || null : null,
-      recorded_on_behalf_of_role: showOnBehalf ? data.recorded_on_behalf_of_role || null : null,
-      recorded_on_behalf_of_reason: showOnBehalf ? data.recorded_on_behalf_of_reason || null : null,
+      recorded_on_behalf_of_name: isOnBehalfOfActive ? onBehalfOfName.trim() : null,
+      recorded_on_behalf_of_role: isOnBehalfOfActive ? onBehalfOfRole : null,
+      recorded_on_behalf_of_reason: isOnBehalfOfActive ? onBehalfOfReason : null,
     });
 
     form.reset();
     setShowOnBehalf(false);
+    setOnBehalfOfName('');
+    setOnBehalfOfRole(null);
+    setOnBehalfOfReason(null);
+    setShowOnBehalfConfirm(false);
     setShowBackdated(false);
     setRedZoneDialog(null);
     onOpenChange(false);
