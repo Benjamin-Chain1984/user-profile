@@ -340,9 +340,11 @@ export const FluidConfigSettings: React.FC<FluidConfigSettingsProps> = ({
                       </FormItem>
                     )}
                   />
+                  )}
+                    </>
+                  )}
                 </CardContent>
               </Card>
-            )}
             
             <Card className={isRestricted ? 'border-amber-200' : ''}>
               <CardHeader>
