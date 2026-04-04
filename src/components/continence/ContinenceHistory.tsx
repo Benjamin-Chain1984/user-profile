@@ -83,6 +83,7 @@ export function ContinenceHistory({ clientId }: ContinenceHistoryProps) {
 
   const [padFilter, setPadFilter] = useState('7d');
   const [skinFilter, setSkinFilter] = useState('7d');
+  const [utiFilter, setUtiFilter] = useState('7d');
 
   const filteredChanges = useMemo(() => {
     const cutoff = getFilterDate(padFilter);
@@ -93,6 +94,11 @@ export function ContinenceHistory({ clientId }: ContinenceHistoryProps) {
     const cutoff = getFilterDate(skinFilter);
     return skinChecks.filter((c) => isAfter(new Date(c.event_occurred_at), cutoff));
   }, [skinChecks, skinFilter]);
+
+  const filteredUTITests = useMemo(() => {
+    const cutoff = getFilterDate(utiFilter);
+    return utiTests.filter((t) => isAfter(new Date(t.created_at), cutoff));
+  }, [utiTests, utiFilter]);
 
   // Resolve staff names for pad changes and skin checks
   const allStaffIds = useMemo(() => {
