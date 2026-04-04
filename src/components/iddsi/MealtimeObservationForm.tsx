@@ -1,18 +1,27 @@
 /**
  * Mealtime Observation Form
  * Staff identity is auto-stamped from authenticated session.
+ * "Recorded on Behalf Of" matches the Bowel Care module pattern.
  */
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useMealtimeObservations } from '@/hooks/useIddsi';
 import { useCurrentStaff } from '@/hooks/useCurrentStaff';
 import { calculateObservationSeverity } from '@/types/iddsi';
-import { AlertCircle, AlertTriangle, CheckCircle2, User, Phone } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle2, User, Phone, ChevronDown, ChevronUp, Users, CalendarIcon, Clock } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -29,7 +38,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { OnBehalfSelector, OnBehalfData, isOnBehalfActive, isOnBehalfValid } from '@/components/shared/OnBehalfSelector';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { ON_BEHALF_REASONS, STAFF_ROLES } from '@/types/bowelCare';
 
 interface Props {
   clientId?: string;
@@ -79,13 +97,6 @@ function ToggleOption({
   );
 }
 
-const EMPTY_ON_BEHALF: OnBehalfData = {
-  onBehalfUserId: null,
-  onBehalfName: null,
-  onBehalfRole: null,
-  onBehalfReason: null,
-};
-
 export function MealtimeObservationForm({ clientId, open, onOpenChange }: Props) {
   const { logObservation } = useMealtimeObservations(clientId);
   const { staffName } = useCurrentStaff();
@@ -98,8 +109,21 @@ export function MealtimeObservationForm({ clientId, open, onOpenChange }: Props)
   const [refusal, setRefusal] = useState(false);
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
-  const [onBehalf, setOnBehalf] = useState<OnBehalfData>(EMPTY_ON_BEHALF);
-  const [showConfirm, setShowConfirm] = useState(false);
+
+  // Recorded on Behalf Of state (matches Bowel Care)
+  const [showOnBehalfOf, setShowOnBehalfOf] = useState(false);
+  const [onBehalfOfName, setOnBehalfOfName] = useState('');
+  const [onBehalfOfRole, setOnBehalfOfRole] = useState<string | null>(null);
+  const [onBehalfOfReason, setOnBehalfOfReason] = useState<string | null>(null);
+
+  // Event Occurred At (backdated entry)
+  const [eventDate, setEventDate] = useState<Date>(new Date());
+  const [eventTime, setEventTime] = useState(format(new Date(), 'HH:mm'));
+
+  // Confirmation dialog
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
+  const isOnBehalfOfActive = showOnBehalfOf && (onBehalfOfName || onBehalfOfRole || onBehalfOfReason);
 
   const severity = calculateObservationSeverity({
     coughing,
@@ -110,6 +134,13 @@ export function MealtimeObservationForm({ clientId, open, onOpenChange }: Props)
     refusal,
   });
 
+  const validateOnBehalfOf = () => {
+    if (!isOnBehalfOfActive) return true;
+    if (!onBehalfOfName.trim()) return false;
+    if (!onBehalfOfReason) return false;
+    return true;
+  };
+
   const reset = () => {
     setCoughing('none');
     setWetVoice(false);
@@ -119,12 +150,23 @@ export function MealtimeObservationForm({ clientId, open, onOpenChange }: Props)
     setMealPct([100]);
     setRefusal(false);
     setNotes('');
-    setOnBehalf(EMPTY_ON_BEHALF);
+    setShowOnBehalfOf(false);
+    setOnBehalfOfName('');
+    setOnBehalfOfRole(null);
+    setOnBehalfOfReason(null);
+    setEventDate(new Date());
+    setEventTime(format(new Date(), 'HH:mm'));
+    setShowConfirmDialog(false);
   };
 
-  const doSubmit = async () => {
+  const submitEntry = async () => {
     setSaving(true);
-    const behalfActive = isOnBehalfActive(onBehalf);
+
+    // Combine date and time for event_occurred_at
+    const [hours, minutes] = eventTime.split(':').map(Number);
+    const eventOccurredAt = new Date(eventDate);
+    eventOccurredAt.setHours(hours, minutes, 0, 0);
+
     const ok = await logObservation({
       coughing,
       wet_voice: wetVoice,
@@ -136,9 +178,10 @@ export function MealtimeObservationForm({ clientId, open, onOpenChange }: Props)
       severity,
       notes: notes.trim(),
       completed_by_name: staffName,
-      recorded_on_behalf_of_name: behalfActive ? onBehalf.onBehalfName : null,
-      recorded_on_behalf_of_role: behalfActive ? onBehalf.onBehalfRole : null,
-      recorded_on_behalf_of_reason: behalfActive ? onBehalf.onBehalfReason : null,
+      event_occurred_at: eventOccurredAt.toISOString(),
+      recorded_on_behalf_of_name: isOnBehalfOfActive ? onBehalfOfName.trim() : null,
+      recorded_on_behalf_of_role: isOnBehalfOfActive ? onBehalfOfRole : null,
+      recorded_on_behalf_of_reason: isOnBehalfOfActive ? onBehalfOfReason : null,
     });
     setSaving(false);
     if (ok) {
@@ -147,12 +190,12 @@ export function MealtimeObservationForm({ clientId, open, onOpenChange }: Props)
     }
   };
 
-  const handleSubmit = () => {
-    if (isOnBehalfActive(onBehalf)) {
-      if (!isOnBehalfValid(onBehalf)) return;
-      setShowConfirm(true);
+  const handleSubmitClick = () => {
+    if (!validateOnBehalfOf()) return;
+    if (isOnBehalfOfActive) {
+      setShowConfirmDialog(true);
     } else {
-      doSubmit();
+      submitEntry();
     }
   };
 
@@ -165,8 +208,133 @@ export function MealtimeObservationForm({ clientId, open, onOpenChange }: Props)
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* On Behalf Selector */}
-            <OnBehalfSelector value={onBehalf} onChange={setOnBehalf} disabled={saving} />
+            {/* Recorded on Behalf Of - Collapsible Section (matches Bowel Care) */}
+            <Collapsible open={showOnBehalfOf} onOpenChange={setShowOnBehalfOf}>
+              <CollapsibleTrigger asChild>
+                <button
+                  type="button"
+                  className={cn(
+                    "flex items-center justify-between w-full p-3 rounded-lg border text-left transition-colors",
+                    showOnBehalfOf
+                      ? "bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-800"
+                      : "bg-muted/30 border-muted hover:bg-muted/50"
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium text-sm">Recorded on Behalf Of</span>
+                  </div>
+                  {showOnBehalfOf ? (
+                    <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-3 p-4 border rounded-lg bg-blue-50/50 dark:bg-blue-950/10 space-y-4">
+                <p className="text-xs text-muted-foreground">
+                  Use this option only when a staff member cannot log in themselves.
+                  All entries will be clearly marked as recorded on behalf of another person.
+                </p>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="onBehalfName">Staff Name *</Label>
+                    <Input
+                      id="onBehalfName"
+                      placeholder="e.g., Jamie Brown"
+                      value={onBehalfOfName}
+                      onChange={(e) => setOnBehalfOfName(e.target.value)}
+                      disabled={saving}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Staff Role / Relationship</Label>
+                    <Select
+                      value={onBehalfOfRole || ''}
+                      onValueChange={(v) => setOnBehalfOfRole(v || null)}
+                      disabled={saving}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select role..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STAFF_ROLES.map((role) => (
+                          <SelectItem key={role.value} value={role.value}>
+                            {role.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Reason for Recording on Behalf *</Label>
+                  <Select
+                    value={onBehalfOfReason || ''}
+                    onValueChange={(v) => setOnBehalfOfReason(v || null)}
+                    disabled={saving}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select reason..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ON_BEHALF_REASONS.map((reason) => (
+                        <SelectItem key={reason.value} value={reason.value}>
+                          {reason.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Event Occurred At */}
+                <div className="space-y-2 pt-2 border-t">
+                  <Label className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Event Occurred At *
+                  </Label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Use the time the observation actually occurred.
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-[180px] justify-start text-left font-normal",
+                            !eventDate && "text-muted-foreground"
+                          )}
+                          disabled={saving}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {eventDate ? format(eventDate, 'PP') : 'Pick a date'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={eventDate}
+                          onSelect={(date) => date && setEventDate(date)}
+                          disabled={(date) => date > new Date()}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <Input
+                      type="time"
+                      value={eventTime}
+                      onChange={(e) => setEventTime(e.target.value)}
+                      className="w-[130px]"
+                      disabled={saving}
+                    />
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
 
             {/* Auto-stamped staff identity */}
             <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border">
@@ -319,9 +487,16 @@ export function MealtimeObservationForm({ clientId, open, onOpenChange }: Props)
               </div>
             )}
 
+            {/* Validation errors */}
+            {isOnBehalfOfActive && !validateOnBehalfOf() && (
+              <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-sm text-destructive">
+                When recording on behalf of another staff member, Staff Name and Reason are required.
+              </div>
+            )}
+
             <Button
-              onClick={handleSubmit}
-              disabled={saving || (isOnBehalfActive(onBehalf) && !isOnBehalfValid(onBehalf))}
+              onClick={handleSubmitClick}
+              disabled={saving || (isOnBehalfOfActive && !validateOnBehalfOf())}
               className="w-full"
               size="lg"
             >
@@ -331,21 +506,26 @@ export function MealtimeObservationForm({ clientId, open, onOpenChange }: Props)
         </DialogContent>
       </Dialog>
 
-      {/* On-behalf confirmation dialog */}
-      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+      {/* Confirmation Dialog for On Behalf Of entries (matches Bowel Care) */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm On-Behalf Entry</AlertDialogTitle>
+            <AlertDialogTitle>Confirm Entry on Behalf of Another Staff Member</AlertDialogTitle>
             <AlertDialogDescription>
-              You are logging this mealtime observation on behalf of{' '}
-              <strong>{onBehalf.onBehalfName}</strong>
-              {onBehalf.onBehalfRole && ` (${onBehalf.onBehalfRole})`}.
-              Both identities will be recorded in the audit trail.
+              You are recording this entry on behalf of <strong>{onBehalfOfName}</strong>
+              {onBehalfOfRole && (
+                <> ({STAFF_ROLES.find(r => r.value === onBehalfOfRole)?.label})</>
+              )}.
+              <br /><br />
+              This entry will be clearly marked in the timeline and audit records.
+              Please confirm this information is accurate.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={doSubmit}>Confirm & Save</AlertDialogAction>
+            <AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={submitEntry} disabled={saving}>
+              Confirm & Save
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
