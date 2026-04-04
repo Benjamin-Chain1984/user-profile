@@ -83,6 +83,7 @@ export function ContinenceHistory({ clientId }: ContinenceHistoryProps) {
 
   const [padFilter, setPadFilter] = useState('7d');
   const [skinFilter, setSkinFilter] = useState('7d');
+  const [utiFilter, setUtiFilter] = useState('7d');
 
   const filteredChanges = useMemo(() => {
     const cutoff = getFilterDate(padFilter);
@@ -94,13 +95,19 @@ export function ContinenceHistory({ clientId }: ContinenceHistoryProps) {
     return skinChecks.filter((c) => isAfter(new Date(c.event_occurred_at), cutoff));
   }, [skinChecks, skinFilter]);
 
+  const filteredUTITests = useMemo(() => {
+    const cutoff = getFilterDate(utiFilter);
+    return utiTests.filter((t) => isAfter(new Date(t.created_at), cutoff));
+  }, [utiTests, utiFilter]);
+
   // Resolve staff names for pad changes and skin checks
   const allStaffIds = useMemo(() => {
     const ids = new Set<string>();
     filteredChanges.forEach((c) => { if (c.created_by) ids.add(c.created_by); });
     filteredSkinChecks.forEach((c) => { if (c.created_by) ids.add(c.created_by); });
+    filteredUTITests.forEach((t) => { if (t.created_by) ids.add(t.created_by); });
     return Array.from(ids);
-  }, [filteredChanges, filteredSkinChecks]);
+  }, [filteredChanges, filteredSkinChecks, filteredUTITests]);
   const { data: staffNames = {} } = useStaffNames(allStaffIds);
 
   const getPadTypeLabel = (value: string) => PAD_TYPES.find((t) => t.value === value)?.label || value;
@@ -343,18 +350,32 @@ export function ContinenceHistory({ clientId }: ContinenceHistoryProps) {
       <TabsContent value="uti-tests">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Recent UTI Tests</CardTitle>
-            <CardDescription>Last 50 entries</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">Recent UTI Tests</CardTitle>
+                <CardDescription>{filteredUTITests.length} entries</CardDescription>
+              </div>
+              <Select value={utiFilter} onValueChange={setUtiFilter}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIME_FILTERS.map((f) => (
+                    <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[400px] pr-4">
               {utiLoading ? (
                 <p className="text-muted-foreground">Loading...</p>
-              ) : utiTests.length === 0 ? (
-                <p className="text-muted-foreground">No UTI tests logged yet.</p>
+              ) : filteredUTITests.length === 0 ? (
+                <p className="text-muted-foreground">No UTI tests in this period.</p>
               ) : (
                 <div className="space-y-4">
-                  {utiTests.map((test) => (
+                  {filteredUTITests.map((test) => (
                     <div
                       key={test.id}
                       className="flex items-start gap-4 p-4 rounded-lg border bg-card"
@@ -373,9 +394,10 @@ export function ContinenceHistory({ clientId }: ContinenceHistoryProps) {
                           >
                             {test.test_result === 'positive' ? 'Positive' : 'Negative'}
                           </Badge>
-                          <span className="text-sm text-muted-foreground">
-                            {format(new Date(test.test_date), 'PP')}
-                          </span>
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            {formatDistanceToNow(new Date(test.created_at), { addSuffix: true })}
+                          </div>
                         </div>
                         {test.symptoms.length > 0 && (
                           <div className="flex flex-wrap gap-1">
@@ -391,9 +413,18 @@ export function ContinenceHistory({ clientId }: ContinenceHistoryProps) {
                             Escalated: {test.escalated_to === 'gp' ? 'GP' : 'Monitor'}
                           </Badge>
                         )}
+                        {test.created_by && staffNames[test.created_by] && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <User className="h-3 w-3" />
+                            Logged by: {staffNames[test.created_by]}
+                          </div>
+                        )}
                         {test.notes && (
                           <p className="text-sm text-muted-foreground">{test.notes}</p>
                         )}
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          {format(new Date(test.created_at), 'dd/MM/yy HH:mm')}
+                        </div>
                       </div>
                     </div>
                   ))}
