@@ -235,9 +235,18 @@ export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
           <BowelCareTrends clientId={clientId} />
         </TabsContent>
 
+        <TabsContent value="competency" className="space-y-6">
+          <CompetencyStatusPanel
+            clientId={clientId}
+            onStartCheck={() => setShowCompetencyCheck(true)}
+          />
+          <CompetencyTrendsView clientId={clientId} />
+        </TabsContent>
+
         {isAdmin && (
-          <TabsContent value="settings">
+          <TabsContent value="settings" className="space-y-6">
             <BowelCareConfigSettings clientId={clientId} />
+            <CompetencyConfigSettings clientId={clientId} />
           </TabsContent>
         )}
       </Tabs>
