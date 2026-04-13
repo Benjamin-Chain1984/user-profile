@@ -28,7 +28,10 @@ import {
   usePrnAdministrations,
   useBowelCareStatus,
 } from '@/hooks/useBowelCare';
-import { Pill, Clock, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
+import { useBowelCarePlan } from '@/hooks/useBowelCarePlan';
+import { PrnEscalationFlowchart } from './PrnEscalationFlowchart';
+import { Pill, Clock, AlertTriangle, CheckCircle, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import type { PrnEscalationStep } from '@/types/bowelCarePlan';
 import { formatDistanceToNow, addHours, isAfter } from 'date-fns';
 import { BristolSelector } from './BristolSelector';
 
@@ -41,9 +44,12 @@ export function PrnWorkflowCard({ clientId }: PrnWorkflowCardProps) {
   const { medications } = usePrnMedications(clientId);
   const { administrations, recordAdministration, recordOutcome, isRecording } = usePrnAdministrations(clientId);
   const statusInfo = useBowelCareStatus(clientId);
+  const { plan } = useBowelCarePlan(clientId);
 
   const [showAdminDialog, setShowAdminDialog] = useState(false);
   const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
+  const [showEscalationPathway, setShowEscalationPathway] = useState(false);
+
   const [selectedMed, setSelectedMed] = useState<string>('');
   const [priorBristolType, setPriorBristolType] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
@@ -250,6 +256,32 @@ export function PrnWorkflowCard({ clientId }: PrnWorkflowCardProps) {
             <div className="text-center py-4 text-muted-foreground">
               <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
               <p className="text-sm">No PRN required at this time</p>
+            </div>
+          )}
+
+          {/* PRN Escalation Pathway from Care Plan */}
+          {plan?.prn_escalation_steps && (plan.prn_escalation_steps as PrnEscalationStep[]).length > 0 && (
+            <div className="border-t pt-4">
+              <Button
+                variant="ghost"
+                className="w-full flex items-center justify-between p-0 h-auto hover:bg-transparent"
+                onClick={() => setShowEscalationPathway(!showEscalationPathway)}
+              >
+                <span className="font-semibold text-sm">PRN Escalation Pathway</span>
+                {showEscalationPathway ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </Button>
+              {showEscalationPathway && (
+                <div className="mt-3">
+                  <PrnEscalationFlowchart
+                    steps={plan.prn_escalation_steps as PrnEscalationStep[]}
+                    monitoringHours={config.monitor_hours_after_prn}
+                  />
+                </div>
+              )}
             </div>
           )}
         </CardContent>
