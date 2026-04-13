@@ -16,8 +16,10 @@ import { BowelCareConfigSettings } from './BowelCareConfigSettings';
 import { BowelCareExportReports } from './BowelCareExportReports';
 import { BowelCarePlanEditor } from './BowelCarePlanEditor';
 import { BowelCarePlanViewer } from './BowelCarePlanViewer';
+import { CompetencyCheckPage, CompetencyStatusPanel, CompetencyTrendsView, CompetencyConfigSettings } from './competency';
 import { useBowelCareStatus } from '@/hooks/useBowelCare';
 import { useBowelCarePlan, useBowelCarePlanAcknowledgements, useBowelCarePlanStatus } from '@/hooks/useBowelCarePlan';
+import { useStaffCompetencyStatus, useBowelCompetencyConfig } from '@/hooks/useBowelCompetency';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { RoleTabsTrigger } from '@/components/ui/role-tabs-trigger';
 import { useProfile } from '@/contexts/ProfileContext';
@@ -32,7 +34,8 @@ import {
   FileDown,
   FileText,
   AlertTriangle,
-  CheckCircle2
+  CheckCircle2,
+  ShieldCheck
 } from 'lucide-react';
 
 interface BowelCareDashboardProps {
