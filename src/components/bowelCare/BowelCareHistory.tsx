@@ -83,21 +83,34 @@ export function BowelCareHistory({ clientId }: BowelCareHistoryProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Clock className="h-5 w-5" />
-          Bowel Care Timeline
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            Bowel Care Timeline
+          </CardTitle>
+          <Select value={timeRange} onValueChange={setTimeRange}>
+            <SelectTrigger className="w-[130px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {TIME_RANGES.map(r => (
+                <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <p className="text-sm text-muted-foreground">{filteredLogs.length} entries</p>
       </CardHeader>
       <CardContent>
-        {logs.length === 0 ? (
+        {filteredLogs.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            <p>No entries recorded yet</p>
-            <p className="text-sm mt-1">Log a bowel entry to start tracking</p>
+            <p>No entries in selected period</p>
+            <p className="text-sm mt-1">Try a longer time range</p>
           </div>
         ) : (
           <ScrollArea className="h-[400px] pr-4">
             <div className="space-y-3">
-              {logs.map((log) => {
+              {filteredLogs.map((log) => {
                 const bristolInfo = BRISTOL_TYPES.find(b => b.type === log.bristol_type);
                 const sizeInfo = STOOL_SIZES.find(s => s.value === log.stool_size);
                 const isNoMovement = log.bristol_type === 0;
