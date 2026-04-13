@@ -24,10 +24,17 @@ export function CompetencyCheckPage({ clientId, onClose }: CompetencyCheckPagePr
   const { config: compConfig } = useBowelCompetencyConfig(clientId);
   const { submitAttempt, isSubmitting } = useBowelCompetencyAttempts(clientId);
 
-  const questions = useMemo(
-    () => getAllQuestions(bowelConfig, medications),
-    [bowelConfig, medications]
-  );
+  const questionsRef = useRef<CompetencyQuestion[]>([]);
+  const [questionsReady, setQuestionsReady] = useState(false);
+
+  useEffect(() => {
+    if (!questionsReady && bowelConfig !== undefined && medications !== undefined) {
+      questionsRef.current = getAllQuestions(bowelConfig, medications);
+      setQuestionsReady(true);
+    }
+  }, [bowelConfig, medications, questionsReady]);
+
+  const questions = questionsRef.current;
 
   const [currentIdx, setCurrentIdx] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
