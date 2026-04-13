@@ -3,22 +3,55 @@
  * Shows "Recorded on Behalf Of" attribution when applicable
  */
 
+import { useState, useMemo } from 'react';
 import { useBowelLogs } from '@/hooks/useBowelCare';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { format, formatDistanceToNow } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { format, formatDistanceToNow, subHours, subDays, subMonths, isAfter } from 'date-fns';
 import { BRISTOL_TYPES, STOOL_SIZES, STAFF_ROLES, ON_BEHALF_REASONS } from '@/types/bowelCare';
 import { Clock, Edit, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { StoolIllustration } from './StoolIllustration';
+
+const TIME_RANGES = [
+  { value: '24h', label: '24 hours' },
+  { value: '7d', label: '7 days' },
+  { value: '14d', label: '2 weeks' },
+  { value: '1m', label: '1 month' },
+  { value: '6m', label: '6 months' },
+  { value: '12m', label: '12 months' },
+];
+
+function getCutoffDate(range: string): Date {
+  const now = new Date();
+  switch (range) {
+    case '24h': return subHours(now, 24);
+    case '7d': return subDays(now, 7);
+    case '14d': return subDays(now, 14);
+    case '1m': return subMonths(now, 1);
+    case '6m': return subMonths(now, 6);
+    case '12m': return subMonths(now, 12);
+    default: return subDays(now, 7);
+  }
+}
 
 interface BowelCareHistoryProps {
   clientId: string;
 }
 
 export function BowelCareHistory({ clientId }: BowelCareHistoryProps) {
-  const { logs, isLoading } = useBowelLogs(clientId, 30);
+  const [timeRange, setTimeRange] = useState('7d');
+  const { logs, isLoading } = useBowelLogs(clientId, 500);
+
+  const filteredLogs = useMemo(() => {
+    const cutoff = getCutoffDate(timeRange);
+    return logs.filter(log => {
+      const eventTime = log.event_occurred_at || log.entry_time;
+      return isAfter(new Date(eventTime), cutoff);
+    });
+  }, [logs, timeRange]);
 
   const getRoleLabel = (role: string | null) => {
     if (!role) return null;
