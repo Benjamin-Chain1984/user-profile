@@ -3,22 +3,55 @@
  * Shows "Recorded on Behalf Of" attribution when applicable
  */
 
+import { useState, useMemo } from 'react';
 import { useBowelLogs } from '@/hooks/useBowelCare';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { format, formatDistanceToNow } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { format, formatDistanceToNow, subHours, subDays, subMonths, isAfter } from 'date-fns';
 import { BRISTOL_TYPES, STOOL_SIZES, STAFF_ROLES, ON_BEHALF_REASONS } from '@/types/bowelCare';
 import { Clock, Edit, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { StoolIllustration } from './StoolIllustration';
+
+const TIME_RANGES = [
+  { value: '24h', label: '24 hours' },
+  { value: '7d', label: '7 days' },
+  { value: '14d', label: '2 weeks' },
+  { value: '1m', label: '1 month' },
+  { value: '6m', label: '6 months' },
+  { value: '12m', label: '12 months' },
+];
+
+function getCutoffDate(range: string): Date {
+  const now = new Date();
+  switch (range) {
+    case '24h': return subHours(now, 24);
+    case '7d': return subDays(now, 7);
+    case '14d': return subDays(now, 14);
+    case '1m': return subMonths(now, 1);
+    case '6m': return subMonths(now, 6);
+    case '12m': return subMonths(now, 12);
+    default: return subDays(now, 7);
+  }
+}
 
 interface BowelCareHistoryProps {
   clientId: string;
 }
 
 export function BowelCareHistory({ clientId }: BowelCareHistoryProps) {
-  const { logs, isLoading } = useBowelLogs(clientId, 30);
+  const [timeRange, setTimeRange] = useState('7d');
+  const { logs, isLoading } = useBowelLogs(clientId, 500);
+
+  const filteredLogs = useMemo(() => {
+    const cutoff = getCutoffDate(timeRange);
+    return logs.filter(log => {
+      const eventTime = log.event_occurred_at || log.entry_time;
+      return isAfter(new Date(eventTime), cutoff);
+    });
+  }, [logs, timeRange]);
 
   const getRoleLabel = (role: string | null) => {
     if (!role) return null;
@@ -50,21 +83,34 @@ export function BowelCareHistory({ clientId }: BowelCareHistoryProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Clock className="h-5 w-5" />
-          Bowel Care Timeline
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            Bowel Care Timeline
+          </CardTitle>
+          <Select value={timeRange} onValueChange={setTimeRange}>
+            <SelectTrigger className="w-[130px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {TIME_RANGES.map(r => (
+                <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <p className="text-sm text-muted-foreground">{filteredLogs.length} entries</p>
       </CardHeader>
       <CardContent>
-        {logs.length === 0 ? (
+        {filteredLogs.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            <p>No entries recorded yet</p>
-            <p className="text-sm mt-1">Log a bowel entry to start tracking</p>
+            <p>No entries in selected period</p>
+            <p className="text-sm mt-1">Try a longer time range</p>
           </div>
         ) : (
           <ScrollArea className="h-[400px] pr-4">
             <div className="space-y-3">
-              {logs.map((log) => {
+              {filteredLogs.map((log) => {
                 const bristolInfo = BRISTOL_TYPES.find(b => b.type === log.bristol_type);
                 const sizeInfo = STOOL_SIZES.find(s => s.value === log.stool_size);
                 const isNoMovement = log.bristol_type === 0;
