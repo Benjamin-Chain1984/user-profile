@@ -620,6 +620,109 @@ export type Database = {
           },
         ]
       }
+      bowel_competency_attempts: {
+        Row: {
+          answers_snapshot: Json
+          client_id: string | null
+          completed_at: string
+          created_at: string
+          created_by: string | null
+          id: string
+          invalidated: boolean
+          invalidated_at: string | null
+          invalidated_reason: string | null
+          passed: boolean
+          score: number
+          staff_user_id: string
+          total_questions: number
+          valid_until: string
+        }
+        Insert: {
+          answers_snapshot?: Json
+          client_id?: string | null
+          completed_at?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invalidated?: boolean
+          invalidated_at?: string | null
+          invalidated_reason?: string | null
+          passed?: boolean
+          score: number
+          staff_user_id: string
+          total_questions: number
+          valid_until: string
+        }
+        Update: {
+          answers_snapshot?: Json
+          client_id?: string | null
+          completed_at?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invalidated?: boolean
+          invalidated_at?: string | null
+          invalidated_reason?: string | null
+          passed?: boolean
+          score?: number
+          staff_user_id?: string
+          total_questions?: number
+          valid_until?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bowel_competency_attempts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bowel_competency_config: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          expiry_warning_days: number
+          id: string
+          pass_threshold_percent: number
+          updated_at: string
+          updated_by: string | null
+          validity_months: number
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          expiry_warning_days?: number
+          id?: string
+          pass_threshold_percent?: number
+          updated_at?: string
+          updated_by?: string | null
+          validity_months?: number
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          expiry_warning_days?: number
+          id?: string
+          pass_threshold_percent?: number
+          updated_at?: string
+          updated_by?: string | null
+          validity_months?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bowel_competency_config_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bowel_escalation_records: {
         Row: {
           advice_received: string | null
