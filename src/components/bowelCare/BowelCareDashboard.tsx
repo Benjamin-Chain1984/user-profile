@@ -66,14 +66,14 @@ export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
   const [showPlanEditor, setShowPlanEditor] = useState(false);
   const [showPlanViewer, setShowPlanViewer] = useState(false);
   const [showCompetencyCheck, setShowCompetencyCheck] = useState(false);
-  const [showPlanEditor, setShowPlanEditor] = useState(false);
-  const [showPlanViewer, setShowPlanViewer] = useState(false);
   const statusInfo = useBowelCareStatus(clientId);
   const { isAdmin } = useRoleAccess();
   const { isMonitoringPaused, monitoringStatus } = useProfile();
   const { plan } = useBowelCarePlan(clientId);
   const planStatus = useBowelCarePlanStatus(plan);
   const { hasCurrentUserAcknowledged } = useBowelCarePlanAcknowledgements(plan?.id, plan?.version);
+  const { config: compConfig } = useBowelCompetencyConfig(clientId);
+  const { overdueCount, expiringSoonCount } = useStaffCompetencyStatus(clientId, compConfig?.expiry_warning_days ?? 30);
 
   // Show export view
   if (showExport) {
