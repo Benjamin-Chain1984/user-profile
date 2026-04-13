@@ -28,7 +28,10 @@ import {
   usePrnAdministrations,
   useBowelCareStatus,
 } from '@/hooks/useBowelCare';
-import { Pill, Clock, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
+import { useBowelCarePlan } from '@/hooks/useBowelCarePlan';
+import { PrnEscalationFlowchart } from './PrnEscalationFlowchart';
+import { Pill, Clock, AlertTriangle, CheckCircle, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import type { PrnEscalationStep } from '@/types/bowelCarePlan';
 import { formatDistanceToNow, addHours, isAfter } from 'date-fns';
 import { BristolSelector } from './BristolSelector';
 
