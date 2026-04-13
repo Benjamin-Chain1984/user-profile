@@ -44,6 +44,11 @@ export function PrnWorkflowCard({ clientId }: PrnWorkflowCardProps) {
   const { medications } = usePrnMedications(clientId);
   const { administrations, recordAdministration, recordOutcome, isRecording } = usePrnAdministrations(clientId);
   const statusInfo = useBowelCareStatus(clientId);
+  const { plan } = useBowelCarePlan(clientId);
+
+  const [showAdminDialog, setShowAdminDialog] = useState(false);
+  const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
+  const [showEscalationPathway, setShowEscalationPathway] = useState(false);
 
   const [showAdminDialog, setShowAdminDialog] = useState(false);
   const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
