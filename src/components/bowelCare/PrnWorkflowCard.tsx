@@ -148,33 +148,6 @@ export function PrnWorkflowCard({ clientId }: PrnWorkflowCardProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* PRN Recommendation */}
-          {prnRecommended && !activeMonitoring && (
-            <div className="p-4 bg-amber-100 border border-amber-300 rounded-lg">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
-                <div className="flex-1">
-                  <h4 className="font-semibold text-amber-800">PRN Laxative Recommended</h4>
-                  <p className="text-sm text-amber-700 mt-1">
-                    Based on current thresholds, a PRN laxative may be beneficial.
-                  </p>
-                  <Button
-                    size="sm"
-                    className="mt-3"
-                    onClick={() => setShowAdminDialog(true)}
-                    disabled={medications.length === 0}
-                  >
-                    Record PRN Given
-                  </Button>
-                  {medications.length === 0 && (
-                    <p className="text-xs text-amber-600 mt-2">
-                      No PRN medications configured. Ask an admin to add them.
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Active Monitoring */}
           {activeMonitoring && (
