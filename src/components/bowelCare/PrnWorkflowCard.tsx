@@ -258,6 +258,32 @@ export function PrnWorkflowCard({ clientId }: PrnWorkflowCardProps) {
               <p className="text-sm">No PRN required at this time</p>
             </div>
           )}
+
+          {/* PRN Escalation Pathway from Care Plan */}
+          {plan?.prn_escalation_steps && (plan.prn_escalation_steps as PrnEscalationStep[]).length > 0 && (
+            <div className="border-t pt-4">
+              <Button
+                variant="ghost"
+                className="w-full flex items-center justify-between p-0 h-auto hover:bg-transparent"
+                onClick={() => setShowEscalationPathway(!showEscalationPathway)}
+              >
+                <span className="font-semibold text-sm">PRN Escalation Pathway</span>
+                {showEscalationPathway ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </Button>
+              {showEscalationPathway && (
+                <div className="mt-3">
+                  <PrnEscalationFlowchart
+                    steps={plan.prn_escalation_steps as PrnEscalationStep[]}
+                    monitoringHours={config.monitor_hours_after_prn}
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
