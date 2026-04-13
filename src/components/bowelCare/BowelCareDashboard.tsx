@@ -65,6 +65,9 @@ export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
   const [showExport, setShowExport] = useState(false);
   const [showPlanEditor, setShowPlanEditor] = useState(false);
   const [showPlanViewer, setShowPlanViewer] = useState(false);
+  const [showCompetencyCheck, setShowCompetencyCheck] = useState(false);
+  const [showPlanEditor, setShowPlanEditor] = useState(false);
+  const [showPlanViewer, setShowPlanViewer] = useState(false);
   const statusInfo = useBowelCareStatus(clientId);
   const { isAdmin } = useRoleAccess();
   const { isMonitoringPaused, monitoringStatus } = useProfile();
