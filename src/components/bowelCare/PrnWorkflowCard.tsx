@@ -50,8 +50,6 @@ export function PrnWorkflowCard({ clientId }: PrnWorkflowCardProps) {
   const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
   const [showEscalationPathway, setShowEscalationPathway] = useState(false);
 
-  const [showAdminDialog, setShowAdminDialog] = useState(false);
-  const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
   const [selectedMed, setSelectedMed] = useState<string>('');
   const [priorBristolType, setPriorBristolType] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
