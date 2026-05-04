@@ -8,7 +8,7 @@ import { ProfileForm } from '@/components/ideal/ProfileForm';
 import { ModuleSelector } from '@/components/ideal/ModuleSelector';
 import { ProfileCompletionBanner } from '@/components/ideal/ProfileCompletionBanner';
 import { IndustryResources } from '@/components/ideal/IndustryResources';
-import { AppHeader } from '@/components/ideal/AppHeader';
+
 import { useProfile } from '@/contexts/ProfileContext';
 import { PauseResumeButton, MonitoringPausedBanner } from '@/components/monitoring';
 import { UndoButton } from '@/components/undo';
@@ -24,9 +24,6 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-background pb-20 sm:pb-24 safe-area-inset">
-      {/* Header with Logo */}
-      <AppHeader />
-
       {/* Main Content - Responsive container */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         {activeTab === 'home' && (
