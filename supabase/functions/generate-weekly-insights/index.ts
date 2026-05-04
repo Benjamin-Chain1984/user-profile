@@ -69,7 +69,14 @@ serve(async (req) => {
       .eq("client_id", client_id)
       .single();
 
-    if (existing && new Date(existing.next_due_at) > new Date()) {
+    const sameModules =
+      existing?.enabled_modules &&
+      Array.isArray(existing.enabled_modules) &&
+      existing.enabled_modules.length === enabled_modules.length &&
+      [...existing.enabled_modules].sort().join(",") ===
+        [...enabled_modules].sort().join(",");
+
+    if (existing && sameModules && new Date(existing.next_due_at) > new Date()) {
       return new Response(
         JSON.stringify({
           insight_summary: existing.insight_summary,
