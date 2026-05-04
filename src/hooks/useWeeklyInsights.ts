@@ -23,14 +23,19 @@ export function useWeeklyInsights(clientId?: string, enabledModuleIds?: string[]
     setError(null);
 
     try {
-      // First check if we have a cached insight that's still valid
+      // First check if we have a cached insight that's still valid AND matches enabled modules
       const { data: cached } = await supabase
         .from('weekly_health_insights')
         .select('*')
         .eq('client_id', clientId)
         .single();
 
-      if (cached && new Date(cached.next_due_at) > new Date()) {
+      const cachedModules = (cached?.enabled_modules as string[] | null) ?? [];
+      const sameModules =
+        cachedModules.length === enabledModuleIds.length &&
+        [...cachedModules].sort().join(',') === [...enabledModuleIds].sort().join(',');
+
+      if (cached && sameModules && new Date(cached.next_due_at) > new Date()) {
         setInsight({
           insight_summary: cached.insight_summary,
           generated_at: cached.generated_at,
