@@ -12,6 +12,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
+import OAuthConsent from "./pages/OAuthConsent";
 import ClientScanPage from "./pages/ClientScan";
 import ClientPosterPage from "./pages/ClientPoster";
 import AdminPage from "./pages/Admin";
@@ -64,6 +65,8 @@ const App = () => (
               <Routes>
                 {/* Public routes */}
                 <Route path="/auth" element={<AuthPage />} />
+                <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
+
                 
                 {/* QR Scan route - handles auth check internally */}
                 <Route path="/c/:token" element={<ClientScanPage />} />

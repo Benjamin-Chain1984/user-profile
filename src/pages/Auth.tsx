@@ -60,8 +60,11 @@ export default function AuthPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [passkeySupported, setPasskeySupported] = useState(false);
 
-  // Get the redirect destination
-  const from = (location.state as any)?.from?.pathname || '/';
+  // Get the redirect destination. Prefer ?next= (used by OAuth consent) so
+  // MCP OAuth returns the user to /.lovable/oauth/consent after sign-in.
+  const nextParam = new URLSearchParams(location.search).get('next');
+  const isSafeNext = nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//');
+  const from = (isSafeNext && nextParam) || (location.state as any)?.from?.pathname || '/';
 
   useEffect(() => {
     setPasskeySupported(authService.isPasskeySupported());
