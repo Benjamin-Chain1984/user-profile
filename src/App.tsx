@@ -65,6 +65,8 @@ const App = () => (
               <Routes>
                 {/* Public routes */}
                 <Route path="/auth" element={<AuthPage />} />
+                <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
+
                 
                 {/* QR Scan route - handles auth check internally */}
                 <Route path="/c/:token" element={<ClientScanPage />} />
