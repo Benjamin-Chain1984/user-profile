@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { authService } from '@/services/auth';
+import { supabase } from '@/integrations/supabase/client';
 import { auditService } from '@/services/audit';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -96,6 +97,28 @@ export default function AuthPage() {
     resolver: zodResolver(otpSchema),
     defaultValues: { code: '' },
   });
+  const handleForgotPassword = async () => {
+    const email = emailForm.getValues('email');
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast({
+        title: 'Enter your email first',
+        description: 'Type your email address above, then tap “Forgot your password?”.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setIsSubmitting(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setIsSubmitting(false);
+    if (error) {
+      toast({ title: 'Could not send reset email', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Check your email', description: 'We sent you a password reset link.' });
+  };
+
 
   const handleEmailLogin = async (data: EmailFormData) => {
     setIsSubmitting(true);
@@ -333,7 +356,17 @@ export default function AuthPage() {
                     <Button type="submit" className="w-full" disabled={isSubmitting}>
                       {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sign In'}
                     </Button>
+
+                    <button
+                      type="button"
+                      className="w-full text-sm text-muted-foreground hover:text-foreground underline"
+                      onClick={handleForgotPassword}
+                      disabled={isSubmitting}
+                    >
+                      Forgot your password?
+                    </button>
                   </form>
+
                 </TabsContent>
 
                 <TabsContent value="signup" className="space-y-4 mt-4">

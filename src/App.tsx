@@ -12,6 +12,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
+import ResetPasswordPage from "./pages/ResetPassword";
 import OAuthConsent from "./pages/OAuthConsent";
 import ClientScanPage from "./pages/ClientScan";
 import ClientPosterPage from "./pages/ClientPoster";
@@ -65,6 +66,7 @@ const App = () => (
               <Routes>
                 {/* Public routes */}
                 <Route path="/auth" element={<AuthPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
 
                 
