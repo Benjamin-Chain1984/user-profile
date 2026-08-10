@@ -333,7 +333,17 @@ export default function AuthPage() {
                     <Button type="submit" className="w-full" disabled={isSubmitting}>
                       {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sign In'}
                     </Button>
+
+                    <button
+                      type="button"
+                      className="w-full text-sm text-muted-foreground hover:text-foreground underline"
+                      onClick={handleForgotPassword}
+                      disabled={isSubmitting}
+                    >
+                      Forgot your password?
+                    </button>
                   </form>
+
                 </TabsContent>
 
                 <TabsContent value="signup" className="space-y-4 mt-4">
