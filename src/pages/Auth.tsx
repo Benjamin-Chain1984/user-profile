@@ -96,6 +96,28 @@ export default function AuthPage() {
     resolver: zodResolver(otpSchema),
     defaultValues: { code: '' },
   });
+  const handleForgotPassword = async () => {
+    const email = emailForm.getValues('email');
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast({
+        title: 'Enter your email first',
+        description: 'Type your email address above, then tap “Forgot your password?”.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setIsSubmitting(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setIsSubmitting(false);
+    if (error) {
+      toast({ title: 'Could not send reset email', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Check your email', description: 'We sent you a password reset link.' });
+  };
+
 
   const handleEmailLogin = async (data: EmailFormData) => {
     setIsSubmitting(true);
