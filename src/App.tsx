@@ -66,6 +66,7 @@ const App = () => (
               <Routes>
                 {/* Public routes */}
                 <Route path="/auth" element={<AuthPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
 
                 
