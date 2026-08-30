@@ -20,9 +20,10 @@ import { IddsiHistory } from './IddsiHistory';
 import { IddsiConfigSettings } from './IddsiConfigSettings';
 import { IddsiStatusCard } from './IddsiStatusCard';
 import { IddsiExportReports } from './IddsiExportReports';
+import { IddsiPlacematBuilder } from './placemat/IddsiPlacematBuilder';
 import {
   AlertCircle, Settings, Clock, BarChart3,
-  Eye, Armchair, Brain, Plus, FileDown,
+  Eye, Armchair, Brain, Plus, FileDown, LayoutTemplate,
 } from 'lucide-react';
 
 interface IddsiDashboardProps {
@@ -51,6 +52,7 @@ export function IddsiDashboard({ clientId }: IddsiDashboardProps) {
   const [showStrategies, setShowStrategies] = useState(false);
   const [showObservation, setShowObservation] = useState(false);
   const [showExport, setShowExport] = useState(false);
+  const [showPlacemat, setShowPlacemat] = useState(false);
 
   const lastObs = observations.length > 0 ? observations[0] : null;
   const lastSeverity = lastObs?.severity || 'green';
@@ -102,6 +104,9 @@ export function IddsiDashboard({ clientId }: IddsiDashboardProps) {
   }
   if (showExport) {
     return <IddsiExportReports clientId={clientId} onClose={() => setShowExport(false)} />;
+  }
+  if (showPlacemat) {
+    return <IddsiPlacematBuilder clientId={clientId} onClose={() => setShowPlacemat(false)} />;
   }
 
   return (
@@ -199,11 +204,12 @@ export function IddsiDashboard({ clientId }: IddsiDashboardProps) {
       )}
 
       {/* ── Quick Actions ── */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {[
           { icon: Eye, label: 'IDDSI Levels', onClick: () => setShowLevelDisplay(true) },
           { icon: Armchair, label: 'Positioning', onClick: () => setShowPositioning(true) },
           { icon: Brain, label: 'Strategies', onClick: () => setShowStrategies(true) },
+          { icon: LayoutTemplate, label: 'Placemat Builder', onClick: () => setShowPlacemat(true) },
         ].map(({ icon: Icon, label, onClick }) => (
           <button
             key={label}
