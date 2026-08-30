@@ -175,7 +175,7 @@ export function IddsiPlacematBuilder({ clientId, onClose }: Props) {
   );
 
   return (
-    <div className="space-y-5">
+    <div className="min-w-0 max-w-full space-y-5 overflow-hidden">
       <div className="flex items-center gap-3 no-print">
         <Button variant="ghost" size="icon" onClick={onClose} aria-label="Back">
           <ArrowLeft className="h-5 w-5" />
@@ -197,7 +197,7 @@ export function IddsiPlacematBuilder({ clientId, onClose }: Props) {
         </Alert>
       )}
 
-      <div className="grid lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)] gap-5 items-start">
+      <div className="grid min-w-0 max-w-full lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)] gap-5 items-start">
         <div className="space-y-4 no-print">
           <Card>
             <CardHeader className="pb-3">
@@ -264,7 +264,7 @@ export function IddsiPlacematBuilder({ clientId, onClose }: Props) {
           </Card>
         </div>
 
-        <div className="space-y-2">
+        <div className="min-w-0 max-w-full space-y-2 overflow-hidden">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground no-print">
             Live preview — A4 landscape
           </p>

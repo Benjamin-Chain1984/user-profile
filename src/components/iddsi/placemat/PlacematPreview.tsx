@@ -1,7 +1,10 @@
 /** A4 landscape mealtime placemat with a touch-scroll mobile preview. */
 import { forwardRef, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { ChevronLeft, ChevronRight, ScanLine } from 'lucide-react';
+import {
+  Armchair, ChevronLeft, ChevronRight, Eye, Gauge, ScanLine,
+  Soup, Users, Utensils, VolumeX,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { IddsiLevelMeta, PiratesItem, TEST_EQUIPMENT, PLACEMAT_DISCLAIMER } from './placematData';
 
@@ -28,9 +31,9 @@ const DANGER = '#B42318';
 const DANGER_SOFT = '#FEF3F2';
 const PLAN = '#E8F2F8';
 
-const PIRATES_ICONS: Record<string, string> = {
-  positioning: '🪑', implements: '🍴', rate: '🐢', alertness: '👀',
-  texture: '🥄', environment: '🤫', supervision: '👥',
+const PIRATES_ICONS = {
+  positioning: Armchair, implements: Utensils, rate: Gauge, alertness: Eye,
+  texture: Soup, environment: VolumeX, supervision: Users,
 };
 
 function Section({ title, children, accent = INK, style }: {
@@ -110,7 +113,7 @@ export const PlacematPreview = forwardRef<HTMLDivElement, { data: PlacematData }
     const initials = data.name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();
     const scroll = (direction: number) => scrollRef.current?.scrollBy({ left: direction * 320, behavior: 'smooth' });
 
-    return <div className="w-full min-w-0">
+    return <div className="w-full min-w-0 max-w-[calc(100vw-2rem)] lg:max-w-none">
       <div className="no-print mb-2 flex items-center justify-between gap-2 rounded-md border bg-muted/50 px-3 py-2">
         <p className="text-xs font-semibold">Swipe or use arrows to view the full A4 placemat</p>
         <div className="flex shrink-0 gap-1">
@@ -119,7 +122,7 @@ export const PlacematPreview = forwardRef<HTMLDivElement, { data: PlacematData }
         </div>
       </div>
 
-      <div ref={scrollRef} className="placemat-preview-scroll w-full overflow-x-scroll overscroll-x-contain rounded-md border bg-muted/30 pb-3" tabIndex={0} aria-label="Scrollable placemat preview">
+      <div ref={scrollRef} className="placemat-preview-scroll block w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain rounded-md border bg-muted/30 pb-3" tabIndex={0} aria-label="Scrollable placemat preview">
         <div className="placemat-scale-wrapper" style={{ width: SHEET_W, minWidth: SHEET_W }}>
           <div ref={ref} className="placemat-print-area" style={{ width: SHEET_W, height: SHEET_H, overflow: 'hidden', background: '#FFFFFF', color: INK, fontFamily: 'Arial, sans-serif', padding: 16, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 7 }}>
             <header style={{ height: 90, display: 'flex', alignItems: 'center', gap: 13, borderBottom: `4px solid ${INK}`, paddingBottom: 7 }}>
@@ -142,11 +145,13 @@ export const PlacematPreview = forwardRef<HTMLDivElement, { data: PlacematData }
             <div style={{ display: 'grid', gridTemplateColumns: '1.55fr .9fr .95fr', gap: 8, height: 218 }}>
               <Section title="Mealtime support — PIRATES">
                 <div style={{ padding: '6px 8px', display: 'grid', gap: 3 }}>
-                  {data.pirates.filter((item) => item.value.trim()).map((item) => <div key={item.key} style={{ display: 'grid', gridTemplateColumns: '21px 20px minmax(0,1fr)', gap: 4, alignItems: 'start' }}>
+                  {data.pirates.filter((item) => item.value.trim()).map((item) => {
+                    const StrategyIcon = PIRATES_ICONS[item.key as keyof typeof PIRATES_ICONS];
+                    return <div key={item.key} style={{ display: 'grid', gridTemplateColumns: '21px 20px minmax(0,1fr)', gap: 4, alignItems: 'start' }}>
                     <span style={{ width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', background: INK, color: '#FFFFFF', fontSize: 10, fontWeight: 900 }}>{item.letter}</span>
-                    <span style={{ fontSize: 12, lineHeight: '20px' }}>{PIRATES_ICONS[item.key]}</span>
+                    <span style={{ width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{StrategyIcon && <StrategyIcon size={13} strokeWidth={2.4} />}</span>
                     <span style={{ fontSize: 9.2, lineHeight: 1.22 }}><strong>{item.label}:</strong> {item.value}</span>
-                  </div>)}
+                  </div>})}
                 </div>
               </Section>
               <div style={{ display: 'grid', gridTemplateRows: '1fr 1fr', gap: 8 }}>
