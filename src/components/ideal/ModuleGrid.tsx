@@ -13,7 +13,6 @@ import {
 const moduleIcons: Record<string, React.ElementType> = {
   'constipation': CircleDot,
   'continence': Droplets,
-  'diabetes': Activity,
   'enteral': Apple,
   'epilepsy': HeartPulse,
   'fluid-balance': Droplets,
