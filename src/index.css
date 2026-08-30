@@ -280,6 +280,27 @@ html {
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
 }
+
+.placemat-preview-scroll {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: auto;
+  touch-action: pan-x pan-y;
+}
+
+.placemat-preview-scroll::-webkit-scrollbar {
+  height: 12px;
+}
+
+.placemat-preview-scroll::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.55);
+  border: 3px solid hsl(var(--muted));
+  border-radius: 999px;
+}
+
+.placemat-preview-scroll::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
 /* ── IDDSI Placemat print output (A4 landscape, 1:1) ── */
 @media print {
   @page {
@@ -305,6 +326,9 @@ html {
     top: 0 !important;
     margin: 0 !important;
     border: none !important;
+    width: 297mm !important;
+    height: 210mm !important;
+    overflow: hidden !important;
     page-break-inside: avoid;
     break-inside: avoid;
     z-index: 9999;

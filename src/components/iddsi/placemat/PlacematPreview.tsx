@@ -1,13 +1,9 @@
-/**
- * PlacematPreview — A4 landscape (1123 × 794 px @ 96dpi) mealtime placemat.
- * Rendered at fixed pixel size and scaled to fit on screen; printed 1:1.
- */
-
-import { forwardRef } from 'react';
+/** A4 landscape mealtime placemat with a touch-scroll mobile preview. */
+import { forwardRef, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import {
-  IddsiLevelMeta, PiratesItem, TEST_EQUIPMENT, PLACEMAT_DISCLAIMER,
-} from './placematData';
+import { ChevronLeft, ChevronRight, ScanLine } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { IddsiLevelMeta, PiratesItem, TEST_EQUIPMENT, PLACEMAT_DISCLAIMER } from './placematData';
 
 export interface PlacematData {
   name: string;
@@ -17,7 +13,6 @@ export interface PlacematData {
   pirates: PiratesItem[];
   equipment: string[];
   preferences: string;
-  /** Additional mealtime instructions from the IDDSI module */
   instructions?: string;
   organisation: string;
   reviewDate: string;
@@ -25,265 +20,175 @@ export interface PlacematData {
 
 const SHEET_W = 1123;
 const SHEET_H = 794;
+const INK = '#18212B';
+const MUTED_INK = '#53606C';
+const SOFT = '#F3F6F8';
+const LINE = '#CBD4DA';
+const DANGER = '#B42318';
+const DANGER_SOFT = '#FEF3F2';
+const PLAN = '#E8F2F8';
 
-const INK = '#1B1B22';
-const SOFT = '#F6F6F8';
-const LINE = '#DCDCE3';
+const PIRATES_ICONS: Record<string, string> = {
+  positioning: '🪑', implements: '🍴', rate: '🐢', alertness: '👀',
+  texture: '🥄', environment: '🤫', supervision: '👥',
+};
 
-function Panel({
-  title, accent, children, style,
-}: { title: string; accent?: string; children: React.ReactNode; style?: React.CSSProperties }) {
+function Section({ title, children, accent = INK, style }: {
+  title: string; children: React.ReactNode; accent?: string; style?: React.CSSProperties;
+}) {
   return (
-    <div
-      style={{
-        border: `1.5px solid ${LINE}`, borderRadius: 14, background: '#fff', overflow: 'hidden',
-        display: 'flex', flexDirection: 'column', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', ...style,
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', background: SOFT, borderBottom: `1.5px solid ${LINE}` }}>
-        <span style={{ width: 8, height: 8, borderRadius: 999, background: accent ?? INK, border: `1px solid ${INK}22`, flexShrink: 0 }} />
-        <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 1.1, color: INK, textTransform: 'uppercase' }}>{title}</span>
+    <section style={{ border: `1.5px solid ${LINE}`, background: '#FFFFFF', display: 'flex', flexDirection: 'column', minHeight: 0, ...style }}>
+      <div style={{ borderLeft: `7px solid ${accent}`, padding: '5px 9px', background: SOFT, borderBottom: `1px solid ${LINE}`, fontSize: 10.5, fontWeight: 900, letterSpacing: 0, textTransform: 'uppercase' }}>
+        {title}
       </div>
-      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>{children}</div>
-    </div>
+      {children}
+    </section>
   );
 }
 
-function LevelCard({ kind, meta }: { kind: 'FOOD TEXTURE' | 'DRINK THICKNESS'; meta: IddsiLevelMeta | null }) {
+function LevelBlock({ kind, meta }: { kind: 'FOOD' | 'DRINK'; meta: IddsiLevelMeta | null }) {
   const accent = meta?.color ?? LINE;
   return (
-    <div
-      style={{
-        flex: 1, borderRadius: 14, overflow: 'hidden', background: '#fff',
-        border: `2px solid ${meta ? accent : LINE}`, display: 'flex', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-      }}
-    >
-      <div
-        style={{
-          width: 96, background: accent, display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', gap: 1,
-          borderRight: `1.5px solid ${meta ? INK + '33' : LINE}`,
-        }}
-      >
-        <span style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 1, color: meta?.onColor ?? '#71717a' }}>LEVEL</span>
-        <span style={{ fontSize: 46, fontWeight: 900, lineHeight: 1, color: meta?.onColor ?? '#71717a' }}>{meta?.level ?? '–'}</span>
+    <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '88px minmax(0,1fr) 76px', border: `2px solid ${accent}`, background: '#FFFFFF', minWidth: 0 }}>
+      <div style={{ background: accent, color: meta?.onColor ?? MUTED_INK, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ fontSize: 10, fontWeight: 900 }}>{kind}</span>
+        <span style={{ fontSize: 45, fontWeight: 950, lineHeight: .95 }}>{meta?.level ?? '–'}</span>
       </div>
-      <div style={{ flex: 1, minWidth: 0, padding: '7px 10px', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1.2, color: '#6B6B78' }}>{kind}</div>
-          <div style={{ fontSize: 17, fontWeight: 900, color: INK, lineHeight: 1.12, marginTop: 1 }}>
-            {meta?.name ?? 'Not set'}
-          </div>
-          <div style={{ fontSize: 10, color: '#4B4B57', marginTop: 3, lineHeight: 1.25 }}>
-            {meta?.descriptor ?? 'Set this level in the IDDSI module settings.'}
-          </div>
-        </div>
-        {meta && (
-          <img src={meta.image} alt={meta.name} style={{ height: 60, width: 84, objectFit: 'contain', flexShrink: 0 }} />
-        )}
+      <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0 }}>
+        <div style={{ fontSize: 17, fontWeight: 900, lineHeight: 1.05 }}>{meta?.name ?? 'Level not set'}</div>
+        <div style={{ fontSize: 9.5, color: MUTED_INK, lineHeight: 1.25, marginTop: 4 }}>{meta?.descriptor ?? 'Configure this level in IDDSI Settings.'}</div>
       </div>
+      {meta && <img src={meta.image} alt={`${meta.name} IDDSI symbol`} style={{ width: 70, height: 70, objectFit: 'contain', alignSelf: 'center' }} />}
     </div>
   );
 }
 
-function TestingBlock({
-  title, meta, qrLabel,
-}: { title: string; meta: IddsiLevelMeta | null; qrLabel: string }) {
-  const equipment = meta
-    ? Array.from(new Set(meta.tests.map((t) => TEST_EQUIPMENT[t]).filter(Boolean)))
-    : [];
+function TestingCard({ kind, meta }: { kind: 'FOOD' | 'DRINK'; meta: IddsiLevelMeta | null }) {
+  const equipment = meta ? Array.from(new Set(meta.tests.map((test) => TEST_EQUIPMENT[test]).filter(Boolean))) : [];
   return (
-    <Panel title={title} accent={meta?.color} style={{ flex: 1 }}>
-      <div style={{ display: 'flex', gap: 8, padding: 8, flex: 1, minHeight: 0 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {meta ? (
-            <>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                {meta.tests.map((t) => (
-                  <span
-                    key={t}
-                    style={{
-                      fontSize: 9.5, fontWeight: 700, color: INK, background: `${meta.color}33`,
-                      border: `1px solid ${meta.color}`, borderRadius: 999, padding: '2px 7px',
-                    }}
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
-              <div style={{ fontSize: 9.5, color: '#3f3f46', marginTop: 5, lineHeight: 1.3 }}>
-                <strong>Requirement:</strong> {meta.particleSize}
-              </div>
-              {equipment.length > 0 && (
-                <div style={{ fontSize: 9.5, color: '#3f3f46', marginTop: 2, lineHeight: 1.3 }}>
-                  <strong>Test with:</strong> {equipment.join(' · ')}
-                </div>
-              )}
-            </>
-          ) : (
-            <div style={{ fontSize: 10.5, color: '#71717a' }}>Level not set in the IDDSI module.</div>
-          )}
+    <Section title={`${kind} testing`} accent={meta?.color} style={{ flex: 1 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 104px', gap: 8, padding: 8, flex: 1 }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 11.5, fontWeight: 900, lineHeight: 1.15 }}>{meta?.videoTitle ?? 'Level not set'}</div>
+          {meta && <>
+            <div style={{ fontSize: 9, lineHeight: 1.28, marginTop: 5 }}><strong>Tests:</strong> {meta.tests.join(' · ')}</div>
+            <div style={{ fontSize: 9, lineHeight: 1.28, marginTop: 4 }}><strong>Pass requirement:</strong> {meta.particleSize}</div>
+            {equipment.length > 0 && <div style={{ fontSize: 8.5, color: MUTED_INK, lineHeight: 1.25, marginTop: 4 }}><strong>Use:</strong> {equipment.join(' · ')}</div>}
+          </>}
         </div>
-        <div style={{ width: 92, textAlign: 'center', flexShrink: 0 }}>
-          {meta ? (
-            <>
-              <div style={{ background: '#fff', border: `1.5px solid ${LINE}`, borderRadius: 8, padding: 3, display: 'inline-block' }}>
-                <QRCodeSVG value={meta.videoUrl} size={72} level="M" includeMargin={false} />
-              </div>
-              <div style={{ fontSize: 7.5, fontWeight: 700, lineHeight: 1.15, marginTop: 2, color: INK }}>{qrLabel}</div>
-            </>
-          ) : (
-            <div style={{ width: 72, height: 72, border: `1px dashed ${LINE}`, borderRadius: 8, margin: '0 auto' }} />
-          )}
+        <div style={{ textAlign: 'center', alignSelf: 'center' }}>
+          {meta ? <>
+            <div style={{ display: 'inline-flex', padding: 4, background: '#FFFFFF', border: `2px solid ${INK}` }}>
+              <QRCodeSVG value={meta.videoUrl} size={88} level="H" includeMargin={false} />
+            </div>
+            <div style={{ fontSize: 7.5, fontWeight: 800, lineHeight: 1.15, marginTop: 3 }}>SCAN: {kind} TESTING VIDEO</div>
+          </> : <div style={{ width: 96, height: 96, border: `1px dashed ${LINE}` }} />}
         </div>
       </div>
-    </Panel>
+    </Section>
   );
 }
 
-/** Icon shown beside each PIRATES strategy (keyed by PiratesItem.key) */
-export const PIRATES_ICONS: Record<string, string> = {
-  positioning: '🪑',
-  implements: '🍴',
-  rate: '🐢',
-  alertness: '👀',
-  texture: '🥄',
-  environment: '🤫',
-  supervision: '🧑‍🤝‍🧑',
-};
+function QrCheckCard({ kind, meta }: { kind: 'Food' | 'Drink'; meta: IddsiLevelMeta | null }) {
+  return (
+    <div className="rounded-md border bg-card p-4 text-center shadow-sm">
+      <div className="mb-3 flex items-center justify-center gap-2 text-sm font-bold"><ScanLine className="h-4 w-4" />{kind} testing QR</div>
+      {meta ? <>
+        <a href={meta.videoUrl} target="_blank" rel="noreferrer" className="inline-block rounded-md border-2 border-foreground bg-background p-2" aria-label={`Open ${kind.toLowerCase()} testing video`}>
+          <QRCodeSVG value={meta.videoUrl} size={132} level="H" />
+        </a>
+        <p className="mt-2 text-sm font-semibold">Level {meta.level} · {meta.videoTitle}</p>
+        <a href={meta.videoUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-sm font-medium text-primary underline underline-offset-4">Open testing video</a>
+      </> : <p className="text-sm text-muted-foreground">Set this level in IDDSI Settings.</p>}
+    </div>
+  );
+}
 
 export const PlacematPreview = forwardRef<HTMLDivElement, { data: PlacematData }>(
   function PlacematPreview({ data }, ref) {
-    const initials = data.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const initials = data.name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();
+    const scroll = (direction: number) => scrollRef.current?.scrollBy({ left: direction * 320, behavior: 'smooth' });
 
-    // Fixed A4 size; the outer container scrolls horizontally on small screens.
-    return (
-      <div className="w-full overflow-x-auto pb-2">
-        <div className="placemat-scale-wrapper" style={{ width: SHEET_W }}>
-          <div
-            ref={ref}
-            className="placemat-print-area"
-            style={{
-              width: SHEET_W, height: SHEET_H, background: '#fff', color: INK,
-              fontFamily: 'system-ui, -apple-system, sans-serif',
-              padding: 18, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 9,
-              border: `1px solid ${LINE}`,
-            }}
-          >
-            {/* Header */}
-            <div
-              style={{
-                display: 'flex', alignItems: 'center', gap: 14, padding: '10px 14px',
-                borderRadius: 16, background: SOFT, border: `1.5px solid ${LINE}`,
-              }}
-            >
-              <div
-                style={{
-                  width: 84, height: 84, borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
-                  background: '#fff', border: `3px solid ${INK}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}
-              >
-                {data.photoUrl
-                  ? <img src={data.photoUrl} alt={data.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <span style={{ fontSize: 28, fontWeight: 800, color: '#9a9aa5' }}>{initials || '—'}</span>}
+    return <div className="w-full min-w-0">
+      <div className="no-print mb-2 flex items-center justify-between gap-2 rounded-md border bg-muted/50 px-3 py-2">
+        <p className="text-xs font-semibold">Swipe or use arrows to view the full A4 placemat</p>
+        <div className="flex shrink-0 gap-1">
+          <Button type="button" variant="outline" size="icon" className="h-9 w-9" onClick={() => scroll(-1)} aria-label="Scroll placemat left"><ChevronLeft className="h-4 w-4" /></Button>
+          <Button type="button" variant="outline" size="icon" className="h-9 w-9" onClick={() => scroll(1)} aria-label="Scroll placemat right"><ChevronRight className="h-4 w-4" /></Button>
+        </div>
+      </div>
+
+      <div ref={scrollRef} className="placemat-preview-scroll w-full overflow-x-scroll overscroll-x-contain rounded-md border bg-muted/30 pb-3" tabIndex={0} aria-label="Scrollable placemat preview">
+        <div className="placemat-scale-wrapper" style={{ width: SHEET_W, minWidth: SHEET_W }}>
+          <div ref={ref} className="placemat-print-area" style={{ width: SHEET_W, height: SHEET_H, overflow: 'hidden', background: '#FFFFFF', color: INK, fontFamily: 'Arial, sans-serif', padding: 16, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 7 }}>
+            <header style={{ height: 90, display: 'flex', alignItems: 'center', gap: 13, borderBottom: `4px solid ${INK}`, paddingBottom: 7 }}>
+              <div style={{ width: 76, height: 76, overflow: 'hidden', flexShrink: 0, border: `3px solid ${INK}`, display: 'flex', alignItems: 'center', justifyContent: 'center', background: SOFT }}>
+                {data.photoUrl ? <img src={data.photoUrl} alt={data.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 27, fontWeight: 900 }}>{initials || '—'}</span>}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2.4, color: '#6B6B78' }}>MEALTIME PLACEMAT</div>
-                <div style={{ fontSize: 36, fontWeight: 900, lineHeight: 1.03, letterSpacing: -0.5 }}>{data.name || 'Name'}</div>
-                {data.organisation && <div style={{ fontSize: 11, color: '#6B6B78' }}>{data.organisation}</div>}
+                <div style={{ fontSize: 11, fontWeight: 900, color: MUTED_INK }}>MEALTIME PLACEMAT</div>
+                <h1 style={{ fontSize: 33, fontWeight: 950, lineHeight: 1, margin: '3px 0 0' }}>{data.name || 'Person’s name'}</h1>
               </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {[{ label: 'FOOD', meta: data.food }, { label: 'DRINK', meta: data.drink }].map(({ label, meta }) => (
-                  <div
-                    key={label}
-                    style={{
-                      minWidth: 74, background: meta?.color ?? '#fff', color: meta?.onColor ?? '#9a9aa5',
-                      borderRadius: 14, padding: '7px 12px', textAlign: 'center',
-                      border: `2px solid ${meta ? INK : LINE}`,
-                    }}
-                  >
-                    <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1.4 }}>{label}</div>
-                    <div style={{ fontSize: 32, fontWeight: 900, lineHeight: 1 }}>{meta?.level ?? '–'}</div>
-                  </div>
-                ))}
-              </div>
+              <div style={{ fontSize: 10, textAlign: 'right', lineHeight: 1.35 }}><strong>Review by</strong><br />{data.reviewDate || 'Not recorded'}</div>
+            </header>
+
+            <div style={{ minHeight: 37, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', background: PLAN, border: `2px solid ${INK}`, padding: '6px 14px', fontSize: 13.5, fontWeight: 900 }}>
+              ALWAYS REFER TO {data.name ? `${data.name.toUpperCase()}’S` : 'THE PERSON’S'} CURRENT MEALTIME MANAGEMENT PLAN BEFORE PROVIDING FOOD OR DRINK
             </div>
 
-            {/* Levels */}
-            <div style={{ display: 'flex', gap: 9, height: 96 }}>
-              <LevelCard kind="FOOD TEXTURE" meta={data.food} />
-              <LevelCard kind="DRINK THICKNESS" meta={data.drink} />
-            </div>
+            <div style={{ display: 'flex', gap: 8, height: 94 }}><LevelBlock kind="FOOD" meta={data.food} /><LevelBlock kind="DRINK" meta={data.drink} /></div>
 
-            {/* Middle */}
-            <div style={{ display: 'flex', gap: 9, flex: 1, minHeight: 0 }}>
-              <Panel title="PIRATES mealtime strategies" style={{ flex: 1.6 }}>
-                <div style={{ padding: '6px 9px', display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-                  {data.pirates.filter((p) => p.value.trim()).map((p) => (
-                    <div key={p.key} style={{ display: 'flex', gap: 7, alignItems: 'flex-start' }}>
-                      <div
-                        style={{
-                          width: 19, height: 19, borderRadius: 6, background: INK, color: '#fff', fontSize: 11,
-                          fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                        }}
-                      >
-                        {p.letter}
-                      </div>
-                      <span style={{ fontSize: 12, lineHeight: '19px', flexShrink: 0 }} aria-hidden>
-                        {PIRATES_ICONS[p.key] ?? ''}
-                      </span>
-                      <div style={{ fontSize: 10, lineHeight: 1.3, flex: 1 }}>
-                        <strong>{p.label}:</strong> {p.value}
-                      </div>
-                    </div>
-                  ))}
+            <div style={{ display: 'grid', gridTemplateColumns: '1.55fr .9fr .95fr', gap: 8, height: 218 }}>
+              <Section title="Mealtime support — PIRATES">
+                <div style={{ padding: '6px 8px', display: 'grid', gap: 3 }}>
+                  {data.pirates.filter((item) => item.value.trim()).map((item) => <div key={item.key} style={{ display: 'grid', gridTemplateColumns: '21px 20px minmax(0,1fr)', gap: 4, alignItems: 'start' }}>
+                    <span style={{ width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', background: INK, color: '#FFFFFF', fontSize: 10, fontWeight: 900 }}>{item.letter}</span>
+                    <span style={{ fontSize: 12, lineHeight: '20px' }}>{PIRATES_ICONS[item.key]}</span>
+                    <span style={{ fontSize: 9.2, lineHeight: 1.22 }}><strong>{item.label}:</strong> {item.value}</span>
+                  </div>)}
                 </div>
-              </Panel>
-
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 9, minWidth: 0 }}>
-                <Panel title="Equipment required" style={{ flex: 1 }}>
-                  <div style={{ padding: 7, display: 'flex', flexWrap: 'wrap', gap: 4, alignContent: 'flex-start' }}>
-                    {data.equipment.length > 0 ? data.equipment.map((e) => (
-                      <span
-                        key={e}
-                        style={{
-                          fontSize: 9.5, fontWeight: 600, background: SOFT, border: `1px solid ${LINE}`,
-                          borderRadius: 999, padding: '2px 8px',
-                        }}
-                      >
-                        {e}
-                      </span>
-                    )) : <span style={{ fontSize: 10, color: '#71717a' }}>Set the IDDSI levels to list equipment</span>}
-                  </div>
-                </Panel>
-                <Panel title="Food preferences & likes" style={{ flex: 1 }}>
-                  <div style={{ padding: 7, fontSize: 10, lineHeight: 1.35, whiteSpace: 'pre-wrap' }}>
-                    {data.preferences || <span style={{ color: '#9a9aa5' }}>No preferences recorded</span>}
-                  </div>
-                </Panel>
+              </Section>
+              <div style={{ display: 'grid', gridTemplateRows: '1fr 1fr', gap: 8 }}>
+                <Section title="Equipment required"><div style={{ padding: 7, display: 'flex', flexWrap: 'wrap', gap: 4, alignContent: 'flex-start' }}>{data.equipment.map((item) => <span key={item} style={{ padding: '2px 6px', background: SOFT, border: `1px solid ${LINE}`, fontSize: 8.5, fontWeight: 700 }}>{item}</span>)}</div></Section>
+                <Section title="Food preferences & likes"><div style={{ padding: 7, fontSize: 9.5, lineHeight: 1.28, whiteSpace: 'pre-wrap' }}>{data.preferences || <span style={{ color: MUTED_INK }}>None recorded</span>}</div></Section>
               </div>
+              <Section title="Watch for swallowing concerns" accent={DANGER}>
+                <div style={{ padding: 7, fontSize: 9, lineHeight: 1.27 }}>
+                  <div style={{ fontWeight: 900, color: DANGER }}>CHOKING SIGNS</div>
+                  <div>Unable to breathe, speak or cough · silent/ineffective cough · clutching throat · blue/grey colour · collapse</div>
+                  <div style={{ fontWeight: 900, color: DANGER, marginTop: 7 }}>ASPIRATION SIGNS</div>
+                  <div>Coughing or throat clearing · wet/gurgly voice · breathing changes · watery eyes · food pocketing · distress, fatigue or recurrent chest symptoms</div>
+                </div>
+              </Section>
             </div>
 
-            {/* Testing + QR codes */}
-            <div style={{ display: 'flex', gap: 9, height: 132 }}>
-              <TestingBlock title="Food testing method" meta={data.food} qrLabel="Scan to watch IDDSI Food Testing Method" />
-              <TestingBlock title="Drink testing method" meta={data.drink} qrLabel="Scan to watch IDDSI Drink Testing Method" />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.05fr', gap: 8, height: 190 }}>
+              <TestingCard kind="FOOD" meta={data.food} />
+              <TestingCard kind="DRINK" meta={data.drink} />
+              <Section title="If signs or symptoms are observed" accent={DANGER}>
+                <ol style={{ margin: 0, padding: '7px 8px 5px 25px', fontSize: 9.2, lineHeight: 1.27 }}>
+                  <li style={{ marginBottom: 4 }}><strong>Stop food and drink.</strong> Stay with the person, keep them upright and follow their Mealtime Management Plan.</li>
+                  <li style={{ marginBottom: 4 }}><strong>Choking / breathing emergency:</strong> call <strong>000</strong> and provide choking first aid within your training and workplace procedure.</li>
+                  <li style={{ marginBottom: 4 }}><strong>If breathing:</strong> notify the supervisor/RN and seek urgent clinical advice as directed in the person’s plan.</li>
+                  <li style={{ marginBottom: 4 }}><strong>Document and escalate:</strong> record the observation and complete an incident report.</li>
+                  <li><strong>Clinical review:</strong> contact the person’s Speech Pathologist / treating team and review the plan before oral intake resumes.</li>
+                </ol>
+              </Section>
             </div>
 
-            {/* Footer */}
-            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-              <div style={{ fontSize: 7.5, color: '#6B6B78', lineHeight: 1.3, flex: 1 }}>
-                {PLACEMAT_DISCLAIMER}
-                <br />
-                © The International Dysphagia Diet Standardisation Initiative 2019 · iddsi.org/standards/framework · CC BY-SA 4.0.
-              </div>
-              {data.reviewDate && (
-                <div style={{ fontSize: 8, fontWeight: 700, color: INK, whiteSpace: 'nowrap' }}>Review by: {data.reviewDate}</div>
-              )}
-            </div>
+            <footer style={{ minHeight: 34, display: 'flex', gap: 10, alignItems: 'flex-start', borderTop: `1px solid ${LINE}`, paddingTop: 5 }}>
+              <div style={{ fontSize: 7.2, color: MUTED_INK, lineHeight: 1.23, flex: 1 }}>{PLACEMAT_DISCLAIMER}<br />© The International Dysphagia Diet Standardisation Initiative 2019 · iddsi.org/standards/framework · CC BY-SA 4.0.</div>
+              <div style={{ padding: '3px 7px', background: DANGER_SOFT, color: DANGER, fontSize: 8, fontWeight: 900 }}>IF IN DOUBT: STOP AND CHECK THE PLAN</div>
+            </footer>
           </div>
         </div>
       </div>
-    );
+
+      <div className="no-print mt-4">
+        <h3 className="mb-2 text-sm font-bold">Check testing QR codes on this phone</h3>
+        <div className="grid gap-3 sm:grid-cols-2"><QrCheckCard kind="Food" meta={data.food} /><QrCheckCard kind="Drink" meta={data.drink} /></div>
+      </div>
+    </div>;
   }
 );
