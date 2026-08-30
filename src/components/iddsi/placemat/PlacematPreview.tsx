@@ -3,7 +3,7 @@
  * Rendered at fixed pixel size and scaled to fit on screen; printed 1:1.
  */
 
-import { forwardRef, useEffect, useRef, useState } from 'react';
+import { forwardRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   IddsiLevelMeta, PiratesItem, TEST_EQUIPMENT, PLACEMAT_DISCLAIMER,
@@ -141,29 +141,25 @@ function TestingBlock({
   );
 }
 
+/** Icon shown beside each PIRATES strategy (keyed by PiratesItem.key) */
+export const PIRATES_ICONS: Record<string, string> = {
+  positioning: '🪑',
+  implements: '🍴',
+  rate: '🐢',
+  alertness: '👀',
+  texture: '🥄',
+  environment: '🤫',
+  supervision: '🧑‍🤝‍🧑',
+};
+
 export const PlacematPreview = forwardRef<HTMLDivElement, { data: PlacematData }>(
   function PlacematPreview({ data }, ref) {
-    const wrapRef = useRef<HTMLDivElement>(null);
-    const [scale, setScale] = useState(1);
-
-    useEffect(() => {
-      const el = wrapRef.current;
-      if (!el) return;
-      const update = () => setScale(Math.min(1, el.clientWidth / SHEET_W));
-      update();
-      const ro = new ResizeObserver(update);
-      ro.observe(el);
-      return () => ro.disconnect();
-    }, []);
-
     const initials = data.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
 
+    // Fixed A4 size; the outer container scrolls horizontally on small screens.
     return (
-      <div ref={wrapRef} className="w-full">
-        <div
-          className="placemat-scale-wrapper"
-          style={{ height: SHEET_H * scale, transform: `scale(${scale})`, transformOrigin: 'top left', width: SHEET_W }}
-        >
+      <div className="w-full overflow-x-auto pb-2">
+        <div className="placemat-scale-wrapper" style={{ width: SHEET_W }}>
           <div
             ref={ref}
             className="placemat-print-area"
@@ -233,6 +229,9 @@ export const PlacematPreview = forwardRef<HTMLDivElement, { data: PlacematData }
                       >
                         {p.letter}
                       </div>
+                      <span style={{ fontSize: 12, lineHeight: '19px', flexShrink: 0 }} aria-hidden>
+                        {PIRATES_ICONS[p.key] ?? ''}
+                      </span>
                       <div style={{ fontSize: 10, lineHeight: 1.3, flex: 1 }}>
                         <strong>{p.label}:</strong> {p.value}
                       </div>
@@ -262,13 +261,6 @@ export const PlacematPreview = forwardRef<HTMLDivElement, { data: PlacematData }
                     {data.preferences || <span style={{ color: '#9a9aa5' }}>No preferences recorded</span>}
                   </div>
                 </Panel>
-                {data.instructions?.trim() && (
-                  <Panel title="Additional instructions" style={{ flex: 1 }}>
-                    <div style={{ padding: 7, fontSize: 10, lineHeight: 1.35, whiteSpace: 'pre-wrap' }}>
-                      {data.instructions}
-                    </div>
-                  </Panel>
-                )}
               </div>
             </div>
 
