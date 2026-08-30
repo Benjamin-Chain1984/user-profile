@@ -2,20 +2,32 @@
  * IDDSI Level Display - Shows prescribed levels with testing info and videos
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useIddsiConfig } from '@/hooks/useIddsi';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { FOOD_LEVELS, DRINK_LEVELS, getFoodLevelKey, LevelInfo } from '@/types/iddsi';
 import {
-  ArrowLeft, ChevronDown, Play, FlaskConical, AlertCircle,
+  ArrowLeft, ChevronDown, Play, FlaskConical, AlertCircle, Pencil, CheckCircle2, Save, X,
 } from 'lucide-react';
 
 interface Props {
   clientId?: string;
   onClose: () => void;
 }
+
+const FOOD_OPTIONS = [
+  { level: 7, variant: 'regular', key: '7_regular' },
+  { level: 7, variant: 'easy_to_chew', key: '7_easy_to_chew' },
+  { level: 6, variant: null, key: '6' },
+  { level: 5, variant: null, key: '5' },
+  { level: 4, variant: null, key: '4' },
+  { level: 3, variant: null, key: '3_food' },
+];
+
+const DRINK_OPTIONS = [4, 3, 2, 1, 0];
 
 function LevelCard({
   info,
