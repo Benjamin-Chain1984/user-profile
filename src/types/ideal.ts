@@ -56,7 +56,6 @@ export const HEALTH_MODULES: Omit<HealthModule, 'enabled' | 'status' | 'lastEntr
   { id: 'constipation', name: 'Bowel Care', description: 'Track bowel movements and patterns' },
   { id: 'catheter', name: 'Urinary Catheter Management', description: 'Catheter care and monitoring' },
   { id: 'continence', name: 'Continence Management', description: 'Monitor pad changes and skin integrity' },
-  { id: 'diabetes', name: 'Diabetes', description: 'Blood glucose monitoring and management' },
   { id: 'enteral', name: 'Enteral Nutrition', description: 'Tube feeding management and tracking' },
   { id: 'epilepsy', name: 'Epilepsy & Seizures', description: 'Seizure tracking, patterns, and escalation' },
   { id: 'fluid-balance', name: 'Fluid Balance & Hydration', description: 'Daily fluid intake, output, and hydration monitoring' },
