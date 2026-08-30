@@ -36,8 +36,8 @@ function LevelPanel({ heading, meta, fallback }: { heading: string; meta: IddsiL
             <span style={{ color: meta.onColor, fontSize: 40, fontWeight: 900, lineHeight: 1 }}>{meta.level}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', flex: 1 }}>
-            <img src={meta.image} alt={meta.name} style={{ height: 60, width: 'auto', objectFit: 'contain' }} />
-            <div>
+            <img src={meta.image} alt={meta.name} style={{ height: 58, width: 90, objectFit: 'contain', flexShrink: 0 }} />
+            <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 16, fontWeight: 800, color: '#231F20', lineHeight: 1.15 }}>{meta.name}</div>
               <div style={{ fontSize: 10.5, color: '#3f3f46', marginTop: 2, lineHeight: 1.25 }}>{meta.descriptor}</div>
             </div>

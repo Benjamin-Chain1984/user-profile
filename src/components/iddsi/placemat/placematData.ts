@@ -207,7 +207,7 @@ export const PLACEMAT_DRINK_LEVELS: IddsiLevelMeta[] = [
     descriptor: 'Can be drunk from a cup. Drips slowly through fork tines in dollops.',
     image: '/drink-level-3.png',
     tests: ['IDDSI Flow Test (10 mL syringe)', 'Fork Drip Test'],
-    particleSize: 'Smooth — no lumps or fibres',
+    particleSize: '8–10 mL remaining after 10 seconds — smooth, no lumps',
     videoUrl: IDDSI_TEST_VIDEOS.flowAndForkDrip.url,
     videoTitle: IDDSI_TEST_VIDEOS.flowAndForkDrip.title,
   },
