@@ -3,7 +3,7 @@
  * Rendered at fixed pixel size and scaled to fit on screen; printed 1:1.
  */
 
-import { forwardRef, useEffect, useRef, useState } from 'react';
+import { forwardRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   IddsiLevelMeta, PiratesItem, TEST_EQUIPMENT, PLACEMAT_DISCLAIMER,
@@ -229,6 +229,9 @@ export const PlacematPreview = forwardRef<HTMLDivElement, { data: PlacematData }
                       >
                         {p.letter}
                       </div>
+                      <span style={{ fontSize: 12, lineHeight: '19px', flexShrink: 0 }} aria-hidden>
+                        {PIRATES_ICONS[p.key] ?? ''}
+                      </span>
                       <div style={{ fontSize: 10, lineHeight: 1.3, flex: 1 }}>
                         <strong>{p.label}:</strong> {p.value}
                       </div>
@@ -258,13 +261,6 @@ export const PlacematPreview = forwardRef<HTMLDivElement, { data: PlacematData }
                     {data.preferences || <span style={{ color: '#9a9aa5' }}>No preferences recorded</span>}
                   </div>
                 </Panel>
-                {data.instructions?.trim() && (
-                  <Panel title="Additional instructions" style={{ flex: 1 }}>
-                    <div style={{ padding: 7, fontSize: 10, lineHeight: 1.35, whiteSpace: 'pre-wrap' }}>
-                      {data.instructions}
-                    </div>
-                  </Panel>
-                )}
               </div>
             </div>
 
