@@ -209,7 +209,7 @@ export function IddsiDashboard({ clientId }: IddsiDashboardProps) {
           { icon: Eye, label: 'IDDSI Levels', onClick: () => setShowLevelDisplay(true) },
           { icon: Armchair, label: 'Positioning', onClick: () => setShowPositioning(true) },
           { icon: Brain, label: 'Strategies', onClick: () => setShowStrategies(true) },
-          { icon: LayoutTemplate, label: 'Placemat Builder', onClick: () => setShowPlacemat(true) },
+          { icon: LayoutTemplate, label: 'Print Placemat', onClick: () => setShowPlacemat(true) },
         ].map(({ icon: Icon, label, onClick }) => (
           <button
             key={label}
