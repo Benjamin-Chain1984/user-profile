@@ -285,6 +285,42 @@ export const EQUIPMENT_OPTIONS: string[] = [
   'Suction equipment',
 ];
 
+/**
+ * Equipment shown on the placemat, derived automatically from the selected
+ * food and drink levels (testing equipment + level-appropriate implements).
+ */
+export function buildEquipmentFromLevels(
+  food: IddsiLevelMeta | null,
+  drink: IddsiLevelMeta | null,
+): string[] {
+  const items = new Set<string>(['Non-slip mat']);
+
+  for (const meta of [food, drink]) {
+    if (!meta) continue;
+    for (const test of meta.tests) {
+      const eq = TEST_EQUIPMENT[test];
+      if (eq) items.add(eq);
+    }
+  }
+
+  if (food) {
+    if (food.level <= 4) items.add('Dessert spoon');
+    if (food.level === 5) { items.add('Teaspoon'); items.add('Scoop plate / bowl'); }
+    if (food.level >= 6) { items.add('Standard fork'); items.add('Plate guard'); }
+    if (food.level <= 5) items.add('Scoop plate / bowl');
+  }
+
+  if (drink) {
+    if (drink.level === 0) items.add('Prescribed cup');
+    if (drink.level >= 1 && drink.level <= 3) { items.add('Thickener'); items.add('Measuring scoop'); items.add('Prescribed cup'); }
+    if (drink.level === 4) { items.add('Thickener'); items.add('Dessert spoon'); }
+    if (drink.level >= 2) items.add('No straws unless approved');
+  }
+
+  return Array.from(items);
+}
+
+
 export const LAMINATING_STEPS: string[] = [
   'Print in A4 landscape orientation.',
   'Print at 100% / actual size — do not scale to fit.',

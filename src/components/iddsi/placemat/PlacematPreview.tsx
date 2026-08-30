@@ -17,6 +17,8 @@ export interface PlacematData {
   pirates: PiratesItem[];
   equipment: string[];
   preferences: string;
+  /** Additional mealtime instructions from the IDDSI module */
+  instructions?: string;
   organisation: string;
   reviewDate: string;
 }
@@ -24,28 +26,62 @@ export interface PlacematData {
 const SHEET_W = 1123;
 const SHEET_H = 794;
 
-function LevelPanel({ heading, meta, fallback }: { heading: string; meta: IddsiLevelMeta | null; fallback: string }) {
+const INK = '#1B1B22';
+const SOFT = '#F6F6F8';
+const LINE = '#DCDCE3';
+
+function Panel({
+  title, accent, children, style,
+}: { title: string; accent?: string; children: React.ReactNode; style?: React.CSSProperties }) {
   return (
-    <div style={{ flex: 1, border: '2px solid #231F20', borderRadius: 10, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: '#fff' }}>
-      <div style={{ background: '#231F20', color: '#fff', padding: '5px 10px', fontSize: 13, fontWeight: 800, letterSpacing: 1.2 }}>
-        {heading}
+    <div
+      style={{
+        border: `1.5px solid ${LINE}`, borderRadius: 14, background: '#fff', overflow: 'hidden',
+        display: 'flex', flexDirection: 'column', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', ...style,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', background: SOFT, borderBottom: `1.5px solid ${LINE}` }}>
+        <span style={{ width: 8, height: 8, borderRadius: 999, background: accent ?? INK, border: `1px solid ${INK}22`, flexShrink: 0 }} />
+        <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 1.1, color: INK, textTransform: 'uppercase' }}>{title}</span>
       </div>
-      {meta ? (
-        <div style={{ display: 'flex', flex: 1 }}>
-          <div style={{ width: 74, background: meta.color, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: '2px solid #231F20' }}>
-            <span style={{ color: meta.onColor, fontSize: 40, fontWeight: 900, lineHeight: 1 }}>{meta.level}</span>
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>{children}</div>
+    </div>
+  );
+}
+
+function LevelCard({ kind, meta }: { kind: 'FOOD TEXTURE' | 'DRINK THICKNESS'; meta: IddsiLevelMeta | null }) {
+  const accent = meta?.color ?? LINE;
+  return (
+    <div
+      style={{
+        flex: 1, borderRadius: 14, overflow: 'hidden', background: '#fff',
+        border: `2px solid ${meta ? accent : LINE}`, display: 'flex', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+      }}
+    >
+      <div
+        style={{
+          width: 96, background: accent, display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', gap: 1,
+          borderRight: `1.5px solid ${meta ? INK + '33' : LINE}`,
+        }}
+      >
+        <span style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 1, color: meta?.onColor ?? '#71717a' }}>LEVEL</span>
+        <span style={{ fontSize: 46, fontWeight: 900, lineHeight: 1, color: meta?.onColor ?? '#71717a' }}>{meta?.level ?? '–'}</span>
+      </div>
+      <div style={{ flex: 1, minWidth: 0, padding: '7px 10px', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1.2, color: '#6B6B78' }}>{kind}</div>
+          <div style={{ fontSize: 17, fontWeight: 900, color: INK, lineHeight: 1.12, marginTop: 1 }}>
+            {meta?.name ?? 'Not set'}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', flex: 1 }}>
-            <img src={meta.image} alt={meta.name} style={{ height: 58, width: 90, objectFit: 'contain', flexShrink: 0 }} />
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 16, fontWeight: 800, color: '#231F20', lineHeight: 1.15 }}>{meta.name}</div>
-              <div style={{ fontSize: 10.5, color: '#3f3f46', marginTop: 2, lineHeight: 1.25 }}>{meta.descriptor}</div>
-            </div>
+          <div style={{ fontSize: 10, color: '#4B4B57', marginTop: 3, lineHeight: 1.25 }}>
+            {meta?.descriptor ?? 'Set this level in the IDDSI module settings.'}
           </div>
         </div>
-      ) : (
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#71717a' }}>{fallback}</div>
-      )}
+        {meta && (
+          <img src={meta.image} alt={meta.name} style={{ height: 60, width: 84, objectFit: 'contain', flexShrink: 0 }} />
+        )}
+      </div>
     </div>
   );
 }
@@ -57,38 +93,51 @@ function TestingBlock({
     ? Array.from(new Set(meta.tests.map((t) => TEST_EQUIPMENT[t]).filter(Boolean)))
     : [];
   return (
-    <div style={{ flex: 1, border: `2px solid ${meta ? meta.color : '#d4d4d8'}`, borderRadius: 10, padding: 8, background: '#fff', display: 'flex', gap: 8 }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.8, color: '#231F20' }}>{title}</div>
-        {meta ? (
-          <>
-            <ul style={{ margin: '4px 0 0', paddingLeft: 14, fontSize: 10.5, color: '#231F20', lineHeight: 1.35 }}>
-              {meta.tests.map((t) => <li key={t} style={{ fontWeight: 600 }}>{t}</li>)}
-            </ul>
-            <div style={{ fontSize: 9.5, color: '#3f3f46', marginTop: 3, lineHeight: 1.3 }}>
-              <strong>Requirement:</strong> {meta.particleSize}
-            </div>
-            {equipment.length > 0 && (
-              <div style={{ fontSize: 9.5, color: '#3f3f46', marginTop: 2, lineHeight: 1.3 }}>
-                <strong>Test with:</strong> {equipment.join(' · ')}
+    <Panel title={title} accent={meta?.color} style={{ flex: 1 }}>
+      <div style={{ display: 'flex', gap: 8, padding: 8, flex: 1, minHeight: 0 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {meta ? (
+            <>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                {meta.tests.map((t) => (
+                  <span
+                    key={t}
+                    style={{
+                      fontSize: 9.5, fontWeight: 700, color: INK, background: `${meta.color}33`,
+                      border: `1px solid ${meta.color}`, borderRadius: 999, padding: '2px 7px',
+                    }}
+                  >
+                    {t}
+                  </span>
+                ))}
               </div>
-            )}
-          </>
-        ) : (
-          <div style={{ fontSize: 10.5, color: '#71717a', marginTop: 6 }}>Select a level to show its testing method.</div>
-        )}
+              <div style={{ fontSize: 9.5, color: '#3f3f46', marginTop: 5, lineHeight: 1.3 }}>
+                <strong>Requirement:</strong> {meta.particleSize}
+              </div>
+              {equipment.length > 0 && (
+                <div style={{ fontSize: 9.5, color: '#3f3f46', marginTop: 2, lineHeight: 1.3 }}>
+                  <strong>Test with:</strong> {equipment.join(' · ')}
+                </div>
+              )}
+            </>
+          ) : (
+            <div style={{ fontSize: 10.5, color: '#71717a' }}>Level not set in the IDDSI module.</div>
+          )}
+        </div>
+        <div style={{ width: 92, textAlign: 'center', flexShrink: 0 }}>
+          {meta ? (
+            <>
+              <div style={{ background: '#fff', border: `1.5px solid ${LINE}`, borderRadius: 8, padding: 3, display: 'inline-block' }}>
+                <QRCodeSVG value={meta.videoUrl} size={72} level="M" includeMargin={false} />
+              </div>
+              <div style={{ fontSize: 7.5, fontWeight: 700, lineHeight: 1.15, marginTop: 2, color: INK }}>{qrLabel}</div>
+            </>
+          ) : (
+            <div style={{ width: 72, height: 72, border: `1px dashed ${LINE}`, borderRadius: 8, margin: '0 auto' }} />
+          )}
+        </div>
       </div>
-      <div style={{ width: 96, textAlign: 'center', flexShrink: 0 }}>
-        {meta ? (
-          <>
-            <QRCodeSVG value={meta.videoUrl} size={78} level="M" includeMargin={false} />
-            <div style={{ fontSize: 7.5, fontWeight: 700, lineHeight: 1.15, marginTop: 2, color: '#231F20' }}>{qrLabel}</div>
-          </>
-        ) : (
-          <div style={{ width: 78, height: 78, border: '1px dashed #d4d4d8', borderRadius: 6, margin: '0 auto' }} />
-        )}
-      </div>
-    </div>
+    </Panel>
   );
 }
 
@@ -119,56 +168,69 @@ export const PlacematPreview = forwardRef<HTMLDivElement, { data: PlacematData }
             ref={ref}
             className="placemat-print-area"
             style={{
-              width: SHEET_W, height: SHEET_H, background: '#fff', color: '#231F20',
+              width: SHEET_W, height: SHEET_H, background: '#fff', color: INK,
               fontFamily: 'system-ui, -apple-system, sans-serif',
-              padding: 16, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 8,
-              border: '1px solid #e4e4e7',
+              padding: 18, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 9,
+              border: `1px solid ${LINE}`,
             }}
           >
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderBottom: '3px solid #231F20', paddingBottom: 8 }}>
-              <div style={{ width: 92, height: 92, borderRadius: 12, overflow: 'hidden', border: '3px solid #231F20', flexShrink: 0, background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div
+              style={{
+                display: 'flex', alignItems: 'center', gap: 14, padding: '10px 14px',
+                borderRadius: 16, background: SOFT, border: `1.5px solid ${LINE}`,
+              }}
+            >
+              <div
+                style={{
+                  width: 84, height: 84, borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
+                  background: '#fff', border: `3px solid ${INK}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
                 {data.photoUrl
                   ? <img src={data.photoUrl} alt={data.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <span style={{ fontSize: 30, fontWeight: 800, color: '#71717a' }}>{initials || '—'}</span>}
+                  : <span style={{ fontSize: 28, fontWeight: 800, color: '#9a9aa5' }}>{initials || '—'}</span>}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 2, color: '#52525b' }}>MEALTIME PLACEMAT</div>
-                <div style={{ fontSize: 34, fontWeight: 900, lineHeight: 1.05 }}>{data.name || 'Name'}</div>
-                {data.organisation && <div style={{ fontSize: 11, color: '#52525b' }}>{data.organisation}</div>}
+                <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2.4, color: '#6B6B78' }}>MEALTIME PLACEMAT</div>
+                <div style={{ fontSize: 36, fontWeight: 900, lineHeight: 1.03, letterSpacing: -0.5 }}>{data.name || 'Name'}</div>
+                {data.organisation && <div style={{ fontSize: 11, color: '#6B6B78' }}>{data.organisation}</div>}
               </div>
-              <div style={{ display: 'flex', gap: 6 }}>
-                {data.food && (
-                  <div style={{ background: data.food.color, color: data.food.onColor, borderRadius: 10, padding: '6px 12px', textAlign: 'center', border: '2px solid #231F20' }}>
-                    <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1 }}>FOOD</div>
-                    <div style={{ fontSize: 30, fontWeight: 900, lineHeight: 1 }}>{data.food.level}</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {[{ label: 'FOOD', meta: data.food }, { label: 'DRINK', meta: data.drink }].map(({ label, meta }) => (
+                  <div
+                    key={label}
+                    style={{
+                      minWidth: 74, background: meta?.color ?? '#fff', color: meta?.onColor ?? '#9a9aa5',
+                      borderRadius: 14, padding: '7px 12px', textAlign: 'center',
+                      border: `2px solid ${meta ? INK : LINE}`,
+                    }}
+                  >
+                    <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1.4 }}>{label}</div>
+                    <div style={{ fontSize: 32, fontWeight: 900, lineHeight: 1 }}>{meta?.level ?? '–'}</div>
                   </div>
-                )}
-                {data.drink && (
-                  <div style={{ background: data.drink.color, color: data.drink.onColor, borderRadius: 10, padding: '6px 12px', textAlign: 'center', border: '2px solid #231F20' }}>
-                    <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1 }}>DRINK</div>
-                    <div style={{ fontSize: 30, fontWeight: 900, lineHeight: 1 }}>{data.drink.level}</div>
-                  </div>
-                )}
+                ))}
               </div>
             </div>
 
             {/* Levels */}
-            <div style={{ display: 'flex', gap: 8, height: 96 }}>
-              <LevelPanel heading="FOOD TEXTURE" meta={data.food} fallback="No food level selected" />
-              <LevelPanel heading="DRINK THICKNESS" meta={data.drink} fallback="No drink level selected" />
+            <div style={{ display: 'flex', gap: 9, height: 96 }}>
+              <LevelCard kind="FOOD TEXTURE" meta={data.food} />
+              <LevelCard kind="DRINK THICKNESS" meta={data.drink} />
             </div>
 
-            {/* Middle: PIRATES + equipment/preferences */}
-            <div style={{ display: 'flex', gap: 8, flex: 1, minHeight: 0 }}>
-              <div style={{ flex: 1.65, border: '2px solid #231F20', borderRadius: 10, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ background: '#231F20', color: '#fff', padding: '4px 10px', fontSize: 12, fontWeight: 800, letterSpacing: 1 }}>
-                  PIRATES MEALTIME STRATEGIES
-                </div>
-                <div style={{ padding: '5px 8px', display: 'flex', flexDirection: 'column', gap: 3, flex: 1 }}>
+            {/* Middle */}
+            <div style={{ display: 'flex', gap: 9, flex: 1, minHeight: 0 }}>
+              <Panel title="PIRATES mealtime strategies" style={{ flex: 1.6 }}>
+                <div style={{ padding: '6px 9px', display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
                   {data.pirates.filter((p) => p.value.trim()).map((p) => (
-                    <div key={p.key} style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
-                      <div style={{ width: 19, height: 19, borderRadius: 5, background: '#231F20', color: '#fff', fontSize: 11, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <div key={p.key} style={{ display: 'flex', gap: 7, alignItems: 'flex-start' }}>
+                      <div
+                        style={{
+                          width: 19, height: 19, borderRadius: 6, background: INK, color: '#fff', fontSize: 11,
+                          fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                        }}
+                      >
                         {p.letter}
                       </div>
                       <div style={{ fontSize: 10, lineHeight: 1.3, flex: 1 }}>
@@ -177,41 +239,54 @@ export const PlacematPreview = forwardRef<HTMLDivElement, { data: PlacematData }
                     </div>
                   ))}
                 </div>
-              </div>
+              </Panel>
 
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
-                <div style={{ border: '2px solid #231F20', borderRadius: 10, overflow: 'hidden', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ background: '#231F20', color: '#fff', padding: '4px 10px', fontSize: 12, fontWeight: 800, letterSpacing: 1 }}>EQUIPMENT REQUIRED</div>
-                  <div style={{ padding: 6, display: 'flex', flexWrap: 'wrap', gap: 4, alignContent: 'flex-start' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 9, minWidth: 0 }}>
+                <Panel title="Equipment required" style={{ flex: 1 }}>
+                  <div style={{ padding: 7, display: 'flex', flexWrap: 'wrap', gap: 4, alignContent: 'flex-start' }}>
                     {data.equipment.length > 0 ? data.equipment.map((e) => (
-                      <span key={e} style={{ fontSize: 9.5, fontWeight: 600, background: '#f4f4f5', border: '1px solid #d4d4d8', borderRadius: 999, padding: '2px 7px' }}>{e}</span>
-                    )) : <span style={{ fontSize: 10, color: '#71717a' }}>No equipment selected</span>}
+                      <span
+                        key={e}
+                        style={{
+                          fontSize: 9.5, fontWeight: 600, background: SOFT, border: `1px solid ${LINE}`,
+                          borderRadius: 999, padding: '2px 8px',
+                        }}
+                      >
+                        {e}
+                      </span>
+                    )) : <span style={{ fontSize: 10, color: '#71717a' }}>Set the IDDSI levels to list equipment</span>}
                   </div>
-                </div>
-                <div style={{ border: '2px solid #231F20', borderRadius: 10, overflow: 'hidden', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ background: '#231F20', color: '#fff', padding: '4px 10px', fontSize: 12, fontWeight: 800, letterSpacing: 1 }}>FOOD PREFERENCES & NOTES</div>
-                  <div style={{ padding: 6, fontSize: 10, lineHeight: 1.35, whiteSpace: 'pre-wrap' }}>
-                    {data.preferences || <span style={{ color: '#71717a' }}>No preferences recorded</span>}
+                </Panel>
+                <Panel title="Food preferences & likes" style={{ flex: 1 }}>
+                  <div style={{ padding: 7, fontSize: 10, lineHeight: 1.35, whiteSpace: 'pre-wrap' }}>
+                    {data.preferences || <span style={{ color: '#9a9aa5' }}>No preferences recorded</span>}
                   </div>
-                </div>
+                </Panel>
+                {data.instructions?.trim() && (
+                  <Panel title="Additional instructions" style={{ flex: 1 }}>
+                    <div style={{ padding: 7, fontSize: 10, lineHeight: 1.35, whiteSpace: 'pre-wrap' }}>
+                      {data.instructions}
+                    </div>
+                  </Panel>
+                )}
               </div>
             </div>
 
             {/* Testing + QR codes */}
-            <div style={{ display: 'flex', gap: 8, height: 132 }}>
+            <div style={{ display: 'flex', gap: 9, height: 132 }}>
               <TestingBlock title="Food testing method" meta={data.food} qrLabel="Scan to watch IDDSI Food Testing Method" />
               <TestingBlock title="Drink testing method" meta={data.drink} qrLabel="Scan to watch IDDSI Drink Testing Method" />
             </div>
 
             {/* Footer */}
-            <div style={{ borderTop: '1px solid #d4d4d8', paddingTop: 4, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-              <div style={{ fontSize: 7.5, color: '#52525b', lineHeight: 1.3, flex: 1 }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <div style={{ fontSize: 7.5, color: '#6B6B78', lineHeight: 1.3, flex: 1 }}>
                 {PLACEMAT_DISCLAIMER}
                 <br />
                 © The International Dysphagia Diet Standardisation Initiative 2019 · iddsi.org/standards/framework · CC BY-SA 4.0.
               </div>
               {data.reviewDate && (
-                <div style={{ fontSize: 8, fontWeight: 700, color: '#231F20', whiteSpace: 'nowrap' }}>Review by: {data.reviewDate}</div>
+                <div style={{ fontSize: 8, fontWeight: 700, color: INK, whiteSpace: 'nowrap' }}>Review by: {data.reviewDate}</div>
               )}
             </div>
           </div>
