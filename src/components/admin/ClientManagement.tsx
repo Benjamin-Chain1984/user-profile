@@ -33,11 +33,13 @@ import { ClientAuditDialog } from './ClientAuditDialog';
 import { ClientAccessDialog } from './ClientAccessDialog';
 import { toast } from 'sonner';
 import type { Client } from '@/services/clientToken/types';
+import { TrafficLightIcon } from '@/components/shared/TrafficLightIcon';
+import { TrafficLightBadge } from '@/components/shared/TrafficLightBadge';
+import { useClientsIdealSignal } from '@/hooks/useClientsIdealSignal';
 
 interface ClientRow {
   id: string;
   preferred_name: string;
-  short_bio: string | null;
   photo_url: string | null;
   beacon_id: string | null;
   status: string;
@@ -58,6 +60,7 @@ export function ClientManagement() {
   const [auditClient, setAuditClient] = useState<ClientRow | null>(null);
   const [accessClient, setAccessClient] = useState<ClientRow | null>(null);
   const { activeClientId, setActiveClient } = useActiveClient();
+  const { signals } = useClientsIdealSignal(clients.map((c) => c.id));
 
   const openClientProfile = (client: ClientRow) => {
     setActiveClient(client.id, client.preferred_name);
@@ -144,6 +147,7 @@ export function ClientManagement() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
+                  <TableHead>IDEAL signal</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>QR Token</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -183,13 +187,39 @@ export function ClientManagement() {
                               </Badge>
                             )}
                           </div>
-                          {client.short_bio && (
-                            <div className="text-sm text-muted-foreground line-clamp-1">
-                              {client.short_bio}
-                            </div>
-                          )}
                         </div>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {(() => {
+                        const signal = signals[client.id];
+                        if (!signal) {
+                          return <span className="text-sm text-muted-foreground">—</span>;
+                        }
+                        return (
+                          <div className="flex items-center gap-2">
+                            <TrafficLightIcon status={signal.status} size="sm" />
+                            <div className="min-w-0">
+                              <TrafficLightBadge
+                                status={signal.status}
+                                size="sm"
+                                isPaused={signal.isPaused}
+                              />
+                              <div className="text-xs text-muted-foreground mt-0.5">
+                                {signal.isPaused
+                                  ? 'Monitoring paused'
+                                  : signal.redCount > 0
+                                    ? `${signal.redCount} Red alert${signal.redCount > 1 ? 's' : ''}`
+                                    : signal.amberCount > 0
+                                      ? `${signal.amberCount} Amber alert${signal.amberCount > 1 ? 's' : ''}`
+                                      : signal.needsSetup
+                                        ? 'Setup required'
+                                        : 'No alerts'}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell>
                       <Badge variant={client.status === 'active' ? 'default' : 'secondary'}>
