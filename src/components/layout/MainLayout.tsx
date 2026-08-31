@@ -6,6 +6,8 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 import { ViewAsToggle } from './ViewAsToggle';
 import { PreviewBanner } from './PreviewBanner';
+import { useProfile } from '@/contexts/ProfileContext';
+import { UserRound } from 'lucide-react';
 const idealLogo = '/Ideal-logo.png';
 
 interface MainLayoutProps {
@@ -13,6 +15,9 @@ interface MainLayoutProps {
 }
 
 export function MainLayout({ children }: MainLayoutProps) {
+  const { profile } = useProfile();
+  const showClientChip = profile && profile.id !== '1' && profile.fullName !== 'Loading...';
+
   return (
     <SidebarProvider>
       <div className="h-screen overflow-hidden flex w-full flex-col">
@@ -29,7 +34,13 @@ export function MainLayout({ children }: MainLayoutProps) {
                   className="h-8 sm:h-10 lg:h-12 w-auto shrink-0"
                 />
               </div>
-              <div className="shrink-0">
+              <div className="flex items-center gap-2 shrink-0">
+                {showClientChip && (
+                  <div className="flex items-center gap-1.5 rounded-full bg-primary/10 text-primary px-3 py-1.5 text-xs sm:text-sm font-medium max-w-[140px] sm:max-w-[220px]">
+                    <UserRound className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{profile.fullName}</span>
+                  </div>
+                )}
                 <ViewAsToggle />
               </div>
             </header>

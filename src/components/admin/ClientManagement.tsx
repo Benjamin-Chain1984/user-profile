@@ -17,7 +17,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, RefreshCw, FileText, Edit, Eye, Printer, MoreHorizontal } from 'lucide-react';
+import { Plus, RefreshCw, FileText, Edit, Eye, Printer, MoreHorizontal, UserRound } from 'lucide-react';
+import { useActiveClient } from '@/contexts/ActiveClientContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,6 +55,13 @@ export function ClientManagement() {
   const [posterClient, setPosterClient] = useState<{ client: ClientRow; token: string } | null>(null);
   const [rotatingClient, setRotatingClient] = useState<ClientRow | null>(null);
   const [auditClient, setAuditClient] = useState<ClientRow | null>(null);
+  const { activeClientId, setActiveClient } = useActiveClient();
+
+  const openClientProfile = (client: ClientRow) => {
+    setActiveClient(client.id, client.preferred_name);
+    toast.success(`Now viewing ${client.preferred_name}'s profile`);
+    navigate('/');
+  };
 
   const fetchClients = async () => {
     setIsLoading(true);
@@ -187,6 +195,11 @@ export function ClientManagement() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem onClick={() => openClientProfile(client)}>
+                            <UserRound className="h-4 w-4 mr-2" />
+                            Open Profile
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => setEditingClient(client)}>
                             <Edit className="h-4 w-4 mr-2" />
                             Edit Client
