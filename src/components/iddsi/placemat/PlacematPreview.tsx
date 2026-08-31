@@ -142,7 +142,7 @@ export const PlacematPreview = forwardRef<HTMLDivElement, { data: PlacematData }
 
             <div style={{ display: 'flex', gap: 8, height: 94 }}><LevelBlock kind="FOOD" meta={data.food} /><LevelBlock kind="DRINK" meta={data.drink} /></div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1.55fr .9fr .95fr', gap: 8, height: 218 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.55fr 1fr', gap: 8, height: 196 }}>
               <Section title="Mealtime support — PIRATES">
                 <div style={{ padding: '6px 8px', display: 'grid', gap: 3 }}>
                   {data.pirates.filter((item) => item.value.trim()).map((item) => {
