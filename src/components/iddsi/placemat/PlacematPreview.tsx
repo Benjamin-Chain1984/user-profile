@@ -176,7 +176,7 @@ export const PlacematPreview = forwardRef<HTMLDivElement, { data: PlacematData }
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.35fr', gap: 8, minHeight: 66 }}>
-              <Section title="Equipment required"><div style={{ padding: 7, display: 'flex', flexWrap: 'wrap', gap: 4, alignContent: 'flex-start' }}>{data.equipment.map((item) => <span key={item} style={{ padding: '2px 6px', background: SOFT, border: `1px solid ${LINE}`, fontSize: 8.5, fontWeight: 700 }}>{item}</span>)}</div></Section>
+              <Section title="Equipment Needed for IDDSI Testing"><div style={{ padding: 7, display: 'flex', flexWrap: 'wrap', gap: 4, alignContent: 'flex-start' }}>{data.equipment.map((item) => <span key={item} style={{ padding: '2px 6px', background: SOFT, border: `1px solid ${LINE}`, fontSize: 8.5, fontWeight: 700 }}>{item}</span>)}</div></Section>
               <Section title="Food preferences & likes"><div style={{ padding: 7, fontSize: 10.5, lineHeight: 1.32, whiteSpace: 'pre-wrap' }}>{data.preferences || <span style={{ color: MUTED_INK }}>None recorded — add preferences in the panel below the preview.</span>}</div></Section>
             </div>
 
