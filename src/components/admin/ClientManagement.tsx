@@ -114,6 +114,11 @@ export function ClientManagement() {
         </Button>
       </div>
 
+      <p className="text-sm text-muted-foreground flex items-center gap-2 bg-muted/50 border border-border rounded-lg px-3 py-2">
+        <UserRound className="h-4 w-4 shrink-0 text-primary" />
+        Click a client (or their Open button) to switch into their individual profile. The active client is highlighted.
+      </p>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
