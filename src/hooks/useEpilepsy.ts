@@ -14,6 +14,7 @@ import type {
   EpilepsyAlert,
   EpilepsyStatusInfo,
 } from '@/types/epilepsy';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 const DEFAULT_CONFIG: Partial<EpilepsyConfig> = {
   enable_seizure_monitoring: true,
@@ -34,6 +35,7 @@ const DEFAULT_CONFIG: Partial<EpilepsyConfig> = {
 };
 
 export function useEpilepsyConfig(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -90,6 +92,7 @@ export function useEpilepsyConfig(clientId?: string) {
 }
 
 export function useSeizureEvents(clientId?: string, limit = 100) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -152,6 +155,7 @@ export function useSeizureEvents(clientId?: string, limit = 100) {
 }
 
 export function useSeizureActions(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -197,6 +201,7 @@ export function useSeizureActions(clientId?: string) {
 }
 
 export function useEpilepsyAlerts(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -262,6 +267,7 @@ export function useEpilepsyAlerts(clientId?: string) {
 }
 
 export function useEpilepsyStatus(clientId?: string): EpilepsyStatusInfo {
+  clientId = useClientIdOrActive(clientId);
   const { events } = useSeizureEvents(clientId);
   const { config } = useEpilepsyConfig(clientId);
   const { alerts } = useEpilepsyAlerts(clientId);

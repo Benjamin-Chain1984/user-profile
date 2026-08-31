@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { addMonths, differenceInDays } from 'date-fns';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 export interface CatheterCarePlan {
   id: string;
@@ -136,6 +137,7 @@ export const DEFAULT_ESCALATION_INSTRUCTIONS: EscalationInstruction[] = [
 ];
 
 export function useCatheterCarePlan(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();

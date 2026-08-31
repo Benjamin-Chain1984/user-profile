@@ -14,6 +14,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { TrafficLightStatusCard } from '@/components/shared/TrafficLightStatusCard';
 import { toTrafficLight } from '@/types/trafficLight';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 function getNextDueVital(vitals: PerVitalStatus[]): { label: string; dueAt: Date } | null {
   const now = Date.now();
@@ -45,6 +46,7 @@ interface HealthMonitoringStatusCardProps {
 }
 
 export function HealthMonitoringStatusCard({ clientId }: HealthMonitoringStatusCardProps) {
+  clientId = useClientIdOrActive(clientId);
   const { entries } = useVitalSignEntries(clientId, 50);
   const { alerts } = useVitalSignAlerts(clientId);
   const { criteriaMap } = useAlteredCriteria(clientId);

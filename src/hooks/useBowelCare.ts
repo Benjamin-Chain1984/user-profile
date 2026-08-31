@@ -19,6 +19,7 @@ import type {
   BowelCareStatusInfo,
   BowelIndicators,
 } from '@/types/bowelCare';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 // Default config values
 const DEFAULT_CONFIG: Partial<BowelCareConfig> = {
@@ -42,6 +43,7 @@ const DEFAULT_CONFIG: Partial<BowelCareConfig> = {
 };
 
 export function useBowelCareConfig(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -136,6 +138,7 @@ export function useBowelCareConfig(clientId?: string) {
 }
 
 export function usePrnMedications(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -247,6 +250,7 @@ export function usePrnMedications(clientId?: string) {
 }
 
 export function useBowelLogs(clientId?: string, limit = 50) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -353,6 +357,7 @@ export function useBowelLogs(clientId?: string, limit = 50) {
 }
 
 export function usePrnAdministrations(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -451,6 +456,7 @@ export function usePrnAdministrations(clientId?: string) {
 }
 
 export function useBowelCareAlerts(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -541,6 +547,7 @@ export function useBowelCareAlerts(clientId?: string) {
 }
 
 export function useBowelCareStatus(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { config } = useBowelCareConfig(clientId);
   const { logs } = useBowelLogs(clientId, 50);
   const { alerts } = useBowelCareAlerts(clientId);
@@ -568,6 +575,7 @@ export function useBowelCareStatus(clientId?: string) {
 }
 
 export function useEscalationRecords(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();

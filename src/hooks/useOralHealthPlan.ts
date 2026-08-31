@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { addMonths, differenceInDays } from 'date-fns';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 export interface OralHealthPlan {
   id: string;
@@ -74,6 +75,7 @@ export interface PlanStatusInfo {
 }
 
 export function useOralHealthCarePlan(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();

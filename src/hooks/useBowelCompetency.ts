@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { addMonths, differenceInDays } from 'date-fns';
 import type { CompetencyAttempt, CompetencyConfig, CompetencyAnswer, CompetencyStatus, StaffCompetencyInfo } from '@/types/bowelCompetency';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 const DEFAULT_CONFIG: Partial<CompetencyConfig> = {
   pass_threshold_percent: 80,
@@ -16,6 +17,7 @@ const DEFAULT_CONFIG: Partial<CompetencyConfig> = {
 };
 
 export function useBowelCompetencyConfig(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -81,6 +83,7 @@ export function useBowelCompetencyConfig(clientId?: string) {
 }
 
 export function useBowelCompetencyAttempts(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -184,6 +187,7 @@ export function useStaffCompetencyStatus(clientId?: string, expiryWarningDays = 
   overdueCount: number;
   expiringSoonCount: number;
 } {
+  clientId = useClientIdOrActive(clientId);
   const { data: attempts = [] } = useQuery({
     queryKey: ['bowelCompetencyAttempts', clientId],
     queryFn: async () => {

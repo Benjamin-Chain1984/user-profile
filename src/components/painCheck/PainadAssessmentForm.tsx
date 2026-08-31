@@ -19,6 +19,7 @@ import {
 import { ASSESSMENT_TRIGGER_LABELS } from '@/types/painAssessment';
 import { PainActionForm } from './PainActionForm';
 import { ArrowLeft, ArrowRight, Check, AlertTriangle, Info, ChevronDown } from 'lucide-react';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 interface PainadAssessmentFormProps {
   onComplete: () => void;
@@ -27,6 +28,7 @@ interface PainadAssessmentFormProps {
 }
 
 export function PainadAssessmentForm({ onComplete, onCancel, clientId }: PainadAssessmentFormProps) {
+  clientId = useClientIdOrActive(clientId);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({
     q1_breathing: -1,

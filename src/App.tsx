@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { RolePreviewProvider } from "@/contexts/RolePreviewContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
+import { ActiveClientProvider } from "@/contexts/ActiveClientContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -45,11 +46,13 @@ const queryClient = new QueryClient({
 function ProtectedAppShell() {
   return (
     <ProtectedRoute>
-      <ProfileProvider>
-        <MainLayout>
-          <Outlet />
-        </MainLayout>
-      </ProfileProvider>
+      <ActiveClientProvider>
+        <ProfileProvider>
+          <MainLayout>
+            <Outlet />
+          </MainLayout>
+        </ProfileProvider>
+      </ActiveClientProvider>
     </ProtectedRoute>
   );
 }

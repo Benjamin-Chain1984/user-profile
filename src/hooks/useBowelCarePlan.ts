@@ -14,8 +14,10 @@ import type {
   PlanStatusInfo,
   PlanReviewStatus,
 } from '@/types/bowelCarePlan';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 export function useBowelCarePlan(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();

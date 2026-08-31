@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { NotificationContact, ModuleAlertRecipient, AlertSeverity } from '@/types/notificationContacts';
 import { toast } from 'sonner';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 const CONTACTS_KEY = ['notification_contacts'];
 const RECIPIENTS_KEY = ['module_alert_recipients'];
@@ -11,6 +12,7 @@ const RECIPIENTS_KEY = ['module_alert_recipients'];
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function useNotificationContacts(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   return useQuery({
     queryKey: [...CONTACTS_KEY, clientId],
     queryFn: async () => {
@@ -26,6 +28,7 @@ export function useNotificationContacts(clientId?: string) {
 }
 
 export function useActiveNotificationContacts(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   return useQuery({
     queryKey: [...CONTACTS_KEY, clientId, 'active'],
     queryFn: async () => {
@@ -125,6 +128,7 @@ export function useDeleteNotificationContact() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function useModuleAlertRecipients(moduleName: string, clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   return useQuery({
     queryKey: [...RECIPIENTS_KEY, moduleName, clientId],
     queryFn: async () => {

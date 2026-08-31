@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { addMonths, differenceInDays } from 'date-fns';
 import type { PressureReliefPlan, RotationPosition, WeeklyRotationSequence } from '@/types/pressureArea';
 import { normalizeRotationSequence } from '@/types/pressureArea';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 export interface PressureReliefPlanVersion {
   id: string;
@@ -40,6 +41,7 @@ export interface PlanStatusInfo {
 }
 
 export function usePressureReliefPlan(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
