@@ -49,13 +49,13 @@ interface AdminNavItem {
 
 const adminItems: AdminNavItem[] = [
   {
-    title: 'Clients',
+    title: 'Admin',
     url: '/admin',
     icon: Users,
     requiresAdmin: true,
     children: [
       { title: 'Clients', url: '/admin' },
-      { title: 'Team', url: '/admin/team' },
+      { title: 'My Team', url: '/admin/team' },
     ],
   },
 ];
@@ -64,6 +64,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { canAccessAdmin } = useRoleAccess();
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
   const isActive = (path: string) => location.pathname === path;
 
