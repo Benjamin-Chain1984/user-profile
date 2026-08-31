@@ -3,7 +3,6 @@
  * Uses role-based access control with preview support
  */
 
-import { useState, useEffect } from 'react';
 import { Home, Users, LogOut, Lock, ChevronRight } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
@@ -67,20 +66,6 @@ export function AppSidebar() {
   const { canAccessAdmin } = useRoleAccess();
 
   const isActive = (path: string) => location.pathname === path;
-
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
-
-  useEffect(() => {
-    setOpenGroups((prev) => {
-      const next: Record<string, boolean> = { ...prev };
-      adminItems.forEach((item) => {
-        if (item.children) {
-          next[item.title] = item.children.some((child) => isActive(child.url));
-        }
-      });
-      return next;
-    });
-  }, [location.pathname]);
 
   const handleRestrictedClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -157,10 +142,7 @@ export function AppSidebar() {
                 return (
                   <Collapsible
                     key={item.title}
-                    open={openGroups[item.title]}
-                    onOpenChange={(open) =>
-                      setOpenGroups((prev) => ({ ...prev, [item.title]: open }))
-                    }
+                    open={isGroupActive}
                     className="group/collapsible"
                   >
                     <SidebarMenuItem>
