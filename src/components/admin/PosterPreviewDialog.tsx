@@ -22,7 +22,7 @@ import { generatePosterPdf } from '@/utils/generatePosterPdf';
 interface ClientRow {
   id: string;
   preferred_name: string;
-  short_bio: string | null;
+  short_bio?: string | null;
   photo_url: string | null;
 }
 
