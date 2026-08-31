@@ -3,7 +3,8 @@
  * Uses role-based access control with preview support
  */
 
-import { Home, Users, LogOut, Lock } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Home, Users, UserCog, LogOut, Lock, ChevronRight } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,8 +19,16 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarFooter,
 } from '@/components/ui/sidebar';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import {
   Tooltip,
   TooltipContent,
@@ -31,8 +40,25 @@ const mainItems = [
   { title: 'Dashboard', url: '/', icon: Home, requiresAdmin: false },
 ];
 
-const adminItems = [
-  { title: 'Clients', url: '/admin', icon: Users, requiresAdmin: true },
+interface AdminNavItem {
+  title: string;
+  url: string;
+  icon: React.ElementType;
+  requiresAdmin: boolean;
+  children?: { title: string; url: string }[];
+}
+
+const adminItems: AdminNavItem[] = [
+  {
+    title: 'Clients',
+    url: '/admin',
+    icon: Users,
+    requiresAdmin: true,
+    children: [
+      { title: 'Clients', url: '/admin' },
+      { title: 'Team', url: '/admin/team' },
+    ],
+  },
 ];
 
 export function AppSidebar() {
