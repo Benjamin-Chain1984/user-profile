@@ -27,6 +27,23 @@ export function AlertDashboard() {
     );
   }
 
+  // Fresh profile with no modules set up — prompt setup instead of showing IDEAL
+  if (currentStatus === 'monitor' && redAlerts.length === 0 && amberAlerts.length === 0) {
+    return (
+      <div className="bg-warning/10 border border-warning/20 rounded-2xl p-5">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-warning/20 rounded-full">
+            <AlertTriangle className="w-6 h-6 text-warning" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-foreground">Setup required</h3>
+            <p className="text-sm text-muted-foreground">Enable and configure health modules in the Profile tab to begin monitoring</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Only show Amber and Red alerts - IDEAL status means no alerts to display
   if (currentStatus === 'stable' || (redAlerts.length === 0 && amberAlerts.length === 0)) {
     return (
