@@ -29,8 +29,7 @@ import { toast } from 'sonner';
 interface ClientRow {
   id: string;
   preferred_name: string;
-  short_bio: string | null;
-  photo_url: string | null;
+  beacon_id: string | null;
   status: string;
 }
 
@@ -50,8 +49,7 @@ export function ClientFormDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     preferred_name: '',
-    short_bio: '',
-    photo_url: '',
+    beacon_id: '',
     status: 'active',
   });
 
