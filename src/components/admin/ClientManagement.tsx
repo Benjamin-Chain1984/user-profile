@@ -40,7 +40,6 @@ import { useClientsIdealSignal } from '@/hooks/useClientsIdealSignal';
 interface ClientRow {
   id: string;
   preferred_name: string;
-  short_bio: string | null;
   photo_url: string | null;
   beacon_id: string | null;
   status: string;
@@ -148,6 +147,7 @@ export function ClientManagement() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
+                  <TableHead>IDEAL signal</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>QR Token</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
