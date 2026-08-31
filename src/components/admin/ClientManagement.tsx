@@ -311,6 +311,14 @@ export function ClientManagement() {
         onOpenChange={(open) => !open && setAuditClient(null)}
         client={auditClient}
       />
+
+      <ClientAccessDialog
+        open={!!accessClient}
+        onOpenChange={(open) => !open && setAccessClient(null)}
+        clientId={accessClient?.id ?? null}
+        clientName={accessClient?.preferred_name}
+      />
+
     </div>
   );
 }
