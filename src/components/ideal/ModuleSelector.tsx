@@ -115,12 +115,32 @@ export function ModuleSelector() {
                   </div>
                   <Switch
                     checked={module.enabled}
-                    onCheckedChange={() => isAdmin && toggleModule(module.id)}
+                    onCheckedChange={() => handleToggle(module.id, module.name, module.enabled)}
                     size="lg"
                     variant={module.enabled ? 'success' : 'default'}
                     disabled={!isAdmin}
                   />
                 </div>
+
+                {module.enabled && !isSetupComplete(module.id) && (
+                  <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0 text-warning" />
+                    <p className="flex-1 text-sm text-warning">
+                      Setup required — no settings have been applied yet.
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        markSetupComplete(module.id);
+                        navigate(`/module/${module.id}`);
+                      }}
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      Set up
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {/* Health Monitoring Sub-modules */}
