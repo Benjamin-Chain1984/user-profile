@@ -9,7 +9,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { calculateBowelCareStatus, toBowelCareStatusInfo } from '@/utils/bowelCareStatusCalculator';
 import type {
-import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
   BowelCareConfig,
   PrnMedication,
   BowelLogEntry,
@@ -20,6 +19,7 @@ import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
   BowelCareStatusInfo,
   BowelIndicators,
 } from '@/types/bowelCare';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 // Default config values
 const DEFAULT_CONFIG: Partial<BowelCareConfig> = {

@@ -7,7 +7,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import type {
-import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
   EnteralConfig,
   EnteralFeedLog,
   EnteralMedicationConfig,
@@ -15,6 +14,7 @@ import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
   EnteralStomaCheck,
   EnteralAlert,
 } from '@/types/enteral';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 /** Helper: resolve created_by UUIDs → full_name via profiles table */
 async function enrichWithStaffNames<T extends { created_by?: string | null }>(rows: T[]): Promise<(T & { staff_name?: string | null })[]> {

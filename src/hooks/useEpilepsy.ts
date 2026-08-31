@@ -8,13 +8,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { calculateEpilepsyStatus } from '@/utils/epilepsyStatusCalculator';
 import type {
-import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
   EpilepsyConfig,
   SeizureEvent,
   SeizureAction,
   EpilepsyAlert,
   EpilepsyStatusInfo,
 } from '@/types/epilepsy';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 const DEFAULT_CONFIG: Partial<EpilepsyConfig> = {
   enable_seizure_monitoring: true,

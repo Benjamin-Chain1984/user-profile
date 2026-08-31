@@ -7,7 +7,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import type {
-import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
   OralHealthConfig,
   OralHealthPlanCategory,
   OralHealthTaskLog,
@@ -18,6 +17,7 @@ import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
   AssessmentFrequency,
   MouthAnnotation,
 } from '@/types/oralHealth';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 const DEFAULT_CONFIG: Partial<OralHealthConfig> = {
   enable_compliance_monitoring: false,

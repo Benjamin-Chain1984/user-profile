@@ -9,7 +9,6 @@ import { useToast } from '@/hooks/use-toast';
 import { calculateEntryStatuses } from '@/utils/vitalSignStatusCalculator';
 import { computeHealthMonitoringStatus } from '@/utils/computeHealthMonitoringStatus';
 import type {
-import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
   VitalSignEntry,
   VitalSignConfig,
   AlteredCriteria,
@@ -18,6 +17,7 @@ import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
   VitalType,
   HealthMonitoringStatusInfo,
 } from '@/types/healthMonitoring';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 // Default config values
 const DEFAULT_CONFIG: Partial<VitalSignConfig> = {
