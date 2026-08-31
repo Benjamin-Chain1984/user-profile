@@ -1,9 +1,21 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { RestrictedSection } from '@/components/ui/restricted-section';
+import { useModuleSetupStatus } from '@/hooks/useModuleSetupStatus';
 import { HEALTH_MONITORING_VITALS } from '@/types/ideal';
-import { AlertCircle, Heart, Activity, Wind, Thermometer, Lock } from 'lucide-react';
+import { AlertCircle, Heart, Activity, Wind, Thermometer, Lock, Settings } from 'lucide-react';
 
 const vitalIcons: Record<string, React.ElementType> = {
   'blood-pressure': Heart,
@@ -21,8 +33,27 @@ export function ModuleSelector() {
     toggleVital,
   } = useProfile();
   const { hasRole } = useAuth();
+  const navigate = useNavigate();
+  const { isSetupComplete, markSetupComplete } = useModuleSetupStatus();
+  const [setupPrompt, setSetupPrompt] = useState<{ id: string; name: string } | null>(null);
 
   const isAdmin = hasRole('admin');
+
+  const handleToggle = (moduleId: string, moduleName: string, isEnabled: boolean) => {
+    if (!isAdmin) return;
+    toggleModule(moduleId);
+    if (!isEnabled && !isSetupComplete(moduleId)) {
+      setSetupPrompt({ id: moduleId, name: moduleName });
+    }
+  };
+
+  const openModuleSettings = () => {
+    if (!setupPrompt) return;
+    markSetupComplete(setupPrompt.id);
+    const id = setupPrompt.id;
+    setSetupPrompt(null);
+    navigate(`/module/${id}`);
+  };
 
   const healthMonitoringEnabled = enabledModules.find(m => m.id === 'health-monitoring')?.enabled;
   
@@ -83,12 +114,32 @@ export function ModuleSelector() {
                   </div>
                   <Switch
                     checked={module.enabled}
-                    onCheckedChange={() => isAdmin && toggleModule(module.id)}
+                    onCheckedChange={() => handleToggle(module.id, module.name, module.enabled)}
                     size="lg"
                     variant={module.enabled ? 'success' : 'default'}
                     disabled={!isAdmin}
                   />
                 </div>
+
+                {module.enabled && !isSetupComplete(module.id) && (
+                  <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0 text-warning" />
+                    <p className="flex-1 text-sm text-warning">
+                      Setup required — no settings have been applied yet.
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        markSetupComplete(module.id);
+                        navigate(`/module/${module.id}`);
+                      }}
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      Set up
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {/* Health Monitoring Sub-modules */}
@@ -145,6 +196,31 @@ export function ModuleSelector() {
             : 'Module changes require administrator access. Contact your team leader or admin for updates.'}
         </p>
       </div>
+
+      <Dialog open={!!setupPrompt} onOpenChange={(open) => !open && setSetupPrompt(null)}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Set up {setupPrompt?.name}</DialogTitle>
+            <DialogDescription>
+              This module has been enabled with no settings applied — nothing is assumed.
+              Open the module and complete its <strong>Settings</strong> tab (thresholds,
+              schedules and alert contacts) before staff begin logging.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning">
+            Until setup is complete the module status stays Amber (Monitor) on the dashboard.
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setSetupPrompt(null)}>
+              Set up later
+            </Button>
+            <Button onClick={openModuleSettings}>
+              <Settings className="mr-2 h-4 w-4" />
+              Go to module settings
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
