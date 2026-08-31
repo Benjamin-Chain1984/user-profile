@@ -197,6 +197,31 @@ export function ModuleSelector() {
             : 'Module changes require administrator access. Contact your team leader or admin for updates.'}
         </p>
       </div>
+
+      <Dialog open={!!setupPrompt} onOpenChange={(open) => !open && setSetupPrompt(null)}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Set up {setupPrompt?.name}</DialogTitle>
+            <DialogDescription>
+              This module has been enabled with no settings applied — nothing is assumed.
+              Open the module and complete its <strong>Settings</strong> tab (thresholds,
+              schedules and alert contacts) before staff begin logging.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning">
+            Until setup is complete the module status stays Amber (Monitor) on the dashboard.
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setSetupPrompt(null)}>
+              Set up later
+            </Button>
+            <Button onClick={openModuleSettings}>
+              <Settings className="mr-2 h-4 w-4" />
+              Go to module settings
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
