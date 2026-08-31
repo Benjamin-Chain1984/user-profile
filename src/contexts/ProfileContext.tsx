@@ -336,14 +336,14 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
         // Load persisted enabled_modules from database
         const dbEnabledModules: string[] | null = (data as any).enabled_modules;
-        if (dbEnabledModules !== null && dbEnabledModules !== undefined) {
-          setEnabledModules((prev) =>
-            prev.map((m) => ({
-              ...m,
-              enabled: dbEnabledModules.includes(m.id),
-            }))
-          );
-        }
+        // A fresh profile (null) starts completely blank — all modules disabled until setup
+        const enabledIds = dbEnabledModules ?? [];
+        setEnabledModules((prev) =>
+          prev.map((m) => ({
+            ...m,
+            enabled: enabledIds.includes(m.id),
+          }))
+        );
       }
     } catch (err) {
       console.error('Error in fetchProfileFromDb:', err);
@@ -1633,8 +1633,11 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const hasRedAlert = !isMonitoringPaused && activeEnabledModules.some((m) => m.status === 'action');
   const hasAmberAlert = !isMonitoringPaused && activeEnabledModules.some((m) => m.status === 'monitor');
   
+  // A fresh profile with no modules enabled is never IDEAL — it requires setup (Amber)
+  const noModulesEnabled = activeEnabledModules.length === 0;
+
   const globalAlertState: GlobalAlertState = {
-    currentStatus: hasRedAlert ? 'action' : hasAmberAlert ? 'monitor' : 'stable',
+    currentStatus: hasRedAlert ? 'action' : (hasAmberAlert || noModulesEnabled) ? 'monitor' : 'stable',
     activeAlertsCount: activeAlerts.length,
     alerts: activeAlerts,
   };

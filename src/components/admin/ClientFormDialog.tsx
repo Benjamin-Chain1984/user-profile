@@ -103,6 +103,7 @@ export function ClientFormDialog({
           status: formData.status,
           poster_qr_token_hash: tokenHash,
           poster_qr_token_plain: token,
+          enabled_modules: [],
         } as any);
 
         if (error) throw error;
