@@ -395,20 +395,20 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       const [abbeyResult, painadResult, configResult] = await Promise.all([
         supabase
           .from('abbey_pain_assessments')
-          .select('total_score, severity, created_at')
+          .select('total_score, severity, created_at').eq('client_id', profile.id)
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle(),
         supabase
           .from('painad_assessments')
-          .select('total_score, severity, created_at')
+          .select('total_score, severity, created_at').eq('client_id', profile.id)
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle(),
         supabase
           .from('abbey_pain_config')
-          .select('overdue_alert_enabled, overdue_threshold_days, assessment_triggers')
-          .is('client_id', null)
+          .select('overdue_alert_enabled, overdue_threshold_days, assessment_triggers').eq('client_id', profile.id)
+          .eq('client_id', profile.id)
           .maybeSingle(),
       ]);
 
@@ -471,15 +471,15 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const fetchBowelCareStatus = async () => {
     try {
       const [configResult, logsResult, planResult] = await Promise.all([
-        supabase.from('bowel_care_config').select('*').limit(1).maybeSingle(),
-        supabase.from('bowel_log_entries').select('*').eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(50),
+        supabase.from('bowel_care_config').select('*').eq('client_id', profile.id).limit(1).maybeSingle(),
+        supabase.from('bowel_log_entries').select('*').eq('client_id', profile.id).eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(50),
         (() => {
           let query = supabase
             .from('bowel_care_plans')
             .select('id, version, status, published_at, next_review_due')
             .order('version', { ascending: false })
             .limit(1);
-          return profile?.id && profile.id !== '1' ? query.eq('client_id', profile.id).maybeSingle() : query.is('client_id', null).maybeSingle();
+          return profile?.id && profile.id !== '1' ? query.eq('client_id', profile.id).maybeSingle() : query.eq('client_id', profile.id).maybeSingle();
         })(),
       ]);
 
@@ -538,11 +538,11 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   // ── Weight & BMI ─────────────────────────────────────────────
   const fetchWeightStatus = async () => {
     try {
-      const { data: configData } = await supabase.from('weight_bmi_config').select('*').maybeSingle();
-      const { data: entries, error } = await supabase.from('weight_entries').select('*').eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(50);
+      const { data: configData } = await supabase.from('weight_bmi_config').select('*').eq('client_id', profile.id).maybeSingle();
+      const { data: entries, error } = await supabase.from('weight_entries').select('*').eq('client_id', profile.id).eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(50);
       if (error) { console.error('Error fetching weight entries:', error); return; }
 
-      const { data: alertsData } = await supabase.from('weight_bmi_alerts').select('*').order('created_at', { ascending: false });
+      const { data: alertsData } = await supabase.from('weight_bmi_alerts').select('*').eq('client_id', profile.id).order('created_at', { ascending: false });
 
       const typedEntries = (entries || []) as unknown as WeightEntry[];
       const typedConfig = configData as unknown as WeightBmiConfig | null;
@@ -561,17 +561,17 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   // ── Fluid Balance ────────────────────────────────────────────
   const fetchFluidStatus = async () => {
     try {
-      const { data: configData } = await supabase.from('fluid_config').select('*').maybeSingle();
+      const { data: configData } = await supabase.from('fluid_config').select('*').eq('client_id', profile.id).maybeSingle();
       // Fetch last 2 days to allow calculateDailyTotals to properly filter by day_boundary_time
       const twoDaysAgo = new Date();
       twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
       const cutoff = twoDaysAgo.toISOString();
-      const { data: intakeData, error } = await supabase.from('fluid_intake_entries').select('*').eq('is_undone', false).gte('event_occurred_at', cutoff).order('event_occurred_at', { ascending: false });
+      const { data: intakeData, error } = await supabase.from('fluid_intake_entries').select('*').eq('client_id', profile.id).eq('is_undone', false).gte('event_occurred_at', cutoff).order('event_occurred_at', { ascending: false });
       if (error) { console.error('Error fetching fluid intake:', error); return; }
 
       let outputData: FluidOutputEntry[] = [];
       if (configData?.enable_output_logging) {
-        const { data: outputs } = await supabase.from('fluid_output_entries').select('*').eq('is_undone', false).gte('event_occurred_at', cutoff);
+        const { data: outputs } = await supabase.from('fluid_output_entries').select('*').eq('client_id', profile.id).eq('is_undone', false).gte('event_occurred_at', cutoff);
         outputData = (outputs || []) as unknown as FluidOutputEntry[];
       }
 
@@ -640,8 +640,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   // ── Sleep ────────────────────────────────────────────────────
   const fetchSleepStatus = async () => {
     try {
-      const { data: configData } = await supabase.from('sleep_config').select('*').maybeSingle();
-      const { data: entries, error } = await supabase.from('sleep_entries').select('*').eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(50);
+      const { data: configData } = await supabase.from('sleep_config').select('*').eq('client_id', profile.id).maybeSingle();
+      const { data: entries, error } = await supabase.from('sleep_entries').select('*').eq('client_id', profile.id).eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(50);
       if (error) { console.error('Error fetching sleep entries:', error); return; }
 
       const typedEntries = (entries || []) as unknown as SleepEntry[];
@@ -667,16 +667,16 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const fetchOralHealthStatus = async () => {
     try {
       const [configResult, assessmentResult, taskLogResult, planResult] = await Promise.all([
-        supabase.from('oral_health_config').select('*').maybeSingle(),
-        supabase.from('oral_health_assessments').select('*').eq('is_undone', false).order('created_at', { ascending: false }).limit(10),
-        supabase.from('oral_health_task_logs').select('*').eq('is_undone', false).order('log_date', { ascending: false }).limit(50),
+        supabase.from('oral_health_config').select('*').eq('client_id', profile.id).maybeSingle(),
+        supabase.from('oral_health_assessments').select('*').eq('client_id', profile.id).eq('is_undone', false).order('created_at', { ascending: false }).limit(10),
+        supabase.from('oral_health_task_logs').select('*').eq('client_id', profile.id).eq('is_undone', false).order('log_date', { ascending: false }).limit(50),
         (() => {
           let query = supabase
             .from('oral_health_plans')
             .select('id, version, status, published_at, next_review_due')
             .order('version', { ascending: false })
             .limit(1);
-          return profile?.id && profile.id !== '1' ? query.eq('client_id', profile.id).maybeSingle() : query.is('client_id', null).maybeSingle();
+          return profile?.id && profile.id !== '1' ? query.eq('client_id', profile.id).maybeSingle() : query.eq('client_id', profile.id).maybeSingle();
         })(),
       ]);
 
@@ -723,7 +723,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     try {
       const { data: entries, error } = await supabase
         .from('vital_sign_entries')
-        .select('*')
+        .select('*').eq('client_id', profile.id)
         .eq('is_undone', false)
         .order('event_occurred_at', { ascending: false })
         .limit(50);
@@ -732,22 +732,22 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
       const { data: alertsData } = await supabase
         .from('vital_sign_alerts')
-        .select('*')
+        .select('*').eq('client_id', profile.id)
         .is('resolved_at', null)
         .order('created_at', { ascending: false });
 
       // Fetch altered criteria for recalculation
       const { data: alteredCriteriaData } = await supabase
         .from('vital_sign_altered_criteria')
-        .select('*')
+        .select('*').eq('client_id', profile.id)
         .eq('is_active', true)
         .eq('confirmed_by_medical_professional', true);
 
       // Fetch config for schedule/frequency overdue checks
       const { data: configData } = await supabase
         .from('vital_sign_config')
-        .select('*')
-        .is('client_id', null)
+        .select('*').eq('client_id', profile.id)
+        .eq('client_id', profile.id)
         .maybeSingle();
 
       const typedEntries = (entries || []) as unknown as VitalSignEntry[];
@@ -812,10 +812,10 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   // ── Epilepsy & Seizures ──────────────────────────────────────
   const fetchEpilepsyStatus = async () => {
     try {
-      const { data: configData } = await supabase.from('epilepsy_config').select('*').limit(1).maybeSingle();
+      const { data: configData } = await supabase.from('epilepsy_config').select('*').eq('client_id', profile.id).limit(1).maybeSingle();
       const { data: events, error } = await supabase
         .from('seizure_events')
-        .select('*')
+        .select('*').eq('client_id', profile.id)
         .eq('is_undone', false)
         .order('event_occurred_at', { ascending: false })
         .limit(100);
@@ -823,7 +823,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
       const { data: alertsData } = await supabase
         .from('epilepsy_alerts')
-        .select('*')
+        .select('*').eq('client_id', profile.id)
         .is('resolved_at', null)
         .order('created_at', { ascending: false });
 
@@ -847,12 +847,12 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   // ── Continence Management ────────────────────────────────────
   const fetchContinenceStatus = async () => {
     try {
-      const { data: configData } = await supabase.from('continence_config').select('*').limit(1).maybeSingle();
+      const { data: configData } = await supabase.from('continence_config').select('*').eq('client_id', profile.id).limit(1).maybeSingle();
       
       // Latest pad change
       const { data: padChanges } = await supabase
         .from('continence_pad_changes')
-        .select('*')
+        .select('*').eq('client_id', profile.id)
         .eq('is_undone', false)
         .order('event_occurred_at', { ascending: false })
         .limit(10);
@@ -860,7 +860,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       // Recent skin checks
       const { data: skinChecks } = await supabase
         .from('continence_skin_checks')
-        .select('*')
+        .select('*').eq('client_id', profile.id)
         .eq('is_undone', false)
         .order('event_occurred_at', { ascending: false })
         .limit(10);
@@ -868,7 +868,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       // Latest UTI test
       const { data: utiTests } = await supabase
         .from('continence_uti_tests')
-        .select('*')
+        .select('*').eq('client_id', profile.id)
         .eq('is_undone', false)
         .order('test_date', { ascending: false })
         .limit(1);
@@ -876,7 +876,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       // Latest consumables check
       const { data: consumables } = await supabase
         .from('continence_consumables_checks')
-        .select('*')
+        .select('*').eq('client_id', profile.id)
         .eq('is_undone', false)
         .order('check_date', { ascending: false })
         .limit(1);
@@ -967,7 +967,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   // ── Urinary Catheter ─────────────────────────────────────────
   const fetchCatheterStatus = async () => {
     try {
-      const { data: configData } = await supabase.from('catheter_config').select('*').limit(1).maybeSingle();
+      const { data: configData } = await supabase.from('catheter_config').select('*').eq('client_id', profile.id).limit(1).maybeSingle();
 
       // Fetch care plan as source of truth, preferring published and falling back to draft
       // Query with client_id matching the module's hook logic to ensure consistency
@@ -983,7 +983,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         if (clientIdForQuery) {
           q = q.eq('client_id', clientIdForQuery);
         } else {
-          q = q.is('client_id', null);
+          q = q.eq('client_id', profile.id);
         }
         return q;
       };
@@ -997,7 +997,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           .from('catheter_care_plans')
           .select('id, version, status, published_at, next_review_due, change_interval, flush_prescribed, flush_frequency, flush_custom_interval')
           .eq('status', 'published')
-          .is('client_id', null)
+          .eq('client_id', profile.id)
           .order('version', { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -1013,7 +1013,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
             .from('catheter_care_plans')
             .select('id, version, status, published_at, next_review_due, change_interval, flush_prescribed, flush_frequency, flush_custom_interval')
             .eq('status', 'draft')
-            .is('client_id', null)
+            .eq('client_id', profile.id)
             .order('version', { ascending: false })
             .limit(1)
             .maybeSingle();
@@ -1024,10 +1024,10 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       const planData = effectivePublishedPlan || draftPlan;
 
       const [changesResult, flushResult, stomaResult, alertsResult] = await Promise.all([
-        supabase.from('catheter_change_logs').select('*').eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(10),
-        supabase.from('catheter_flush_logs').select('*').eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(10),
-        supabase.from('catheter_stoma_checks').select('*').eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(10),
-        supabase.from('catheter_alerts').select('*').is('resolved_at', null).order('created_at', { ascending: false }),
+        supabase.from('catheter_change_logs').select('*').eq('client_id', profile.id).eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(10),
+        supabase.from('catheter_flush_logs').select('*').eq('client_id', profile.id).eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(10),
+        supabase.from('catheter_stoma_checks').select('*').eq('client_id', profile.id).eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(10),
+        supabase.from('catheter_alerts').select('*').eq('client_id', profile.id).is('resolved_at', null).order('created_at', { ascending: false }),
       ]);
 
       const changes = changesResult.data;
@@ -1184,7 +1184,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
       const pressureAreaConfigQuery = (() => {
         let query = supabase.from('pressure_area_config').select('*').limit(1);
-        return activeClientId ? query.eq('client_id', activeClientId).maybeSingle() : query.is('client_id', null).maybeSingle();
+        return activeClientId ? query.eq('client_id', activeClientId).maybeSingle() : query.eq('client_id', profile.id).maybeSingle();
       })();
 
       const pressureReliefEventsQuery = (() => {
@@ -1194,7 +1194,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           .eq('is_undone', false)
           .order('event_occurred_at', { ascending: false })
           .limit(50);
-        return activeClientId ? query.eq('client_id', activeClientId) : query.is('client_id', null);
+        return activeClientId ? query.eq('client_id', activeClientId) : query.eq('client_id', profile.id);
       })();
 
       const skinCheckSessionsQuery = (() => {
@@ -1203,7 +1203,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           .select('*, skin_finding_markers(*)')
           .order('event_occurred_at', { ascending: false })
           .limit(200);
-        return activeClientId ? query.eq('client_id', activeClientId) : query.is('client_id', null);
+        return activeClientId ? query.eq('client_id', activeClientId) : query.eq('client_id', profile.id);
       })();
 
       const pressureReliefPlanQuery = (() => {
@@ -1213,7 +1213,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           .eq('status', 'published')
           .order('version', { ascending: false })
           .limit(1);
-        return activeClientId ? query.eq('client_id', activeClientId).maybeSingle() : query.is('client_id', null).maybeSingle();
+        return activeClientId ? query.eq('client_id', activeClientId).maybeSingle() : query.eq('client_id', profile.id).maybeSingle();
       })();
 
       const [configResult, eventsResult, skinChecksResult, planResult] = await Promise.all([
@@ -1368,15 +1368,15 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     try {
       const { data: configData } = await supabase
         .from('enteral_config')
-        .select('*')
-        .is('client_id', null)
+        .select('*').eq('client_id', profile.id)
+        .eq('client_id', profile.id)
         .order('updated_at', { ascending: false })
         .limit(1)
         .maybeSingle();
-      const { data: feedLogs } = await supabase.from('enteral_feed_logs').select('*').eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(100);
-      const { data: flushLogs } = await supabase.from('enteral_flush_logs').select('*').eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(100);
-      const { data: stomaChecks } = await supabase.from('enteral_stoma_checks').select('*').eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(10);
-      const { data: medLogs } = await supabase.from('enteral_medication_logs').select('*').eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(50);
+      const { data: feedLogs } = await supabase.from('enteral_feed_logs').select('*').eq('client_id', profile.id).eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(100);
+      const { data: flushLogs } = await supabase.from('enteral_flush_logs').select('*').eq('client_id', profile.id).eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(100);
+      const { data: stomaChecks } = await supabase.from('enteral_stoma_checks').select('*').eq('client_id', profile.id).eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(10);
+      const { data: medLogs } = await supabase.from('enteral_medication_logs').select('*').eq('client_id', profile.id).eq('is_undone', false).order('event_occurred_at', { ascending: false }).limit(50);
 
       const result = calculateEnteralStatus({
         config: configData as any,
