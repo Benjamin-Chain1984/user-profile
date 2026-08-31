@@ -3,6 +3,7 @@
  * Uses role-based access control with preview support
  */
 
+import { useState } from 'react';
 import { Home, Users, LogOut, Lock, ChevronRight } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
@@ -49,13 +50,13 @@ interface AdminNavItem {
 
 const adminItems: AdminNavItem[] = [
   {
-    title: 'Clients',
+    title: 'Admin',
     url: '/admin',
     icon: Users,
     requiresAdmin: true,
     children: [
       { title: 'Clients', url: '/admin' },
-      { title: 'Team', url: '/admin/team' },
+      { title: 'My Team', url: '/admin/team' },
     ],
   },
 ];
@@ -64,6 +65,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { canAccessAdmin } = useRoleAccess();
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -138,11 +140,15 @@ export function AppSidebar() {
                 }
 
                 const isGroupActive = item.children.some((child) => isActive(child.url));
+                const isOpen = openGroups[item.title] ?? isGroupActive;
 
                 return (
                   <Collapsible
                     key={item.title}
-                    open={isGroupActive}
+                    open={isOpen}
+                    onOpenChange={(open) =>
+                      setOpenGroups((prev) => ({ ...prev, [item.title]: open }))
+                    }
                     className="group/collapsible"
                   >
                     <SidebarMenuItem>
