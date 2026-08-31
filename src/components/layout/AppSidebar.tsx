@@ -3,8 +3,7 @@
  * Uses role-based access control with preview support
  */
 
-import { useState, useEffect } from 'react';
-import { Home, Users, UserCog, LogOut, Lock, ChevronRight } from 'lucide-react';
+import { Home, Users, LogOut, Lock, ChevronRight } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -143,10 +142,7 @@ export function AppSidebar() {
                 return (
                   <Collapsible
                     key={item.title}
-                    open={openGroups[item.title]}
-                    onOpenChange={(open) =>
-                      setOpenGroups((prev) => ({ ...prev, [item.title]: open }))
-                    }
+                    defaultOpen={isGroupActive}
                     className="group/collapsible"
                   >
                     <SidebarMenuItem>
