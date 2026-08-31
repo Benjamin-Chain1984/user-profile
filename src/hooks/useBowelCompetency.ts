@@ -180,7 +180,6 @@ export function useBowelCompetencyAttempts(clientId?: string) {
 }
 
 export function useStaffCompetencyStatus(clientId?: string, expiryWarningDays = 30): {
-  clientId = useClientIdOrActive(clientId);
   staffStatuses: StaffCompetencyInfo[];
   isLoading: boolean;
   completedCount: number;
@@ -188,6 +187,7 @@ export function useStaffCompetencyStatus(clientId?: string, expiryWarningDays = 
   overdueCount: number;
   expiringSoonCount: number;
 } {
+  clientId = useClientIdOrActive(clientId);
   const { data: attempts = [] } = useQuery({
     queryKey: ['bowelCompetencyAttempts', clientId],
     queryFn: async () => {
