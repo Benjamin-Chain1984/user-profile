@@ -172,20 +172,14 @@ export const PlacematPreview = forwardRef<HTMLDivElement, { data: PlacematData }
               </Section>
               <Section title="Signs and symptoms to watch out for" accent={DANGER}>
                 <div style={{ padding: '5px 7px', fontSize: 8.6, lineHeight: 1.24 }}>
-                  <div style={{ fontWeight: 900, color: DANGER, marginBottom: 4 }}>Seek advice from Speech Pathologist, escalate immediately.</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px 10px' }}>
-                    <span>☐ Coughing during meals</span>
-                    <span>☐ Choking</span>
-                    <span>☐ Wet, gurgly or hoarse voice</span>
-                    <span>☐ Watery eyes or red face</span>
-                    <span>☐ Not finishing meals</span>
-                    <span>☐ Taking longer than usual to eat</span>
-                    <span>☐ Chest infections</span>
-                    <span>☐ Unexplained weight loss</span>
-                    <span>☐ Reflux or vomiting</span>
-                    <span>☐ Poor oral hygiene</span>
-                    <span>☐ Drooling or trouble managing saliva</span>
-                    <span>☐ Shortness of breath during meals</span>
+                  <div style={{ fontWeight: 900, color: DANGER, marginBottom: 5 }}>Seek advice from Speech Pathologist, escalate immediately.</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 10px' }}>
+                    {SYMPTOMS.map(({ label, Icon }) => (
+                      <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                        <Icon size={12} strokeWidth={2.2} color={DANGER} style={{ flexShrink: 0 }} />
+                        <span>{label}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </Section>
