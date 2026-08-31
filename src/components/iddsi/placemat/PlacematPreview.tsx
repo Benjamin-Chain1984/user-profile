@@ -293,9 +293,13 @@ export const PlacematPreview = forwardRef<HTMLDivElement, { data: PlacematData }
 
             <footer style={{ minHeight: 34, display: 'flex', gap: 10, alignItems: 'flex-start', borderTop: `1px solid ${LINE}`, paddingTop: 5 }}>
               <div style={{ fontSize: 7.2, color: MUTED_INK, lineHeight: 1.23, flex: 1 }}>{PLACEMAT_DISCLAIMER}<br />© The International Dysphagia Diet Standardisation Initiative 2019 · iddsi.org/standards/framework · CC BY-SA 4.0.</div>
+              <div style={{ padding: '3px 7px', background: DANGER_SOFT, color: DANGER, fontSize: 8, fontWeight: 900, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <AlertTriangle size={11} /> CHOKING FIRST AID — SEE REVERSE
+              </div>
               <div style={{ padding: '3px 7px', background: DANGER_SOFT, color: DANGER, fontSize: 8, fontWeight: 900 }}>IF IN DOUBT: STOP AND CHECK THE PLAN</div>
             </footer>
           </div>
+          <PlacematBack data={data} />
         </div>
       </div>
 
