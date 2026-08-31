@@ -154,12 +154,23 @@ export const PlacematPreview = forwardRef<HTMLDivElement, { data: PlacematData }
                   </div>})}
                 </div>
               </Section>
-              <Section title="Watch for swallowing concerns" accent={DANGER}>
-                <div style={{ padding: 7, fontSize: 9, lineHeight: 1.27 }}>
-                  <div style={{ fontWeight: 900, color: DANGER }}>CHOKING SIGNS</div>
-                  <div>Unable to breathe, speak or cough · silent/ineffective cough · clutching throat · blue/grey colour · collapse</div>
-                  <div style={{ fontWeight: 900, color: DANGER, marginTop: 7 }}>ASPIRATION SIGNS</div>
-                  <div>Coughing or throat clearing · wet/gurgly voice · breathing changes · watery eyes · food pocketing · distress, fatigue or recurrent chest symptoms</div>
+              <Section title="Signs and symptoms to watch out for" accent={DANGER}>
+                <div style={{ padding: '5px 7px', fontSize: 8.6, lineHeight: 1.24 }}>
+                  <div style={{ fontWeight: 900, color: DANGER, marginBottom: 4 }}>Seek advice from Speech Pathologist, escalate immediately.</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px 10px' }}>
+                    <span>☐ Coughing during meals</span>
+                    <span>☐ Choking</span>
+                    <span>☐ Wet, gurgly or hoarse voice</span>
+                    <span>☐ Watery eyes or red face</span>
+                    <span>☐ Not finishing meals</span>
+                    <span>☐ Taking longer than usual to eat</span>
+                    <span>☐ Chest infections</span>
+                    <span>☐ Unexplained weight loss</span>
+                    <span>☐ Reflux or vomiting</span>
+                    <span>☐ Poor oral hygiene</span>
+                    <span>☐ Drooling or trouble managing saliva</span>
+                    <span>☐ Shortness of breath during meals</span>
+                  </div>
                 </div>
               </Section>
             </div>
