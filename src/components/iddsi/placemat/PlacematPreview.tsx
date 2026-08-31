@@ -37,6 +37,21 @@ const PIRATES_ICONS = {
   texture: Soup, environment: VolumeX, supervision: Users,
 };
 
+const SYMPTOMS: { label: string; Icon: React.ElementType }[] = [
+  { label: 'Coughing during meals', Icon: Wind },
+  { label: 'Choking', Icon: AlertTriangle },
+  { label: 'Wet, gurgly or hoarse voice', Icon: Mic },
+  { label: 'Watery eyes or red face', Icon: Eye },
+  { label: 'Not finishing meals', Icon: UtensilsCrossed },
+  { label: 'Taking longer than usual to eat', Icon: Clock },
+  { label: 'Chest infections', Icon: Heart },
+  { label: 'Unexplained weight loss', Icon: TrendingDown },
+  { label: 'Reflux or vomiting', Icon: RotateCcw },
+  { label: 'Poor oral hygiene', Icon: Smile },
+  { label: 'Drooling or trouble managing saliva', Icon: Droplets },
+  { label: 'Shortness of breath during meals', Icon: Wind },
+];
+
 function Section({ title, children, accent = INK, style }: {
   title: string; children: React.ReactNode; accent?: string; style?: React.CSSProperties;
 }) {
