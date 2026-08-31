@@ -267,7 +267,7 @@ export function QRPosterSection() {
           img.src = url;
         });
         const qrDataUrl = qrCanvas.toDataURL('image/png');
-        const qrPdfSize = 55;
+        const qrPdfSize = 45;
         pdf.addImage(qrDataUrl, 'PNG', (pw - qrPdfSize) / 2, y, qrPdfSize, qrPdfSize);
         y += qrPdfSize + 6;
       }
