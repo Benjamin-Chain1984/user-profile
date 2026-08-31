@@ -17,7 +17,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, RefreshCw, FileText, Edit, Eye, Printer, MoreHorizontal, UserRound } from 'lucide-react';
+import { Plus, RefreshCw, FileText, Edit, Eye, Printer, MoreHorizontal, UserRound, ArrowRightCircle, CheckCircle2 } from 'lucide-react';
 import { useActiveClient } from '@/contexts/ActiveClientContext';
 import {
   DropdownMenu,
@@ -114,6 +114,11 @@ export function ClientManagement() {
         </Button>
       </div>
 
+      <p className="text-sm text-muted-foreground flex items-center gap-2 bg-muted/50 border border-border rounded-lg px-3 py-2">
+        <UserRound className="h-4 w-4 shrink-0 text-primary" />
+        Click a client (or their Open button) to switch into their individual profile. The active client is highlighted.
+      </p>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
@@ -144,7 +149,15 @@ export function ClientManagement() {
               </TableHeader>
               <TableBody>
                 {clients.map((client) => (
-                  <TableRow key={client.id}>
+                  <TableRow
+                    key={client.id}
+                    onClick={() => openClientProfile(client)}
+                    className={`cursor-pointer transition-colors ${
+                      activeClientId === client.id
+                        ? 'bg-primary/10 hover:bg-primary/15'
+                        : 'hover:bg-muted/60'
+                    }`}
+                  >
                     <TableCell>
                       <div className="flex items-center gap-3">
                         {client.photo_url ? (
@@ -162,7 +175,10 @@ export function ClientManagement() {
                           <div className="font-medium flex items-center gap-2">
                             {client.preferred_name}
                             {activeClientId === client.id && (
-                              <Badge variant="outline" className="text-xs border-primary text-primary">Active</Badge>
+                              <Badge className="text-xs gap-1">
+                                <CheckCircle2 className="h-3 w-3" />
+                                Active
+                              </Badge>
                             )}
                           </div>
                           {client.short_bio && (
@@ -191,7 +207,24 @@ export function ClientManagement() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-2">
+                        {activeClientId === client.id ? (
+                          <Button size="sm" variant="default" className="gap-1.5" onClick={() => navigate('/')}>
+                            <CheckCircle2 className="h-4 w-4" />
+                            Viewing
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-1.5 border-primary/40 text-primary hover:bg-primary/10"
+                            onClick={() => openClientProfile(client)}
+                          >
+                            <ArrowRightCircle className="h-4 w-4" />
+                            Open
+                          </Button>
+                        )}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm">
@@ -229,6 +262,7 @@ export function ClientManagement() {
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
