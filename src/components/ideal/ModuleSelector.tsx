@@ -1,9 +1,22 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { RestrictedSection } from '@/components/ui/restricted-section';
+import { useModuleSetupStatus } from '@/hooks/useModuleSetupStatus';
 import { HEALTH_MONITORING_VITALS } from '@/types/ideal';
-import { AlertCircle, Heart, Activity, Wind, Thermometer, Lock } from 'lucide-react';
+import { AlertCircle, Heart, Activity, Wind, Thermometer, Lock, Settings } from 'lucide-react';
 
 const vitalIcons: Record<string, React.ElementType> = {
   'blood-pressure': Heart,
@@ -21,8 +34,27 @@ export function ModuleSelector() {
     toggleVital,
   } = useProfile();
   const { hasRole } = useAuth();
+  const navigate = useNavigate();
+  const { isSetupComplete, markSetupComplete } = useModuleSetupStatus();
+  const [setupPrompt, setSetupPrompt] = useState<{ id: string; name: string } | null>(null);
 
   const isAdmin = hasRole('admin');
+
+  const handleToggle = (moduleId: string, moduleName: string, isEnabled: boolean) => {
+    if (!isAdmin) return;
+    toggleModule(moduleId);
+    if (!isEnabled && !isSetupComplete(moduleId)) {
+      setSetupPrompt({ id: moduleId, name: moduleName });
+    }
+  };
+
+  const openModuleSettings = () => {
+    if (!setupPrompt) return;
+    markSetupComplete(setupPrompt.id);
+    const id = setupPrompt.id;
+    setSetupPrompt(null);
+    navigate(`/module/${id}`);
+  };
 
   const healthMonitoringEnabled = enabledModules.find(m => m.id === 'health-monitoring')?.enabled;
   
