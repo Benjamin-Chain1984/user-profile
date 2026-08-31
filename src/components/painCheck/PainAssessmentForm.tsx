@@ -20,6 +20,7 @@ import {
 } from '@/types/painAssessment';
 import { ArrowLeft, ArrowRight, Check, AlertTriangle } from 'lucide-react';
 import { PainActionForm } from './PainActionForm';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 interface PainAssessmentFormProps {
   onComplete: () => void;
@@ -29,6 +30,7 @@ interface PainAssessmentFormProps {
 }
 
 export function PainAssessmentForm({ onComplete, onCancel, clientId, preselectedTrigger }: PainAssessmentFormProps) {
+  clientId = useClientIdOrActive(clientId);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({
     q1_vocalization: -1,

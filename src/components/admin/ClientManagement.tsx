@@ -159,7 +159,12 @@ export function ClientManagement() {
                           </div>
                         )}
                         <div>
-                          <div className="font-medium">{client.preferred_name}</div>
+                          <div className="font-medium flex items-center gap-2">
+                            {client.preferred_name}
+                            {activeClientId === client.id && (
+                              <Badge variant="outline" className="text-xs border-primary text-primary">Active</Badge>
+                            )}
+                          </div>
                           {client.short_bio && (
                             <div className="text-sm text-muted-foreground line-clamp-1">
                               {client.short_bio}

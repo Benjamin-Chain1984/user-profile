@@ -17,12 +17,14 @@ import { ModuleDisclaimer } from '@/components/module/ModuleDisclaimer';
 import { useEnteralConfig, useSaveEnteralConfig, useEnteralMedications, useSaveEnteralMedication } from '@/hooks/useEnteral';
 import { TUBE_TYPES, FORMULA_OPTIONS, FEEDING_TYPES, type TubeType, type FeedingType } from '@/types/enteral';
 import { EnteralFeedingSchedule, DEFAULT_SCHEDULE, migrateScheduleFormat, type FeedingScheduleEntry } from './EnteralFeedingSchedule';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 interface EnteralConfigSettingsProps {
   clientId?: string;
 }
 
 export function EnteralConfigSettings({ clientId }: EnteralConfigSettingsProps) {
+  clientId = useClientIdOrActive(clientId);
   const { data: config } = useEnteralConfig(clientId);
   const saveConfig = useSaveEnteralConfig(clientId);
   const { data: medications = [] } = useEnteralMedications(clientId);

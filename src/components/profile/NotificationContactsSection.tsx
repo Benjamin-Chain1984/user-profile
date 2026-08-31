@@ -37,12 +37,14 @@ import {
 } from '@/hooks/useNotificationContacts';
 import { NotificationContactDialog } from './NotificationContactDialog';
 import type { NotificationContact } from '@/types/notificationContacts';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 interface NotificationContactsSectionProps {
   clientId?: string;
 }
 
 export function NotificationContactsSection({ clientId }: NotificationContactsSectionProps) {
+  clientId = useClientIdOrActive(clientId);
   const { hasRole } = useAuth();
   const isAdmin = hasRole('admin');
 
