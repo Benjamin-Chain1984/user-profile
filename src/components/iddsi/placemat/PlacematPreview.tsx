@@ -226,8 +226,8 @@ export const PlacematPreview = forwardRef<HTMLDivElement, { data: PlacematData }
       </div>
 
       <div ref={scrollRef} className="placemat-preview-scroll block w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain rounded-md border bg-muted/30 pb-3" tabIndex={0} aria-label="Scrollable placemat preview">
-        <div className="placemat-scale-wrapper" style={{ width: SHEET_W, minWidth: SHEET_W }}>
-          <div ref={ref} className="placemat-print-area" style={{ width: SHEET_W, height: SHEET_H, overflow: 'hidden', background: '#FFFFFF', color: INK, fontFamily: 'Arial, sans-serif', padding: 16, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 7 }}>
+        <div ref={ref} className="placemat-print-wrapper placemat-scale-wrapper" style={{ width: SHEET_W, minWidth: SHEET_W, display: 'flex', flexDirection: 'column' }}>
+          <div className="placemat-print-area" style={{ width: SHEET_W, height: SHEET_H, overflow: 'hidden', background: '#FFFFFF', color: INK, fontFamily: 'Arial, sans-serif', padding: 16, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 7 }}>
             <header style={{ height: 90, display: 'flex', alignItems: 'center', gap: 13, borderBottom: `4px solid ${INK}`, paddingBottom: 7 }}>
               <div style={{ width: 76, height: 76, overflow: 'hidden', flexShrink: 0, border: `3px solid ${INK}`, display: 'flex', alignItems: 'center', justifyContent: 'center', background: SOFT }}>
                 {data.photoUrl ? <img src={data.photoUrl} alt={data.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 27, fontWeight: 900 }}>{initials || '—'}</span>}
