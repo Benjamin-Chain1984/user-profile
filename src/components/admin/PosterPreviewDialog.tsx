@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { ProfileAvatar } from '@/components/ideal/ProfileAvatar';
 import { Download, Printer } from 'lucide-react';
 import { toast } from 'sonner';
-import jsPDF from 'jspdf';
+import { generatePosterPdf } from '@/utils/generatePosterPdf';
 
 interface ClientRow {
   id: string;
