@@ -7,7 +7,9 @@ import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ClientManagement } from '@/components/admin/ClientManagement';
 import { AuditLogViewer } from '@/components/admin/AuditLogViewer';
-import { Users, FileText, Shield } from 'lucide-react';
+import { MyTeam } from '@/components/team/MyTeam';
+import { Card } from '@/components/ui/card';
+import { Users, UserCog, Shield } from 'lucide-react';
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('clients');
@@ -18,17 +20,21 @@ export default function AdminPage() {
         <div className="container mx-auto px-4 py-4">
           <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage clients, generate posters, and view audit logs
+            Manage clients, team members, and view audit logs
           </p>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-xl grid-cols-3">
             <TabsTrigger value="clients" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Clients
+            </TabsTrigger>
+            <TabsTrigger value="team" className="flex items-center gap-2">
+              <UserCog className="h-4 w-4" />
+              Team
             </TabsTrigger>
             <TabsTrigger value="audit" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
@@ -38,6 +44,16 @@ export default function AdminPage() {
 
           <TabsContent value="clients" className="space-y-6">
             <ClientManagement />
+          </TabsContent>
+
+          <TabsContent value="team" className="space-y-6">
+            <Card className="p-4 sm:p-6">
+              <MyTeam />
+              <p className="text-xs text-muted-foreground mt-4">
+                Once a member is added and their phone verified, grant them access to a client
+                under Clients &gt; Actions &gt; Manage Record Access.
+              </p>
+            </Card>
           </TabsContent>
 
           <TabsContent value="audit" className="space-y-6">
