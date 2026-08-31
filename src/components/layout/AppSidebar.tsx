@@ -68,31 +68,6 @@ export function AppSidebar() {
 
   const isActive = (path: string) => location.pathname === path;
 
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = {};
-    adminItems.forEach((item) => {
-      if (item.children) {
-        initial[item.title] = item.children.some((child) => isActive(child.url));
-      }
-    });
-    return initial;
-  });
-
-  useEffect(() => {
-    setOpenGroups((prev) => {
-      const next: Record<string, boolean> = { ...prev };
-      adminItems.forEach((item) => {
-        if (item.children) {
-          const shouldBeOpen = item.children.some((child) => isActive(child.url));
-          if (shouldBeOpen) {
-            next[item.title] = true;
-          }
-        }
-      });
-      return next;
-    });
-  }, [location.pathname]);
-
   const handleRestrictedClick = (e: React.MouseEvent) => {
     e.preventDefault();
     toast({
