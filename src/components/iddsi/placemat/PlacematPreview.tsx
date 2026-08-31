@@ -123,6 +123,93 @@ function QrCheckCard({ kind, meta }: { kind: 'Food' | 'Drink'; meta: IddsiLevelM
   );
 }
 
+function BackSection({ title, accent, children, icon: Icon }: {
+  title: string; accent: string; children: React.ReactNode; icon?: React.ElementType;
+}) {
+  return (
+    <section style={{ border: `1.5px solid ${LINE}`, background: '#FFFFFF', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      <div style={{ borderLeft: `7px solid ${accent}`, padding: '5px 9px', background: SOFT, borderBottom: `1px solid ${LINE}`, fontSize: 10, fontWeight: 900, letterSpacing: 0, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
+        {Icon && <Icon size={13} strokeWidth={2.4} color={accent} />}
+        {title}
+      </div>
+      <div style={{ padding: '6px 8px', fontSize: 8.8, lineHeight: 1.28, flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>{children}</div>
+    </section>
+  );
+}
+
+function Step({ n, text, icon: Icon }: { n: number; text: React.ReactNode; icon?: React.ElementType }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 5 }}>
+      <span style={{ width: 16, height: 16, borderRadius: '50%', background: INK, color: '#FFFFFF', fontSize: 8.5, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>{n}</span>
+      {Icon && <Icon size={11} strokeWidth={2.3} color={INK} style={{ flexShrink: 0, marginTop: 3 }} />}
+      <span style={{ flex: 1 }}>{text}</span>
+    </div>
+  );
+}
+
+function PlacematBack({ data }: { data: PlacematData }) {
+  const initials = data.name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();
+  return (
+    <div className="placemat-print-page" style={{ width: SHEET_W, height: SHEET_H, overflow: 'hidden', background: '#FFFFFF', color: INK, fontFamily: 'Arial, sans-serif', padding: 16, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 7 }}>
+      <header style={{ height: 70, display: 'flex', alignItems: 'center', gap: 13, borderBottom: `4px solid ${DANGER}`, paddingBottom: 7 }}>
+        <div style={{ width: 60, height: 60, overflow: 'hidden', flexShrink: 0, border: `3px solid ${DANGER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', background: DANGER_SOFT }}>
+          {data.photoUrl ? <img src={data.photoUrl} alt={data.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 22, fontWeight: 900, color: DANGER }}>{initials || '—'}</span>}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 11, fontWeight: 900, color: DANGER }}>CHOKING FIRST AID</div>
+          <h1 style={{ fontSize: 28, fontWeight: 950, lineHeight: 1, margin: '3px 0 0' }}>{data.name || 'Person’s name'}</h1>
+        </div>
+        <div style={{ fontSize: 10, textAlign: 'right', lineHeight: 1.35 }}><strong>Review by</strong><br />{data.reviewDate || 'Not recorded'}</div>
+      </header>
+
+      <div style={{ minHeight: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', background: DANGER_SOFT, border: `2px solid ${DANGER}`, padding: '5px 14px', fontSize: 12.5, fontWeight: 900, color: DANGER }}>
+        <Siren size={16} style={{ marginRight: 8 }} /> IN AN EMERGENCY, CALL TRIPLE ZERO (000) AND FOLLOW YOUR WORKPLACE FIRST-AID TRAINING
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, flex: 1, minHeight: 0 }}>
+        <BackSection title="Responsive — ineffective cough" accent={DANGER} icon={AlertTriangle}>
+          <Step n={1} text={<><strong>Call for help.</strong></>} icon={Users} />
+          <Step n={2} text={<><strong>Back blows:</strong> give up to 5 sharp blows between the shoulder blades with the heel of one hand. Check after each blow.</>} />
+          <Step n={3} text={<><strong>Chest thrusts:</strong> if back blows are not effective, give up to 5 chest thrusts.</>} icon={HeartPulse} />
+          <Step n={4} text={<><strong>Repeat</strong> if the blockage does not clear.</>} icon={RotateCcw} />
+        </BackSection>
+
+        <BackSection title="Responsive — wheelchair user" accent="#B45309" icon={AlertTriangle}>
+          <Step n={1} text={<><strong>Call for help.</strong></>} icon={Users} />
+          <Step n={2} text={<><strong>Apply wheelchair brakes.</strong></>} />
+          <Step n={3} text={<><strong>Remove</strong> the person’s postural harness.</>} icon={Unlock} />
+          <Step n={4} text={<><strong>Lean</strong> the person forward.</>} icon={ArrowDown} />
+          <Step n={5} text={<><strong>Give 5 back blows.</strong></>} />
+          <Step n={6} text={<><strong>Chest thrusts:</strong> if not effective, give 5 chest thrusts.</>} icon={HeartPulse} />
+          <Step n={7} text={<><strong>Repeat</strong> if the blockage does not clear.</>} icon={RotateCcw} />
+        </BackSection>
+
+        <BackSection title="Unresponsive" accent={DANGER} icon={Siren}>
+          <Step n={1} text={<><strong>Call for help</strong> from an additional person if possible.</>} icon={Users} />
+          <Step n={2} text={<><strong>Call an ambulance — Triple Zero (000).</strong></>} icon={Phone} />
+          <Step n={3} text={<strong>Start CPR.</strong>} icon={HeartPulse} />
+        </BackSection>
+
+        <BackSection title="Unresponsive — wheelchair user" accent="#B45309" icon={Siren}>
+          <Step n={1} text={<><strong>Call for help</strong> from an additional person if possible.</>} icon={Users} />
+          <Step n={2} text={<><strong>Call an ambulance — Triple Zero (000).</strong></>} icon={Phone} />
+          <Step n={3} text={<><strong>Apply wheelchair brakes.</strong></>} />
+          <Step n={4} text={<><strong>Remove</strong> the person’s postural harness.</>} icon={Unlock} />
+          <Step n={5} text={<><strong>Transfer</strong> the person from the wheelchair to the floor / ground.</>} icon={MoveDown} />
+          <Step n={6} text={<strong>Start CPR.</strong>} icon={HeartPulse} />
+        </BackSection>
+      </div>
+
+      <footer style={{ minHeight: 34, display: 'flex', gap: 10, alignItems: 'flex-start', borderTop: `1px solid ${LINE}`, paddingTop: 5 }}>
+        <div style={{ fontSize: 7.2, color: MUTED_INK, lineHeight: 1.23, flex: 1 }}>
+          This first-aid guidance is a quick reference only and does not replace accredited first-aid training or the person’s individual emergency care plan. Always follow local workplace policies and the instructions of emergency services.
+        </div>
+        <div style={{ padding: '3px 7px', background: DANGER_SOFT, color: DANGER, fontSize: 8, fontWeight: 900 }}>IF IN DOUBT: CALL 000</div>
+      </footer>
+    </div>
+  );
+}
+
 export const PlacematPreview = forwardRef<HTMLDivElement, { data: PlacematData }>(
   function PlacematPreview({ data }, ref) {
     const scrollRef = useRef<HTMLDivElement>(null);
