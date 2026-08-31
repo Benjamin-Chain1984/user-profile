@@ -283,11 +283,32 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   // Fetch profile from database
   const fetchProfileFromDb = async () => {
     try {
-      const { data, error } = await supabase
-        .from('clients')
-        .select('*')
-        .limit(1)
-        .maybeSingle();
+      let data: any = null;
+      let error: any = null;
+
+      if (activeClientId) {
+        const result = await supabase
+          .from('clients')
+          .select('*')
+          .eq('id', activeClientId)
+          .maybeSingle();
+        data = result.data;
+        error = result.error;
+      }
+
+      // Fallback to first client when no active selection (or it was deleted)
+      if (!data && !error) {
+        const result = await supabase
+          .from('clients')
+          .select('*')
+          .limit(1)
+          .maybeSingle();
+        data = result.data;
+        error = result.error;
+        if (data && activeClientId && data.id !== activeClientId) {
+          setActiveClient(data.id, (data as any).full_name || data.preferred_name || null);
+        }
+      }
 
       if (error) {
         console.error('Error fetching profile:', error);
