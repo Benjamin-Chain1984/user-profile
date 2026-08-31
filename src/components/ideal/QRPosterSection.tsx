@@ -214,6 +214,32 @@ export function QRPosterSection() {
       pdf.text('Scan to Access Profile', pw / 2, y, { align: 'center' });
       y += 8;
 
+      // Person photo
+      if (photo) {
+        const size = 32;
+        const x = (pw - size) / 2;
+        pdf.setDrawColor(150, 130, 200);
+        pdf.setLineWidth(0.6);
+        pdf.rect(x - 1, y - 1, size + 2, size + 2);
+        pdf.setLineWidth(0.2);
+        // cover-crop the photo to a square
+        const side = Math.min(photo.width, photo.height);
+        const cropCanvas = document.createElement('canvas');
+        cropCanvas.width = side;
+        cropCanvas.height = side;
+        const cctx = cropCanvas.getContext('2d');
+        let src = photo.dataUrl;
+        if (cctx) {
+          const img = new Image();
+          img.src = photo.dataUrl;
+          await new Promise<void>((res) => { img.onload = () => res(); img.onerror = () => res(); });
+          cctx.drawImage(img, (photo.width - side) / 2, (photo.height - side) / 2, side, side, 0, 0, side, side);
+          src = cropCanvas.toDataURL('image/png');
+        }
+        pdf.addImage(src, 'PNG', x, y, size, size);
+        y += size + 6;
+      }
+
       pdf.setFontSize(16);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(0);
