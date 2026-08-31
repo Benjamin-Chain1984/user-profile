@@ -293,7 +293,7 @@ export function buildEquipmentFromLevels(
   food: IddsiLevelMeta | null,
   drink: IddsiLevelMeta | null,
 ): string[] {
-  const items = new Set<string>(['Non-slip mat']);
+  const items = new Set<string>();
 
   for (const meta of [food, drink]) {
     if (!meta) continue;
@@ -301,20 +301,6 @@ export function buildEquipmentFromLevels(
       const eq = TEST_EQUIPMENT[test];
       if (eq) items.add(eq);
     }
-  }
-
-  if (food) {
-    if (food.level <= 4) items.add('Dessert spoon');
-    if (food.level === 5) { items.add('Teaspoon'); items.add('Scoop plate / bowl'); }
-    if (food.level >= 6) { items.add('Standard fork'); items.add('Plate guard'); }
-    if (food.level <= 5) items.add('Scoop plate / bowl');
-  }
-
-  if (drink) {
-    if (drink.level === 0) items.add('Prescribed cup');
-    if (drink.level >= 1 && drink.level <= 3) { items.add('Thickener'); items.add('Measuring scoop'); items.add('Prescribed cup'); }
-    if (drink.level === 4) { items.add('Thickener'); items.add('Dessert spoon'); }
-    if (drink.level >= 2) items.add('No straws unless approved');
   }
 
   return Array.from(items);
