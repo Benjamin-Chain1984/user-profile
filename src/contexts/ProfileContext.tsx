@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useMonitoringStatus } from '@/hooks/useMonitoringStatus';
 import { useAuth } from '@/contexts/AuthContext';
+import { useActiveClient } from '@/contexts/ActiveClientContext';
 import type { MonitoringStatus, PauseReason, PauseEndType } from '@/types/monitoringStatus';
 import { 
   IndividualProfile, 
@@ -279,6 +280,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     resumeMonitoring,
   } = useMonitoringStatus(profile?.id ?? null);
   const { user } = useAuth();
+  const { activeClientId, setActiveClient } = useActiveClient();
 
   // Fetch profile from database
   const fetchProfileFromDb = async () => {
@@ -1525,7 +1527,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       supabase.removeChannel(mealtimeChannel);
       supabase.removeChannel(enteralChannel);
     };
-  }, [profile?.id, user?.id]);
+  }, [profile?.id, user?.id, activeClientId]);
 
   // Re-fetch profile-dependent statuses when profile loads from DB
   useEffect(() => {
