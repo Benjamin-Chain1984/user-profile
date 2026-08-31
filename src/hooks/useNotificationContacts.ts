@@ -128,6 +128,7 @@ export function useDeleteNotificationContact() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function useModuleAlertRecipients(moduleName: string, clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   return useQuery({
     queryKey: [...RECIPIENTS_KEY, moduleName, clientId],
     queryFn: async () => {
