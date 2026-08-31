@@ -240,6 +240,11 @@ export function ClientManagement() {
                             Open Profile
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setAccessClient(client)}>
+                            <UserCog className="h-4 w-4 mr-2" />
+                            Manage Record Access
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => setEditingClient(client)}>
                             <Edit className="h-4 w-4 mr-2" />
                             Edit Client
