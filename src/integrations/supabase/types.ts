@@ -1941,6 +1941,53 @@ export type Database = {
           },
         ]
       }
+      client_ideal_signals: {
+        Row: {
+          amber_count: number
+          client_id: string
+          computed_at: string
+          is_paused: boolean
+          needs_setup: boolean
+          red_count: number
+          status: string
+          top_alert_message: string | null
+          top_alert_module: string | null
+          updated_at: string
+        }
+        Insert: {
+          amber_count?: number
+          client_id: string
+          computed_at?: string
+          is_paused?: boolean
+          needs_setup?: boolean
+          red_count?: number
+          status?: string
+          top_alert_message?: string | null
+          top_alert_module?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amber_count?: number
+          client_id?: string
+          computed_at?: string
+          is_paused?: boolean
+          needs_setup?: boolean
+          red_count?: number
+          status?: string
+          top_alert_message?: string | null
+          top_alert_module?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_ideal_signals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_staff_access: {
         Row: {
           client_id: string

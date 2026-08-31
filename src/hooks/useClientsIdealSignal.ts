@@ -1,19 +1,27 @@
 /**
  * useClientsIdealSignal
  * ---------------------
- * Aggregates a single global IDEAL signal (traffic light) per client so admins
- * can review every client at a glance.
+ * Reads the global IDEAL signal (traffic light) per client.
+ *
+ * SINGLE SOURCE OF TRUTH: the person's profile computes the signal (via
+ * ProfileContext, using each module's clinical calculators) and publishes it to
+ * `client_ideal_signals`. This hook only reads that published signal so the
+ * Admin > Clients list can never disagree with the profile.
  *
  * Hierarchy (highest severity wins — never optimistic):
- *   Paused  → monitoring suspended
- *   Red     → any unresolved red/critical module alert
- *   Amber   → any unresolved amber alert, OR no modules configured (setup required)
- *   IDEAL   → configured, monitored, no unresolved alerts
+ *   Paused  → monitoring suspended (Amber)
+ *   Red     → any module in "action"
+ *   Amber   → any module in "monitor", OR no modules configured (setup required)
+ *   IDEAL   → configured, monitored, no active alerts
+ *
+ * Clients whose profile has not been opened yet have no published signal — they
+ * are shown as Amber ("Not yet calculated"), never IDEAL.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { TrafficLightStatus } from '@/types/trafficLight';
+import { useProfile } from '@/contexts/ProfileContext';
 
 export interface ClientIdealSignal {
   status: TrafficLightStatus;
@@ -21,33 +29,37 @@ export interface ClientIdealSignal {
   redCount: number;
   amberCount: number;
   needsSetup: boolean;
+  /** True when the profile has never published a signal for this client. */
+  notCalculated?: boolean;
+  topAlertModule?: string | null;
+  topAlertMessage?: string | null;
 }
 
-const ALERT_TABLES = [
-  'bowel_care_alerts',
-  'catheter_alerts',
-  'continence_alerts',
-  'enteral_alerts',
-  'epilepsy_alerts',
-  'fluid_balance_alerts',
-  'health_prevention_alerts',
-  'iddsi_alerts',
-  'oral_health_alerts',
-  'pressure_area_alerts',
-  'sleep_alerts',
-  'vital_sign_alerts',
-  'weight_bmi_alerts',
-] as const;
+interface SignalRow {
+  client_id: string;
+  status: string;
+  red_count: number;
+  amber_count: number;
+  is_paused: boolean;
+  needs_setup: boolean;
+  top_alert_module: string | null;
+  top_alert_message: string | null;
+}
 
-const isRed = (severity: string) =>
-  ['red', 'critical', 'action', 'high'].includes((severity || '').toLowerCase());
-const isAmber = (severity: string) =>
-  ['amber', 'warning', 'monitor', 'medium'].includes((severity || '').toLowerCase());
+const toStatus = (value: string): TrafficLightStatus => {
+  const v = (value || '').toLowerCase();
+  if (v === 'red' || v === 'action') return 'red';
+  if (v === 'green' || v === 'ideal' || v === 'stable') return 'green';
+  return 'amber';
+};
 
 export function useClientsIdealSignal(clientIds: string[]) {
   const [signals, setSignals] = useState<Record<string, ClientIdealSignal>>({});
   const [isLoading, setIsLoading] = useState(true);
   const key = clientIds.slice().sort().join(',');
+
+  // Live signal for the client currently loaded in the profile — always fresh.
+  const { profile, globalAlertState, isMonitoringPaused, enabledModules } = useProfile();
 
   const fetchSignals = useCallback(async () => {
     if (!key) {
@@ -60,57 +72,38 @@ export function useClientsIdealSignal(clientIds: string[]) {
 
     const base: Record<string, ClientIdealSignal> = {};
     ids.forEach((id) => {
-      base[id] = { status: 'green', isPaused: false, redCount: 0, amberCount: 0, needsSetup: false };
+      base[id] = {
+        status: 'amber',
+        isPaused: false,
+        redCount: 0,
+        amberCount: 0,
+        needsSetup: false,
+        notCalculated: true,
+      };
     });
 
     try {
-      const [modulesRes, pauseRes, ...alertResults] = await Promise.all([
-        supabase.from('clients').select('id, enabled_modules').in('id', ids),
-        supabase.from('profile_monitoring_status').select('client_id, is_paused').in('client_id', ids),
-        ...ALERT_TABLES.map((table) =>
-          supabase
-            .from(table)
-            .select('client_id, severity')
-            .in('client_id', ids)
-            .is('resolved_at', null)
-        ),
-      ]);
+      const { data, error } = await supabase
+        .from('client_ideal_signals')
+        .select(
+          'client_id, status, red_count, amber_count, is_paused, needs_setup, top_alert_module, top_alert_message'
+        )
+        .in('client_id', ids);
 
-      // Setup state — a client with no enabled modules is Amber, never IDEAL
-      (modulesRes.data || []).forEach((row: { id: string; enabled_modules: unknown }) => {
-        const modules = Array.isArray(row.enabled_modules) ? row.enabled_modules : [];
-        if (base[row.id] && modules.length === 0) {
-          base[row.id].needsSetup = true;
-        }
-      });
+      if (error) throw error;
 
-      // Unresolved alerts
-      alertResults.forEach((res) => {
-        (res.data || []).forEach((row: { client_id: string | null; severity: string }) => {
-          if (!row.client_id || !base[row.client_id]) return;
-          if (isRed(row.severity)) base[row.client_id].redCount += 1;
-          else if (isAmber(row.severity)) base[row.client_id].amberCount += 1;
-        });
-      });
-
-      // Global monitoring pause suppresses alerts
-      (pauseRes.data || []).forEach((row: { client_id: string; is_paused: boolean }) => {
-        if (base[row.client_id] && row.is_paused) base[row.client_id].isPaused = true;
-      });
-
-      ids.forEach((id) => {
-        const s = base[id];
-        if (s.isPaused) {
-          s.redCount = 0;
-          s.amberCount = 0;
-          s.status = 'amber';
-        } else if (s.redCount > 0) {
-          s.status = 'red';
-        } else if (s.amberCount > 0 || s.needsSetup) {
-          s.status = 'amber';
-        } else {
-          s.status = 'green';
-        }
+      (data as SignalRow[] | null)?.forEach((row) => {
+        if (!base[row.client_id]) return;
+        base[row.client_id] = {
+          status: toStatus(row.status),
+          isPaused: row.is_paused,
+          redCount: row.red_count ?? 0,
+          amberCount: row.amber_count ?? 0,
+          needsSetup: row.needs_setup,
+          notCalculated: false,
+          topAlertModule: row.top_alert_module,
+          topAlertMessage: row.top_alert_message,
+        };
       });
 
       setSignals(base);
@@ -126,5 +119,37 @@ export function useClientsIdealSignal(clientIds: string[]) {
     fetchSignals();
   }, [fetchSignals]);
 
-  return { signals, isLoading, refresh: fetchSignals };
+  // Overlay the live profile-computed signal for the active client so the Admin
+  // list reflects the profile immediately, before the published row round-trips.
+  const merged = useMemo(() => {
+    const clientId = profile?.id;
+    if (!clientId || clientId === '1' || !signals[clientId]) return signals;
+
+    const alerts = isMonitoringPaused ? [] : globalAlertState.alerts;
+    const noModulesEnabled = !enabledModules.some((m) => m.enabled);
+    const status: TrafficLightStatus = isMonitoringPaused
+      ? 'amber'
+      : globalAlertState.currentStatus === 'action'
+        ? 'red'
+        : globalAlertState.currentStatus === 'monitor' || noModulesEnabled
+          ? 'amber'
+          : 'green';
+    const top = alerts[0];
+
+    return {
+      ...signals,
+      [clientId]: {
+        status,
+        isPaused: isMonitoringPaused,
+        redCount: alerts.filter((a) => a.status === 'red').length,
+        amberCount: alerts.filter((a) => a.status === 'amber').length,
+        needsSetup: noModulesEnabled,
+        notCalculated: false,
+        topAlertModule: top?.moduleName ?? null,
+        topAlertMessage: top?.message ?? null,
+      },
+    };
+  }, [signals, profile?.id, globalAlertState, isMonitoringPaused, enabledModules]);
+
+  return { signals: merged, isLoading, refresh: fetchSignals };
 }
