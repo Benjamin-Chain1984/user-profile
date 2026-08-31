@@ -80,6 +80,28 @@ export function QRPosterSection() {
 
   const handlePrint = () => window.print();
 
+  /** Load an image URL into a data URL (via canvas) so jsPDF can embed it */
+  const loadImage = (src: string): Promise<{ dataUrl: string; width: number; height: number } | null> =>
+    new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return resolve(null);
+          ctx.drawImage(img, 0, 0);
+          resolve({ dataUrl: canvas.toDataURL('image/png'), width: img.naturalWidth, height: img.naturalHeight });
+        } catch {
+          resolve(null);
+        }
+      };
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+
   const handleDownloadPDF = async () => {
     if (!qrToken) return;
     try {
@@ -90,16 +112,32 @@ export function QRPosterSection() {
       const cw = pw - m * 2;
       let y = m;
 
+      const [logo, photo] = await Promise.all([
+        loadImage('/Ideal-logo.png'),
+        profile?.avatarUrl ? loadImage(profile.avatarUrl) : Promise.resolve(null),
+      ]);
+
       // Logo line
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(80, 60, 160);
-      pdf.text('IDEAL', m, y + 5);
-      pdf.setFontSize(7);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(100);
-      pdf.text('Intelligent Data for Everyday Activities & Lifestyle', m + 14, y + 5);
-      y += 12;
+      if (logo) {
+        const logoH = 12;
+        const logoW = Math.min((logo.width / logo.height) * logoH, 70);
+        pdf.addImage(logo.dataUrl, 'PNG', m, y, logoW, logoH);
+        pdf.setFontSize(7);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(100);
+        pdf.text('Intelligent Data for Everyday Activities & Lifestyle', m + logoW + 3, y + logoH / 2 + 1);
+        y += logoH + 2;
+      } else {
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(80, 60, 160);
+        pdf.text('IDEAL', m, y + 5);
+        pdf.setFontSize(7);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(100);
+        pdf.text('Intelligent Data for Everyday Activities & Lifestyle', m + 14, y + 5);
+        y += 12;
+      }
       pdf.setDrawColor(200);
       pdf.line(m, y, pw - m, y);
       y += 10;
