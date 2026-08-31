@@ -149,7 +149,15 @@ export function ClientManagement() {
               </TableHeader>
               <TableBody>
                 {clients.map((client) => (
-                  <TableRow key={client.id}>
+                  <TableRow
+                    key={client.id}
+                    onClick={() => openClientProfile(client)}
+                    className={`cursor-pointer transition-colors ${
+                      activeClientId === client.id
+                        ? 'bg-primary/10 hover:bg-primary/15'
+                        : 'hover:bg-muted/60'
+                    }`}
+                  >
                     <TableCell>
                       <div className="flex items-center gap-3">
                         {client.photo_url ? (
