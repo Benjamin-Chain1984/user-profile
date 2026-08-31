@@ -57,15 +57,13 @@ export function ClientFormDialog({
     if (client) {
       setFormData({
         preferred_name: client.preferred_name,
-        short_bio: client.short_bio || '',
-        photo_url: client.photo_url || '',
+        beacon_id: client.beacon_id || '',
         status: client.status,
       });
     } else {
       setFormData({
         preferred_name: '',
-        short_bio: '',
-        photo_url: '',
+        beacon_id: '',
         status: 'active',
       });
     }
