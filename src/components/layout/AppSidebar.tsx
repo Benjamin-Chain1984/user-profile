@@ -140,11 +140,15 @@ export function AppSidebar() {
                 }
 
                 const isGroupActive = item.children.some((child) => isActive(child.url));
+                const isOpen = openGroups[item.title] ?? isGroupActive;
 
                 return (
                   <Collapsible
                     key={item.title}
-                    open={isGroupActive}
+                    open={isOpen}
+                    onOpenChange={(open) =>
+                      setOpenGroups((prev) => ({ ...prev, [item.title]: open }))
+                    }
                     className="group/collapsible"
                   >
                     <SidebarMenuItem>
