@@ -1943,6 +1943,7 @@ export type Database = {
       }
       clients: {
         Row: {
+          beacon_id: string | null
           created_at: string
           created_by: string | null
           date_of_birth: string | null
@@ -1968,6 +1969,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          beacon_id?: string | null
           created_at?: string
           created_by?: string | null
           date_of_birth?: string | null
@@ -1993,6 +1995,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          beacon_id?: string | null
           created_at?: string
           created_by?: string | null
           date_of_birth?: string | null

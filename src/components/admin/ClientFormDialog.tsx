@@ -16,7 +16,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -29,8 +28,7 @@ import { toast } from 'sonner';
 interface ClientRow {
   id: string;
   preferred_name: string;
-  short_bio: string | null;
-  photo_url: string | null;
+  beacon_id: string | null;
   status: string;
 }
 
@@ -50,8 +48,7 @@ export function ClientFormDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     preferred_name: '',
-    short_bio: '',
-    photo_url: '',
+    beacon_id: '',
     status: 'active',
   });
 
@@ -59,15 +56,13 @@ export function ClientFormDialog({
     if (client) {
       setFormData({
         preferred_name: client.preferred_name,
-        short_bio: client.short_bio || '',
-        photo_url: client.photo_url || '',
+        beacon_id: client.beacon_id || '',
         status: client.status,
       });
     } else {
       setFormData({
         preferred_name: '',
-        short_bio: '',
-        photo_url: '',
+        beacon_id: '',
         status: 'active',
       });
     }
@@ -90,8 +85,7 @@ export function ClientFormDialog({
           .from('clients')
           .update({
             preferred_name: formData.preferred_name.trim(),
-            short_bio: formData.short_bio.trim() || null,
-            photo_url: formData.photo_url.trim() || null,
+            beacon_id: formData.beacon_id.trim() || null,
             status: formData.status,
           })
           .eq('id', client.id);
@@ -105,8 +99,7 @@ export function ClientFormDialog({
 
         const { error } = await supabase.from('clients').insert({
           preferred_name: formData.preferred_name.trim(),
-          short_bio: formData.short_bio.trim() || null,
-          photo_url: formData.photo_url.trim() || null,
+          beacon_id: formData.beacon_id.trim() || null,
           status: formData.status,
           poster_qr_token_hash: tokenHash,
           poster_qr_token_plain: token,
@@ -117,9 +110,13 @@ export function ClientFormDialog({
       }
 
       onSaved();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error saving client:', err);
-      toast.error('Failed to save client');
+      if (err?.code === '23505' && String(err?.message || '').includes('beacon_id')) {
+        toast.error('This Beacon ID is already assigned to another client');
+      } else {
+        toast.error('Failed to save client');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -145,28 +142,16 @@ export function ClientFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="short_bio">Short Bio</Label>
-            <Textarea
-              id="short_bio"
-              value={formData.short_bio}
-              onChange={(e) => setFormData({ ...formData, short_bio: e.target.value })}
-              placeholder="Brief description (non-sensitive)"
-              rows={3}
+            <Label htmlFor="beacon_id">Beacon ID (Serial Number)</Label>
+            <Input
+              id="beacon_id"
+              value={formData.beacon_id}
+              onChange={(e) => setFormData({ ...formData, beacon_id: e.target.value })}
+              placeholder="e.g. BCN-000123"
             />
             <p className="text-xs text-muted-foreground">
-              This will appear on the printed poster. Keep it brief and non-sensitive.
+              Unique serial number of the IoT beacon assigned to this client. Must be unique across clients.
             </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="photo_url">Photo URL</Label>
-            <Input
-              id="photo_url"
-              type="url"
-              value={formData.photo_url}
-              onChange={(e) => setFormData({ ...formData, photo_url: e.target.value })}
-              placeholder="https://example.com/photo.jpg"
-            />
           </div>
 
           <div className="space-y-2">
