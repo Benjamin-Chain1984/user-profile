@@ -61,6 +61,7 @@ export function ClientManagement() {
   const [auditClient, setAuditClient] = useState<ClientRow | null>(null);
   const [accessClient, setAccessClient] = useState<ClientRow | null>(null);
   const { activeClientId, setActiveClient } = useActiveClient();
+  const { signals } = useClientsIdealSignal(clients.map((c) => c.id));
 
   const openClientProfile = (client: ClientRow) => {
     setActiveClient(client.id, client.preferred_name);
