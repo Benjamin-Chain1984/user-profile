@@ -263,7 +263,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<IndividualProfile | null>({
     id: '1',
     fullName: 'Loading...',
-    dateOfBirth: '1990-01-01',
+    dateOfBirth: '',
     personResponsibleName: '',
     relationshipToIndividual: '',
     primaryContactNumber: '',
@@ -321,7 +321,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         setProfile({
           id: data.id,
           fullName: (data as any).full_name || data.preferred_name || '',
-          dateOfBirth: (data as any).date_of_birth || '1990-01-01',
+          dateOfBirth: (data as any).date_of_birth || '',
           avatarUrl: data.photo_url || undefined,
           personResponsibleName: (data as any).person_responsible_name || '',
           relationshipToIndividual: (data as any).relationship_to_individual || '',
