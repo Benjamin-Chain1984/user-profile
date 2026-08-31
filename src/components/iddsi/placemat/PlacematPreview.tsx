@@ -2,8 +2,9 @@
 import { forwardRef, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import {
-  Armchair, ChevronLeft, ChevronRight, Eye, Gauge, ScanLine,
-  Soup, Users, Utensils, VolumeX,
+  AlertTriangle, Armchair, ChevronLeft, ChevronRight, Clock, Droplets, Eye, Gauge,
+  Heart, Mic, RotateCcw, ScanLine, Smile, Soup, TrendingDown, Users, Utensils,
+  UtensilsCrossed, VolumeX, Wind,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { IddsiLevelMeta, PiratesItem, TEST_EQUIPMENT, PLACEMAT_DISCLAIMER } from './placematData';
