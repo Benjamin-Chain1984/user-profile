@@ -336,14 +336,14 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
         // Load persisted enabled_modules from database
         const dbEnabledModules: string[] | null = (data as any).enabled_modules;
-        if (dbEnabledModules !== null && dbEnabledModules !== undefined) {
-          setEnabledModules((prev) =>
-            prev.map((m) => ({
-              ...m,
-              enabled: dbEnabledModules.includes(m.id),
-            }))
-          );
-        }
+        // A fresh profile (null) starts completely blank — all modules disabled until setup
+        const enabledIds = dbEnabledModules ?? [];
+        setEnabledModules((prev) =>
+          prev.map((m) => ({
+            ...m,
+            enabled: enabledIds.includes(m.id),
+          }))
+        );
       }
     } catch (err) {
       console.error('Error in fetchProfileFromDb:', err);
