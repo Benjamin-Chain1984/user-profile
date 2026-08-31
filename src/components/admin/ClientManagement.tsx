@@ -175,7 +175,10 @@ export function ClientManagement() {
                           <div className="font-medium flex items-center gap-2">
                             {client.preferred_name}
                             {activeClientId === client.id && (
-                              <Badge variant="outline" className="text-xs border-primary text-primary">Active</Badge>
+                              <Badge className="text-xs gap-1">
+                                <CheckCircle2 className="h-3 w-3" />
+                                Active
+                              </Badge>
                             )}
                           </div>
                           {client.short_bio && (
