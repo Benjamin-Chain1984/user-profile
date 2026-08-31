@@ -166,14 +166,15 @@ export function AppSidebar() {
                 const isGroupActive = item.children.some((child) => isActive(child.url));
 
                 return (
-                  <SidebarMenuItem key={item.title}>
-                    <Collapsible
-                      open={openGroups[item.title]}
-                      onOpenChange={(open) =>
-                        setOpenGroups((prev) => ({ ...prev, [item.title]: open }))
-                      }
-                      className="group/collapsible"
-                    >
+                  <Collapsible
+                    key={item.title}
+                    open={openGroups[item.title]}
+                    onOpenChange={(open) =>
+                      setOpenGroups((prev) => ({ ...prev, [item.title]: open }))
+                    }
+                    className="group/collapsible"
+                  >
+                    <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
                         <SidebarMenuButton isActive={isGroupActive}>
                           <item.icon className="h-4 w-4" />
@@ -181,21 +182,21 @@ export function AppSidebar() {
                           <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
                         </SidebarMenuButton>
                       </CollapsibleTrigger>
-                      <CollapsibleContent>
-                        <SidebarMenuSub>
-                          {item.children.map((child) => (
-                            <SidebarMenuSubItem key={child.title}>
-                              <SidebarMenuSubButton asChild isActive={isActive(child.url)}>
-                                <NavLink to={child.url} className="flex items-center gap-2">
-                                  <span>{child.title}</span>
-                                </NavLink>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          ))}
-                        </SidebarMenuSub>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  </SidebarMenuItem>
+                    </SidebarMenuItem>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {item.children.map((child) => (
+                          <SidebarMenuSubItem key={child.title}>
+                            <SidebarMenuSubButton asChild isActive={isActive(child.url)}>
+                              <NavLink to={child.url} className="flex items-center gap-2">
+                                <span>{child.title}</span>
+                              </NavLink>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </Collapsible>
                 );
               })}
             </SidebarMenu>
