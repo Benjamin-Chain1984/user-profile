@@ -30,6 +30,7 @@ import { ClientFormDialog } from './ClientFormDialog';
 import { PosterPreviewDialog } from './PosterPreviewDialog';
 import { RotateQRDialog } from './RotateQRDialog';
 import { ClientAuditDialog } from './ClientAuditDialog';
+import { ClientAccessDialog } from './ClientAccessDialog';
 import { toast } from 'sonner';
 import type { Client } from '@/services/clientToken/types';
 
