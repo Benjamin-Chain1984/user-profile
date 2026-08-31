@@ -6,7 +6,7 @@ import { QrCode, FileText, Download, Printer, RefreshCw, Loader2 } from 'lucide-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import jsPDF from 'jspdf';
+import { generatePosterPdf } from '@/utils/generatePosterPdf';
 import { supabase } from '@/integrations/supabase/client';
 import { generateSecureToken, hashToken } from '@/services/clientToken';
 
