@@ -1642,6 +1642,56 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     alerts: activeAlerts,
   };
 
+  // ── Publish the profile-computed IDEAL signal (single source of truth) ──
+  // The profile is authoritative: everywhere else (Admin > Clients) reads this
+  // published signal instead of re-deriving statuses from raw alert tables.
+  const publishedStatus: 'red' | 'amber' | 'green' = isMonitoringPaused
+    ? 'amber'
+    : hasRedAlert
+      ? 'red'
+      : hasAmberAlert || noModulesEnabled
+        ? 'amber'
+        : 'green';
+  const publishedRedCount = activeAlerts.filter((a) => a.status === 'red').length;
+  const publishedAmberCount = activeAlerts.filter((a) => a.status === 'amber').length;
+  const publishedTopAlert = activeAlerts[0];
+  const signalFingerprint = [
+    profile?.id,
+    publishedStatus,
+    publishedRedCount,
+    publishedAmberCount,
+    isMonitoringPaused ? 1 : 0,
+    noModulesEnabled ? 1 : 0,
+    publishedTopAlert?.moduleName ?? '',
+    publishedTopAlert?.message ?? '',
+  ].join('|');
+
+  useEffect(() => {
+    const clientId = profile?.id;
+    if (!clientId || clientId === '1') return;
+    supabase
+      .from('client_ideal_signals')
+      .upsert(
+        {
+          client_id: clientId,
+          status: publishedStatus,
+          red_count: publishedRedCount,
+          amber_count: publishedAmberCount,
+          is_paused: isMonitoringPaused,
+          needs_setup: noModulesEnabled,
+          top_alert_module: publishedTopAlert?.moduleName ?? null,
+          top_alert_message: publishedTopAlert?.message ?? null,
+          computed_at: new Date().toISOString(),
+        },
+        { onConflict: 'client_id' }
+      )
+      .then(({ error }) => {
+        if (error) console.error('Error publishing IDEAL signal:', error);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signalFingerprint]);
+
+
   const isProfileComplete = Boolean(
     profile?.fullName &&
     profile?.dateOfBirth &&
