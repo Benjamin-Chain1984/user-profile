@@ -33,6 +33,9 @@ import { ClientAuditDialog } from './ClientAuditDialog';
 import { ClientAccessDialog } from './ClientAccessDialog';
 import { toast } from 'sonner';
 import type { Client } from '@/services/clientToken/types';
+import { TrafficLightIcon } from '@/components/shared/TrafficLightIcon';
+import { TrafficLightBadge } from '@/components/shared/TrafficLightBadge';
+import { useClientsIdealSignal } from '@/hooks/useClientsIdealSignal';
 
 interface ClientRow {
   id: string;
