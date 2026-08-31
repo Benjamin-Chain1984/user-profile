@@ -3,6 +3,7 @@
  * Uses role-based access control with preview support
  */
 
+import { useState } from 'react';
 import { Home, Users, LogOut, Lock, ChevronRight } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
