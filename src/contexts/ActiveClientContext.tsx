@@ -40,7 +40,10 @@ export function ActiveClientProvider({ children }: { children: ReactNode }) {
 
 export function useActiveClient() {
   const ctx = useContext(ActiveClientContext);
-  if (!ctx) throw new Error('useActiveClient must be used within ActiveClientProvider');
+  // Lenient fallback so public routes (QR poster etc.) render outside the provider
+  if (!ctx) {
+    return { activeClientId: null, activeClientName: null, setActiveClient: () => {} };
+  }
   return ctx;
 }
 
