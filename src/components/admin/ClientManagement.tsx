@@ -56,6 +56,7 @@ export function ClientManagement() {
   const [posterClient, setPosterClient] = useState<{ client: ClientRow; token: string } | null>(null);
   const [rotatingClient, setRotatingClient] = useState<ClientRow | null>(null);
   const [auditClient, setAuditClient] = useState<ClientRow | null>(null);
+  const [accessClient, setAccessClient] = useState<ClientRow | null>(null);
   const { activeClientId, setActiveClient } = useActiveClient();
 
   const openClientProfile = (client: ClientRow) => {
