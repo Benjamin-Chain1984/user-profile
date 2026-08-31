@@ -207,7 +207,24 @@ export function ClientManagement() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-2">
+                        {activeClientId === client.id ? (
+                          <Button size="sm" variant="default" className="gap-1.5" onClick={() => navigate('/')}>
+                            <CheckCircle2 className="h-4 w-4" />
+                            Viewing
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-1.5 border-primary/40 text-primary hover:bg-primary/10"
+                            onClick={() => openClientProfile(client)}
+                          >
+                            <ArrowRightCircle className="h-4 w-4" />
+                            Open
+                          </Button>
+                        )}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm">
