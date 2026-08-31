@@ -16,7 +16,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -111,9 +110,13 @@ export function ClientFormDialog({
       }
 
       onSaved();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error saving client:', err);
-      toast.error('Failed to save client');
+      if (err?.code === '23505' && String(err?.message || '').includes('beacon_id')) {
+        toast.error('This Beacon ID is already assigned to another client');
+      } else {
+        toast.error('Failed to save client');
+      }
     } finally {
       setIsLoading(false);
     }
