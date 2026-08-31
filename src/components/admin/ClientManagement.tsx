@@ -17,7 +17,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, RefreshCw, FileText, Edit, Eye, Printer, MoreHorizontal, UserRound, ArrowRightCircle, CheckCircle2 } from 'lucide-react';
+import { Plus, RefreshCw, FileText, Edit, Eye, Printer, MoreHorizontal, UserRound, ArrowRightCircle, CheckCircle2, UserCog } from 'lucide-react';
 import { useActiveClient } from '@/contexts/ActiveClientContext';
 import {
   DropdownMenu,
@@ -30,6 +30,7 @@ import { ClientFormDialog } from './ClientFormDialog';
 import { PosterPreviewDialog } from './PosterPreviewDialog';
 import { RotateQRDialog } from './RotateQRDialog';
 import { ClientAuditDialog } from './ClientAuditDialog';
+import { ClientAccessDialog } from './ClientAccessDialog';
 import { toast } from 'sonner';
 import type { Client } from '@/services/clientToken/types';
 
@@ -55,6 +56,7 @@ export function ClientManagement() {
   const [posterClient, setPosterClient] = useState<{ client: ClientRow; token: string } | null>(null);
   const [rotatingClient, setRotatingClient] = useState<ClientRow | null>(null);
   const [auditClient, setAuditClient] = useState<ClientRow | null>(null);
+  const [accessClient, setAccessClient] = useState<ClientRow | null>(null);
   const { activeClientId, setActiveClient } = useActiveClient();
 
   const openClientProfile = (client: ClientRow) => {
@@ -238,6 +240,11 @@ export function ClientManagement() {
                             Open Profile
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setAccessClient(client)}>
+                            <UserCog className="h-4 w-4 mr-2" />
+                            Manage Record Access
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => setEditingClient(client)}>
                             <Edit className="h-4 w-4 mr-2" />
                             Edit Client
@@ -304,6 +311,14 @@ export function ClientManagement() {
         onOpenChange={(open) => !open && setAuditClient(null)}
         client={auditClient}
       />
+
+      <ClientAccessDialog
+        open={!!accessClient}
+        onOpenChange={(open) => !open && setAccessClient(null)}
+        clientId={accessClient?.id ?? null}
+        clientName={accessClient?.preferred_name}
+      />
+
     </div>
   );
 }
