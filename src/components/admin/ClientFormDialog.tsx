@@ -139,28 +139,16 @@ export function ClientFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="short_bio">Short Bio</Label>
-            <Textarea
-              id="short_bio"
-              value={formData.short_bio}
-              onChange={(e) => setFormData({ ...formData, short_bio: e.target.value })}
-              placeholder="Brief description (non-sensitive)"
-              rows={3}
+            <Label htmlFor="beacon_id">Beacon ID (Serial Number)</Label>
+            <Input
+              id="beacon_id"
+              value={formData.beacon_id}
+              onChange={(e) => setFormData({ ...formData, beacon_id: e.target.value })}
+              placeholder="e.g. BCN-000123"
             />
             <p className="text-xs text-muted-foreground">
-              This will appear on the printed poster. Keep it brief and non-sensitive.
+              Unique serial number of the IoT beacon assigned to this client. Must be unique across clients.
             </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="photo_url">Photo URL</Label>
-            <Input
-              id="photo_url"
-              type="url"
-              value={formData.photo_url}
-              onChange={(e) => setFormData({ ...formData, photo_url: e.target.value })}
-              placeholder="https://example.com/photo.jpg"
-            />
           </div>
 
           <div className="space-y-2">
