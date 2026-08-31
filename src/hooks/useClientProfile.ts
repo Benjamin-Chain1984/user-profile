@@ -29,7 +29,7 @@ function mapDbToProfile(data: ClientProfileData): IndividualProfile {
     id: data.id,
     fullName: data.full_name || data.preferred_name || '',
     sex: (data.sex as IndividualProfile['sex']) || undefined,
-    dateOfBirth: data.date_of_birth || '1990-01-01',
+    dateOfBirth: data.date_of_birth || '',
     avatarUrl: data.photo_url || undefined,
     personResponsibleName: data.person_responsible_name || '',
     relationshipToIndividual: data.relationship_to_individual || '',

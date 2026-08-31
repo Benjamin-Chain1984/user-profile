@@ -44,7 +44,7 @@ export function ProfileForm() {
     return null;
   }
 
-  const age = profile.dateOfBirth ? differenceInYears(new Date(), new Date(profile.dateOfBirth)) : 0;
+  const age = profile.dateOfBirth ? differenceInYears(new Date(), new Date(profile.dateOfBirth)) : null;
 
   const handleChange = (field: keyof IndividualProfile, value: string) => {
     if (!isAdmin) return;
@@ -213,7 +213,7 @@ export function ProfileForm() {
               <div>
                 <Label>Age</Label>
                 <div className="mt-1.5 h-10 px-3 flex items-center bg-muted rounded-md text-muted-foreground">
-                  {age} years
+                  {age !== null ? `${age} years` : 'Not set'}
                 </div>
               </div>
             </div>

@@ -10,7 +10,9 @@ export function ProfileHeader() {
 
   if (!profile) return null;
 
-  const age = differenceInYears(new Date(), new Date(profile.dateOfBirth));
+  const age = profile.dateOfBirth
+    ? differenceInYears(new Date(), new Date(profile.dateOfBirth))
+    : null;
 
   return (
     <div className="p-4 sm:p-6 bg-card rounded-xl sm:rounded-2xl border border-border shadow-sm">
@@ -25,7 +27,7 @@ export function ProfileHeader() {
             {profile.fullName}
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-0.5">
-            Age {age}
+            {age !== null ? `Age ${age}` : 'Age not set'}
           </p>
           <div className="mt-2 sm:mt-3 flex items-center gap-2">
             <TrafficLightIcon status={toTrafficLight(globalAlertState.currentStatus)} size="sm" />
