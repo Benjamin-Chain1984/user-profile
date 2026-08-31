@@ -64,9 +64,34 @@ const adminItems: AdminNavItem[] = [
 export function AppSidebar() {
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const { isAdmin, canAccessAdmin } = useRoleAccess();
+  const { canAccessAdmin } = useRoleAccess();
 
   const isActive = (path: string) => location.pathname === path;
+
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    adminItems.forEach((item) => {
+      if (item.children) {
+        initial[item.title] = item.children.some((child) => isActive(child.url));
+      }
+    });
+    return initial;
+  });
+
+  useEffect(() => {
+    setOpenGroups((prev) => {
+      const next: Record<string, boolean> = { ...prev };
+      adminItems.forEach((item) => {
+        if (item.children) {
+          const shouldBeOpen = item.children.some((child) => isActive(child.url));
+          if (shouldBeOpen) {
+            next[item.title] = true;
+          }
+        }
+      });
+      return next;
+    });
+  }, [location.pathname]);
 
   const handleRestrictedClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -104,7 +129,28 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {adminItems.map((item) => {
-                if (canAccessAdmin) {
+                if (!canAccessAdmin) {
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <SidebarMenuButton
+                            onClick={handleRestrictedClick}
+                            className="flex items-center gap-3 opacity-50 cursor-not-allowed"
+                          >
+                            <Lock className="h-4 w-4" />
+                            <span>{item.title}</span>
+                          </SidebarMenuButton>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Admin access required</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </SidebarMenuItem>
+                  );
+                }
+
+                if (!item.children) {
                   return (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild isActive={isActive(item.url)}>
@@ -116,22 +162,39 @@ export function AppSidebar() {
                     </SidebarMenuItem>
                   );
                 }
+
+                const isGroupActive = item.children.some((child) => isActive(child.url));
+
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <SidebarMenuButton
-                          onClick={handleRestrictedClick}
-                          className="flex items-center gap-3 opacity-50 cursor-not-allowed"
-                        >
-                          <Lock className="h-4 w-4" />
+                    <Collapsible
+                      open={openGroups[item.title]}
+                      onOpenChange={(open) =>
+                        setOpenGroups((prev) => ({ ...prev, [item.title]: open }))
+                      }
+                      className="group/collapsible"
+                    >
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton isActive={isGroupActive}>
+                          <item.icon className="h-4 w-4" />
                           <span>{item.title}</span>
+                          <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
                         </SidebarMenuButton>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Admin access required</p>
-                      </TooltipContent>
-                    </Tooltip>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          {item.children.map((child) => (
+                            <SidebarMenuSubItem key={child.title}>
+                              <SidebarMenuSubButton asChild isActive={isActive(child.url)}>
+                                <NavLink to={child.url} className="flex items-center gap-2">
+                                  <span>{child.title}</span>
+                                </NavLink>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </Collapsible>
                   </SidebarMenuItem>
                 );
               })}
