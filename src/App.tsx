@@ -18,6 +18,7 @@ import OAuthConsent from "./pages/OAuthConsent";
 import ClientScanPage from "./pages/ClientScan";
 import ClientPosterPage from "./pages/ClientPoster";
 import AdminPage from "./pages/Admin";
+import AdminTeamPage from "./pages/AdminTeam";
 import ModulePlaceholder from "./pages/ModulePlaceholder";
 import PainCheckPage from "./pages/PainCheck";
 import BowelCarePage from "./pages/BowelCare";
@@ -110,6 +111,14 @@ const App = () => (
                     element={
                       <ProtectedRoute requiredRole="admin">
                         <AdminPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/team"
+                    element={
+                      <ProtectedRoute requiredRole="admin">
+                        <AdminTeamPage />
                       </ProtectedRoute>
                     }
                   />

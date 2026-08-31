@@ -3,7 +3,7 @@
  * Uses role-based access control with preview support
  */
 
-import { Home, Users, LogOut, Lock } from 'lucide-react';
+import { Home, Users, LogOut, Lock, ChevronRight } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,8 +18,16 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarFooter,
 } from '@/components/ui/sidebar';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import {
   Tooltip,
   TooltipContent,
@@ -31,14 +39,31 @@ const mainItems = [
   { title: 'Dashboard', url: '/', icon: Home, requiresAdmin: false },
 ];
 
-const adminItems = [
-  { title: 'Clients', url: '/admin', icon: Users, requiresAdmin: true },
+interface AdminNavItem {
+  title: string;
+  url: string;
+  icon: React.ElementType;
+  requiresAdmin: boolean;
+  children?: { title: string; url: string }[];
+}
+
+const adminItems: AdminNavItem[] = [
+  {
+    title: 'Clients',
+    url: '/admin',
+    icon: Users,
+    requiresAdmin: true,
+    children: [
+      { title: 'Clients', url: '/admin' },
+      { title: 'Team', url: '/admin/team' },
+    ],
+  },
 ];
 
 export function AppSidebar() {
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const { isAdmin, canAccessAdmin } = useRoleAccess();
+  const { canAccessAdmin } = useRoleAccess();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -78,7 +103,28 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {adminItems.map((item) => {
-                if (canAccessAdmin) {
+                if (!canAccessAdmin) {
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <SidebarMenuButton
+                            onClick={handleRestrictedClick}
+                            className="flex items-center gap-3 opacity-50 cursor-not-allowed"
+                          >
+                            <Lock className="h-4 w-4" />
+                            <span>{item.title}</span>
+                          </SidebarMenuButton>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Admin access required</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </SidebarMenuItem>
+                  );
+                }
+
+                if (!item.children) {
                   return (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild isActive={isActive(item.url)}>
@@ -90,23 +136,38 @@ export function AppSidebar() {
                     </SidebarMenuItem>
                   );
                 }
+
+                const isGroupActive = item.children.some((child) => isActive(child.url));
+
                 return (
-                  <SidebarMenuItem key={item.title}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <SidebarMenuButton
-                          onClick={handleRestrictedClick}
-                          className="flex items-center gap-3 opacity-50 cursor-not-allowed"
-                        >
-                          <Lock className="h-4 w-4" />
+                  <Collapsible
+                    key={item.title}
+                    open={isGroupActive}
+                    className="group/collapsible"
+                  >
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton isActive={isGroupActive}>
+                          <item.icon className="h-4 w-4" />
                           <span>{item.title}</span>
+                          <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
                         </SidebarMenuButton>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Admin access required</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </SidebarMenuItem>
+                      </CollapsibleTrigger>
+                    </SidebarMenuItem>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {item.children.map((child) => (
+                          <SidebarMenuSubItem key={child.title}>
+                            <SidebarMenuSubButton asChild isActive={isActive(child.url)}>
+                              <NavLink to={child.url} className="flex items-center gap-2">
+                                <span>{child.title}</span>
+                              </NavLink>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </Collapsible>
                 );
               })}
             </SidebarMenu>
