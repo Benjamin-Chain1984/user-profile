@@ -126,9 +126,23 @@ export function IddsiPlacematBuilder({ clientId, onClose }: Props) {
       ]);
       const canvas = await html2canvas(sheetRef.current, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
       const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+      // Front page (top half)
       pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 297, 210);
+
+      // Back page (bottom half)
+      const cropCanvas = document.createElement('canvas');
+      cropCanvas.width = canvas.width;
+      cropCanvas.height = canvas.height / 2;
+      const ctx = cropCanvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(canvas, 0, canvas.height / 2, canvas.width, canvas.height / 2, 0, 0, canvas.width, canvas.height / 2);
+      }
+      pdf.addPage('a4', 'landscape');
+      pdf.addImage(cropCanvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 297, 210);
+
       pdf.save(`IDDSI-Placemat-${(data.name || 'person').replace(/\s+/g, '-')}.pdf`);
-      toast({ title: 'PDF downloaded', description: 'Attach the PDF to your email to share the placemat.' });
+      toast({ title: 'PDF downloaded', description: 'Front and back pages downloaded. Print double-sided if possible.' });
       return true;
     } catch (e) {
       toast({ title: 'PDF export failed', description: (e as Error).message, variant: 'destructive' });
@@ -266,7 +280,7 @@ export function IddsiPlacematBuilder({ clientId, onClose }: Props) {
 
         <div className="min-w-0 max-w-full space-y-2 overflow-hidden">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground no-print">
-            Live preview — A4 landscape
+            Live preview — A4 landscape, front and back
           </p>
           <PlacematPreview ref={sheetRef} data={data} />
         </div>
