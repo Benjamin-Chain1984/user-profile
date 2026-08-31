@@ -142,7 +142,7 @@ export const PlacematPreview = forwardRef<HTMLDivElement, { data: PlacematData }
 
             <div style={{ display: 'flex', gap: 8, height: 94 }}><LevelBlock kind="FOOD" meta={data.food} /><LevelBlock kind="DRINK" meta={data.drink} /></div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1.55fr 1fr', gap: 8, height: 196 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.55fr 1fr', gap: 8, height: 190 }}>
               <Section title="Mealtime support — PIRATES">
                 <div style={{ padding: '6px 8px', display: 'grid', gap: 3 }}>
                   {data.pirates.filter((item) => item.value.trim()).map((item) => {
@@ -154,10 +154,6 @@ export const PlacematPreview = forwardRef<HTMLDivElement, { data: PlacematData }
                   </div>})}
                 </div>
               </Section>
-              <div style={{ display: 'grid', gridTemplateRows: '1fr 1fr', gap: 8 }}>
-                <Section title="Equipment required"><div style={{ padding: 7, display: 'flex', flexWrap: 'wrap', gap: 4, alignContent: 'flex-start' }}>{data.equipment.map((item) => <span key={item} style={{ padding: '2px 6px', background: SOFT, border: `1px solid ${LINE}`, fontSize: 8.5, fontWeight: 700 }}>{item}</span>)}</div></Section>
-                <Section title="Food preferences & likes"><div style={{ padding: 7, fontSize: 9.5, lineHeight: 1.28, whiteSpace: 'pre-wrap' }}>{data.preferences || <span style={{ color: MUTED_INK }}>None recorded</span>}</div></Section>
-              </div>
               <Section title="Watch for swallowing concerns" accent={DANGER}>
                 <div style={{ padding: 7, fontSize: 9, lineHeight: 1.27 }}>
                   <div style={{ fontWeight: 900, color: DANGER }}>CHOKING SIGNS</div>
@@ -166,6 +162,11 @@ export const PlacematPreview = forwardRef<HTMLDivElement, { data: PlacematData }
                   <div>Coughing or throat clearing · wet/gurgly voice · breathing changes · watery eyes · food pocketing · distress, fatigue or recurrent chest symptoms</div>
                 </div>
               </Section>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.35fr', gap: 8, minHeight: 66 }}>
+              <Section title="Equipment required"><div style={{ padding: 7, display: 'flex', flexWrap: 'wrap', gap: 4, alignContent: 'flex-start' }}>{data.equipment.map((item) => <span key={item} style={{ padding: '2px 6px', background: SOFT, border: `1px solid ${LINE}`, fontSize: 8.5, fontWeight: 700 }}>{item}</span>)}</div></Section>
+              <Section title="Food preferences & likes"><div style={{ padding: 7, fontSize: 10.5, lineHeight: 1.32, whiteSpace: 'pre-wrap' }}>{data.preferences || <span style={{ color: MUTED_INK }}>None recorded — add preferences in the panel below the preview.</span>}</div></Section>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.05fr', gap: 8, height: 190 }}>
