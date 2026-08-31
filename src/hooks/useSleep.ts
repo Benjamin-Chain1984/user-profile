@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { calculateSleepStatus } from '@/utils/sleepStatusCalculator';
 import type { SleepConfig, SleepEntry, AwakeningEvent } from '@/types/sleep';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 const DEFAULT_CONFIG_VALUES = {
   min_expected_sleep_hours: 7,
@@ -20,6 +21,7 @@ const DEFAULT_CONFIG_VALUES = {
 };
 
 export function useSleepConfig(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -87,6 +89,7 @@ export function useSleepConfig(clientId?: string) {
 }
 
 export function useSleepEntries(clientId?: string, limit = 50) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -175,6 +178,7 @@ export function useSleepEntries(clientId?: string, limit = 50) {
 }
 
 export function useSleepStatus(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { config } = useSleepConfig(clientId);
   const { entries } = useSleepEntries(clientId);
 

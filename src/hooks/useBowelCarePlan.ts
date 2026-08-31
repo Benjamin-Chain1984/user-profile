@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { differenceInDays, addMonths, addDays } from 'date-fns';
 import type {
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
   BowelCarePlan,
   BowelCarePlanVersion,
   BowelCarePlanAcknowledgement,
@@ -16,6 +17,7 @@ import type {
 } from '@/types/bowelCarePlan';
 
 export function useBowelCarePlan(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();

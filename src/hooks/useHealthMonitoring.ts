@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { calculateEntryStatuses } from '@/utils/vitalSignStatusCalculator';
 import { computeHealthMonitoringStatus } from '@/utils/computeHealthMonitoringStatus';
 import type {
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
   VitalSignEntry,
   VitalSignConfig,
   AlteredCriteria,
@@ -33,6 +34,7 @@ const DEFAULT_CONFIG: Partial<VitalSignConfig> = {
 // ==================== CONFIG HOOK ====================
 
 export function useVitalSignConfig(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -102,6 +104,7 @@ export function useVitalSignConfig(clientId?: string) {
 // ==================== ENTRIES HOOK ====================
 
 export function useVitalSignEntries(clientId?: string, limit = 50) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -220,6 +223,7 @@ export function useVitalSignEntries(clientId?: string, limit = 50) {
 // ==================== ALERTS HOOK ====================
 
 export function useVitalSignAlerts(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -335,6 +339,7 @@ export function useVitalSignAlerts(clientId?: string) {
 // ==================== ALTERED CRITERIA HOOK ====================
 
 export function useAlteredCriteria(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -478,6 +483,7 @@ export function useAlteredCriteria(clientId?: string) {
 // ==================== STATUS HOOK ====================
 
 export function useHealthMonitoringStatus(clientId?: string): HealthMonitoringStatusInfo {
+  clientId = useClientIdOrActive(clientId);
   const { entries } = useVitalSignEntries(clientId, 50);
   const { alerts } = useVitalSignAlerts(clientId);
   const { criteriaMap } = useAlteredCriteria(clientId);
@@ -527,6 +533,7 @@ export function useHealthMonitoringStatus(clientId?: string): HealthMonitoringSt
 // ==================== ACTION LOGS HOOK ====================
 
 export function useVitalSignActionLogs(clientId?: string, alertId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();

@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { FluidConfig, FluidIntakeEntry, FluidOutputEntry, HydrationSymptomCheck, FluidBalanceAlert, FluidStatus } from '@/types/fluidBalance';
 import { calculateDailyTotals, calculateFluidStatus } from '@/utils/fluidBalanceCalculator';
 import { useToast } from '@/hooks/use-toast';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 interface UseFluidBalanceReturn {
   config: FluidConfig | null;
@@ -28,6 +29,7 @@ interface UseFluidBalanceReturn {
 }
 
 export function useFluidBalance(clientId?: string): UseFluidBalanceReturn {
+  clientId = useClientIdOrActive(clientId);
   const { user } = useAuth();
   const { toast } = useToast();
   

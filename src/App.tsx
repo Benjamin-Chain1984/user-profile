@@ -45,11 +45,13 @@ const queryClient = new QueryClient({
 function ProtectedAppShell() {
   return (
     <ProtectedRoute>
-      <ProfileProvider>
-        <MainLayout>
-          <Outlet />
-        </MainLayout>
-      </ProfileProvider>
+      <ActiveClientProvider>
+        <ProfileProvider>
+          <MainLayout>
+            <Outlet />
+          </MainLayout>
+        </ProfileProvider>
+      </ActiveClientProvider>
     </ProtectedRoute>
   );
 }

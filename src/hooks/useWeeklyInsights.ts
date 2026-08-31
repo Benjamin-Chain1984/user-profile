@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 interface WeeklyInsight {
   insight_summary: string;
@@ -9,6 +10,7 @@ interface WeeklyInsight {
 }
 
 export function useWeeklyInsights(clientId?: string, enabledModuleIds?: string[]) {
+  clientId = useClientIdOrActive(clientId);
   const [insight, setInsight] = useState<WeeklyInsight | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { IndividualProfile } from '@/types/ideal';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 interface ClientProfileData {
   id: string;
@@ -43,6 +44,7 @@ function mapDbToProfile(data: ClientProfileData): IndividualProfile {
 }
 
 export function useClientProfile(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const [profile, setProfile] = useState<IndividualProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

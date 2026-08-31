@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AbbeyPainConfig, AssessmentTrigger } from '@/types/painAssessment';
 import { useToast } from '@/hooks/use-toast';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 interface UpdateConfigData {
   assessment_triggers?: AssessmentTrigger[];
@@ -29,6 +30,7 @@ const DEFAULT_CONFIG: Omit<AbbeyPainConfig, 'id' | 'created_at' | 'updated_at' |
 };
 
 export function usePainConfig(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const [config, setConfig] = useState<AbbeyPainConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { PainadAssessment, calculatePainadSeverity } from '@/types/painad';
 import { PainType } from '@/types/painAssessment';
 import { useToast } from '@/hooks/use-toast';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 interface NewPainadAssessment {
   client_id?: string;
@@ -17,6 +18,7 @@ interface NewPainadAssessment {
 }
 
 export function usePainadAssessments(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const [assessments, setAssessments] = useState<PainadAssessment[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();

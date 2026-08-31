@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import type {
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
   OralHealthConfig,
   OralHealthPlanCategory,
   OralHealthTaskLog,
@@ -27,6 +28,7 @@ const DEFAULT_CONFIG: Partial<OralHealthConfig> = {
 };
 
 export function useOralHealthConfig(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -83,6 +85,7 @@ export function useOralHealthConfig(clientId?: string) {
 }
 
 export function useOralHealthPlan(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -139,6 +142,7 @@ export function useOralHealthPlan(clientId?: string) {
 }
 
 export function useOralHealthTaskLogs(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -201,6 +205,7 @@ export function useOralHealthTaskLogs(clientId?: string) {
 }
 
 export function useOralHealthAssessments(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -249,6 +254,7 @@ export function useOralHealthAssessments(clientId?: string) {
 }
 
 export function useOralHealthAlerts(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();

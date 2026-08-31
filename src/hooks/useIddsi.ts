@@ -7,8 +7,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useProfile } from '@/contexts/ProfileContext';
 import { toast } from '@/hooks/use-toast';
 import type { IddsiConfig, MealtimeObservation, PositioningCheck, VideoView } from '@/types/iddsi';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 export function useIddsiConfig(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { profile } = useProfile();
   const cId = clientId || profile?.id;
   const [config, setConfig] = useState<IddsiConfig | null>(null);
@@ -90,6 +92,7 @@ export function useIddsiConfig(clientId?: string) {
 }
 
 export function useMealtimeObservations(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { profile } = useProfile();
   const cId = clientId || profile?.id;
   const [observations, setObservations] = useState<MealtimeObservation[]>([]);
@@ -167,6 +170,7 @@ export function useMealtimeObservations(clientId?: string) {
 }
 
 export function usePositioningChecks(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { profile } = useProfile();
   const cId = clientId || profile?.id;
   const [checks, setChecks] = useState<PositioningCheck[]>([]);
@@ -233,6 +237,7 @@ export function usePositioningChecks(clientId?: string) {
 }
 
 export function useVideoViews(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { profile } = useProfile();
   const cId = clientId || profile?.id;
   const [views, setViews] = useState<VideoView[]>([]);

@@ -35,6 +35,7 @@ import type {
 } from '@/types/catheter';
 import { STOMA_FINDINGS, STOMA_PAIN_LEVELS } from '@/types/catheter';
 import { differenceInDays, differenceInHours, parseISO, addDays, addHours, format } from 'date-fns';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 type HealthStatus = 'stable' | 'monitor' | 'action';
 
@@ -53,6 +54,7 @@ interface CatheterStatus {
 }
 
 export function useCatheterConfig(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -111,6 +113,7 @@ export function useCatheterConfig(clientId?: string) {
 }
 
 export function useCatheterChanges(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -177,6 +180,7 @@ export function useCatheterChanges(clientId?: string) {
 }
 
 export function useFlushLogs(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -277,6 +281,7 @@ export function calculateStomaStatusLevel(
 }
 
 export function useStomaChecks(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -393,6 +398,7 @@ export function useStomaChecks(clientId?: string) {
 }
 
 export function useBagChanges(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -501,6 +507,7 @@ export function useBagChanges(clientId?: string) {
 // ── Catheter Bag Config (Stock Management) ──────────────────────
 
 export function useCatheterBagConfig(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -615,6 +622,7 @@ export function useCatheterBagConfig(clientId?: string) {
 }
 
 export function useCatheterAlerts(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -666,6 +674,7 @@ export function useCatheterAlerts(clientId?: string) {
 }
 
 export function useAutonomicRiskLogs(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -790,6 +799,7 @@ function parseFlushFrequencyToHours(frequency: string | null | undefined, custom
 }
 
 export function useCatheterStatus(clientId?: string): CatheterStatus & { loading: boolean } {
+  clientId = useClientIdOrActive(clientId);
   const { config, loading: configLoading } = useCatheterConfig(clientId);
   const { changes, loading: changesLoading } = useCatheterChanges(clientId);
   const { lastFlush, loading: flushLoading } = useFlushLogs(clientId);

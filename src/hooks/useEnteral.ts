@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import type {
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
   EnteralConfig,
   EnteralFeedLog,
   EnteralMedicationConfig,
@@ -27,6 +28,7 @@ async function enrichWithStaffNames<T extends { created_by?: string | null }>(ro
 
 // ── Config ──────────────────────────────────────────────────────
 export function useEnteralConfig(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   return useQuery({
     queryKey: ['enteral-config', clientId],
     queryFn: async () => {
@@ -50,6 +52,7 @@ export function useEnteralConfig(clientId?: string) {
 }
 
 export function useSaveEnteralConfig(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -101,6 +104,7 @@ export function useSaveEnteralConfig(clientId?: string) {
 
 // ── Medication Config ───────────────────────────────────────────
 export function useEnteralMedications(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   return useQuery({
     queryKey: ['enteral-medications', clientId],
     queryFn: async () => {
@@ -141,6 +145,7 @@ export function useSaveEnteralMedication() {
 
 // ── Feed Logs ───────────────────────────────────────────────────
 export function useEnteralFeedLogs(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   return useQuery({
     queryKey: ['enteral-feed-logs', clientId],
     queryFn: async () => {
@@ -154,6 +159,7 @@ export function useEnteralFeedLogs(clientId?: string) {
 }
 
 export function useLogEnteralFeed(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -182,6 +188,7 @@ export function useLogEnteralFeed(clientId?: string) {
  * into the enteral_flush_logs table so they count toward flush totals.
  */
 export function useLogEnteralFeedWithFlushes(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -237,6 +244,7 @@ export function useLogEnteralFeedWithFlushes(clientId?: string) {
 
 // ── Medication Logs ─────────────────────────────────────────────
 export function useEnteralMedicationLogs(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   return useQuery({
     queryKey: ['enteral-med-logs', clientId],
     queryFn: async () => {
@@ -250,6 +258,7 @@ export function useEnteralMedicationLogs(clientId?: string) {
 }
 
 export function useLogEnteralMedication(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -275,6 +284,7 @@ export function useLogEnteralMedication(clientId?: string) {
 
 // ── Flush Logs ──────────────────────────────────────────────────
 export function useEnteralFlushLogs(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   return useQuery({
     queryKey: ['enteral-flush-logs', clientId],
     queryFn: async () => {
@@ -288,6 +298,7 @@ export function useEnteralFlushLogs(clientId?: string) {
 }
 
 export function useLogEnteralFlush(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -313,6 +324,7 @@ export function useLogEnteralFlush(clientId?: string) {
 
 // ── Stoma Checks ────────────────────────────────────────────────
 export function useEnteralStomaChecks(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   return useQuery({
     queryKey: ['enteral-stoma-checks', clientId],
     queryFn: async () => {
@@ -327,6 +339,7 @@ export function useEnteralStomaChecks(clientId?: string) {
 
 // ── Tube Change Logs ────────────────────────────────────────────
 export function useEnteralTubeChangeLogs(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   return useQuery({
     queryKey: ['enteral-tube-change-logs', clientId],
     queryFn: async () => {
@@ -340,6 +353,7 @@ export function useEnteralTubeChangeLogs(clientId?: string) {
 }
 
 export function useLogEnteralTubeChange(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -428,6 +442,7 @@ export function useLogEnteralTubeChange(clientId?: string) {
 }
 
 export function useLogEnteralStomaCheck(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user } = useAuth();

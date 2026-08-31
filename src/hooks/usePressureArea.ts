@@ -7,8 +7,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import type { PressureReliefEvent, SkinCheckSession, SkinFindingMarker, PressureAreaConfig } from '@/types/pressureArea';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 export function usePressureAreaConfig(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -63,6 +65,7 @@ export function usePressureAreaConfig(clientId?: string) {
 }
 
 export function usePressureReliefEvents(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -130,6 +133,7 @@ export function usePressureReliefEvents(clientId?: string) {
 }
 
 export function useSkinChecks(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();

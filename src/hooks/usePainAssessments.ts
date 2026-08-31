@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AbbeyPainAssessment, PainActionRecord, PainType, calculateSeverity } from '@/types/painAssessment';
 import { useToast } from '@/hooks/use-toast';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 interface NewAssessment {
   client_id?: string;
@@ -23,6 +24,7 @@ interface NewActionRecord {
 }
 
 export function usePainAssessments(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const [assessments, setAssessments] = useState<AbbeyPainAssessment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

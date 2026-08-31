@@ -14,6 +14,7 @@ import type {
   BmiCategory
 } from '@/types/weightBmi';
 import { calculateWeightBmiStatus, calculateBmi, getBmiCategory } from '@/utils/weightBmiCalculator';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 const DEFAULT_CONFIG: Partial<WeightBmiConfig> = {
   monitoring_frequency: 'weekly',
@@ -29,6 +30,7 @@ const DEFAULT_CONFIG: Partial<WeightBmiConfig> = {
 };
 
 export function useWeightBmi(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { user } = useAuth();
   const { toast } = useToast();
   const [entries, setEntries] = useState<WeightEntry[]>([]);
@@ -237,6 +239,7 @@ export function useWeightBmi(clientId?: string) {
 
 // Simplified hook for status only (used by dashboard tiles)
 export function useWeightBmiStatus(clientId?: string): WeightStatusInfo | null {
+  clientId = useClientIdOrActive(clientId);
   const { statusInfo } = useWeightBmi(clientId);
   return statusInfo;
 }

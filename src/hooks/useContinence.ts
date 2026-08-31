@@ -29,6 +29,7 @@ import type {
   BodyMapMarker,
 } from '@/types/continence';
 import { differenceInHours, parseISO, format } from 'date-fns';
+import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 type HealthStatus = 'stable' | 'monitor' | 'action';
 
@@ -46,6 +47,7 @@ interface ContinenceStatus {
 }
 
 export function useContinenceConfig(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -105,6 +107,7 @@ export function useContinenceConfig(clientId?: string) {
 }
 
 export function usePadChanges(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -174,6 +177,7 @@ export function usePadChanges(clientId?: string) {
 }
 
 export function useSkinChecks(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -271,6 +275,7 @@ export function useSkinChecks(clientId?: string) {
 }
 
 export function useConsumablesChecks(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -346,6 +351,7 @@ export function useConsumablesChecks(clientId?: string) {
 }
 
 export function useUTITests(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -416,6 +422,7 @@ export function useUTITests(clientId?: string) {
 }
 
 export function useContinenceAlerts(clientId?: string) {
+  clientId = useClientIdOrActive(clientId);
   const queryClient = useQueryClient();
 
   const alertsQuery = useQuery({
@@ -443,6 +450,7 @@ export function useContinenceAlerts(clientId?: string) {
 }
 
 export function useContinenceStatus(clientId?: string): ContinenceStatus {
+  clientId = useClientIdOrActive(clientId);
   const { config } = useContinenceConfig(clientId);
   const { changes } = usePadChanges(clientId);
   const { checks: skinChecks, isOverdue: skinCheckOverdue } = useSkinChecks(clientId);
