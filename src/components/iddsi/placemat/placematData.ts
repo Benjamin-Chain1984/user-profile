@@ -310,6 +310,7 @@ export function buildEquipmentFromLevels(
 export const LAMINATING_STEPS: string[] = [
   'Print in A4 landscape orientation.',
   'Print at 100% / actual size — do not scale to fit.',
+  'Print double-sided if possible so the choking first-aid guide is on the back.',
   "Check the person's food and drink levels are correct before laminating.",
   'Test both QR codes with a phone camera before laminating.',
   'Laminate the completed placemat (A4 pouch, gloss or matte).',

@@ -280,7 +280,7 @@ export function IddsiPlacematBuilder({ clientId, onClose }: Props) {
 
         <div className="min-w-0 max-w-full space-y-2 overflow-hidden">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground no-print">
-            Live preview — A4 landscape
+            Live preview — A4 landscape, front and back
           </p>
           <PlacematPreview ref={sheetRef} data={data} />
         </div>
