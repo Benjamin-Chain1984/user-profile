@@ -183,13 +183,39 @@ export function ClientManagement() {
                               </Badge>
                             )}
                           </div>
-                          {client.short_bio && (
-                            <div className="text-sm text-muted-foreground line-clamp-1">
-                              {client.short_bio}
-                            </div>
-                          )}
                         </div>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {(() => {
+                        const signal = signals[client.id];
+                        if (!signal) {
+                          return <span className="text-sm text-muted-foreground">—</span>;
+                        }
+                        return (
+                          <div className="flex items-center gap-2">
+                            <TrafficLightIcon status={signal.status} size="sm" />
+                            <div className="min-w-0">
+                              <TrafficLightBadge
+                                status={signal.status}
+                                size="sm"
+                                isPaused={signal.isPaused}
+                              />
+                              <div className="text-xs text-muted-foreground mt-0.5">
+                                {signal.isPaused
+                                  ? 'Monitoring paused'
+                                  : signal.redCount > 0
+                                    ? `${signal.redCount} Red alert${signal.redCount > 1 ? 's' : ''}`
+                                    : signal.amberCount > 0
+                                      ? `${signal.amberCount} Amber alert${signal.amberCount > 1 ? 's' : ''}`
+                                      : signal.needsSetup
+                                        ? 'Setup required'
+                                        : 'No alerts'}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell>
                       <Badge variant={client.status === 'active' ? 'default' : 'secondary'}>
