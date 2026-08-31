@@ -86,8 +86,7 @@ export function ClientFormDialog({
           .from('clients')
           .update({
             preferred_name: formData.preferred_name.trim(),
-            short_bio: formData.short_bio.trim() || null,
-            photo_url: formData.photo_url.trim() || null,
+            beacon_id: formData.beacon_id.trim() || null,
             status: formData.status,
           })
           .eq('id', client.id);
@@ -101,8 +100,7 @@ export function ClientFormDialog({
 
         const { error } = await supabase.from('clients').insert({
           preferred_name: formData.preferred_name.trim(),
-          short_bio: formData.short_bio.trim() || null,
-          photo_url: formData.photo_url.trim() || null,
+          beacon_id: formData.beacon_id.trim() || null,
           status: formData.status,
           poster_qr_token_hash: tokenHash,
           poster_qr_token_plain: token,

@@ -37,6 +37,7 @@ interface ClientRow {
   preferred_name: string;
   short_bio: string | null;
   photo_url: string | null;
+  beacon_id: string | null;
   status: string;
   poster_qr_token_created_at: string;
   poster_qr_token_rotated_at: string | null;
