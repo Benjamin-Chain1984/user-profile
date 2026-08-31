@@ -1633,8 +1633,11 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const hasRedAlert = !isMonitoringPaused && activeEnabledModules.some((m) => m.status === 'action');
   const hasAmberAlert = !isMonitoringPaused && activeEnabledModules.some((m) => m.status === 'monitor');
   
+  // A fresh profile with no modules enabled is never IDEAL — it requires setup (Amber)
+  const noModulesEnabled = activeEnabledModules.length === 0;
+
   const globalAlertState: GlobalAlertState = {
-    currentStatus: hasRedAlert ? 'action' : hasAmberAlert ? 'monitor' : 'stable',
+    currentStatus: hasRedAlert ? 'action' : (hasAmberAlert || noModulesEnabled) ? 'monitor' : 'stable',
     activeAlertsCount: activeAlerts.length,
     alerts: activeAlerts,
   };
