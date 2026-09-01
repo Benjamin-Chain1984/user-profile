@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+
 import { BowelCareStatusCard } from './BowelCareStatusCard';
 import { BowelLogForm } from './BowelLogForm';
 import { BowelCareHistory } from './BowelCareHistory';
@@ -14,12 +14,7 @@ import { BowelCareTrends } from './BowelCareTrends';
 import { PrnWorkflowCard } from './PrnWorkflowCard';
 import { BowelCareConfigSettings } from './BowelCareConfigSettings';
 import { BowelCareExportReports } from './BowelCareExportReports';
-import { BowelCarePlanEditor } from './BowelCarePlanEditor';
-import { BowelCarePlanViewer } from './BowelCarePlanViewer';
-import { CompetencyCheckPage, CompetencyStatusPanel, CompetencyTrendsView, CompetencyConfigSettings } from './competency';
 import { useBowelCareStatus } from '@/hooks/useBowelCare';
-import { useBowelCarePlan, useBowelCarePlanAcknowledgements, useBowelCarePlanStatus } from '@/hooks/useBowelCarePlan';
-import { useStaffCompetencyStatus, useBowelCompetencyConfig } from '@/hooks/useBowelCompetency';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { RoleTabsTrigger } from '@/components/ui/role-tabs-trigger';
 import { useProfile } from '@/contexts/ProfileContext';
@@ -31,11 +26,7 @@ import {
   Clock, 
   AlertCircle,
   Activity,
-  FileDown,
-  FileText,
-  AlertTriangle,
-  CheckCircle2,
-  ShieldCheck
+  FileDown
 } from 'lucide-react';
 
 interface BowelCareDashboardProps {
@@ -63,42 +54,13 @@ const BOWEL_CARE_TIPS = [
 export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
   const [showLogForm, setShowLogForm] = useState(false);
   const [showExport, setShowExport] = useState(false);
-  const [showPlanEditor, setShowPlanEditor] = useState(false);
-  const [showPlanViewer, setShowPlanViewer] = useState(false);
-  const [showCompetencyCheck, setShowCompetencyCheck] = useState(false);
   const statusInfo = useBowelCareStatus(clientId);
   const { isAdmin } = useRoleAccess();
   const { isMonitoringPaused, monitoringStatus } = useProfile();
-  const { plan } = useBowelCarePlan(clientId);
-  const planStatus = useBowelCarePlanStatus(plan);
-  const { hasCurrentUserAcknowledged } = useBowelCarePlanAcknowledgements(plan?.id, plan?.version);
-  const { config: compConfig } = useBowelCompetencyConfig(clientId);
-  const { overdueCount, expiringSoonCount } = useStaffCompetencyStatus(clientId, compConfig?.expiry_warning_days ?? 30);
 
   // Show export view
   if (showExport) {
     return <BowelCareExportReports clientId={clientId} onClose={() => setShowExport(false)} />;
-  }
-
-  // Show plan editor (admin only)
-  if (showPlanEditor) {
-    return <BowelCarePlanEditor clientId={clientId} onClose={() => setShowPlanEditor(false)} />;
-  }
-
-  // Show plan viewer
-  if (showPlanViewer) {
-    return (
-      <BowelCarePlanViewer
-        clientId={clientId}
-        onClose={() => setShowPlanViewer(false)}
-        onEdit={isAdmin ? () => { setShowPlanViewer(false); setShowPlanEditor(true); } : undefined}
-      />
-    );
-  }
-
-  // Show competency check
-  if (showCompetencyCheck) {
-    return <CompetencyCheckPage clientId={clientId} onClose={() => setShowCompetencyCheck(false)} />;
   }
 
   return (
@@ -112,14 +74,6 @@ export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => setShowPlanViewer(true)}>
-            <FileText className="h-4 w-4 mr-2" />
-            Digital Bowel Care Plan
-          </Button>
-          <Button variant="outline" onClick={() => setShowCompetencyCheck(true)}>
-            <ShieldCheck className="h-4 w-4 mr-2" />
-            Competency Check
-          </Button>
           <Button variant="outline" onClick={() => setShowExport(true)}>
             <FileDown className="h-4 w-4 mr-2" />
             Export
@@ -158,7 +112,7 @@ export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
 
       {/* Tabs - PRN tab removed, accessed via settings only */}
       <Tabs defaultValue="tracking" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
+        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
           <TabsTrigger value="tracking" className="gap-2">
             <Clock className="h-4 w-4" />
             <span className="hidden sm:inline">Tracking</span>
@@ -166,15 +120,6 @@ export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
           <TabsTrigger value="trends" className="gap-2">
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">Trends</span>
-          </TabsTrigger>
-          <TabsTrigger value="competency" className="gap-2">
-            <ShieldCheck className="h-4 w-4" />
-            <span className="hidden sm:inline">Competency</span>
-            {(overdueCount > 0 || expiringSoonCount > 0) && (
-              <Badge variant={overdueCount > 0 ? 'destructive' : 'secondary'} className="ml-1 h-5 px-1.5 text-xs">
-                {overdueCount + expiringSoonCount}
-              </Badge>
-            )}
           </TabsTrigger>
           <RoleTabsTrigger 
             value="settings" 
@@ -235,65 +180,13 @@ export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
           <BowelCareTrends clientId={clientId} />
         </TabsContent>
 
-        <TabsContent value="competency" className="space-y-6">
-          <CompetencyStatusPanel
-            clientId={clientId}
-            onStartCheck={() => setShowCompetencyCheck(true)}
-          />
-          <CompetencyTrendsView clientId={clientId} />
-        </TabsContent>
-
         {isAdmin && (
           <TabsContent value="settings" className="space-y-6">
             <BowelCareConfigSettings clientId={clientId} />
-            <CompetencyConfigSettings clientId={clientId} />
           </TabsContent>
         )}
       </Tabs>
 
-      {/* Plan Status Banners */}
-      {plan?.status === 'published' && !hasCurrentUserAcknowledged && (
-        <Card className="border-amber-200 bg-amber-50/50">
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0" />
-                <p className="text-sm font-medium text-amber-800">Plan acknowledgement required</p>
-              </div>
-              <Button size="sm" variant="outline" onClick={() => setShowPlanViewer(true)}>
-                View & Acknowledge
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {planStatus.reviewStatus === 'review_overdue' && (
-        <Card className="border-destructive/50 bg-destructive/5">
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0" />
-                <p className="text-sm font-medium text-destructive">{planStatus.reviewMessage}</p>
-              </div>
-              {isAdmin && (
-                <Button size="sm" variant="outline" onClick={() => setShowPlanEditor(true)}>Review Now</Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {planStatus.reviewStatus === 'review_due_soon' && (
-        <Card className="border-amber-200 bg-amber-50/50">
-          <CardContent className="py-3">
-            <div className="flex items-center gap-3">
-              <Clock className="h-4 w-4 text-amber-600" />
-              <p className="text-sm text-amber-800">{planStatus.reviewMessage}</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Bristol Stool Chart Citation */}
       <div className="text-xs text-muted-foreground border-t pt-4 space-y-1">

@@ -93,34 +93,8 @@ export function useBowelCareConfig(clientId?: string) {
         return data;
       }
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bowelCareConfig', clientId] });
-      // Invalidate all active competency attempts when config changes
-      try {
-        const { data: activeAttempts } = await supabase
-          .from('bowel_competency_attempts')
-          .select('id')
-          .eq('invalidated', false)
-          .eq('passed', true);
-        if (clientId) {
-          // scoped invalidation would need admin RLS - handled via update
-        }
-        if (activeAttempts && activeAttempts.length > 0) {
-          for (const attempt of activeAttempts) {
-            await supabase
-              .from('bowel_competency_attempts')
-              .update({
-                invalidated: true,
-                invalidated_at: new Date().toISOString(),
-                invalidated_reason: 'Bowel care configuration changed',
-              })
-              .eq('id', attempt.id);
-          }
-          queryClient.invalidateQueries({ queryKey: ['bowelCompetencyAttempts', clientId] });
-        }
-      } catch (e) {
-        console.error('Failed to invalidate competency attempts:', e);
-      }
       toast({ title: 'Settings saved', description: 'Bowel care configuration updated.' });
     },
     onError: (error) => {
