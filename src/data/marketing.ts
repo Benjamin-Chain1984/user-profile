@@ -97,9 +97,9 @@ export const secondaryFeatures: MarketingFeature[] = [
   },
   {
     icon: Workflow,
-    title: 'Digital support plans',
+    title: 'Customisable in minutes',
     description:
-      'Configuration lives in each module’s settings and drives the logging forms, schedules and alerts staff see on shift.',
+      'Every module is configured in its own Settings tab — thresholds, schedules and alert contacts. Enable a module and it is ready for staff to use within minutes.',
   },
   {
     icon: Sparkles,
