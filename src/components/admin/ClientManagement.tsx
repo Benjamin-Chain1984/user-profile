@@ -178,15 +178,7 @@ export function ClientManagement() {
                           </div>
                         )}
                         <div>
-                          <div className="font-medium flex items-center gap-2">
-                            {client.preferred_name}
-                            {activeClientId === client.id && (
-                              <Badge className="text-xs gap-1">
-                                <CheckCircle2 className="h-3 w-3" />
-                                Active
-                              </Badge>
-                            )}
-                          </div>
+                          <div className="font-medium">{client.preferred_name}</div>
                         </div>
                       </div>
                     </TableCell>
