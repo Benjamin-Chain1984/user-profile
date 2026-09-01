@@ -23,6 +23,7 @@ import {
   trustIndicators,
 } from '@/data/marketing';
 import dashboardMockup from '@/assets/marketing-dashboard.jpg';
+import beaconRed from '@/assets/marketing-beacon-red.jpg';
 
 export default function Landing() {
   return (
@@ -140,18 +141,30 @@ export default function Landing() {
                 ))}
               </ul>
             </div>
-            <div className="rounded-2xl border border-border bg-background p-8 shadow-card">
-              <h3 className="text-base font-semibold">A new model of practice governance</h3>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                IDEAL changes how governance and support are delivered in disability services and
-                residential aged care. Configuration set by clinicians flows straight to the floor —
-                as logging forms, schedules, beacon cues and escalation alerts — and every action
-                flows back as an audit-ready record.
-              </p>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                Managers see every client's IDEAL signal on one screen. Staff see exactly what to do
-                next. Nothing relies on memory, handover notes or a shared folder again.
-              </p>
+            <div className="space-y-6">
+              <div className="rounded-2xl border border-border bg-background p-2 shadow-card">
+                <img
+                  src={beaconRed}
+                  alt="IDEAL Beacon mounted on a wall showing a red act-now signal"
+                  width={1024}
+                  height={768}
+                  loading="lazy"
+                  className="w-full rounded-xl"
+                />
+              </div>
+              <div className="rounded-2xl border border-border bg-background p-8 shadow-card">
+                <h3 className="text-base font-semibold">A new model of practice governance</h3>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  IDEAL changes how governance and support are delivered in disability services and
+                  residential aged care. Configuration set by clinicians flows straight to the floor —
+                  as logging forms, schedules, beacon cues and escalation alerts — and every action
+                  flows back as an audit-ready record.
+                </p>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  Managers see every client's IDEAL signal on one screen. Staff see exactly what to do
+                  next. Nothing relies on memory, handover notes or a shared folder again.
+                </p>
+              </div>
             </div>
           </div>
         </div>

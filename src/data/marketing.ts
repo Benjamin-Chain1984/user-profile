@@ -177,6 +177,8 @@ export const trustIndicators = [
   'Assistive technology for high-intensity supports',
   'NDIS High Intensity aligned',
   'Beacon visual cues & alerts',
+  'Built with clinicians and industry experts',
+  'Co-designed with people with disability',
   'Role-based access control',
   'Full audit trail',
   'Australian data practices',
