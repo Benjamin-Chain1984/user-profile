@@ -26,6 +26,8 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   const { isActive, isLoading } = usePlatformSubscription();
   const [orgAccess, setOrgAccess] = useState<boolean | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [hasLegacyClients, setHasLegacyClients] = useState<boolean | null>(null);
+
 
   const isAdmin = hasRole('admin');
 
@@ -61,21 +63,37 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
     return () => { cancelled = true; };
   }, [isAdmin, isActive, user?.id]);
 
+  // Legacy workspaces: admins who already created client profiles before the
+  // paywall existed keep access to those records without a paid plan.
+  useEffect(() => {
+    if (!isAdmin || !user?.id) return;
+    let cancelled = false;
+    supabase
+      .from('clients')
+      .select('id', { count: 'exact', head: true })
+      .then(({ count, error }) => {
+        if (cancelled) return;
+        setHasLegacyClients(!error && (count ?? 0) > 0);
+      });
+    return () => { cancelled = true; };
+  }, [isAdmin, user?.id]);
+
   const handleOnboardingClose = useCallback(() => setShowOnboarding(false), []);
 
   if (isAdmin) {
-    if (isLoading) return <LoadingScreen />;
-    if (isActive) {
+    if (isLoading || hasLegacyClients === null) return <LoadingScreen />;
+    if (isActive || hasLegacyClients) {
       return (
         <>
-          {showOnboarding && <OnboardingDialog key={String(showOnboarding)} />}
-          {showOnboarding && <OnboardingDismiss onDone={handleOnboardingClose} />}
+          {isActive && showOnboarding && <OnboardingDialog key={String(showOnboarding)} />}
+          {isActive && showOnboarding && <OnboardingDismiss onDone={handleOnboardingClose} />}
           {children}
         </>
       );
     }
     return <Paywall />;
   }
+
 
   // Staff / other roles
   if (orgAccess === null) return <LoadingScreen />;
