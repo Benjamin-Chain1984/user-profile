@@ -9,6 +9,7 @@ import {
   FileBarChart,
   Fingerprint,
   HeartPulse,
+  Lightbulb,
   QrCode,
   ShieldCheck,
   Sparkles,
