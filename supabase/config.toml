@@ -14,3 +14,11 @@ verify_jwt = false
 
 [functions.generate-weekly-insights]
 verify_jwt = false
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.payments-webhook]
+verify_jwt = false
+
+[functions.create-portal-session]
+verify_jwt = false
