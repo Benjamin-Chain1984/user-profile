@@ -97,6 +97,25 @@ export default function About() {
         </div>
       </section>
 
+      <section className="border-y border-border bg-card">
+        <div className="site-container site-section">
+          <div className="max-w-3xl">
+            <span className="eyebrow">How we built it</span>
+            <h2 className="display-2 mt-5">Designed with experts, shaped by lived experience</h2>
+            <p className="lead mt-4">
+              IDEAL was built alongside registered nurses, disability practice leaders, support
+              workers and quality managers who live the high-intensity support standards every day.
+            </p>
+            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+              It was also co-designed with people with disability, families and advocates. Their
+              feedback shaped everything from the traffic-light signal to the language in each
+              module — because assistive technology only works when the people being supported trust
+              it too.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section className="border-t border-border bg-card">
         <div className="site-container py-16 text-center">
           <h2 className="display-2">Want to see it with your own care model?</h2>

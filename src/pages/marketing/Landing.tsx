@@ -23,6 +23,7 @@ import {
   trustIndicators,
 } from '@/data/marketing';
 import dashboardMockup from '@/assets/marketing-dashboard.jpg';
+import beaconRed from '@/assets/marketing-beacon-red.jpg';
 
 export default function Landing() {
   return (
