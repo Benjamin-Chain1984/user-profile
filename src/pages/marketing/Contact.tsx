@@ -105,8 +105,8 @@ export default function Contact() {
             <ul className="mt-4 space-y-4 text-sm">
               <li className="flex items-start gap-3">
                 <Mail className="mt-0.5 h-4 w-4 text-primary" aria-hidden />
-                <a href="mailto:hello@idealcare.app" className="hover:underline">
-                  hello@idealcare.app
+                <a href="mailto:info@idealat.com.au" className="hover:underline">
+                  info@idealat.com.au
                 </a>
               </li>
               <li className="flex items-start gap-3">
