@@ -7,7 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertTriangle, FileDown, Plus, Droplets, Package, Clock, TrendingUp, Settings, FileText, AlertCircle } from 'lucide-react';
+import { AlertTriangle, FileDown, Plus, Droplets, Package, Clock, TrendingUp, Settings } from 'lucide-react';
 import { CatheterStatusCard } from './CatheterStatusCard';
 import { CatheterTrafficLightCard } from './CatheterTrafficLightCard';
 import { CatheterHistory } from './CatheterHistory';
@@ -19,10 +19,8 @@ import { FlushLogForm } from './FlushLogForm';
 import { StomaCheckForm } from './StomaCheckForm';
 import { BagChangeForm } from './BagChangeForm';
 import { AutonomicDysreflexiaPanel } from './AutonomicDysreflexiaPanel';
-import { CatheterCarePlanViewer } from './CatheterCarePlanViewer';
-import { CatheterCarePlanEditor } from './CatheterCarePlanEditor';
 import { UrineColourChart } from './UrineColourChart';
-import { useCatheterCarePlan, useCatheterCarePlanAcknowledgements, useCatheterCarePlanStatus } from '@/hooks/useCatheterCarePlan';
+import { useCatheterCarePlan } from '@/hooks/useCatheterCarePlan';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { useProfile } from '@/contexts/ProfileContext';
 import { MonitoringPausedBanner } from '@/components/monitoring';
@@ -42,37 +40,12 @@ export function CatheterDashboard({ clientId }: CatheterDashboardProps) {
   const [showStomaForm, setShowStomaForm] = useState(false);
   const [showBagForm, setShowBagForm] = useState(false);
   const [showExport, setShowExport] = useState(false);
-  const [showPlanViewer, setShowPlanViewer] = useState(false);
-  const [showPlanEditor, setShowPlanEditor] = useState(false);
 
   const { plan } = useCatheterCarePlan(clientId);
-  const planStatus = useCatheterCarePlanStatus(plan);
-  const { hasCurrentUserAcknowledged } = useCatheterCarePlanAcknowledgements(plan?.id, plan?.version);
 
   const planCatheterType = normalizeCatheterType(plan?.catheter_type);
   const typeConfig = planCatheterType ? CATHETER_TYPE_CONFIG[planCatheterType] : null;
 
-  // Show plan editor (admin only)
-  if (showPlanEditor) {
-    return (
-      <div className="container py-6 space-y-6">
-        <CatheterCarePlanEditor clientId={clientId} onClose={() => setShowPlanEditor(false)} />
-      </div>
-    );
-  }
-
-  // Show plan viewer
-  if (showPlanViewer) {
-    return (
-      <div className="container py-6 space-y-6">
-        <CatheterCarePlanViewer
-          clientId={clientId}
-          onClose={() => setShowPlanViewer(false)}
-          onEdit={isAdmin ? () => { setShowPlanViewer(false); setShowPlanEditor(true); } : undefined}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="container py-6 space-y-6">
@@ -83,10 +56,6 @@ export function CatheterDashboard({ clientId }: CatheterDashboardProps) {
           <p className="text-muted-foreground">Track catheter care, flushes, and bag changes</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={() => setShowPlanViewer(true)}>
-            <FileText className="h-4 w-4 mr-2" />
-            Digital Urinary Catheter Plan
-          </Button>
           <Button variant="outline" onClick={() => setShowExport(true)} className="gap-2">
             <FileDown className="h-4 w-4" />
             Export
@@ -161,49 +130,8 @@ export function CatheterDashboard({ clientId }: CatheterDashboardProps) {
         )}
       </Tabs>
 
-      {/* Plan Status Banners */}
-      {plan?.status === 'published' && !hasCurrentUserAcknowledged && (
-        <Card className="border-amber-200 bg-amber-50/50">
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0" />
-                <p className="text-sm font-medium text-amber-800">Plan acknowledgement required</p>
-              </div>
-              <Button size="sm" variant="outline" onClick={() => setShowPlanViewer(true)}>
-                View & Acknowledge
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
-      {planStatus.reviewStatus === 'review_overdue' && (
-        <Card className="border-destructive/50 bg-destructive/5">
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0" />
-                <p className="text-sm font-medium text-destructive">{planStatus.reviewMessage}</p>
-              </div>
-              {isAdmin && (
-                <Button size="sm" variant="outline" onClick={() => setShowPlanEditor(true)}>Review Now</Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
-      {planStatus.reviewStatus === 'review_due_soon' && (
-        <Card className="border-amber-200 bg-amber-50/50">
-          <CardContent className="py-3">
-            <div className="flex items-center gap-3">
-              <Clock className="h-4 w-4 text-amber-600" />
-              <p className="text-sm text-amber-800">{planStatus.reviewMessage}</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Forms */}
       <CatheterChangeForm
