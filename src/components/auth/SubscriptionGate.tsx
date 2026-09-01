@@ -26,6 +26,8 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   const { isActive, isLoading } = usePlatformSubscription();
   const [orgAccess, setOrgAccess] = useState<boolean | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [hasLegacyClients, setHasLegacyClients] = useState<boolean | null>(null);
+
 
   const isAdmin = hasRole('admin');
 
