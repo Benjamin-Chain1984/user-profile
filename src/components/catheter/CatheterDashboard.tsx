@@ -83,10 +83,6 @@ export function CatheterDashboard({ clientId }: CatheterDashboardProps) {
           <p className="text-muted-foreground">Track catheter care, flushes, and bag changes</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={() => setShowPlanViewer(true)}>
-            <FileText className="h-4 w-4 mr-2" />
-            Digital Urinary Catheter Plan
-          </Button>
           <Button variant="outline" onClick={() => setShowExport(true)} className="gap-2">
             <FileDown className="h-4 w-4" />
             Export
