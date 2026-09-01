@@ -348,3 +348,85 @@ html {
     display: none !important;
   }
 }
+
+/* ============================================================
+   Marketing / SaaS design system extension
+   Extends the existing IDEAL tokens (no replacements)
+   ============================================================ */
+@layer base {
+  :root {
+    --brand-1: 258 89% 66%;
+    --brand-2: 269 95% 72%;
+    --brand-3: 234 89% 68%;
+    --gradient-brand: linear-gradient(135deg, hsl(var(--brand-3)), hsl(var(--brand-1)) 55%, hsl(var(--brand-2)));
+    --gradient-subtle: linear-gradient(180deg, hsl(var(--background)), hsl(var(--surface-elevated)));
+    --gradient-glow: radial-gradient(60% 60% at 50% 0%, hsl(var(--brand-1) / 0.18), transparent 70%);
+    --shadow-elegant: 0 24px 60px -24px hsl(var(--brand-1) / 0.35);
+    --shadow-card: 0 1px 2px hsl(240 5% 10% / 0.06), 0 12px 32px -18px hsl(240 5% 10% / 0.25);
+    --glass-bg: 0 0% 100% / 0.65;
+    --glass-border: 240 4% 83% / 0.6;
+  }
+
+  .dark {
+    --gradient-glow: radial-gradient(60% 60% at 50% 0%, hsl(var(--brand-2) / 0.22), transparent 70%);
+    --shadow-card: 0 1px 2px hsl(0 0% 0% / 0.4), 0 16px 40px -20px hsl(0 0% 0% / 0.6);
+    --glass-bg: 240 3% 15% / 0.6;
+    --glass-border: 240 5% 33% / 0.6;
+  }
+}
+
+@layer components {
+  .site-container {
+    @apply mx-auto w-full max-w-6xl px-5 sm:px-8;
+  }
+  .site-section {
+    @apply py-20 sm:py-28;
+  }
+  .glass-panel {
+    background: hsl(var(--glass-bg));
+    border: 1px solid hsl(var(--glass-border));
+    backdrop-filter: blur(14px);
+    @apply rounded-2xl;
+  }
+  .gradient-text {
+    background: var(--gradient-brand);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .gradient-surface {
+    background: var(--gradient-brand);
+  }
+  .glow-bg {
+    background-image: var(--gradient-glow);
+  }
+  .shadow-elegant {
+    box-shadow: var(--shadow-elegant);
+  }
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  .display-1 {
+    @apply font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.05];
+  }
+  .display-2 {
+    @apply font-display text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight;
+  }
+  .display-3 {
+    @apply font-display text-2xl sm:text-3xl font-bold tracking-tight;
+  }
+  .lead {
+    @apply text-base sm:text-lg text-muted-foreground leading-relaxed;
+  }
+  .eyebrow {
+    @apply inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground;
+  }
+  .reveal {
+    animation: reveal-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
