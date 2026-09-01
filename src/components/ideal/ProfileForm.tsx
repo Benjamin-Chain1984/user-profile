@@ -10,6 +10,7 @@ import { RestrictedSection } from '@/components/ui/restricted-section';
 import { MyTeam } from '@/components/team/MyTeam';
 import { QRPosterSection } from './QRPosterSection';
 import { SubscriptionBillingSection } from './SubscriptionBillingSection';
+import { PlatformPlanSection } from './PlatformPlanSection';
 import { NotificationContactsSection } from '@/components/profile';
 import { differenceInYears } from 'date-fns';
 import { Camera, User, Phone, Users, Lock, Loader2, Save, Watch } from 'lucide-react';
@@ -367,6 +368,10 @@ export function ProfileForm() {
       {/* Notification Contacts Section - Admin Only */}
       <Separator className="my-8" />
       <NotificationContactsSection />
+
+      {/* Organisation Plan (Stripe) - Admin only */}
+      <Separator className="my-8" />
+      <PlatformPlanSection />
 
       {/* Subscription & Billing Section - MUST BE LAST */}
       <Separator className="my-8" />
