@@ -311,7 +311,7 @@ export default function AuthPage() {
             )}
 
             {authMode === 'email' && (
-              <Tabs defaultValue="login" className="w-full">
+              <Tabs defaultValue={location.pathname === '/signup' ? 'signup' : 'login'} className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="login">Sign In</TabsTrigger>
                   <TabsTrigger value="signup">Sign Up</TabsTrigger>
