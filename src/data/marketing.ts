@@ -103,6 +103,12 @@ export const secondaryFeatures: MarketingFeature[] = [
       'Every module is configured in its own Settings tab — thresholds, schedules and alert contacts. Enable a module and it is ready for staff to use within minutes.',
   },
   {
+    icon: Award,
+    title: 'Industry-standard, evidence-based tools',
+    description:
+      'IDEAL uses recognised clinical assessment frameworks, best-practice protocols and evidence-based reference tools across every module, so your team works from trusted guidance rather than reinvented checklists.',
+  },
+  {
     icon: Sparkles,
     title: 'Practical AI assistance',
     description:
