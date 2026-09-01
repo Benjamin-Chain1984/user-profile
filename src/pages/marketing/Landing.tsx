@@ -28,8 +28,8 @@ export default function Landing() {
   return (
     <>
       <Seo
-        title="IDEAL — Clinical monitoring for disability & aged care"
-        description="Track vitals, bowel care, epilepsy, pressure areas and more in one platform. Traffic-light risk signals, escalation alerts and audit-ready reporting."
+        title="IDEAL — Assistive technology for disability & aged care"
+        description="Intelligent Data for Everyday Activities and Lifestyle. Beacon-driven visual cues, traffic-light risk signals, escalation alerts and audit-ready reporting — changing how governance and support are delivered."
         path="/"
         jsonLd={[
           {
@@ -37,7 +37,7 @@ export default function Landing() {
             '@type': 'Organization',
             name: 'IDEAL',
             description:
-              'Clinical monitoring, escalation and reporting platform for disability and aged-care providers.',
+              'IDEAL (Intelligent Data for Everyday Activities and Lifestyle) — assistive technology changing how practice governance and support are delivered in disability services and residential aged care.',
           },
           {
             '@context': 'https://schema.org',

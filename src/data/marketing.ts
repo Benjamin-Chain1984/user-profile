@@ -167,11 +167,12 @@ export const testimonials = [
 ];
 
 export const trustIndicators = [
+  'Assistive technology for high-intensity supports',
   'NDIS High Intensity aligned',
+  'Beacon visual cues & alerts',
   'Role-based access control',
   'Full audit trail',
   'Australian data practices',
-  'Clinical safety disclaimers',
 ];
 
 export interface Plan {
