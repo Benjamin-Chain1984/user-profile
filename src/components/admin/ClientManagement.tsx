@@ -199,29 +199,11 @@ export function ClientManagement() {
                         return (
                           <div className="flex items-center gap-2">
                             <TrafficLightIcon status={signal.status} size="sm" />
-                            <div className="min-w-0">
-                              <TrafficLightBadge
-                                status={signal.status}
-                                size="sm"
-                                isPaused={signal.isPaused}
-                              />
-                              <div className="text-xs text-muted-foreground mt-0.5 truncate max-w-[220px]">
-                                {signal.isPaused
-                                  ? 'Monitoring paused'
-                                  : signal.notCalculated
-                                    ? 'Not yet calculated — open profile'
-                                    : signal.topAlertModule
-                                      ? `${signal.topAlertModule}${signal.topAlertMessage ? ` • ${signal.topAlertMessage}` : ''}`
-                                      : signal.redCount > 0
-                                        ? `${signal.redCount} Red alert${signal.redCount > 1 ? 's' : ''}`
-                                        : signal.amberCount > 0
-                                          ? `${signal.amberCount} Amber alert${signal.amberCount > 1 ? 's' : ''}`
-                                          : signal.needsSetup
-                                            ? 'Setup required'
-                                            : 'No alerts'}
-                              </div>
-
-                            </div>
+                            <TrafficLightBadge
+                              status={signal.status}
+                              size="sm"
+                              isPaused={signal.isPaused}
+                            />
                           </div>
                         );
                       })()}
