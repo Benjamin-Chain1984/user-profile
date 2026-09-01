@@ -34,6 +34,14 @@ import EpilepsyPage from "./pages/Epilepsy";
 import PressureAreaPage from "./pages/PressureArea";
 import IddsiPage from "./pages/Iddsi";
 import EnteralPage from "./pages/Enteral";
+import MarketingLayout from "@/components/marketing/MarketingLayout";
+import Landing from "./pages/marketing/Landing";
+import Features from "./pages/marketing/Features";
+import Pricing from "./pages/marketing/Pricing";
+import About from "./pages/marketing/About";
+import Contact from "./pages/marketing/Contact";
+import Terms from "./pages/marketing/Terms";
+import Privacy from "./pages/marketing/Privacy";
 
 const queryClient = new QueryClient({
   defaultOptions: {
