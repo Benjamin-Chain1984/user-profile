@@ -65,7 +65,7 @@ export default function AuthPage() {
   // MCP OAuth returns the user to /.lovable/oauth/consent after sign-in.
   const nextParam = new URLSearchParams(location.search).get('next');
   const isSafeNext = nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//');
-  const from = (isSafeNext && nextParam) || (location.state as any)?.from?.pathname || '/';
+  const from = (isSafeNext && nextParam) || (location.state as any)?.from?.pathname || '/dashboard';
 
   useEffect(() => {
     setPasskeySupported(authService.isPasskeySupported());

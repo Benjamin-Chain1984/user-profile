@@ -509,7 +509,7 @@ export default function ClientScanPage() {
   useEffect(() => {
     if (step === 'success' && client) {
       const timer = setTimeout(() => {
-        navigate('/', { replace: true });
+        navigate('/dashboard', { replace: true });
       }, 2000);
       return () => clearTimeout(timer);
     }
@@ -952,7 +952,7 @@ export default function ClientScanPage() {
           <Button 
             variant="outline" 
             className="w-full"
-            onClick={() => navigate('/', { replace: true })}
+            onClick={() => navigate('/dashboard', { replace: true })}
           >
             Go to Dashboard Now
             <ArrowRight className="w-4 h-4 ml-2" />
