@@ -5658,6 +5658,7 @@ export type Database = {
           is_active: boolean
           last_mfa_verified_at: string | null
           next_mfa_due_at: string | null
+          onboarding_completed_at: string | null
           phone_verified_at: string | null
           poster_qr_token_hash: string | null
           updated_at: string
@@ -5670,6 +5671,7 @@ export type Database = {
           is_active?: boolean
           last_mfa_verified_at?: string | null
           next_mfa_due_at?: string | null
+          onboarding_completed_at?: string | null
           phone_verified_at?: string | null
           poster_qr_token_hash?: string | null
           updated_at?: string
@@ -5682,6 +5684,7 @@ export type Database = {
           is_active?: boolean
           last_mfa_verified_at?: string | null
           next_mfa_due_at?: string | null
+          onboarding_completed_at?: string | null
           phone_verified_at?: string | null
           poster_qr_token_hash?: string | null
           updated_at?: string
@@ -7265,6 +7268,10 @@ export type Database = {
     }
     Functions: {
       has_active_platform_subscription: {
+        Args: { check_env?: string; user_uuid: string }
+        Returns: boolean
+      }
+      has_org_platform_access: {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
       }
