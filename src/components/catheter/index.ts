@@ -11,3 +11,4 @@ export { StomaCheckForm } from './StomaCheckForm';
 export { BagChangeForm } from './BagChangeForm';
 export { AutonomicDysreflexiaPanel } from './AutonomicDysreflexiaPanel';
 export { BagManagementSettings } from './BagManagementSettings';
+export { CatheterClinicalSettings } from './CatheterClinicalSettings';

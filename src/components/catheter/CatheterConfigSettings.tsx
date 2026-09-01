@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ModuleNotificationsCard, type ModuleNotificationSettings } from '@/components/module';
 import { useModuleAlertRecipients, useSetModuleAlertRecipients } from '@/hooks/useNotificationContacts';
 import { BagManagementSettings } from './BagManagementSettings';
+import { CatheterClinicalSettings } from './CatheterClinicalSettings';
 import type { AlertSeverity } from '@/types/notificationContacts';
 
 const MODULE_NAME = 'catheter';
@@ -78,10 +79,13 @@ export function CatheterConfigSettings({ clientId }: CatheterConfigSettingsProps
         <Alert className="border-blue-200 bg-blue-50">
           <Info className="h-4 w-4 text-blue-600" />
           <AlertDescription className="text-blue-800">
-            Catheter type, size, change interval, flush protocol, and all clinical configuration 
-            are managed within the <strong>Digital Urinary Catheter Care Plan</strong> — the single source of truth for this module.
+            Catheter type, size, change interval, flush protocol, and all clinical configuration
+            are managed here in <strong>Module Settings</strong> — the single source of truth for this module.
           </AlertDescription>
         </Alert>
+
+        {/* Clinical Configuration */}
+        <CatheterClinicalSettings clientId={clientId} disabled={!isAdmin} />
 
         {/* Bag Management Settings */}
         <BagManagementSettings clientId={clientId} />
