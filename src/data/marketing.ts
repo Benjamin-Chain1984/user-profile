@@ -4,6 +4,7 @@
 
 import {
   Activity,
+  Award,
   BellRing,
   ClipboardCheck,
   FileBarChart,
