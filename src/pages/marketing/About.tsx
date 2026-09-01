@@ -38,8 +38,8 @@ export default function About() {
   return (
     <>
       <Seo
-        title="About IDEAL — clinical monitoring built with support teams"
-        description="IDEAL was built with nurses, support workers and practice leads to make high-intensity health monitoring safer, simpler and audit-ready."
+        title="About IDEAL — assistive technology built with support teams"
+        description="IDEAL (Intelligent Data for Everyday Activities and Lifestyle) was built with nurses, support workers and practice leads to change how governance and support are delivered in disability and aged care."
         path="/about"
       />
 
@@ -48,11 +48,17 @@ export default function About() {
         <div className="site-container relative py-16 sm:py-24">
           <div className="max-w-3xl">
             <span className="eyebrow">About</span>
-            <h1 className="display-1 mt-6">We build the tool we wished we had on shift</h1>
+            <h1 className="display-1 mt-6">Intelligent Data for Everyday Activities and Lifestyle</h1>
             <p className="lead mt-6">
               IDEAL started as a clinical practice problem, not a software idea. High-intensity
               supports were documented across paper charts, spreadsheets and message threads, which
               meant deterioration was often obvious only in hindsight.
+            </p>
+            <p className="lead mt-4">
+              So we built assistive technology that works the way a shift does: a beacon in the home
+              giving instant visual cues and alerts, a mobile app for logging at the point of care,
+              and governance that flows from clinician configuration to the floor — and back as an
+              audit-ready record.
             </p>
           </div>
         </div>
