@@ -8,12 +8,15 @@ import { RolePreviewProvider } from "@/contexts/RolePreviewContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 import { ActiveClientProvider } from "@/contexts/ActiveClientContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { SubscriptionGate } from "@/components/auth/SubscriptionGate";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
 import ResetPasswordPage from "./pages/ResetPassword";
+import CheckoutPage from "./pages/Checkout";
+import CheckoutReturnPage from "./pages/CheckoutReturn";
 import OAuthConsent from "./pages/OAuthConsent";
 import ClientScanPage from "./pages/ClientScan";
 import ClientPosterPage from "./pages/ClientPoster";
@@ -55,6 +58,7 @@ const queryClient = new QueryClient({
 function ProtectedAppShell() {
   return (
     <ProtectedRoute>
+      <SubscriptionGate>
       <ActiveClientProvider>
         <ProfileProvider>
           <MainLayout>
@@ -62,6 +66,7 @@ function ProtectedAppShell() {
           </MainLayout>
         </ProfileProvider>
       </ActiveClientProvider>
+      </SubscriptionGate>
     </ProtectedRoute>
   );
 }
@@ -92,6 +97,8 @@ const App = () => (
                 <Route path="/login" element={<AuthPage />} />
                 <Route path="/signup" element={<AuthPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/checkout" element={<CheckoutPage />} />
+                <Route path="/checkout/return" element={<CheckoutReturnPage />} />
                 <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
 
                 
