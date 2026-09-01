@@ -76,8 +76,21 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <Routes>
+                {/* Public marketing site */}
+                <Route element={<MarketingLayout />}>
+                  <Route path="/" element={<Landing />} />
+                  <Route path="/features" element={<Features />} />
+                  <Route path="/pricing" element={<Pricing />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/terms" element={<Terms />} />
+                  <Route path="/privacy" element={<Privacy />} />
+                </Route>
+
                 {/* Public routes */}
                 <Route path="/auth" element={<AuthPage />} />
+                <Route path="/login" element={<AuthPage />} />
+                <Route path="/signup" element={<AuthPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
 
@@ -94,7 +107,7 @@ const App = () => (
 
                 {/* Protected routes with sidebar + single ProfileProvider */}
                 <Route element={<ProtectedAppShell />}>
-                  <Route path="/" element={<Index />} />
+                  <Route path="/dashboard" element={<Index />} />
 
                   {/* Modules */}
                   <Route path="/module/pain-check" element={<PainCheckPage />} />
