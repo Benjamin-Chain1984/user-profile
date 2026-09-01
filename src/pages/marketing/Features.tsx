@@ -74,8 +74,9 @@ export default function Features() {
             <span className="eyebrow">Modules</span>
             <h2 className="display-2 mt-5">Enable only what applies</h2>
             <p className="lead mt-4">
-              Modules are switched on per client. A disabled module contributes nothing to the
-              dashboard, reports or weekly insights.
+              Modules are switched on per client and fully customisable — thresholds, schedules and
+              escalation contacts are configured in each module’s Settings tab, ready within minutes.
+              A disabled module contributes nothing to the dashboard, reports or weekly insights.
             </p>
           </div>
           <ul className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
