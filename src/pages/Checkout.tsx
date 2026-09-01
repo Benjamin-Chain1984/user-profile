@@ -36,6 +36,8 @@ export default function CheckoutPage() {
       <Seo
         title="Checkout | IDEAL clinical monitoring"
         description="Subscribe to IDEAL and activate clinical monitoring for your team."
+        path="/checkout"
+        noindex
       />
       <PaymentTestModeBanner />
       <div className="mx-auto max-w-5xl px-4 py-8 sm:py-12">
