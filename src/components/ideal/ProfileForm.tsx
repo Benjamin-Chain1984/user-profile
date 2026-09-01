@@ -368,6 +368,10 @@ export function ProfileForm() {
       <Separator className="my-8" />
       <NotificationContactsSection />
 
+      {/* Organisation Plan (Stripe) - Admin only */}
+      <Separator className="my-8" />
+      <PlatformPlanSection />
+
       {/* Subscription & Billing Section - MUST BE LAST */}
       <Separator className="my-8" />
       <SubscriptionBillingSection />
