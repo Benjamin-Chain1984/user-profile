@@ -65,15 +65,27 @@ export const primaryFeatures: MarketingFeature[] = [
   },
   {
     icon: QrCode,
-    title: 'Bedside access in seconds',
+    title: 'Access in seconds',
     description:
-      'Printable QR posters and SMS OTP sign-in put the right record in front of the right worker without a shared password in sight.',
+      'Printable QR posters and QR code keyrings let the right worker open the right record in seconds — verified by SMS OTP, with no shared password in sight.',
   },
   {
     icon: FileBarChart,
     title: 'Reports clinicians accept',
     description:
-      'Professional PDF and CSV exports per module, plus AI weekly insights summarising the last seven days across active modules only.',
+      'Evidence-based, timestamped PDF and CSV reports support better NDIS funding outcomes. AI weekly insights summarise the last seven days across active modules only.',
+  },
+  {
+    icon: Workflow,
+    title: 'Customisable in minutes',
+    description:
+      'Every module is configured in its own Settings tab — thresholds, schedules and alert contacts. Enable a module and it is ready for staff to use within minutes.',
+  },
+  {
+    icon: Award,
+    title: 'Industry-standard, evidence-based tools',
+    description:
+      'IDEAL uses recognised clinical assessment frameworks, best-practice protocols and evidence-based reference tools across every module, so your team works from trusted guidance rather than reinvented checklists.',
   },
 ];
 
@@ -95,18 +107,6 @@ export const secondaryFeatures: MarketingFeature[] = [
     title: 'Trusted devices and MFA',
     description:
       '90-day trusted-device cycles, phone sessions and verified numbers keep mobile access convenient without loosening control.',
-  },
-  {
-    icon: Workflow,
-    title: 'Customisable in minutes',
-    description:
-      'Every module is configured in its own Settings tab — thresholds, schedules and alert contacts. Enable a module and it is ready for staff to use within minutes.',
-  },
-  {
-    icon: Award,
-    title: 'Industry-standard, evidence-based tools',
-    description:
-      'IDEAL uses recognised clinical assessment frameworks, best-practice protocols and evidence-based reference tools across every module, so your team works from trusted guidance rather than reinvented checklists.',
   },
   {
     icon: Sparkles,
