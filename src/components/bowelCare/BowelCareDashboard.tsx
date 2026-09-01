@@ -205,49 +205,6 @@ export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
         )}
       </Tabs>
 
-      {/* Plan Status Banners */}
-      {plan?.status === 'published' && !hasCurrentUserAcknowledged && (
-        <Card className="border-amber-200 bg-amber-50/50">
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0" />
-                <p className="text-sm font-medium text-amber-800">Plan acknowledgement required</p>
-              </div>
-              <Button size="sm" variant="outline" onClick={() => setShowPlanViewer(true)}>
-                View & Acknowledge
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {planStatus.reviewStatus === 'review_overdue' && (
-        <Card className="border-destructive/50 bg-destructive/5">
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0" />
-                <p className="text-sm font-medium text-destructive">{planStatus.reviewMessage}</p>
-              </div>
-              {isAdmin && (
-                <Button size="sm" variant="outline" onClick={() => setShowPlanEditor(true)}>Review Now</Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {planStatus.reviewStatus === 'review_due_soon' && (
-        <Card className="border-amber-200 bg-amber-50/50">
-          <CardContent className="py-3">
-            <div className="flex items-center gap-3">
-              <Clock className="h-4 w-4 text-amber-600" />
-              <p className="text-sm text-amber-800">{planStatus.reviewMessage}</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Bristol Stool Chart Citation */}
       <div className="text-xs text-muted-foreground border-t pt-4 space-y-1">
