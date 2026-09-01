@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+
 import { BowelCareStatusCard } from './BowelCareStatusCard';
 import { BowelLogForm } from './BowelLogForm';
 import { BowelCareHistory } from './BowelCareHistory';
