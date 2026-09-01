@@ -34,6 +34,14 @@ import EpilepsyPage from "./pages/Epilepsy";
 import PressureAreaPage from "./pages/PressureArea";
 import IddsiPage from "./pages/Iddsi";
 import EnteralPage from "./pages/Enteral";
+import { MarketingLayout } from "@/components/marketing/MarketingLayout";
+import Landing from "./pages/marketing/Landing";
+import Features from "./pages/marketing/Features";
+import Pricing from "./pages/marketing/Pricing";
+import About from "./pages/marketing/About";
+import Contact from "./pages/marketing/Contact";
+import Terms from "./pages/marketing/Terms";
+import Privacy from "./pages/marketing/Privacy";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -68,8 +76,21 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <Routes>
+                {/* Public marketing site */}
+                <Route element={<MarketingLayout />}>
+                  <Route path="/" element={<Landing />} />
+                  <Route path="/features" element={<Features />} />
+                  <Route path="/pricing" element={<Pricing />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/terms" element={<Terms />} />
+                  <Route path="/privacy" element={<Privacy />} />
+                </Route>
+
                 {/* Public routes */}
                 <Route path="/auth" element={<AuthPage />} />
+                <Route path="/login" element={<AuthPage />} />
+                <Route path="/signup" element={<AuthPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
 
@@ -86,7 +107,7 @@ const App = () => (
 
                 {/* Protected routes with sidebar + single ProfileProvider */}
                 <Route element={<ProtectedAppShell />}>
-                  <Route path="/" element={<Index />} />
+                  <Route path="/dashboard" element={<Index />} />
 
                   {/* Modules */}
                   <Route path="/module/pain-check" element={<PainCheckPage />} />

@@ -37,7 +37,7 @@ import {
 import { Button } from '@/components/ui/button';
 
 const mainItems = [
-  { title: 'Dashboard', url: '/', icon: Home, requiresAdmin: false },
+  { title: 'Dashboard', url: '/dashboard', icon: Home, requiresAdmin: false },
 ];
 
 interface AdminNavItem {
