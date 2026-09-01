@@ -54,42 +54,13 @@ const BOWEL_CARE_TIPS = [
 export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
   const [showLogForm, setShowLogForm] = useState(false);
   const [showExport, setShowExport] = useState(false);
-  const [showPlanEditor, setShowPlanEditor] = useState(false);
-  const [showPlanViewer, setShowPlanViewer] = useState(false);
-  const [showCompetencyCheck, setShowCompetencyCheck] = useState(false);
   const statusInfo = useBowelCareStatus(clientId);
   const { isAdmin } = useRoleAccess();
   const { isMonitoringPaused, monitoringStatus } = useProfile();
-  const { plan } = useBowelCarePlan(clientId);
-  const planStatus = useBowelCarePlanStatus(plan);
-  const { hasCurrentUserAcknowledged } = useBowelCarePlanAcknowledgements(plan?.id, plan?.version);
-  const { config: compConfig } = useBowelCompetencyConfig(clientId);
-  const { overdueCount, expiringSoonCount } = useStaffCompetencyStatus(clientId, compConfig?.expiry_warning_days ?? 30);
 
   // Show export view
   if (showExport) {
     return <BowelCareExportReports clientId={clientId} onClose={() => setShowExport(false)} />;
-  }
-
-  // Show plan editor (admin only)
-  if (showPlanEditor) {
-    return <BowelCarePlanEditor clientId={clientId} onClose={() => setShowPlanEditor(false)} />;
-  }
-
-  // Show plan viewer
-  if (showPlanViewer) {
-    return (
-      <BowelCarePlanViewer
-        clientId={clientId}
-        onClose={() => setShowPlanViewer(false)}
-        onEdit={isAdmin ? () => { setShowPlanViewer(false); setShowPlanEditor(true); } : undefined}
-      />
-    );
-  }
-
-  // Show competency check
-  if (showCompetencyCheck) {
-    return <CompetencyCheckPage clientId={clientId} onClose={() => setShowCompetencyCheck(false)} />;
   }
 
   return (
@@ -103,14 +74,6 @@ export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => setShowPlanViewer(true)}>
-            <FileText className="h-4 w-4 mr-2" />
-            Digital Bowel Care Plan
-          </Button>
-          <Button variant="outline" onClick={() => setShowCompetencyCheck(true)}>
-            <ShieldCheck className="h-4 w-4 mr-2" />
-            Competency Check
-          </Button>
           <Button variant="outline" onClick={() => setShowExport(true)}>
             <FileDown className="h-4 w-4 mr-2" />
             Export
