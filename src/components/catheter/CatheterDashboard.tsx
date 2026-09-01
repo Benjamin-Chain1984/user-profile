@@ -42,37 +42,12 @@ export function CatheterDashboard({ clientId }: CatheterDashboardProps) {
   const [showStomaForm, setShowStomaForm] = useState(false);
   const [showBagForm, setShowBagForm] = useState(false);
   const [showExport, setShowExport] = useState(false);
-  const [showPlanViewer, setShowPlanViewer] = useState(false);
-  const [showPlanEditor, setShowPlanEditor] = useState(false);
 
   const { plan } = useCatheterCarePlan(clientId);
-  const planStatus = useCatheterCarePlanStatus(plan);
-  const { hasCurrentUserAcknowledged } = useCatheterCarePlanAcknowledgements(plan?.id, plan?.version);
 
   const planCatheterType = normalizeCatheterType(plan?.catheter_type);
   const typeConfig = planCatheterType ? CATHETER_TYPE_CONFIG[planCatheterType] : null;
 
-  // Show plan editor (admin only)
-  if (showPlanEditor) {
-    return (
-      <div className="container py-6 space-y-6">
-        <CatheterCarePlanEditor clientId={clientId} onClose={() => setShowPlanEditor(false)} />
-      </div>
-    );
-  }
-
-  // Show plan viewer
-  if (showPlanViewer) {
-    return (
-      <div className="container py-6 space-y-6">
-        <CatheterCarePlanViewer
-          clientId={clientId}
-          onClose={() => setShowPlanViewer(false)}
-          onEdit={isAdmin ? () => { setShowPlanViewer(false); setShowPlanEditor(true); } : undefined}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="container py-6 space-y-6">
