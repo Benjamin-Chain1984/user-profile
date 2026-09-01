@@ -85,7 +85,7 @@ export const primaryFeatures: MarketingFeature[] = [
     icon: Award,
     title: 'Industry-standard, evidence-based tools',
     description:
-      'IDEAL uses recognised clinical assessment frameworks, best-practice protocols and evidence-based reference tools across every module, so your team works from trusted guidance rather than reinvented checklists.',
+      'IDEAL uses recognised clinical assessment frameworks, best-practice protocols and evidence-based reference tools, so your team works from trusted guidance rather than reinvented checklists.',
   },
 ];
 
@@ -119,6 +119,12 @@ export const secondaryFeatures: MarketingFeature[] = [
     title: 'Print-ready at the point of care',
     description:
       'A4 IDDSI placemats, choking first-aid workflows and client access posters print exactly as designed.',
+  },
+  {
+    icon: Activity,
+    title: 'Data turned into clear visuals',
+    description:
+      'Trends, charts and infographics transform complex clinical data into easy-to-follow visuals, so teams spot patterns quickly and make informed decisions at a glance.',
   },
 ];
 
