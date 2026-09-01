@@ -1,6 +1,6 @@
 /**
  * Oral Health Dashboard - Main module view
- * Updated to show plan button instead of embedded plan (matches Bowel Care pattern)
+ * All configuration is managed in the Settings tab.
  */
 
 import { useState } from 'react';
@@ -11,11 +11,8 @@ import { RoleTabsTrigger } from '@/components/ui/role-tabs-trigger';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useOralHealthConfig } from '@/hooks/useOralHealth';
-import { useOralHealthCarePlan, useOralHealthPlanAcknowledgements, useOralHealthPlanStatus } from '@/hooks/useOralHealthPlan';
 import { MonitoringPausedBanner } from '@/components/monitoring';
 import { OralHealthStatusCard } from './OralHealthStatusCard';
-import { OralHealthPlanViewer } from './OralHealthPlanViewer';
-import { OralHealthPlanEditor } from './OralHealthPlanEditor';
 import { OralHealthTaskLogging } from './OralHealthTaskLogging';
 import { OralHealthAssessmentForm } from './OralHealthAssessmentForm';
 import { OralHealthHistory } from './OralHealthHistory';
@@ -24,7 +21,6 @@ import { OralHealthConfigSettings } from './OralHealthConfigSettings';
 import { OralHealthExportReports } from './OralHealthExportReports';
 import {
   Settings, BarChart3, Clock, AlertCircle, FileDown, ClipboardCheck,
-  FileText, AlertTriangle, CheckCircle2,
 } from 'lucide-react';
 
 interface OralHealthDashboardProps {
@@ -34,33 +30,12 @@ interface OralHealthDashboardProps {
 export function OralHealthDashboard({ clientId }: OralHealthDashboardProps) {
   const [showAssessment, setShowAssessment] = useState(false);
   const [showExport, setShowExport] = useState(false);
-  const [showPlanViewer, setShowPlanViewer] = useState(false);
-  const [showPlanEditor, setShowPlanEditor] = useState(false);
   const { isAdmin } = useRoleAccess();
   const { isMonitoringPaused, monitoringStatus } = useProfile();
   const { config } = useOralHealthConfig(clientId);
-  const { plan } = useOralHealthCarePlan(clientId);
-  const planStatus = useOralHealthPlanStatus(plan);
-  const { hasCurrentUserAcknowledged } = useOralHealthPlanAcknowledgements(plan?.id, plan?.version);
 
   if (showExport) {
     return <OralHealthExportReports clientId={clientId} onClose={() => setShowExport(false)} />;
-  }
-
-  // Show plan editor (admin only)
-  if (showPlanEditor) {
-    return <OralHealthPlanEditor clientId={clientId} onClose={() => setShowPlanEditor(false)} />;
-  }
-
-  // Show plan viewer
-  if (showPlanViewer) {
-    return (
-      <OralHealthPlanViewer
-        clientId={clientId}
-        onClose={() => setShowPlanViewer(false)}
-        onEdit={isAdmin ? () => { setShowPlanViewer(false); setShowPlanEditor(true); } : undefined}
-      />
-    );
   }
 
   return (
@@ -69,13 +44,9 @@ export function OralHealthDashboard({ clientId }: OralHealthDashboardProps) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-2xl font-bold">Oral Health Care</h2>
-          <p className="text-muted-foreground">Care plan, screening & compliance monitoring</p>
+          <p className="text-muted-foreground">Screening & compliance monitoring</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => setShowPlanViewer(true)}>
-            <FileText className="h-4 w-4 mr-2" />
-            Digital Oral Health Care Plan
-          </Button>
           <Button variant="outline" onClick={() => setShowExport(true)}>
             <FileDown className="h-4 w-4 mr-2" />
             Export
@@ -118,7 +89,7 @@ export function OralHealthDashboard({ clientId }: OralHealthDashboardProps) {
               <div>
                 <p className="text-sm font-semibold text-destructive">Dysphagia Identified</p>
                 <p className="text-sm text-foreground mt-1">
-                  This person has dysphagia (difficulty swallowing). Oral health care is especially important to manage the higher risk of <strong>aspiration pneumonia</strong>. Ensure thorough oral hygiene and follow the care plan closely.
+                  This person has dysphagia (difficulty swallowing). Oral health care is especially important to manage the higher risk of <strong>aspiration pneumonia</strong>. Ensure thorough oral hygiene.
                 </p>
               </div>
             </div>
@@ -168,50 +139,6 @@ export function OralHealthDashboard({ clientId }: OralHealthDashboardProps) {
           </TabsContent>
         )}
       </Tabs>
-
-      {/* Plan Status Banners */}
-      {plan?.status === 'published' && !hasCurrentUserAcknowledged && (
-        <Card className="border-amber-200 bg-amber-50/50">
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0" />
-                <p className="text-sm font-medium text-amber-800">Plan acknowledgement required</p>
-              </div>
-              <Button size="sm" variant="outline" onClick={() => setShowPlanViewer(true)}>
-                View & Acknowledge
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {planStatus.reviewStatus === 'review_overdue' && (
-        <Card className="border-destructive/50 bg-destructive/5">
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0" />
-                <p className="text-sm font-medium text-destructive">{planStatus.reviewMessage}</p>
-              </div>
-              {isAdmin && (
-                <Button size="sm" variant="outline" onClick={() => setShowPlanEditor(true)}>Review Now</Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {planStatus.reviewStatus === 'review_due_soon' && (
-        <Card className="border-amber-200 bg-amber-50/50">
-          <CardContent className="py-3">
-            <div className="flex items-center gap-3">
-              <Clock className="h-4 w-4 text-amber-600" />
-              <p className="text-sm text-amber-800">{planStatus.reviewMessage}</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Footer Safety Language */}
       <div className="text-xs text-muted-foreground border-t pt-4 space-y-1">
