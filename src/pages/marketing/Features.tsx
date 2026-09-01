@@ -45,7 +45,8 @@ export default function Features() {
               modules with beacon-driven visual cues and alerts, changing how practice governance
               and support are delivered in disability services and residential aged care. Each
               module ships with the same three tabs — Tracking, Trends and Settings — so staff learn
-              the pattern once and apply it everywhere.
+              the pattern once and apply it everywhere. IDEAL uses industry-standard, evidence-based
+              assessment tools and best-practice protocols throughout.
             </p>
           </div>
         </div>
