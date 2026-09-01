@@ -252,7 +252,6 @@ export function BowelCareConfigSettings({ clientId }: BowelCareConfigSettingsPro
           </CardTitle>
           <CardDescription>
             Set the thresholds that trigger Amber (monitor) and Red (action required) alerts on the traffic light indicator.
-            These thresholds also appear on the Digital Bowel Care Plan.
           </CardDescription>
         </CardHeader>
         <CardContent>
