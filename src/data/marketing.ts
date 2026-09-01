@@ -9,6 +9,7 @@ import {
   FileBarChart,
   Fingerprint,
   HeartPulse,
+  Lightbulb,
   QrCode,
   ShieldCheck,
   Sparkles,
@@ -25,12 +26,18 @@ export interface MarketingFeature {
 
 export const heroStats = [
   { value: '17', label: 'Clinical modules' },
-  { value: '3-light', label: 'IDEAL signal' },
+  { value: 'Beacon', label: 'Visual cues & alerts' },
   { value: '24/7', label: 'Escalation cover' },
   { value: 'NDIS', label: 'Aligned practice' },
 ];
 
 export const primaryFeatures: MarketingFeature[] = [
+  {
+    icon: Lightbulb,
+    title: 'The IDEAL Beacon — visual cues at the point of care',
+    description:
+      'A connected beacon in the home gives instant visual cues and alerts. Green means on track, Amber means something needs attention, Red means act now — visible from across the room, no screen required.',
+  },
   {
     icon: HeartPulse,
     title: 'Clinical modules that cover the whole person',
@@ -160,11 +167,12 @@ export const testimonials = [
 ];
 
 export const trustIndicators = [
+  'Assistive technology for high-intensity supports',
   'NDIS High Intensity aligned',
+  'Beacon visual cues & alerts',
   'Role-based access control',
   'Full audit trail',
   'Australian data practices',
-  'Clinical safety disclaimers',
 ];
 
 export interface Plan {

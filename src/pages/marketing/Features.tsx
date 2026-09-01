@@ -29,8 +29,8 @@ export default function Features() {
   return (
     <>
       <Seo
-        title="Features — IDEAL clinical monitoring platform"
-        description="Clinical modules, traffic-light risk signals, escalation alerts, role-based access, QR bedside sign-in and audit-ready PDF reporting in one platform."
+        title="Features — IDEAL assistive technology platform"
+        description="Beacon visual cues and alerts, clinical modules, traffic-light risk signals, escalation, role-based access, QR bedside sign-in and audit-ready reporting in one platform."
         path="/features"
       />
 
@@ -39,10 +39,13 @@ export default function Features() {
         <div className="site-container relative py-16 sm:py-24">
           <div className="max-w-3xl">
             <span className="eyebrow">Features</span>
-            <h1 className="display-1 mt-6">One platform for every high-intensity support need</h1>
+            <h1 className="display-1 mt-6">Assistive technology for every high-intensity support need</h1>
             <p className="lead mt-6">
-              Each module ships with the same three tabs — Tracking, Trends and Settings — so staff
-              learn the pattern once and apply it everywhere.
+              IDEAL — Intelligent Data for Everyday Activities and Lifestyle — pairs clinical
+              modules with beacon-driven visual cues and alerts, changing how practice governance
+              and support are delivered in disability services and residential aged care. Each
+              module ships with the same three tabs — Tracking, Trends and Settings — so staff learn
+              the pattern once and apply it everywhere.
             </p>
           </div>
         </div>

@@ -28,8 +28,8 @@ export default function Landing() {
   return (
     <>
       <Seo
-        title="IDEAL — Clinical monitoring for disability & aged care"
-        description="Track vitals, bowel care, epilepsy, pressure areas and more in one platform. Traffic-light risk signals, escalation alerts and audit-ready reporting."
+        title="IDEAL — Assistive technology for disability & aged care"
+        description="Intelligent Data for Everyday Activities and Lifestyle. Beacon-driven visual cues, traffic-light risk signals, escalation alerts and audit-ready reporting — changing how governance and support are delivered."
         path="/"
         jsonLd={[
           {
@@ -37,7 +37,7 @@ export default function Landing() {
             '@type': 'Organization',
             name: 'IDEAL',
             description:
-              'Clinical monitoring, escalation and reporting platform for disability and aged-care providers.',
+              'IDEAL (Intelligent Data for Everyday Activities and Lifestyle) — assistive technology changing how practice governance and support are delivered in disability services and residential aged care.',
           },
           {
             '@context': 'https://schema.org',
@@ -62,15 +62,16 @@ export default function Landing() {
           <div className="mx-auto max-w-3xl text-center reveal">
             <span className="eyebrow">
               <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
-              NDIS High Intensity aligned
+              Assistive technology · NDIS High Intensity aligned
             </span>
             <h1 className="display-1 mt-6">
-              Clinical monitoring your team will <span className="gradient-text">actually use</span>
+              Intelligent Data for <span className="gradient-text">Everyday Activities and Lifestyle</span>
             </h1>
             <p className="lead mx-auto mt-6 max-w-2xl">
-              IDEAL brings every high-intensity health module — bowel care, catheter, epilepsy,
-              pressure areas, dysphagia, vitals and more — into one mobile-first platform with
-              traffic-light risk signals, real escalation and audit-ready reporting.
+              IDEAL is assistive technology that turns clinical data into visual cues and alerts —
+              from the IDEAL Beacon in the home to the traffic-light signal on every screen. It is
+              changing the way practice governance and support are delivered in disability services
+              and residential aged care.
             </p>
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Button asChild size="lg" className="w-full sm:w-auto">
@@ -111,11 +112,56 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Social proof */}
+      {/* Assistive technology / Beacon */}
       <section className="border-y border-border bg-card">
+        <div className="site-container site-section">
+          <div className="grid items-center gap-10 lg:grid-cols-2">
+            <div>
+              <span className="eyebrow">The IDEAL Beacon</span>
+              <h2 className="display-2 mt-5">Visual cues and alerts, right where care happens</h2>
+              <p className="lead mt-4">
+                The IDEAL Beacon is a connected light in the home that mirrors each person's live
+                status. It gives support workers instant visual cues — no phone, no login, no
+                reading charts on a busy shift.
+              </p>
+              <ul className="mt-8 space-y-4">
+                {[
+                  { color: 'bg-success', label: 'Green — on track', text: 'All enabled modules are within their configured ranges.' },
+                  { color: 'bg-warning', label: 'Amber — monitor', text: 'Something needs attention soon: a missed check, an overdue task, a borderline reading.' },
+                  { color: 'bg-destructive', label: 'Red — act now', text: 'A threshold has been breached. The beacon alerts while the right contacts are notified.' },
+                ].map((cue) => (
+                  <li key={cue.label} className="flex items-start gap-3">
+                    <span className={`mt-1 h-4 w-4 shrink-0 rounded-full ${cue.color}`} aria-hidden />
+                    <span className="text-sm">
+                      <span className="font-semibold">{cue.label}.</span>{' '}
+                      <span className="text-muted-foreground">{cue.text}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded-2xl border border-border bg-background p-8 shadow-card">
+              <h3 className="text-base font-semibold">A new model of practice governance</h3>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                IDEAL changes how governance and support are delivered in disability services and
+                residential aged care. Configuration set by clinicians flows straight to the floor —
+                as logging forms, schedules, beacon cues and escalation alerts — and every action
+                flows back as an audit-ready record.
+              </p>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                Managers see every client's IDEAL signal on one screen. Staff see exactly what to do
+                next. Nothing relies on memory, handover notes or a shared folder again.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Social proof */}
+      <section className="bg-background">
         <div className="site-container py-14 sm:py-16">
           <p className="text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Built for supported independent living, aged care and community nursing teams
+            Built for disability services, residential aged care and community nursing teams
           </p>
           <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
             {trustIndicators.map((item) => (
