@@ -15,6 +15,4 @@ export { IndicatorsForm } from './IndicatorsForm';
 export { PrnWorkflowCard } from './PrnWorkflowCard';
 export { EscalationDialog } from './EscalationDialog';
 export { StoolIllustration } from './StoolIllustration';
-export { BowelCarePlanEditor } from './BowelCarePlanEditor';
-export { BowelCarePlanViewer } from './BowelCarePlanViewer';
 export { PrnEscalationFlowchart } from './PrnEscalationFlowchart';
