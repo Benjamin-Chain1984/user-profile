@@ -112,7 +112,7 @@ export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
 
       {/* Tabs - PRN tab removed, accessed via settings only */}
       <Tabs defaultValue="tracking" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
+        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
           <TabsTrigger value="tracking" className="gap-2">
             <Clock className="h-4 w-4" />
             <span className="hidden sm:inline">Tracking</span>
@@ -120,15 +120,6 @@ export function BowelCareDashboard({ clientId }: BowelCareDashboardProps) {
           <TabsTrigger value="trends" className="gap-2">
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">Trends</span>
-          </TabsTrigger>
-          <TabsTrigger value="competency" className="gap-2">
-            <ShieldCheck className="h-4 w-4" />
-            <span className="hidden sm:inline">Competency</span>
-            {(overdueCount > 0 || expiringSoonCount > 0) && (
-              <Badge variant={overdueCount > 0 ? 'destructive' : 'secondary'} className="ml-1 h-5 px-1.5 text-xs">
-                {overdueCount + expiringSoonCount}
-              </Badge>
-            )}
           </TabsTrigger>
           <RoleTabsTrigger 
             value="settings" 
