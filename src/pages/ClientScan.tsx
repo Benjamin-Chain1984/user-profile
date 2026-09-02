@@ -931,7 +931,8 @@ export default function ClientScanPage() {
                     if (error) setError(null);
                     if (digits.length === 6) void handleVerifyOtp(digits);
                   }}
-                />
+                >
+
                   <InputOTPGroup>
                     <InputOTPSlot index={0} />
                     <InputOTPSlot index={1} />
