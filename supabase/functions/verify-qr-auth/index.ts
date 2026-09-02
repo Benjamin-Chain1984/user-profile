@@ -1,7 +1,7 @@
 /**
  * Verify QR Auth OTP Edge Function
  * Validates OTP for QR-based client access.
- * On successful verification, registers device as trusted and sets 90-day MFA window.
+ * On successful verification, registers device as trusted and sets 6-month (180-day) MFA window.
  * Also handles token-only validation for pre-authenticated users.
  */
 
@@ -12,7 +12,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const MFA_VALIDITY_DAYS = 90;
+const MFA_VALIDITY_DAYS = 180; // 6 months
 
 function formatPhoneE164(phone: string): string {
   const digits = phone.replace(/\D/g, '');
@@ -50,7 +50,8 @@ async function resolveClient(supabase: any, clientToken: string) {
       preferredName: clientData.preferred_name,
       shortBio: clientData.short_bio,
       photoUrl: clientData.photo_url,
-      status: clientData.status
+      status: clientData.status,
+      source: 'clients'
     };
   }
 
@@ -67,7 +68,8 @@ async function resolveClient(supabase: any, clientToken: string) {
       preferredName: profileData.full_name,
       shortBio: null,
       photoUrl: null,
-      status: 'active'
+      status: 'active',
+      source: 'profiles'
     };
   }
 

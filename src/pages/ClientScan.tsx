@@ -6,7 +6,8 @@
  * 2. If logged in + trusted device + MFA current → seamless access (no OTP)
  * 3. If logged in but MFA expired → prompt SMS OTP, then re-trust device
  * 4. If not logged in → check for phone-auth session → or show login options
- * 5. After OTP verification, device is registered as trusted for 90 days
+ * 5. After OTP verification, device is registered as trusted for 6 months
+ * 6. Optional biometric (Face ID / fingerprint) unlock protects the saved session
  */
 
 import { useEffect, useState } from 'react';
@@ -19,6 +20,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { getDeviceId, getDeviceName } from '@/utils/deviceFingerprint';
+import { useActiveClient } from '@/contexts/ActiveClientContext';
+import {
+  isBiometricAvailable,
+  isBiometricEnrolledFor,
+  enrolBiometric,
+  verifyBiometric,
+} from '@/utils/biometric';
 import { 
   Loader2, 
   AlertTriangle, 
@@ -30,7 +38,9 @@ import {
   Shield,
   LogIn,
   ShieldCheck,
-  Smartphone
+  Smartphone,
+  Fingerprint,
+  ScanFace
 } from 'lucide-react';
 
 const idealLogo = '/Ideal-logo.png';
@@ -43,6 +53,7 @@ interface Client {
   shortBio?: string;
   photoUrl?: string;
   status: string;
+  source?: 'clients' | 'profiles';
 }
 
 interface AuthState {
@@ -62,6 +73,7 @@ interface PhoneSession {
 type Step = 
   | 'checking' 
   | 'checking_device' 
+  | 'biometric_unlock' 
   | 'login_prompt' 
   | 'mfa_required' 
   | 'phone' 
@@ -112,6 +124,7 @@ export default function ClientScanPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, isLoading: authLoading, isStaff, user, refreshSession } = useAuth();
+  const { setActiveClient } = useActiveClient();
   
   const [step, setStep] = useState<Step>('checking');
   const [phone, setPhone] = useState('');
@@ -124,6 +137,15 @@ export default function ClientScanPage() {
   const [countdown, setCountdown] = useState(0);
   const [mfaExpiresAt, setMfaExpiresAt] = useState<string | null>(null);
   const [accessMethod, setAccessMethod] = useState<string>('otp');
+  const [biometricSupported, setBiometricSupported] = useState(false);
+  const [pendingPhoneSession, setPendingPhoneSession] = useState<PhoneSession | null>(null);
+  const [offerBiometric, setOfferBiometric] = useState(false);
+  const [biometricBusy, setBiometricBusy] = useState(false);
+
+  // Detect platform biometric support once
+  useEffect(() => {
+    isBiometricAvailable().then(setBiometricSupported).catch(() => setBiometricSupported(false));
+  }, []);
 
   // Log QR scan attempt on mount
   useEffect(() => {
@@ -156,8 +178,13 @@ export default function ClientScanPage() {
     }
 
     if (isAuthenticated && isStaff) {
-      // Supabase-authenticated staff — check trusted device
-      checkTrustedDevice();
+      // Supabase-authenticated staff — biometric gate (if enrolled) then trusted device
+      if (isBiometricEnrolledFor(user?.id)) {
+        setPendingPhoneSession(null);
+        setStep('biometric_unlock');
+      } else {
+        checkTrustedDevice();
+      }
     } else if (isAuthenticated && !isStaff) {
       setErrorState({
         title: 'Access Denied',
@@ -169,7 +196,12 @@ export default function ClientScanPage() {
       const phoneSession = loadPhoneSession();
       if (phoneSession) {
         console.log('[QR] Found saved phone session, checking trusted device...');
-        checkTrustedDeviceWithSession(phoneSession);
+        if (isBiometricEnrolledFor(phoneSession.userId)) {
+          setPendingPhoneSession(phoneSession);
+          setStep('biometric_unlock');
+        } else {
+          checkTrustedDeviceWithSession(phoneSession);
+        }
       } else {
         sessionStorage.setItem(QR_REDIRECT_KEY, token);
         setStep('login_prompt');
@@ -485,6 +517,10 @@ export default function ClientScanPage() {
           console.log('[QR] Phone session saved for trusted device reuse');
         }
 
+        if (data.userId && biometricSupported && !isBiometricEnrolledFor(data.userId)) {
+          setOfferBiometric(true);
+        }
+
         setStep('success');
       } else {
         setError(data.error || 'Invalid verification code');
@@ -505,8 +541,45 @@ export default function ClientScanPage() {
     handleSendOtp();
   };
 
+  // Hand the scanned client over to the app so the dashboard opens on them
+  useEffect(() => {
+    if (step === 'success' && client && client.source !== 'profiles') {
+      setActiveClient(client.id, client.preferredName);
+    }
+  }, [step, client, setActiveClient]);
+
+  const handleBiometricUnlock = async () => {
+    setBiometricBusy(true);
+    setError(null);
+    const result = await verifyBiometric();
+    setBiometricBusy(false);
+    if (!result.success) {
+      setError(result.error || 'Biometric check failed. Use text verification instead.');
+      return;
+    }
+    if (pendingPhoneSession) {
+      checkTrustedDeviceWithSession(pendingPhoneSession);
+    } else {
+      checkTrustedDevice();
+    }
+  };
+
+  const handleEnrolBiometric = async () => {
+    const userId = authState?.userId || user?.id;
+    if (!userId) return;
+    setBiometricBusy(true);
+    const result = await enrolBiometric(userId, authState?.userName || user?.fullName);
+    setBiometricBusy(false);
+    if (!result.success) {
+      setError(result.error || 'Could not set up biometric unlock.');
+      return;
+    }
+    setOfferBiometric(false);
+  };
+
   // Auto-redirect to client dashboard on success
   useEffect(() => {
+    if (offerBiometric) return;
     if (step === 'success' && client) {
       const timer = setTimeout(() => {
         navigate('/dashboard', { replace: true });
@@ -531,6 +604,63 @@ export default function ClientScanPage() {
               {step === 'checking_device' ? 'Checking your device…' : 'Verifying access…'}
             </p>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Biometric unlock — fast local gate for an already-verified device
+  if (step === 'biometric_unlock') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+        <div className="w-full max-w-md space-y-6">
+          <div className="flex justify-center">
+            <img src={idealLogo} alt="IDEAL" className="h-14 w-auto" />
+          </div>
+
+          <Card className="border-border shadow-lg">
+            <CardHeader className="text-center">
+              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <ScanFace className="w-8 h-8 text-primary" />
+              </div>
+              <CardTitle>Unlock to Continue</CardTitle>
+              <CardDescription>
+                Use Face ID, Touch ID or your fingerprint to open this client record.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {error && (
+                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                  <p className="text-sm text-destructive text-center">{error}</p>
+                </div>
+              )}
+
+              <Button onClick={handleBiometricUnlock} className="w-full" size="lg" disabled={biometricBusy}>
+                {biometricBusy ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Waiting for biometrics…
+                  </>
+                ) : (
+                  <>
+                    <Fingerprint className="w-4 h-4 mr-2" />
+                    Unlock
+                  </>
+                )}
+              </Button>
+
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={() => {
+                  setError(null);
+                  setStep('mfa_required');
+                }}
+              >
+                Use text verification instead
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -567,7 +697,7 @@ export default function ClientScanPage() {
                 <div className="flex items-start gap-2">
                   <Smartphone className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                   <p className="text-sm text-muted-foreground">
-                    After verification, this device will stay verified for <strong>3 months</strong> — no repeat codes needed.
+                    After verification, this device will stay verified for <strong>6 months</strong> — no repeat codes needed.
                   </p>
                 </div>
               </div>
@@ -913,9 +1043,9 @@ export default function ClientScanPage() {
             <div>
               <p className="font-medium text-green-800 dark:text-green-200">Access Granted</p>
               <p className="text-sm text-green-600 dark:text-green-400">
-                {accessMethod === 'trusted_device' 
-                  ? 'Authenticated via trusted device' 
-                  : 'Authenticated via SMS verification'}
+                {accessMethod === 'trusted_device'
+                  ? 'Recognised device — verified for 6 months'
+                  : 'Verified by text message'}
               </p>
             </div>
           </div>
@@ -942,12 +1072,51 @@ export default function ClientScanPage() {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Loader2 className="w-5 h-5 animate-spin mx-auto text-primary" />
-            <p className="text-sm text-muted-foreground">
-              Redirecting to {client.preferredName}'s profile…
-            </p>
-          </div>
+          {offerBiometric ? (
+            <Card className="text-left">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <ScanFace className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">Turn on biometric unlock</CardTitle>
+                    <CardDescription className="text-xs">
+                      Next scans open with Face ID or your fingerprint — no codes for 6 months.
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {error && (
+                  <p className="text-sm text-destructive text-center">{error}</p>
+                )}
+                <Button className="w-full" onClick={handleEnrolBiometric} disabled={biometricBusy}>
+                  {biometricBusy ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Setting up…
+                    </>
+                  ) : (
+                    <>
+                      <Fingerprint className="w-4 h-4 mr-2" />
+                      Enable Biometric Unlock
+                    </>
+                  )}
+                </Button>
+                <Button variant="ghost" className="w-full" onClick={() => setOfferBiometric(false)}>
+                  Not now
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              <Loader2 className="w-5 h-5 animate-spin mx-auto text-primary" />
+              <p className="text-sm text-muted-foreground">
+                Redirecting to {client.preferredName}'s profile…
+              </p>
+            </div>
+          )}
 
           <Button 
             variant="outline" 

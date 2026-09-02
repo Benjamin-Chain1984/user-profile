@@ -17,7 +17,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, RefreshCw, FileText, Edit, Eye, Printer, MoreHorizontal, UserRound, ArrowRightCircle, CheckCircle2, UserCog } from 'lucide-react';
+import { Plus, RefreshCw, FileText, Edit, Eye, Printer, MoreHorizontal, UserRound, ArrowRightCircle, CheckCircle2, UserCog, QrCode } from 'lucide-react';
 import { useActiveClient } from '@/contexts/ActiveClientContext';
 import {
   DropdownMenu,
@@ -43,6 +43,7 @@ interface ClientRow {
   photo_url: string | null;
   beacon_id: string | null;
   status: string;
+  poster_qr_token_plain?: string | null;
   poster_qr_token_created_at: string;
   poster_qr_token_rotated_at: string | null;
   created_at: string;
@@ -94,6 +95,16 @@ export function ClientManagement() {
     fetchClients();
     setShowAddDialog(false);
     setEditingClient(null);
+  };
+
+  // Open the client's live QR link so admins can test the scan-to-login flow
+  const testQrLogin = (client: ClientRow) => {
+    const token = (client as any).poster_qr_token_plain as string | undefined;
+    if (!token) {
+      toast.error('No QR token yet — use "Generate Poster" first, then test again.');
+      return;
+    }
+    window.open(`/c/${token}`, '_blank', 'noopener');
   };
 
   const handleRotateComplete = (newToken: string) => {
@@ -213,9 +224,22 @@ export function ClientManagement() {
                             Rotated: {new Date(client.poster_qr_token_rotated_at).toLocaleDateString()}
                           </div>
                         )}
-                        <div className="text-xs text-primary/70 mt-1 font-mono truncate max-w-[150px]" title="Token must be regenerated to view URL">
-                          [Generate poster to view URL]
-                        </div>
+                        {client.poster_qr_token_plain ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              testQrLogin(client);
+                            }}
+                            className="text-xs text-primary mt-1 underline underline-offset-2"
+                          >
+                            Test QR login
+                          </button>
+                        ) : (
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Generate poster to create QR link
+                          </div>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
@@ -261,6 +285,11 @@ export function ClientManagement() {
                           <DropdownMenuItem onClick={() => setAuditClient(client)}>
                             <Eye className="h-4 w-4 mr-2" />
                             View Audit Log
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => testQrLogin(client)}>
+                            <QrCode className="h-4 w-4 mr-2" />
+                            Test QR Login
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => navigate(`/client/${client.id}/poster`)}>
