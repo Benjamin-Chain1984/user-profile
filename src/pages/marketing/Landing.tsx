@@ -3,7 +3,7 @@
  */
 
 import { Link } from 'react-router-dom';
-import { ArrowRight, CheckCircle2, ShieldCheck, Star } from 'lucide-react';
+import { ArrowRight, Check, ShieldCheck, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Accordion,
