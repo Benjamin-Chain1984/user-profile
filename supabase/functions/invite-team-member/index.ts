@@ -112,13 +112,15 @@ Deno.serve(async (req) => {
         .eq("id", userId);
     }
 
-    // Assign role
-    await adminClient.from("user_roles").insert({ user_id: userId, role });
+    // Assign role (idempotent)
+    await adminClient
+      .from("user_roles")
+      .upsert({ user_id: userId, role }, { onConflict: "user_id,role" });
 
     // Log audit event
     await adminClient.rpc("log_audit_event", {
       p_actor_user_id: caller.id,
-      p_action: "TEAM_MEMBER_INVITED",
+      p_action: existingUser ? "TEAM_MEMBER_LINKED" : "TEAM_MEMBER_INVITED",
       p_metadata_json: { targetUserId: userId, fullName, role, email },
     });
 
@@ -126,10 +128,14 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         userId,
-        message: `Team member ${fullName} created. They can sign in with email: ${email} and temporary password. They should change their password on first login.`,
-        tempPassword,
+        existingUser,
+        message: existingUser
+          ? `${fullName} already had an account, so we linked it to your team with the ${role} role. They keep their existing password.`
+          : `Team member ${fullName} created. They can sign in with email: ${email} and temporary password. They should change their password on first login.`,
+        tempPassword: existingUser ? null : tempPassword,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+
     );
   } catch (error) {
     console.error("Error inviting team member:", error);
