@@ -26,16 +26,18 @@ function toBase64Url(buffer: ArrayBuffer): string {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-function fromBase64Url(value: string): Uint8Array {
+function fromBase64Url(value: string): ArrayBuffer {
   const padded = value.replace(/-/g, '+').replace(/_/g, '/');
   const raw = atob(padded + '='.repeat((4 - (padded.length % 4)) % 4));
-  return Uint8Array.from(raw, (c) => c.charCodeAt(0));
+  const bytes = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+  return bytes.buffer;
 }
 
-function randomBytes(length = 32): Uint8Array {
-  const bytes = new Uint8Array(length);
+function randomBytes(length = 32): ArrayBuffer {
+  const bytes = new Uint8Array(new ArrayBuffer(length));
   crypto.getRandomValues(bytes);
-  return bytes;
+  return bytes.buffer;
 }
 
 /** Is a platform authenticator (Face ID / fingerprint) available on this device? */
