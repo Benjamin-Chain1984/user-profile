@@ -17,14 +17,13 @@ function generateOTP(): string {
 }
 
 function formatPhoneE164(phone: string): string {
-  const digits = phone.replace(/\D/g, '');
+  let digits = (phone || '').replace(/\D/g, '');
   if (digits.startsWith('0')) {
-    return '+61' + digits.slice(1);
+    digits = '61' + digits.slice(1);
+  } else if (digits.length === 9 && digits.startsWith('4')) {
+    digits = '61' + digits;
   }
-  if (!phone.startsWith('+')) {
-    return '+' + digits;
-  }
-  return phone;
+  return '+' + digits;
 }
 
 async function hashToken(token: string): Promise<string> {
@@ -273,8 +272,8 @@ Deno.serve(async (req) => {
       }
     });
 
-    // Check if phone is verified
-    const { data: profile, error: profileError } = await supabase
+    // Check if phone is verified (tolerant of formatting differences in stored numbers)
+    let { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id, full_name, is_active, verified_phone, phone_verified_at')
       .eq('verified_phone', formattedPhone)
@@ -287,6 +286,30 @@ Deno.serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    if (!profile) {
+      // Fallback: compare on national significant digits (last 9) so stored
+      // numbers with spaces, 0-prefix or no + still match.
+      const target = formattedPhone.replace(/\D/g, '').slice(-9);
+      const { data: candidates } = await supabase
+        .from('profiles')
+        .select('id, full_name, is_active, verified_phone, phone_verified_at')
+        .not('verified_phone', 'is', null);
+
+      profile = (candidates || []).find(
+        (p: any) => (p.verified_phone || '').replace(/\D/g, '').slice(-9) === target
+      ) || null;
+
+      if (profile) {
+        console.log('Matched profile via normalised phone comparison');
+        // Self-heal stored value to canonical E.164
+        await supabase
+          .from('profiles')
+          .update({ verified_phone: formattedPhone })
+          .eq('id', profile.id);
+      }
+    }
+
 
     if (!profile) {
       await supabase.rpc('log_audit_event', {
@@ -455,6 +478,8 @@ Deno.serve(async (req) => {
           detail = 'This number is not verified with the trial SMS account. Please verify it or upgrade the SMS account.';
         } else if (parsed.code === 21211) {
           detail = 'That phone number appears to be invalid. Please check the number and try again.';
+        } else if (parsed.code === 21266) {
+          detail = 'The SMS sender number is the same as the number you are verifying. Please set a different SMS sender number in the messaging configuration.';
         }
       } catch (_e) {
         // keep default message
