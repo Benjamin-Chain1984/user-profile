@@ -478,6 +478,8 @@ Deno.serve(async (req) => {
           detail = 'This number is not verified with the trial SMS account. Please verify it or upgrade the SMS account.';
         } else if (parsed.code === 21211) {
           detail = 'That phone number appears to be invalid. Please check the number and try again.';
+        } else if (parsed.code === 21266) {
+          detail = 'The SMS sender number is the same as the number you are verifying. Please set a different SMS sender number in the messaging configuration.';
         }
       } catch (_e) {
         // keep default message
