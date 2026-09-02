@@ -170,11 +170,11 @@ export function useWeightBmi(clientId?: string) {
       });
       return false;
     }
-  }, [user?.id, config, toast, fetchData]);
+  }, [user?.id, clientId, config, toast, fetchData]);
 
   // Save config
   const saveConfig = useCallback(async (data: Partial<WeightBmiConfig>) => {
-    if (!user?.id) return false;
+    if (!user?.id || !clientId) return false;
 
     try {
       if (config?.id) {
@@ -196,6 +196,7 @@ export function useWeightBmi(clientId?: string) {
           .insert({
             ...DEFAULT_CONFIG,
             ...data,
+            client_id: clientId,
             created_by: user.id
           });
 
