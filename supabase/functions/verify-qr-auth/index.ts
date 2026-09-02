@@ -254,13 +254,27 @@ Deno.serve(async (req) => {
     }
 
     // Get stored OTP
-    const { data: storedOtp, error: otpError } = await supabase
+    let { data: storedOtp } = await supabase
       .from('phone_otps')
       .select('*')
       .eq('phone', formattedPhone)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
 
-    if (otpError || !storedOtp) {
+    // Fallback: match on the last 9 digits to tolerate legacy/mis-normalised rows
+    if (!storedOtp) {
+      const last9 = formattedPhone.replace(/\D/g, '').slice(-9);
+      const { data: candidates } = await supabase
+        .from('phone_otps')
+        .select('*')
+        .like('phone', `%${last9}`)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      storedOtp = candidates?.[0] ?? null;
+    }
+
+    if (!storedOtp) {
       return new Response(
         JSON.stringify({ error: 'No verification code found. Please request a new code.' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -301,7 +315,7 @@ Deno.serve(async (req) => {
     // OTP is valid!
     console.log('QR auth OTP verified successfully');
 
-    await supabase.from('phone_otps').update({ verified: true }).eq('phone', formattedPhone);
+    await supabase.from('phone_otps').update({ verified: true }).eq('id', storedOtp.id);
 
     // Register trusted device if deviceId provided
     let mfaExpiresAt: string | undefined;
