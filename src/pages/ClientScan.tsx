@@ -609,6 +609,63 @@ export default function ClientScanPage() {
     );
   }
 
+  // Biometric unlock — fast local gate for an already-verified device
+  if (step === 'biometric_unlock') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+        <div className="w-full max-w-md space-y-6">
+          <div className="flex justify-center">
+            <img src={idealLogo} alt="IDEAL" className="h-14 w-auto" />
+          </div>
+
+          <Card className="border-border shadow-lg">
+            <CardHeader className="text-center">
+              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <ScanFace className="w-8 h-8 text-primary" />
+              </div>
+              <CardTitle>Unlock to Continue</CardTitle>
+              <CardDescription>
+                Use Face ID, Touch ID or your fingerprint to open this client record.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {error && (
+                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                  <p className="text-sm text-destructive text-center">{error}</p>
+                </div>
+              )}
+
+              <Button onClick={handleBiometricUnlock} className="w-full" size="lg" disabled={biometricBusy}>
+                {biometricBusy ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Waiting for biometrics…
+                  </>
+                ) : (
+                  <>
+                    <Fingerprint className="w-4 h-4 mr-2" />
+                    Unlock
+                  </>
+                )}
+              </Button>
+
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={() => {
+                  setError(null);
+                  setStep('mfa_required');
+                }}
+              >
+                Use text verification instead
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   // MFA Required - device not trusted or MFA expired
   if (step === 'mfa_required') {
     return (
@@ -986,9 +1043,9 @@ export default function ClientScanPage() {
             <div>
               <p className="font-medium text-green-800 dark:text-green-200">Access Granted</p>
               <p className="text-sm text-green-600 dark:text-green-400">
-                {accessMethod === 'trusted_device' 
-                  ? 'Authenticated via trusted device' 
-                  : 'Authenticated via SMS verification'}
+                {accessMethod === 'trusted_device'
+                  ? 'Recognised device — verified for 6 months'
+                  : 'Verified by text message'}
               </p>
             </div>
           </div>
@@ -1015,12 +1072,51 @@ export default function ClientScanPage() {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Loader2 className="w-5 h-5 animate-spin mx-auto text-primary" />
-            <p className="text-sm text-muted-foreground">
-              Redirecting to {client.preferredName}'s profile…
-            </p>
-          </div>
+          {offerBiometric ? (
+            <Card className="text-left">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <ScanFace className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">Turn on biometric unlock</CardTitle>
+                    <CardDescription className="text-xs">
+                      Next scans open with Face ID or your fingerprint — no codes for 6 months.
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {error && (
+                  <p className="text-sm text-destructive text-center">{error}</p>
+                )}
+                <Button className="w-full" onClick={handleEnrolBiometric} disabled={biometricBusy}>
+                  {biometricBusy ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Setting up…
+                    </>
+                  ) : (
+                    <>
+                      <Fingerprint className="w-4 h-4 mr-2" />
+                      Enable Biometric Unlock
+                    </>
+                  )}
+                </Button>
+                <Button variant="ghost" className="w-full" onClick={() => setOfferBiometric(false)}>
+                  Not now
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              <Loader2 className="w-5 h-5 animate-spin mx-auto text-primary" />
+              <p className="text-sm text-muted-foreground">
+                Redirecting to {client.preferredName}'s profile…
+              </p>
+            </div>
+          )}
 
           <Button 
             variant="outline" 
