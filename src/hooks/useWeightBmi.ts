@@ -40,6 +40,15 @@ export function useWeightBmi(clientId?: string) {
   const [statusInfo, setStatusInfo] = useState<WeightStatusInfo | null>(null);
 
   const fetchData = useCallback(async () => {
+    if (!clientId) {
+      setEntries([]);
+      setConfig(null);
+      setAlerts([]);
+      setStatusInfo(calculateWeightBmiStatus([], null, []));
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -47,6 +56,7 @@ export function useWeightBmi(clientId?: string) {
       const { data: entriesData, error: entriesError } = await supabase
         .from('weight_entries')
         .select('*')
+        .eq('client_id', clientId)
         .eq('is_undone', false)
         .order('event_occurred_at', { ascending: false })
         .limit(100);
@@ -57,6 +67,7 @@ export function useWeightBmi(clientId?: string) {
       const { data: configData, error: configError } = await supabase
         .from('weight_bmi_config')
         .select('*')
+        .eq('client_id', clientId)
         .maybeSingle();
 
       if (configError) throw configError;
@@ -65,6 +76,7 @@ export function useWeightBmi(clientId?: string) {
       const { data: alertsData, error: alertsError } = await supabase
         .from('weight_bmi_alerts')
         .select('*')
+        .eq('client_id', clientId)
         .order('created_at', { ascending: false });
 
       if (alertsError) throw alertsError;
