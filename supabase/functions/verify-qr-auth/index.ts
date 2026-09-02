@@ -16,8 +16,14 @@ const MFA_VALIDITY_DAYS = 180; // 6 months
 
 function formatPhoneE164(phone: string): string {
   let digits = (phone || '').replace(/\D/g, '');
-  if (digits.startsWith('0')) {
-    digits = '61' + digits.slice(1);
+  if (digits.startsWith('0011')) digits = digits.slice(4);
+  else if (digits.startsWith('011')) digits = digits.slice(3);
+  if (digits.startsWith('61')) {
+    // Australian country code: drop a trunk "0" typed after +61 (e.g. +61 0407...)
+    let rest = digits.slice(2).replace(/^0+/, '');
+    digits = '61' + rest;
+  } else if (digits.startsWith('0')) {
+    digits = '61' + digits.replace(/^0+/, '');
   } else if (digits.length === 9 && digits.startsWith('4')) {
     digits = '61' + digits;
   }
@@ -248,13 +254,27 @@ Deno.serve(async (req) => {
     }
 
     // Get stored OTP
-    const { data: storedOtp, error: otpError } = await supabase
+    let { data: storedOtp } = await supabase
       .from('phone_otps')
       .select('*')
       .eq('phone', formattedPhone)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
 
-    if (otpError || !storedOtp) {
+    // Fallback: match on the last 9 digits to tolerate legacy/mis-normalised rows
+    if (!storedOtp) {
+      const last9 = formattedPhone.replace(/\D/g, '').slice(-9);
+      const { data: candidates } = await supabase
+        .from('phone_otps')
+        .select('*')
+        .like('phone', `%${last9}`)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      storedOtp = candidates?.[0] ?? null;
+    }
+
+    if (!storedOtp) {
       return new Response(
         JSON.stringify({ error: 'No verification code found. Please request a new code.' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -270,7 +290,7 @@ Deno.serve(async (req) => {
     }
 
     // Verify OTP
-    if (storedOtp.otp_hash !== otp) {
+    if (String(storedOtp.otp_hash).trim() !== String(otp).trim()) {
       if (rateLimit) {
         await supabase.from('rate_limits').update({ attempt_count: rateLimit.attempt_count + 1 }).eq('id', rateLimit.id);
       } else {
@@ -295,7 +315,7 @@ Deno.serve(async (req) => {
     // OTP is valid!
     console.log('QR auth OTP verified successfully');
 
-    await supabase.from('phone_otps').update({ verified: true }).eq('phone', formattedPhone);
+    await supabase.from('phone_otps').update({ verified: true }).eq('id', storedOtp.id);
 
     // Register trusted device if deviceId provided
     let mfaExpiresAt: string | undefined;
