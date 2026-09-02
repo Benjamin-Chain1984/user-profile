@@ -62,6 +62,9 @@ Deno.serve(async (req) => {
 
     // Create user via admin API (auto-confirms email for team invites)
     const tempPassword = crypto.randomUUID().slice(0, 16) + "Aa1!";
+    let userId: string | null = null;
+    let existingUser = false;
+
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
       email,
       password: tempPassword,
@@ -70,17 +73,36 @@ Deno.serve(async (req) => {
     });
 
     if (createError) {
-      // Check for duplicate
-      if (createError.message?.includes("already been registered")) {
-        return new Response(JSON.stringify({ error: "A user with this email already exists" }), {
-          status: 409,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      const msg = createError.message?.toLowerCase() ?? "";
+      const isDuplicate =
+        msg.includes("already been registered") ||
+        msg.includes("already exists") ||
+        msg.includes("duplicate");
+
+      if (!isDuplicate) throw createError;
+
+      // Idempotent: reuse the existing auth user and (re)link them to the team
+      const { data: list } = await adminClient.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      const found = list?.users?.find(
+        (u) => u.email?.toLowerCase() === String(email).toLowerCase()
+      );
+
+      if (!found) {
+        return new Response(
+          JSON.stringify({
+            error:
+              "This email is already registered but the account could not be found. Please contact support.",
+          }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
-      throw createError;
+
+      userId = found.id;
+      existingUser = true;
+    } else {
+      userId = newUser.user.id;
     }
 
-    const userId = newUser.user.id;
 
     // Update profile with phone if provided
     if (phone) {
