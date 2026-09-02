@@ -219,7 +219,7 @@ export function useWeightBmi(clientId?: string) {
       });
       return false;
     }
-  }, [user?.id, config, toast, fetchData]);
+  }, [user?.id, clientId, config, toast, fetchData]);
 
   // Initial fetch
   useEffect(() => {
