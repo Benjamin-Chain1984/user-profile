@@ -19,7 +19,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { getDeviceId, getDeviceName } from '@/utils/deviceFingerprint';
 import { useActiveClient } from '@/contexts/ActiveClientContext';
 import {
@@ -47,6 +46,7 @@ import {
 const idealLogo = '/Ideal-logo.png';
 const QR_REDIRECT_KEY = 'ideal_qr_redirect';
 const PHONE_SESSION_KEY = 'ideal_phone_session';
+const QR_OTP_FLOW_KEY = 'ideal_qr_otp_flow';
 
 interface Client {
   id: string;
@@ -69,6 +69,40 @@ interface PhoneSession {
   roles: string[];
   deviceId: string;
   verifiedAt: string;
+}
+
+interface PendingOtpFlow {
+  token: string;
+  phone: string;
+  authState: AuthState | null;
+  createdAt: number;
+}
+
+const OTP_FLOW_VALID_MS = 5 * 60 * 1000;
+
+function loadPendingOtpFlow(token?: string): PendingOtpFlow | null {
+  if (!token) return null;
+  try {
+    const raw = sessionStorage.getItem(QR_OTP_FLOW_KEY);
+    if (!raw) return null;
+    const flow = JSON.parse(raw) as PendingOtpFlow;
+    if (flow.token !== token || Date.now() - flow.createdAt > OTP_FLOW_VALID_MS) {
+      sessionStorage.removeItem(QR_OTP_FLOW_KEY);
+      return null;
+    }
+    return flow;
+  } catch {
+    sessionStorage.removeItem(QR_OTP_FLOW_KEY);
+    return null;
+  }
+}
+
+function savePendingOtpFlow(flow: PendingOtpFlow): void {
+  sessionStorage.setItem(QR_OTP_FLOW_KEY, JSON.stringify(flow));
+}
+
+function clearPendingOtpFlow(): void {
+  sessionStorage.removeItem(QR_OTP_FLOW_KEY);
 }
 
 type Step = 
@@ -196,6 +230,16 @@ export default function ClientScanPage() {
         message: 'This QR code link is malformed. Please scan a valid poster QR code.',
       });
       setStep('error');
+      return;
+    }
+
+    // Mobile browsers can recreate the page while opening the keyboard. Restore
+    // an in-progress verification instead of restarting the QR flow.
+    const pendingOtpFlow = loadPendingOtpFlow(token);
+    if (pendingOtpFlow) {
+      setPhone(pendingOtpFlow.phone);
+      setAuthState(pendingOtpFlow.authState);
+      setStep('otp');
       return;
     }
 
@@ -448,10 +492,17 @@ export default function ClientScanPage() {
       }
 
       if (data.success) {
-        setAuthState({
+        const nextAuthState = {
           userId: data.userId,
           userName: data.userName,
           roles: data.roles
+        };
+        setAuthState(nextAuthState);
+        savePendingOtpFlow({
+          token: token ?? '',
+          phone,
+          authState: nextAuthState,
+          createdAt: Date.now(),
         });
         setStep('otp');
         setCountdown(60);
@@ -520,6 +571,7 @@ export default function ClientScanPage() {
       }
 
       if (data.success) {
+        clearPendingOtpFlow();
         setClient(data.client);
         setAuthState({
           userId: data.userId,
@@ -920,28 +972,23 @@ export default function ClientScanPage() {
               )}
 
               <div className="flex justify-center">
-                <InputOTP
-                  maxLength={6}
+                <Input
+                  id="verification-code"
+                  type="text"
                   value={otp}
                   inputMode="numeric"
                   autoComplete="one-time-code"
-                  onChange={(value) => {
-                    const digits = value.replace(/\D/g, '').slice(0, 6);
+                  pattern="[0-9]*"
+                  maxLength={6}
+                  autoFocus
+                  aria-label="6-digit verification code"
+                  className="h-14 max-w-64 text-center font-mono text-2xl tracking-[0.35em]"
+                  onChange={(event) => {
+                    const digits = event.currentTarget.value.replace(/\D/g, '').slice(0, 6);
                     setOtp(digits);
                     if (error) setError(null);
-                    if (digits.length === 6) void handleVerifyOtp(digits);
                   }}
-                >
-
-                  <InputOTPGroup>
-                    <InputOTPSlot index={0} />
-                    <InputOTPSlot index={1} />
-                    <InputOTPSlot index={2} />
-                    <InputOTPSlot index={3} />
-                    <InputOTPSlot index={4} />
-                    <InputOTPSlot index={5} />
-                  </InputOTPGroup>
-                </InputOTP>
+                />
               </div>
 
               <p className="text-sm text-muted-foreground text-center">
@@ -982,6 +1029,7 @@ export default function ClientScanPage() {
               <Button 
                 variant="ghost" 
                 onClick={() => {
+                   clearPendingOtpFlow();
                   setStep('phone');
                   setOtp('');
                   setError(null);
