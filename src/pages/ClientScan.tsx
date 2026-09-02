@@ -923,9 +923,15 @@ export default function ClientScanPage() {
                 <InputOTP
                   maxLength={6}
                   value={otp}
-                  onChange={setOtp}
-                  onComplete={(completedCode) => void handleVerifyOtp(completedCode)}
-                >
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  onChange={(value) => {
+                    const digits = value.replace(/\D/g, '').slice(0, 6);
+                    setOtp(digits);
+                    if (error) setError(null);
+                    if (digits.length === 6) void handleVerifyOtp(digits);
+                  }}
+                />
                   <InputOTPGroup>
                     <InputOTPSlot index={0} />
                     <InputOTPSlot index={1} />
