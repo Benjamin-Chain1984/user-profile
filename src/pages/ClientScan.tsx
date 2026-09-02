@@ -12,6 +12,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { FunctionsHttpError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -86,6 +87,19 @@ interface ErrorState {
   title: string;
   message: string;
   isTokenInvalid?: boolean;
+}
+
+async function getFunctionErrorMessage(error: unknown, fallback: string): Promise<string> {
+  if (error instanceof FunctionsHttpError) {
+    try {
+      const payload = await error.context.clone().json() as { error?: string };
+      if (payload.error) return payload.error;
+    } catch {
+      // Fall through to the SDK error message.
+    }
+  }
+
+  return error instanceof Error && error.message ? error.message : fallback;
 }
 
 /**
@@ -445,14 +459,19 @@ export default function ClientScanPage() {
       }
     } catch (err: any) {
       console.error('Error sending OTP:', err);
-      setError(err.message || 'Failed to send verification code');
+      setError(await getFunctionErrorMessage(err, 'Failed to send verification code'));
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleVerifyOtp = async () => {
-    if (otp.length !== 6) {
+  const handleVerifyOtp = async (completedCode?: string) => {
+    if (isLoading) return;
+
+    // InputOTP calls onComplete in the same event as its final onChange. Use
+    // the completed value directly instead of the previous React state value.
+    const code = completedCode ?? otp;
+    if (code.length !== 6) {
       setError('Please enter the 6-digit code');
       return;
     }
@@ -467,7 +486,7 @@ export default function ClientScanPage() {
       const { data, error: fnError } = await supabase.functions.invoke('verify-qr-auth', {
         body: { 
           phone, 
-          otp, 
+          otp: code,
           clientToken: token,
           userId: authState?.userId,
           deviceId,
@@ -528,7 +547,7 @@ export default function ClientScanPage() {
       }
     } catch (err: any) {
       console.error('Error verifying OTP:', err);
-      setError(err.message || 'Verification failed');
+      setError(await getFunctionErrorMessage(err, 'Verification failed'));
       setOtp('');
     } finally {
       setIsLoading(false);
@@ -897,7 +916,7 @@ export default function ClientScanPage() {
                   maxLength={6}
                   value={otp}
                   onChange={setOtp}
-                  onComplete={handleVerifyOtp}
+                  onComplete={(completedCode) => void handleVerifyOtp(completedCode)}
                 >
                   <InputOTPGroup>
                     <InputOTPSlot index={0} />
@@ -930,7 +949,7 @@ export default function ClientScanPage() {
                   {countdown > 0 ? `Resend in ${countdown}s` : 'Resend Code'}
                 </Button>
                 <Button 
-                  onClick={handleVerifyOtp}
+                  onClick={() => void handleVerifyOtp()}
                   disabled={isLoading || otp.length !== 6}
                   className="flex-1"
                 >
