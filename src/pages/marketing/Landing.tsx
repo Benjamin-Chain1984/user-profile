@@ -68,6 +68,9 @@ export default function Landing() {
             <h1 className="display-1 mt-6">
               Intelligent Data for <span className="gradient-text">Everyday Activities and Lifestyle</span>
             </h1>
+            <p className="mt-3 text-lg font-medium text-primary">
+              Ensure your clients receive the IDeAL care and support
+            </p>
             <p className="lead mx-auto mt-6 max-w-2xl">
               IDEAL is assistive technology that turns clinical data into visual cues and alerts —
               from the IDEAL Beacon in the home to the traffic-light signal on every screen. It is
