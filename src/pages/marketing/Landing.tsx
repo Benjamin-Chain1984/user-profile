@@ -268,7 +268,7 @@ export default function Landing() {
         <div className="site-container site-section">
           <div className="max-w-2xl">
             <span className="eyebrow">How it works</span>
-            <h2 className="display-2 mt-5">Live in an afternoon, not a quarter</h2>
+            <h2 className="display-2 mt-5">Set up today, ready for the next shift</h2>
           </div>
           <ol className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {howItWorks.map((s) => (
