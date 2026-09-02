@@ -15,11 +15,19 @@ interface PhoneSession {
   verifiedAt: string;
 }
 
+const PHONE_SESSION_VALID_MS = 180 * 24 * 60 * 60 * 1000; // 6 months
+
 function loadPhoneSession(): PhoneSession | null {
   try {
     const raw = localStorage.getItem(PHONE_SESSION_KEY);
     if (!raw) return null;
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw) as PhoneSession;
+    const verifiedAt = parsed.verifiedAt ? new Date(parsed.verifiedAt).getTime() : 0;
+    if (!verifiedAt || Date.now() - verifiedAt > PHONE_SESSION_VALID_MS) {
+      localStorage.removeItem(PHONE_SESSION_KEY);
+      return null;
+    }
+    return parsed;
   } catch {
     return null;
   }
@@ -28,7 +36,7 @@ function loadPhoneSession(): PhoneSession | null {
 function phoneSessionToAuthSession(ps: PhoneSession): AuthSession {
   return {
     accessToken: `phone-session-${ps.deviceId}`,
-    expiresAt: Date.now() + 90 * 24 * 60 * 60 * 1000,
+    expiresAt: new Date(ps.verifiedAt).getTime() + PHONE_SESSION_VALID_MS,
     user: {
       id: ps.userId,
       fullName: ps.userName,
