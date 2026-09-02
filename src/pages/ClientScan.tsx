@@ -10,7 +10,7 @@
  * 6. Optional biometric (Face ID / fingerprint) unlock protects the saved session
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { FunctionsHttpError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -178,9 +178,17 @@ export default function ClientScanPage() {
     }
   }, [countdown]);
 
+  // Runs the initial routing decision exactly once. Without this guard, an auth
+  // token refresh (e.g. after switching to the SMS app and back) re-ran the
+  // effect and threw the user out of the code-entry step.
+  const flowStartedRef = useRef(false);
+
   // Main flow: check auth state and proceed accordingly
   useEffect(() => {
     if (authLoading) return;
+    if (flowStartedRef.current) return;
+    flowStartedRef.current = true;
+
 
     if (!token) {
       setErrorState({
@@ -915,9 +923,16 @@ export default function ClientScanPage() {
                 <InputOTP
                   maxLength={6}
                   value={otp}
-                  onChange={setOtp}
-                  onComplete={(completedCode) => void handleVerifyOtp(completedCode)}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  onChange={(value) => {
+                    const digits = value.replace(/\D/g, '').slice(0, 6);
+                    setOtp(digits);
+                    if (error) setError(null);
+                    if (digits.length === 6) void handleVerifyOtp(digits);
+                  }}
                 >
+
                   <InputOTPGroup>
                     <InputOTPSlot index={0} />
                     <InputOTPSlot index={1} />
