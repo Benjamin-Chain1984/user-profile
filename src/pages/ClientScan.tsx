@@ -619,9 +619,10 @@ export default function ClientScanPage() {
     handleSendOtp();
   };
 
-  // Hand the scanned client over to the app so the dashboard opens on them
+  // Hand the scanned client over to the app so the dashboard always opens on the
+  // exact profile encoded in the QR token.
   useEffect(() => {
-    if (step === 'success' && client && client.source !== 'profiles') {
+    if (step === 'success' && client?.id) {
       setActiveClient(client.id, client.preferredName);
     }
   }, [step, client, setActiveClient]);

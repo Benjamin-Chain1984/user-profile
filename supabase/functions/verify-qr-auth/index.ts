@@ -40,45 +40,48 @@ async function hashToken(token: string): Promise<string> {
 
 async function resolveClient(supabase: any, clientToken: string) {
   const tokenHash = await hashToken(clientToken);
-  
-  // Check clients table first
-  const { data: clientData, error: clientError } = await supabase
+
+  // Each client record owns a unique poster QR token. Tokens are ONLY resolved
+  // against the clients table so a QR code can never open another profile.
+  const { data: clientData } = await supabase
     .from('clients')
-    .select('id, preferred_name, short_bio, photo_url, status')
+    .select('id, preferred_name, photo_url, status')
     .eq('poster_qr_token_hash', tokenHash)
     .eq('status', 'active')
     .maybeSingle();
 
-  if (!clientError && clientData) {
-    return {
-      id: clientData.id,
-      preferredName: clientData.preferred_name,
-      shortBio: clientData.short_bio,
-      photoUrl: clientData.photo_url,
-      status: clientData.status,
-      source: 'clients'
-    };
-  }
+  if (!clientData) return null;
 
-  // Check profiles table (profile-page QR codes)
-  const { data: profileData, error: profileError } = await supabase
-    .from('profiles')
-    .select('id, full_name')
-    .eq('poster_qr_token_hash', tokenHash)
+  return {
+    id: clientData.id,
+    preferredName: clientData.preferred_name,
+    shortBio: null,
+    photoUrl: clientData.photo_url,
+    status: clientData.status,
+    source: 'clients' as const,
+  };
+}
+
+/**
+ * QR access requires BOTH a verified phone/trusted session AND an explicit
+ * client assignment (Admin > My Team checkbox). Admins always have access.
+ */
+async function hasClientAccess(supabase: any, userId: string, clientId: string) {
+  const { data: roles } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userId);
+
+  if ((roles || []).some((r: any) => r.role === 'admin')) return true;
+
+  const { data: access } = await supabase
+    .from('client_staff_access')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('client_id', clientId)
     .maybeSingle();
 
-  if (!profileError && profileData) {
-    return {
-      id: profileData.id,
-      preferredName: profileData.full_name,
-      shortBio: null,
-      photoUrl: null,
-      status: 'active',
-      source: 'profiles'
-    };
-  }
-
-  return null;
+  return !!access;
 }
 
 async function registerTrustedDevice(
@@ -195,6 +198,22 @@ Deno.serve(async (req) => {
         return new Response(
           JSON.stringify({ error: 'This QR code is invalid or has been replaced.', invalidToken: true }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!(await hasClientAccess(supabase, currentUserId, client.id))) {
+        await supabase.rpc('log_audit_event', {
+          p_actor_user_id: currentUserId,
+          p_action: 'CLIENT_ACCESS_DENIED',
+          p_client_id: client.id,
+          p_metadata_json: { reason: 'not_assigned_to_client', method: 'pre_authenticated' }
+        });
+        return new Response(
+          JSON.stringify({
+            error: `You are not assigned to ${client.preferredName}'s record. Ask an administrator to grant access under Admin > My Team.`,
+            code: 'NOT_ASSIGNED'
+          }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -333,6 +352,22 @@ Deno.serve(async (req) => {
         return new Response(
           JSON.stringify({ error: 'This QR code is invalid or has been replaced.', invalidToken: true }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!(await hasClientAccess(supabase, storedOtp.user_id, client.id))) {
+        await supabase.rpc('log_audit_event', {
+          p_actor_user_id: storedOtp.user_id,
+          p_action: 'CLIENT_ACCESS_DENIED',
+          p_client_id: client.id,
+          p_metadata_json: { reason: 'not_assigned_to_client', method: 'qr_auth_otp' }
+        });
+        return new Response(
+          JSON.stringify({
+            error: `You are not assigned to ${client.preferredName}'s record. Ask an administrator to grant access under Admin > My Team.`,
+            code: 'NOT_ASSIGNED'
+          }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 

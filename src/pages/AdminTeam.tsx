@@ -26,8 +26,8 @@ export default function AdminTeamPage() {
         <Card className="p-4 sm:p-6">
           <MyTeam />
           <p className="text-xs text-muted-foreground mt-4">
-            Once a member is added and their phone verified, grant them access to a client
-            under Clients &gt; Actions &gt; Manage Record Access.
+            QR access requires both steps: verify the member&apos;s phone (6-month text
+            verification), then tick the clients they may open using the client access button.
           </p>
         </Card>
       </main>

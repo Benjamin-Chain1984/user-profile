@@ -18,9 +18,11 @@ import {
   Shield,
   ShieldCheck,
   ShieldAlert,
-  MessageSquare
+  MessageSquare,
+  QrCode
 } from 'lucide-react';
 import { TeamMemberDialog } from './TeamMemberDialog';
+import { TeamClientAccessDialog } from './TeamClientAccessDialog';
 import { PhoneVerificationDialog } from './PhoneVerificationDialog';
 import type { AppRole } from '@/services/auth/types';
 
@@ -31,6 +33,7 @@ interface TeamMember {
   phone_verified_at: string | null;
   is_active: boolean;
   role?: AppRole;
+  clientCount?: number;
 }
 
 const roleLabels: Record<AppRole, string> = {
@@ -55,6 +58,8 @@ export function MyTeam() {
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
   const [verifyingMember, setVerifyingMember] = useState<TeamMember | null>(null);
   const [verifyDialogOpen, setVerifyDialogOpen] = useState(false);
+  const [accessMember, setAccessMember] = useState<TeamMember | null>(null);
+  const [accessDialogOpen, setAccessDialogOpen] = useState(false);
 
   const isAdmin = hasRole('admin');
 
@@ -76,6 +81,11 @@ export function MyTeam() {
 
       if (rolesError) throw rolesError;
 
+      // Client assignments drive QR access (phone verified + client checkbox)
+      const { data: access } = await supabase
+        .from('client_staff_access')
+        .select('user_id, client_id');
+
       // Combine profiles with roles
       const membersWithRoles: TeamMember[] = (profiles || []).map((profile) => {
         const userRole = roles?.find((r) => r.user_id === profile.id);
@@ -86,6 +96,7 @@ export function MyTeam() {
           phone_verified_at: profile.phone_verified_at,
           is_active: profile.is_active,
           role: userRole?.role as AppRole | undefined,
+          clientCount: (access || []).filter((a) => a.user_id === profile.id).length,
         };
       });
 
@@ -111,6 +122,11 @@ export function MyTeam() {
   const handleAddNew = () => {
     setEditingMember(null);
     setDialogOpen(true);
+  };
+
+  const handleManageAccess = (member: TeamMember) => {
+    setAccessMember(member);
+    setAccessDialogOpen(true);
   };
 
   const handleVerifyPhone = (member: TeamMember) => {
@@ -200,10 +216,26 @@ export function MyTeam() {
                       >
                         {isPhoneVerified ? 'Phone Verified' : 'Not Verified'}
                       </Badge>
+                      <Badge
+                        variant={member.clientCount ? 'default' : 'outline'}
+                        className="text-xs"
+                      >
+                        {member.clientCount
+                          ? `${member.clientCount} client${member.clientCount === 1 ? '' : 's'}`
+                          : 'No client access'}
+                      </Badge>
                     </div>
                   </div>
 
                   <div className="flex gap-1">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleManageAccess(member)}
+                      title="Client access (QR)"
+                    >
+                      <QrCode className="w-4 h-4" />
+                    </Button>
                     {!isPhoneVerified && (
                       <Button 
                         variant="outline" 
@@ -234,6 +266,15 @@ export function MyTeam() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         member={editingMember}
+        onSaved={fetchTeamMembers}
+      />
+
+      <TeamClientAccessDialog
+        open={accessDialogOpen}
+        onOpenChange={setAccessDialogOpen}
+        memberId={accessMember?.id ?? null}
+        memberName={accessMember?.full_name}
+        phoneVerified={!!accessMember?.phone_verified_at}
         onSaved={fetchTeamMembers}
       />
 
