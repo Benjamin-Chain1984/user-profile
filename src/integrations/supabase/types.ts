@@ -7282,6 +7282,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_workspace_access: {
+        Args: { check_env?: string; user_uuid: string }
+        Returns: boolean
+      }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
       log_audit_event: {

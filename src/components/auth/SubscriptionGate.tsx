@@ -24,28 +24,31 @@ import { OnboardingDialog } from './OnboardingDialog';
 export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   const { user, hasRole } = useAuth();
   const { isActive, isLoading } = usePlatformSubscription();
-  const [orgAccess, setOrgAccess] = useState<boolean | null>(null);
+  const [workspaceAccess, setWorkspaceAccess] = useState<boolean | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [hasLegacyClients, setHasLegacyClients] = useState<boolean | null>(null);
-
 
   const isAdmin = hasRole('admin');
 
-  // Staff: resolve org-level access via the granting admin's subscription.
+  // Single server-side source of truth for workspace access. Covers paid plans,
+  // staff who inherit access from an admin's plan, and pre-billing workspaces
+  // (including QR + OTP client access) so nobody is bounced to the paywall.
   useEffect(() => {
-    if (isAdmin || !user?.id) return;
+    if (!user?.id) {
+      setWorkspaceAccess(null);
+      return;
+    }
     let cancelled = false;
     supabase
-      .rpc('has_org_platform_access', {
+      .rpc('has_workspace_access', {
         user_uuid: user.id,
         check_env: getStripeEnvironment(),
       })
       .then(({ data, error }) => {
         if (cancelled) return;
-        setOrgAccess(error ? false : Boolean(data));
+        setWorkspaceAccess(error ? false : Boolean(data));
       });
     return () => { cancelled = true; };
-  }, [isAdmin, user?.id]);
+  }, [user?.id]);
 
   // Admins with a fresh active plan get the guided onboarding once.
   useEffect(() => {
@@ -63,42 +66,21 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
     return () => { cancelled = true; };
   }, [isAdmin, isActive, user?.id]);
 
-  // Legacy workspaces: admins who already created client profiles before the
-  // paywall existed keep access to those records without a paid plan.
-  useEffect(() => {
-    if (!isAdmin || !user?.id) return;
-    let cancelled = false;
-    supabase
-      .from('clients')
-      .select('id', { count: 'exact', head: true })
-      .then(({ count, error }) => {
-        if (cancelled) return;
-        setHasLegacyClients(!error && (count ?? 0) > 0);
-      });
-    return () => { cancelled = true; };
-  }, [isAdmin, user?.id]);
-
   const handleOnboardingClose = useCallback(() => setShowOnboarding(false), []);
 
-  if (isAdmin) {
-    if (isLoading || hasLegacyClients === null) return <LoadingScreen />;
-    if (isActive || hasLegacyClients) {
-      return (
-        <>
-          {isActive && showOnboarding && <OnboardingDialog key={String(showOnboarding)} />}
-          {isActive && showOnboarding && <OnboardingDismiss onDone={handleOnboardingClose} />}
-          {children}
-        </>
-      );
-    }
-    return <Paywall />;
+  if (isLoading || workspaceAccess === null) return <LoadingScreen />;
+
+  if (workspaceAccess) {
+    return (
+      <>
+        {isActive && showOnboarding && <OnboardingDialog key={String(showOnboarding)} />}
+        {isActive && showOnboarding && <OnboardingDismiss onDone={handleOnboardingClose} />}
+        {children}
+      </>
+    );
   }
 
-
-  // Staff / other roles
-  if (orgAccess === null) return <LoadingScreen />;
-  if (orgAccess) return <>{children}</>;
-  return <SuspendedScreen />;
+  return isAdmin ? <Paywall /> : <SuspendedScreen />;
 }
 
 /** Re-check onboarding completion so the dialog unmounts once finished. */
