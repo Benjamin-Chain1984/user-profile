@@ -608,7 +608,6 @@ export default function ClientScanPage() {
     } catch (err: any) {
       console.error('Error verifying OTP:', err);
       setError(await getFunctionErrorMessage(err, 'Verification failed'));
-      setOtp('');
     } finally {
       setIsLoading(false);
     }
@@ -1003,6 +1002,7 @@ export default function ClientScanPage() {
 
               <div className="flex gap-3">
                 <Button 
+                  type="button"
                   variant="outline"
                   onClick={handleResend}
                   disabled={countdown > 0 || isLoading}
@@ -1011,6 +1011,7 @@ export default function ClientScanPage() {
                   {countdown > 0 ? `Resend in ${countdown}s` : 'Resend Code'}
                 </Button>
                 <Button 
+                  type="button"
                   onClick={() => void handleVerifyOtp()}
                   disabled={isLoading || otp.length !== 6}
                   className="flex-1"
@@ -1027,6 +1028,7 @@ export default function ClientScanPage() {
               </div>
 
               <Button 
+                type="button"
                 variant="ghost" 
                 onClick={() => {
                    clearPendingOtpFlow();
