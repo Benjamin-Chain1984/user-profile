@@ -201,6 +201,22 @@ Deno.serve(async (req) => {
         );
       }
 
+      if (!(await hasClientAccess(supabase, currentUserId, client.id))) {
+        await supabase.rpc('log_audit_event', {
+          p_actor_user_id: currentUserId,
+          p_action: 'CLIENT_ACCESS_DENIED',
+          p_client_id: client.id,
+          p_metadata_json: { reason: 'not_assigned_to_client', method: 'pre_authenticated' }
+        });
+        return new Response(
+          JSON.stringify({
+            error: `You are not assigned to ${client.preferredName}'s record. Ask an administrator to grant access under Admin > My Team.`,
+            code: 'NOT_ASSIGNED'
+          }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       await supabase.rpc('log_audit_event', {
         p_actor_user_id: currentUserId,
         p_action: 'CLIENT_ACCESS_GRANTED',
@@ -336,6 +352,22 @@ Deno.serve(async (req) => {
         return new Response(
           JSON.stringify({ error: 'This QR code is invalid or has been replaced.', invalidToken: true }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!(await hasClientAccess(supabase, storedOtp.user_id, client.id))) {
+        await supabase.rpc('log_audit_event', {
+          p_actor_user_id: storedOtp.user_id,
+          p_action: 'CLIENT_ACCESS_DENIED',
+          p_client_id: client.id,
+          p_metadata_json: { reason: 'not_assigned_to_client', method: 'qr_auth_otp' }
+        });
+        return new Response(
+          JSON.stringify({
+            error: `You are not assigned to ${client.preferredName}'s record. Ask an administrator to grant access under Admin > My Team.`,
+            code: 'NOT_ASSIGNED'
+          }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 

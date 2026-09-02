@@ -227,6 +227,22 @@ Deno.serve(async (req) => {
           );
         }
 
+        if (!(await hasClientAccess(supabase, currentUserId, client.id))) {
+          await supabase.rpc('log_audit_event', {
+            p_actor_user_id: currentUserId,
+            p_action: 'CLIENT_ACCESS_DENIED',
+            p_client_id: client.id,
+            p_metadata_json: { reason: 'not_assigned_to_client', method: 'trusted_device' }
+          });
+          return new Response(
+            JSON.stringify({
+              error: `You are not assigned to ${client.preferredName}'s record. Ask an administrator to grant access under Admin > My Team.`,
+              code: 'NOT_ASSIGNED'
+            }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
         // Log access
         await supabase.from('qr_access_logs').insert({
           user_id: currentUserId,
