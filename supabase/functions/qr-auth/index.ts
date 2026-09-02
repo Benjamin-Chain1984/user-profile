@@ -17,14 +17,13 @@ function generateOTP(): string {
 }
 
 function formatPhoneE164(phone: string): string {
-  const digits = phone.replace(/\D/g, '');
+  let digits = (phone || '').replace(/\D/g, '');
   if (digits.startsWith('0')) {
-    return '+61' + digits.slice(1);
+    digits = '61' + digits.slice(1);
+  } else if (digits.length === 9 && digits.startsWith('4')) {
+    digits = '61' + digits;
   }
-  if (!phone.startsWith('+')) {
-    return '+' + digits;
-  }
-  return phone;
+  return '+' + digits;
 }
 
 async function hashToken(token: string): Promise<string> {
