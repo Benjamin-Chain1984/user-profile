@@ -16,8 +16,14 @@ const MFA_VALIDITY_DAYS = 180; // 6 months
 
 function formatPhoneE164(phone: string): string {
   let digits = (phone || '').replace(/\D/g, '');
-  if (digits.startsWith('0')) {
-    digits = '61' + digits.slice(1);
+  if (digits.startsWith('0011')) digits = digits.slice(4);
+  else if (digits.startsWith('011')) digits = digits.slice(3);
+  if (digits.startsWith('61')) {
+    // Australian country code: drop a trunk "0" typed after +61 (e.g. +61 0407...)
+    let rest = digits.slice(2).replace(/^0+/, '');
+    digits = '61' + rest;
+  } else if (digits.startsWith('0')) {
+    digits = '61' + digits.replace(/^0+/, '');
   } else if (digits.length === 9 && digits.startsWith('4')) {
     digits = '61' + digits;
   }
