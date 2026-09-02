@@ -117,7 +117,7 @@ export function useWeightBmi(clientId?: string) {
     recorded_on_behalf_of_role?: string;
     recorded_on_behalf_of_reason?: string;
   }) => {
-    if (!user?.id) return false;
+    if (!user?.id || !clientId) return false;
 
     try {
       // Calculate BMI if height is configured
@@ -134,6 +134,7 @@ export function useWeightBmi(clientId?: string) {
       const { error } = await supabase
         .from('weight_entries')
         .insert({
+          client_id: clientId,
           weight_kg: data.weight_kg,
           event_occurred_at: data.event_occurred_at || new Date().toISOString(),
           time_of_day: data.time_of_day || null,
