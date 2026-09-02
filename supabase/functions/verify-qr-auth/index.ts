@@ -50,7 +50,8 @@ async function resolveClient(supabase: any, clientToken: string) {
       preferredName: clientData.preferred_name,
       shortBio: clientData.short_bio,
       photoUrl: clientData.photo_url,
-      status: clientData.status
+      status: clientData.status,
+      source: 'clients'
     };
   }
 
@@ -67,7 +68,8 @@ async function resolveClient(supabase: any, clientToken: string) {
       preferredName: profileData.full_name,
       shortBio: null,
       photoUrl: null,
-      status: 'active'
+      status: 'active',
+      source: 'profiles'
     };
   }
 
