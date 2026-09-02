@@ -443,11 +443,29 @@ Deno.serve(async (req) => {
     if (!twilioResponse.ok) {
       const twilioError = await twilioResponse.text();
       console.error('Twilio error:', twilioError);
+
+      let code: number | undefined;
+      let detail = 'Failed to send verification code. Please try again.';
+      try {
+        const parsed = JSON.parse(twilioError);
+        code = parsed.code;
+        if (parsed.code === 21660 || parsed.code === 21606 || parsed.code === 21212) {
+          detail = 'SMS sender number is not valid for this messaging account. Please update the SMS configuration.';
+        } else if (parsed.code === 21608) {
+          detail = 'This number is not verified with the trial SMS account. Please verify it or upgrade the SMS account.';
+        } else if (parsed.code === 21211) {
+          detail = 'That phone number appears to be invalid. Please check the number and try again.';
+        }
+      } catch (_e) {
+        // keep default message
+      }
+
       return new Response(
-        JSON.stringify({ error: 'Failed to send verification code. Please try again.' }),
+        JSON.stringify({ error: detail, smsErrorCode: code }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
 
     console.log('OTP sent successfully');
 
