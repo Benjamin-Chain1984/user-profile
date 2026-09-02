@@ -147,22 +147,45 @@ export function TeamMemberDialog({ open, onOpenChange, member, onSaved }: TeamMe
           body: { email, fullName, role, phone: formattedPhone },
         });
 
-        if (error) throw error;
+        if (error) {
+          // Surface the function's JSON error message instead of a generic status error
+          let message = error.message || 'Failed to add team member';
+          const res = (error as any)?.context;
+          if (res && typeof res.json === 'function') {
+            try {
+              const body = await res.json();
+              if (body?.error) message = body.error;
+            } catch {
+              // ignore parse errors
+            }
+          }
+          toast.error(message);
+          setIsLoading(false);
+          return;
+        }
 
-        if (data.error) {
+        if (data?.error) {
           toast.error(data.error);
           setIsLoading(false);
           return;
         }
 
-        // Show temporary password to admin
-        setTempPassword(data.tempPassword);
-        setShowCredentials(true);
-        toast.success(`Team member ${fullName} added successfully`);
-        // Don't close - show credentials screen
+        if (data?.tempPassword) {
+          // Show temporary password to admin
+          setTempPassword(data.tempPassword);
+          setShowCredentials(true);
+          toast.success(`Team member ${fullName} added successfully`);
+          setIsLoading(false);
+          return;
+        }
+
+        toast.success(data?.message || `Team member ${fullName} added successfully`);
+        onSaved();
+        onOpenChange(false);
         setIsLoading(false);
         return;
       }
+
 
       onSaved();
       onOpenChange(false);
