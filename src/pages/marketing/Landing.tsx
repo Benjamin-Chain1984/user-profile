@@ -30,7 +30,7 @@ export default function Landing() {
     <>
       <Seo
         title="IDEAL — Assistive technology for disability & aged care"
-        description="Intelligent Data for Everyday Activities and Lifestyle. Beacon-driven visual cues, traffic-light risk signals, escalation alerts and audit-ready reporting — changing how governance and support are delivered."
+        description="Intelligent Data Everyday Activities & Lifestyle. Beacon-driven visual cues, traffic-light risk signals, escalation alerts and audit-ready reporting — changing how governance and support are delivered."
         path="/"
         jsonLd={[
           {
@@ -38,7 +38,7 @@ export default function Landing() {
             '@type': 'Organization',
             name: 'IDEAL',
             description:
-              'IDEAL (Intelligent Data for Everyday Activities and Lifestyle) — assistive technology changing how practice governance and support are delivered in disability services and residential aged care.',
+              'IDEAL (Intelligent Data Everyday Activities & Lifestyle) — assistive technology changing how practice governance and support are delivered in disability services and residential aged care.',
           },
           {
             '@context': 'https://schema.org',
@@ -66,7 +66,7 @@ export default function Landing() {
               Assistive technology · NDIS High Intensity aligned
             </span>
             <h1 className="display-1 mt-6">
-              Intelligent Data for <span className="gradient-text">Everyday Activities and Lifestyle</span>
+              Intelligent Data <span className="gradient-text">Everyday Activities &amp; Lifestyle</span>
             </h1>
             <p className="mt-3 text-lg font-medium text-primary">
               Ensure your clients receive the IDeAL care and support
