@@ -178,9 +178,17 @@ export default function ClientScanPage() {
     }
   }, [countdown]);
 
+  // Runs the initial routing decision exactly once. Without this guard, an auth
+  // token refresh (e.g. after switching to the SMS app and back) re-ran the
+  // effect and threw the user out of the code-entry step.
+  const flowStartedRef = useRef(false);
+
   // Main flow: check auth state and proceed accordingly
   useEffect(() => {
     if (authLoading) return;
+    if (flowStartedRef.current) return;
+    flowStartedRef.current = true;
+
 
     if (!token) {
       setErrorState({
