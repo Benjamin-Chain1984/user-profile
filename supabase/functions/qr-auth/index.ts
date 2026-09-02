@@ -43,44 +43,47 @@ async function hashToken(token: string): Promise<string> {
 async function resolveClient(supabase: any, clientToken: string) {
   const tokenHash = await hashToken(clientToken);
 
-  // Check clients table first
+  // Each client record owns a unique poster QR token. Tokens are ONLY resolved
+  // against the clients table so a QR code can never open another profile.
   const { data: clientData } = await supabase
     .from('clients')
-    .select('id, preferred_name, short_bio, photo_url, status')
+    .select('id, preferred_name, photo_url, status')
     .eq('poster_qr_token_hash', tokenHash)
     .eq('status', 'active')
     .maybeSingle();
 
-  if (clientData) {
-    return {
-      id: clientData.id,
-      preferredName: clientData.preferred_name,
-      shortBio: clientData.short_bio,
-      photoUrl: clientData.photo_url,
-      status: clientData.status,
-      source: 'clients'
-    };
-  }
+  if (!clientData) return null;
 
-  // Check profiles table (profile-page QR codes)
-  const { data: profileData } = await supabase
-    .from('profiles')
-    .select('id, full_name')
-    .eq('poster_qr_token_hash', tokenHash)
+  return {
+    id: clientData.id,
+    preferredName: clientData.preferred_name,
+    shortBio: null,
+    photoUrl: clientData.photo_url,
+    status: clientData.status,
+    source: 'clients' as const,
+  };
+}
+
+/**
+ * QR access requires BOTH a verified phone/trusted session AND an explicit
+ * client assignment (Admin > My Team checkbox). Admins always have access.
+ */
+async function hasClientAccess(supabase: any, userId: string, clientId: string) {
+  const { data: roles } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userId);
+
+  if ((roles || []).some((r: any) => r.role === 'admin')) return true;
+
+  const { data: access } = await supabase
+    .from('client_staff_access')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('client_id', clientId)
     .maybeSingle();
 
-  if (profileData) {
-    return {
-      id: profileData.id,
-      preferredName: profileData.full_name,
-      shortBio: null,
-      photoUrl: null,
-      status: 'active',
-      source: 'profiles'
-    };
-  }
-
-  return null;
+  return !!access;
 }
 
 Deno.serve(async (req) => {
