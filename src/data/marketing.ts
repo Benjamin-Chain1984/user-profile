@@ -297,5 +297,6 @@ export const footerNav = {
   legal: [
     { label: 'Terms of Service', to: '/terms' },
     { label: 'Privacy Policy', to: '/privacy' },
+    { label: 'Disclaimer', to: '/disclaimer' },
   ],
 };

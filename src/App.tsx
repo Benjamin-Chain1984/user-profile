@@ -45,6 +45,7 @@ import About from "./pages/marketing/About";
 import Contact from "./pages/marketing/Contact";
 import Terms from "./pages/marketing/Terms";
 import Privacy from "./pages/marketing/Privacy";
+import Disclaimer from "./pages/marketing/Disclaimer";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -90,6 +91,7 @@ const App = () => (
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/terms" element={<Terms />} />
                   <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/disclaimer" element={<Disclaimer />} />
                 </Route>
 
                 {/* Public routes */}
