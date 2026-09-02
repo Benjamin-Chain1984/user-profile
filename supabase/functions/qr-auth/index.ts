@@ -272,8 +272,8 @@ Deno.serve(async (req) => {
       }
     });
 
-    // Check if phone is verified
-    const { data: profile, error: profileError } = await supabase
+    // Check if phone is verified (tolerant of formatting differences in stored numbers)
+    let { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id, full_name, is_active, verified_phone, phone_verified_at')
       .eq('verified_phone', formattedPhone)
@@ -286,6 +286,30 @@ Deno.serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    if (!profile) {
+      // Fallback: compare on national significant digits (last 9) so stored
+      // numbers with spaces, 0-prefix or no + still match.
+      const target = formattedPhone.replace(/\D/g, '').slice(-9);
+      const { data: candidates } = await supabase
+        .from('profiles')
+        .select('id, full_name, is_active, verified_phone, phone_verified_at')
+        .not('verified_phone', 'is', null);
+
+      profile = (candidates || []).find(
+        (p: any) => (p.verified_phone || '').replace(/\D/g, '').slice(-9) === target
+      ) || null;
+
+      if (profile) {
+        console.log('Matched profile via normalised phone comparison');
+        // Self-heal stored value to canonical E.164
+        await supabase
+          .from('profiles')
+          .update({ verified_phone: formattedPhone })
+          .eq('id', profile.id);
+      }
+    }
+
 
     if (!profile) {
       await supabase.rpc('log_audit_event', {
