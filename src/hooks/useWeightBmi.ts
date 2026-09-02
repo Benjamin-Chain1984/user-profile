@@ -40,6 +40,15 @@ export function useWeightBmi(clientId?: string) {
   const [statusInfo, setStatusInfo] = useState<WeightStatusInfo | null>(null);
 
   const fetchData = useCallback(async () => {
+    if (!clientId) {
+      setEntries([]);
+      setConfig(null);
+      setAlerts([]);
+      setStatusInfo(calculateWeightBmiStatus([], null, []));
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -47,6 +56,7 @@ export function useWeightBmi(clientId?: string) {
       const { data: entriesData, error: entriesError } = await supabase
         .from('weight_entries')
         .select('*')
+        .eq('client_id', clientId)
         .eq('is_undone', false)
         .order('event_occurred_at', { ascending: false })
         .limit(100);
@@ -57,6 +67,7 @@ export function useWeightBmi(clientId?: string) {
       const { data: configData, error: configError } = await supabase
         .from('weight_bmi_config')
         .select('*')
+        .eq('client_id', clientId)
         .maybeSingle();
 
       if (configError) throw configError;
@@ -65,6 +76,7 @@ export function useWeightBmi(clientId?: string) {
       const { data: alertsData, error: alertsError } = await supabase
         .from('weight_bmi_alerts')
         .select('*')
+        .eq('client_id', clientId)
         .order('created_at', { ascending: false });
 
       if (alertsError) throw alertsError;
@@ -105,7 +117,7 @@ export function useWeightBmi(clientId?: string) {
     recorded_on_behalf_of_role?: string;
     recorded_on_behalf_of_reason?: string;
   }) => {
-    if (!user?.id) return false;
+    if (!user?.id || !clientId) return false;
 
     try {
       // Calculate BMI if height is configured
@@ -122,6 +134,7 @@ export function useWeightBmi(clientId?: string) {
       const { error } = await supabase
         .from('weight_entries')
         .insert({
+          client_id: clientId,
           weight_kg: data.weight_kg,
           event_occurred_at: data.event_occurred_at || new Date().toISOString(),
           time_of_day: data.time_of_day || null,
@@ -157,11 +170,11 @@ export function useWeightBmi(clientId?: string) {
       });
       return false;
     }
-  }, [user?.id, config, toast, fetchData]);
+  }, [user?.id, clientId, config, toast, fetchData]);
 
   // Save config
   const saveConfig = useCallback(async (data: Partial<WeightBmiConfig>) => {
-    if (!user?.id) return false;
+    if (!user?.id || !clientId) return false;
 
     try {
       if (config?.id) {
@@ -183,6 +196,7 @@ export function useWeightBmi(clientId?: string) {
           .insert({
             ...DEFAULT_CONFIG,
             ...data,
+            client_id: clientId,
             created_by: user.id
           });
 
@@ -205,7 +219,7 @@ export function useWeightBmi(clientId?: string) {
       });
       return false;
     }
-  }, [user?.id, config, toast, fetchData]);
+  }, [user?.id, clientId, config, toast, fetchData]);
 
   // Initial fetch
   useEffect(() => {
