@@ -290,7 +290,7 @@ Deno.serve(async (req) => {
     }
 
     // Verify OTP
-    if (storedOtp.otp_hash !== otp) {
+    if (String(storedOtp.otp_hash).trim() !== String(otp).trim()) {
       if (rateLimit) {
         await supabase.from('rate_limits').update({ attempt_count: rateLimit.attempt_count + 1 }).eq('id', rateLimit.id);
       } else {
