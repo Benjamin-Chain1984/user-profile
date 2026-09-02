@@ -173,41 +173,63 @@ export default function Landing() {
       {/* Social proof */}
       <section className="bg-background">
         <div className="site-container py-14 sm:py-16">
-          <p className="text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Built for disability services, residential aged care and community nursing teams
-          </p>
-          <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
-            {trustIndicators.map((item) => (
-              <li
-                key={item}
-                className="flex items-center gap-2 text-sm font-medium text-muted-foreground"
-              >
-                <CheckCircle2 className="h-4 w-4 text-success" aria-hidden />
-                {item}
-              </li>
-            ))}
-          </ul>
+          <div className="text-center">
+            <span className="inline-block rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
+              Clinical Governance First
+            </span>
+            <h2 className="display-2 mx-auto mt-5 max-w-2xl">
+              Built for disability services and residential aged care
+            </h2>
+
+            <ul className="mt-8 flex flex-wrap items-center justify-center gap-6 md:gap-10">
+              {trustIndicators.map((item) => (
+                <li
+                  key={item}
+                  className="flex items-center gap-2 text-sm font-medium text-muted-foreground"
+                >
+                  <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success text-success-foreground">
+                    <Check className="h-3 w-3" aria-hidden />
+                  </span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
 
           <div className="mt-12 grid gap-6 lg:grid-cols-3">
-            {testimonials.map((t) => (
-              <figure
-                key={t.quote}
-                className="flex h-full flex-col rounded-2xl border border-border bg-background p-6 shadow-card"
-              >
-                <div className="flex gap-0.5" aria-hidden>
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-warning text-warning" />
-                  ))}
-                </div>
-                <blockquote className="mt-4 flex-1 text-sm leading-relaxed">
-                  “{t.quote}”
-                </blockquote>
-                <figcaption className="mt-5 text-sm">
-                  <span className="font-semibold">{t.name}</span>
-                  <span className="block text-muted-foreground">{t.role}</span>
-                </figcaption>
-              </figure>
-            ))}
+            {testimonials.map((t) => {
+              const initials = t.name
+                .split(' ')
+                .slice(0, 2)
+                .map((n) => n[0])
+                .join('')
+                .toUpperCase();
+
+              return (
+                <figure
+                  key={t.quote}
+                  className="flex h-full flex-col rounded-2xl border border-border bg-card p-8 shadow-card transition-shadow duration-300 hover:shadow-elegant"
+                >
+                  <div className="flex gap-1" aria-hidden>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} className="h-5 w-5 fill-warning text-warning" />
+                    ))}
+                  </div>
+                  <blockquote className="mt-4 flex-1 text-sm leading-relaxed">
+                    “{t.quote}”
+                  </blockquote>
+                  <figcaption className="mt-6 flex items-center gap-4 border-t border-border pt-6">
+                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-sm font-bold text-secondary-foreground">
+                      {initials}
+                    </span>
+                    <div className="text-sm">
+                      <span className="font-semibold">{t.name}</span>
+                      <span className="block text-muted-foreground">{t.role}</span>
+                    </div>
+                  </figcaption>
+                </figure>
+              );
+            })}
           </div>
         </div>
       </section>
