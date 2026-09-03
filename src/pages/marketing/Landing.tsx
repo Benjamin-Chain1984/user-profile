@@ -242,7 +242,7 @@ export default function Landing() {
         <div className="site-container">
           <div className="max-w-2xl">
             <span className="eyebrow">Platform</span>
-            <h2 className="display-2 mt-5">Everything a high-intensity support team needs</h2>
+            <h2 className="display-2 mt-5">Elevate care quality and practice governance</h2>
             <p className="lead mt-4">
               Enable only the modules that apply to each person. Configure thresholds once, and the
               logging forms, schedules and alerts follow automatically.
