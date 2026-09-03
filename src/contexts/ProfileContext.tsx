@@ -298,22 +298,31 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         error = result.error;
       }
 
-      // Fallback to first client when no active selection (or it was deleted)
-      if (!data && !error) {
+      // Only choose a default when there is no explicit selection. An empty
+      // result for a selected client can be a transient authorization response
+      // during QR sign-in; replacing it with the first row would open the wrong
+      // person's profile and overwrite the scanned client ID.
+      if (!activeClientId && !data && !error) {
         const result = await supabase
           .from('clients')
           .select('*')
+          .order('created_at', { ascending: true })
           .limit(1)
           .maybeSingle();
         data = result.data;
         error = result.error;
-        if (data && activeClientId && data.id !== activeClientId) {
+        if (data) {
           setActiveClient(data.id, (data as any).full_name || data.preferred_name || null);
         }
       }
 
       if (error) {
         console.error('Error fetching profile:', error);
+        return;
+      }
+
+      if (activeClientId && !data) {
+        setProfile(null);
         return;
       }
 
