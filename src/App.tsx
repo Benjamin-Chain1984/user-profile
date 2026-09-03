@@ -60,13 +60,11 @@ function ProtectedAppShell() {
   return (
     <ProtectedRoute>
       <SubscriptionGate>
-      <ActiveClientProvider>
         <ProfileProvider>
           <MainLayout>
             <Outlet />
           </MainLayout>
         </ProfileProvider>
-      </ActiveClientProvider>
       </SubscriptionGate>
     </ProtectedRoute>
   );
@@ -76,11 +74,12 @@ const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <RolePreviewProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
+        <ActiveClientProvider>
+          <RolePreviewProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
               <Routes>
                 {/* Public marketing site */}
                 <Route element={<MarketingLayout />}>
@@ -157,9 +156,10 @@ const App = () => (
                 {/* Catch-all */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </RolePreviewProvider>
+              </BrowserRouter>
+            </TooltipProvider>
+          </RolePreviewProvider>
+        </ActiveClientProvider>
       </AuthProvider>
     </QueryClientProvider>
   </ErrorBoundary>
