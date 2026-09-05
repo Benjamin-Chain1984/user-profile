@@ -1,5 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useProfile } from '@/contexts/ProfileContext';
+import { useActiveClient } from '@/contexts/ActiveClientContext';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClientProfile } from '@/hooks/useClientProfile';
 import { Input } from '@/components/ui/input';
@@ -28,6 +30,18 @@ export function ProfileForm() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [localProfile, setLocalProfile] = useState<IndividualProfile | null>(null);
+  const { activeClientId } = useActiveClient();
+  const [beaconId, setBeaconId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!activeClientId) { setBeaconId(null); return; }
+    supabase
+      .from('clients')
+      .select('beacon_id')
+      .eq('id', activeClientId)
+      .maybeSingle()
+      .then(({ data }) => setBeaconId(data?.beacon_id ?? null));
+  }, [activeClientId]);
 
   const isAdmin = hasRole('admin');
 
@@ -336,24 +350,34 @@ export function ProfileForm() {
         </Button>
       )}
 
-      {/* IoT Wearable Device */}
+      {/* IoT Beacon */}
       <Separator className="my-8" />
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
             <Watch className="w-5 h-5 text-primary" />
-            <CardTitle className="text-lg">IoT Wearable Device</CardTitle>
+            <CardTitle className="text-lg">IoT Beacon</CardTitle>
           </div>
           <CardDescription>
-            Connect a wearable device to enable continuous health monitoring
+            Connect an IoT beacon to enable continuous health monitoring
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {beaconId ? (
+            <div className="mb-3">
+              <Label className="text-xs text-muted-foreground">Beacon ID (Serial Number)</Label>
+              <p className="font-mono text-sm font-medium mt-1">{beaconId}</p>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground mb-3">
+              No Beacon ID assigned yet — add one in Admin → Clients.
+            </p>
+          )}
           <Button variant="outline" disabled>
             <Watch className="w-4 h-4 mr-2" />
-            Enable IoT Wearable Device
+            Enable IoT Beacon
           </Button>
-          <p className="text-xs text-muted-foreground mt-2">Coming soon — wearable integration is under development.</p>
+          <p className="text-xs text-muted-foreground mt-2">Coming soon — IoT beacon integration is under development.</p>
         </CardContent>
       </Card>
 
