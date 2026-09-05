@@ -130,7 +130,7 @@ export default function Landing() {
               </p>
               <ul className="mt-8 space-y-4">
                 {[
-                  { color: 'bg-success', label: 'Green — on track', text: 'All enabled modules are within their configured ranges.' },
+                  { color: 'bg-success', label: 'Green — IDEAL', text: 'All enabled modules are within their configured ranges.' },
                   { color: 'bg-warning', label: 'Amber — monitor', text: 'Something needs attention soon: a missed check, an overdue task, a borderline reading.' },
                   { color: 'bg-destructive', label: 'Red — act now', text: 'A threshold has been breached. The beacon alerts while the right contacts are notified.' },
                 ].map((cue) => (
