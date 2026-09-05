@@ -214,7 +214,7 @@ export const plans: Plan[] = [
       'Up to 5 client profiles',
       'All clinical modules',
       'Unlimited staff accounts',
-      'QR + SMS OTP bedside access',
+      'QR + SMS OTP instant and secure access',
       'PDF and CSV reporting',
       'Email support',
     ],
