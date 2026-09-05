@@ -256,6 +256,11 @@ function PadChangeTile({
           {detail && (
             <p className="text-xs text-muted-foreground">{detail}</p>
           )}
+          {config?.schedule_type === 'hourly' && (
+            <p className="text-xs text-muted-foreground italic">
+              Scheduled {(config as any).interval_start_time || '07:00'}–{(config as any).interval_end_time || '22:00'}. Nighttime changes as required.
+            </p>
+          )}
         </div>
 
         {/* Compliance bar */}
