@@ -553,8 +553,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
       const { data: alertsData } = await supabase.from('weight_bmi_alerts').select('*').eq('client_id', profile.id).order('created_at', { ascending: false });
 
-      const typedEntries = (entries || []) as unknown as WeightEntry[];
       const typedConfig = configData as unknown as WeightBmiConfig | null;
+      const typedEntries = applyConfiguredBmi((entries || []) as unknown as WeightEntry[], typedConfig);
       const typedAlerts = (alertsData || []) as unknown as WeightBmiAlert[];
       const statusInfo = calculateWeightBmiStatus(typedEntries, typedConfig, typedAlerts);
 
