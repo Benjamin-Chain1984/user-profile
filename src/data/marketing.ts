@@ -248,7 +248,7 @@ export const plans: Plan[] = [
       'Unlimited sites and clients',
       'Everything in Professional',
       'SSO and directory integration',
-      'IoT / wearable data pipeline',
+      'IoT beacon data pipeline',
       'Custom reporting packs',
       'Dedicated onboarding',
       'Named account manager',

@@ -34,7 +34,7 @@ const comparison: { feature: string; starter: string | boolean; professional: st
   { feature: 'Advanced escalation routing', starter: false, professional: true, enterprise: true },
   { feature: 'Competency tracking', starter: false, professional: true, enterprise: true },
   { feature: 'SSO / directory integration', starter: false, professional: false, enterprise: true },
-  { feature: 'IoT / wearable pipeline', starter: false, professional: false, enterprise: true },
+  { feature: 'IoT beacon pipeline', starter: false, professional: false, enterprise: true },
   { feature: 'Dedicated onboarding', starter: false, professional: false, enterprise: true },
 ];
 
