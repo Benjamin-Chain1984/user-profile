@@ -160,6 +160,13 @@ export function ContinenceConfigSettings({ clientId }: ContinenceConfigSettingsP
       setIntervalStartTime((config as any).interval_start_time || '07:00');
       setIntervalEndTime((config as any).interval_end_time || '22:00');
       setEnableUTI(config.enable_uti_testing);
+      setEnableHydration(config.enable_hydration_link);
+      setEnableConsumables(config.enable_consumables_monitoring);
+      setUtiFrequency(config.uti_testing_frequency as UTITestingFrequency);
+      setSkinCheckFrequency((config as any).skin_check_frequency as SkinCheckFrequency || 'every_pad_change');
+      setHasChanges(false);
+    }
+  };
 
   if (loading) {
     return <p className="text-muted-foreground">Loading settings...</p>;
