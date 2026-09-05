@@ -125,8 +125,8 @@ export default function Landing() {
               <h2 className="display-2 mt-5">Visual cues and alerts, right where care happens</h2>
               <p className="lead mt-4">
                 The IDEAL Beacon is a connected light in the home that mirrors each person's live
-                status. It gives support workers instant visual cues — no phone, no login, no
-                reading charts on a busy shift.
+                status. It gives support workers instant visual cues and support — no login, no
+                second guessing, no reading messy charts on a busy shift.
               </p>
               <ul className="mt-8 space-y-4">
                 {[
