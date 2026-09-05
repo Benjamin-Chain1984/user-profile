@@ -30,6 +30,8 @@ export interface ContinenceConfig {
   schedule_type: ScheduleType;
   fixed_times: string[];
   interval_hours: number;
+  interval_start_time: string;
+  interval_end_time: string;
   enable_uti_testing: boolean;
   enable_hydration_link: boolean;
   enable_consumables_monitoring: boolean;

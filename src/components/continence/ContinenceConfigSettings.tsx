@@ -243,24 +243,56 @@ export function ContinenceConfigSettings({ clientId }: ContinenceConfigSettingsP
 
             {/* Hourly Interval */}
             {scheduleType === 'hourly' && (
-              <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
-                <Label htmlFor="intervalHours">Interval (hours)</Label>
-                <div className="flex items-center gap-4">
-                  <Input
-                    id="intervalHours"
-                    type="number"
-                    min={1}
-                    max={24}
-                    value={intervalHours}
-                    onChange={(e) => {
-                      setIntervalHours(parseInt(e.target.value) || 4);
-                      markChanged();
-                    }}
-                    className="w-24"
-                  />
-                  <span className="text-sm text-muted-foreground">
-                    Every {intervalHours} hour{intervalHours !== 1 ? 's' : ''}
-                  </span>
+              <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
+                <div className="space-y-2">
+                  <Label htmlFor="intervalHours">Interval (hours)</Label>
+                  <div className="flex items-center gap-4">
+                    <Input
+                      id="intervalHours"
+                      type="number"
+                      min={1}
+                      max={24}
+                      value={intervalHours}
+                      onChange={(e) => {
+                        setIntervalHours(parseInt(e.target.value) || 4);
+                        markChanged();
+                      }}
+                      className="w-24"
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      Every {intervalHours} hour{intervalHours !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Active between</Label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Input
+                      type="time"
+                      value={intervalStartTime}
+                      onChange={(e) => {
+                        setIntervalStartTime(e.target.value);
+                        markChanged();
+                      }}
+                      className="w-32"
+                      aria-label="Interval window start time"
+                    />
+                    <span className="text-sm text-muted-foreground">and</span>
+                    <Input
+                      type="time"
+                      value={intervalEndTime}
+                      onChange={(e) => {
+                        setIntervalEndTime(e.target.value);
+                        markChanged();
+                      }}
+                      className="w-32"
+                      aria-label="Interval window end time"
+                    />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Scheduled pad changes apply between these times only. Nighttime changes are performed as required.
+                  </p>
                 </div>
               </div>
             )}
