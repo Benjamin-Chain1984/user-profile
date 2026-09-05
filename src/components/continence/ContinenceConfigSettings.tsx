@@ -76,6 +76,8 @@ export function ContinenceConfigSettings({ clientId }: ContinenceConfigSettingsP
   const [scheduleType, setScheduleType] = useState<ScheduleType>('as_required');
   const [fixedTimes, setFixedTimes] = useState<string[]>([]);
   const [intervalHours, setIntervalHours] = useState(4);
+  const [intervalStartTime, setIntervalStartTime] = useState('07:00');
+  const [intervalEndTime, setIntervalEndTime] = useState('22:00');
   const [enableUTI, setEnableUTI] = useState(false);
   const [enableHydration, setEnableHydration] = useState(false);
   const [enableConsumables, setEnableConsumables] = useState(false);
@@ -89,6 +91,8 @@ export function ContinenceConfigSettings({ clientId }: ContinenceConfigSettingsP
       setScheduleType(config.schedule_type as ScheduleType);
       setFixedTimes(config.fixed_times || []);
       setIntervalHours(config.interval_hours || 4);
+      setIntervalStartTime((config as any).interval_start_time || '07:00');
+      setIntervalEndTime((config as any).interval_end_time || '22:00');
       setEnableUTI(config.enable_uti_testing);
       setEnableHydration(config.enable_hydration_link);
       setEnableConsumables(config.enable_consumables_monitoring);
@@ -135,6 +139,8 @@ export function ContinenceConfigSettings({ clientId }: ContinenceConfigSettingsP
       schedule_type: scheduleType,
       fixed_times: fixedTimes,
       interval_hours: intervalHours,
+      interval_start_time: intervalStartTime,
+      interval_end_time: intervalEndTime,
       enable_uti_testing: enableUTI,
       enable_hydration_link: enableHydration,
       enable_consumables_monitoring: enableConsumables,
@@ -151,14 +157,9 @@ export function ContinenceConfigSettings({ clientId }: ContinenceConfigSettingsP
       setScheduleType(config.schedule_type as ScheduleType);
       setFixedTimes(config.fixed_times || []);
       setIntervalHours(config.interval_hours || 4);
+      setIntervalStartTime((config as any).interval_start_time || '07:00');
+      setIntervalEndTime((config as any).interval_end_time || '22:00');
       setEnableUTI(config.enable_uti_testing);
-      setEnableHydration(config.enable_hydration_link);
-      setEnableConsumables(config.enable_consumables_monitoring);
-      setUtiFrequency(config.uti_testing_frequency as UTITestingFrequency);
-      setSkinCheckFrequency((config as any).skin_check_frequency as SkinCheckFrequency || 'every_pad_change');
-      setHasChanges(false);
-    }
-  };
 
   if (loading) {
     return <p className="text-muted-foreground">Loading settings...</p>;
