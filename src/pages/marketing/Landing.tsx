@@ -63,7 +63,7 @@ export default function Landing() {
           <div className="mx-auto max-w-3xl text-center reveal">
             <span className="eyebrow">
               <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
-              Assistive technology · NDIS High Intensity aligned
+              Assistive technology
             </span>
             <h1 className="display-1 mt-6">
               Intelligent Data <span className="gradient-text">Everyday Activities &amp; Lifestyle</span>
