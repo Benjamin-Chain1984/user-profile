@@ -125,6 +125,15 @@ export function PadChangeForm({
     return items;
   }, [config?.schedule_type, config?.fixed_times, config?.interval_hours, intervalStart, intervalEnd, isAsRequired]);
 
+  // When no schedule is configured, default to an as-required change
+  useEffect(() => {
+    if (!open) return;
+    if (isAsRequired) {
+      setScheduledTime('unscheduled');
+      setChangeReasons((prev) => prev.filter((r) => r !== 'scheduled'));
+    }
+  }, [open, isAsRequired]);
+
 
   // Auto-set change reason based on schedule selection
   const handleScheduleTimeChange = (value: string) => {
