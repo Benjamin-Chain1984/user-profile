@@ -18,7 +18,7 @@ import { BRISTOL_TYPES } from '@/types/bowelCare';
 import { calculateStomaStatusLevel } from '@/hooks/useCatheter';
 import type { StomaFinding, StomaPainLevel } from '@/types/catheter';
 import { calculateBowelCareStatus, type CalculatedBowelStatus } from '@/utils/bowelCareStatusCalculator';
-import { calculateWeightBmiStatus } from '@/utils/weightBmiCalculator';
+import { calculateWeightBmiStatus, applyConfiguredBmi } from '@/utils/weightBmiCalculator';
 import { calculateFluidStatus, calculateDailyTotals } from '@/utils/fluidBalanceCalculator';
 import type { WeightEntry, WeightBmiConfig, WeightBmiAlert, WeightStatusInfo } from '@/types/weightBmi';
 import type { FluidConfig, FluidIntakeEntry, FluidOutputEntry, FluidStatus } from '@/types/fluidBalance';

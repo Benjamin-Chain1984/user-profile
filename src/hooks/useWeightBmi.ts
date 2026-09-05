@@ -13,7 +13,7 @@ import type {
   WeightStatusInfo,
   BmiCategory
 } from '@/types/weightBmi';
-import { calculateWeightBmiStatus, calculateBmi, getBmiCategory } from '@/utils/weightBmiCalculator';
+import { calculateWeightBmiStatus, calculateBmi, getBmiCategory, applyConfiguredBmi } from '@/utils/weightBmiCalculator';
 import { useClientIdOrActive } from '@/contexts/ActiveClientContext';
 
 const DEFAULT_CONFIG: Partial<WeightBmiConfig> = {
@@ -82,8 +82,11 @@ export function useWeightBmi(clientId?: string) {
       if (alertsError) throw alertsError;
 
       // Type cast the data
-      const typedEntries = (entriesData || []) as unknown as WeightEntry[];
       const typedConfig = configData as unknown as WeightBmiConfig | null;
+      const typedEntries = applyConfiguredBmi(
+        (entriesData || []) as unknown as WeightEntry[],
+        typedConfig
+      );
       const typedAlerts = (alertsData || []) as unknown as WeightBmiAlert[];
 
       setEntries(typedEntries);
@@ -201,6 +204,32 @@ export function useWeightBmi(clientId?: string) {
           });
 
         if (error) throw error;
+      }
+
+      // Recalculate BMI on existing entries so they match the configured height
+      const effectiveHeight = (data.height_cm ?? config?.height_cm) || null;
+      if (effectiveHeight && effectiveHeight > 0) {
+        const { data: existing } = await supabase
+          .from('weight_entries')
+          .select('id, weight_kg, bmi_value, height_used_cm')
+          .eq('client_id', clientId)
+          .eq('is_undone', false);
+
+        const stale = (existing || []).filter(
+          e => e.height_used_cm !== effectiveHeight || e.bmi_value == null
+        );
+
+        for (const entry of stale) {
+          const bmi = Math.round(calculateBmi(entry.weight_kg, effectiveHeight) * 10) / 10;
+          await supabase
+            .from('weight_entries')
+            .update({
+              bmi_value: bmi,
+              bmi_category: getBmiCategory(bmi),
+              height_used_cm: effectiveHeight,
+            })
+            .eq('id', entry.id);
+        }
       }
 
       toast({
