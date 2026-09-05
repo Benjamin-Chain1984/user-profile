@@ -18,7 +18,7 @@ import { BRISTOL_TYPES } from '@/types/bowelCare';
 import { calculateStomaStatusLevel } from '@/hooks/useCatheter';
 import type { StomaFinding, StomaPainLevel } from '@/types/catheter';
 import { calculateBowelCareStatus, type CalculatedBowelStatus } from '@/utils/bowelCareStatusCalculator';
-import { calculateWeightBmiStatus } from '@/utils/weightBmiCalculator';
+import { calculateWeightBmiStatus, applyConfiguredBmi } from '@/utils/weightBmiCalculator';
 import { calculateFluidStatus, calculateDailyTotals } from '@/utils/fluidBalanceCalculator';
 import type { WeightEntry, WeightBmiConfig, WeightBmiAlert, WeightStatusInfo } from '@/types/weightBmi';
 import type { FluidConfig, FluidIntakeEntry, FluidOutputEntry, FluidStatus } from '@/types/fluidBalance';
@@ -553,8 +553,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
       const { data: alertsData } = await supabase.from('weight_bmi_alerts').select('*').eq('client_id', profile.id).order('created_at', { ascending: false });
 
-      const typedEntries = (entries || []) as unknown as WeightEntry[];
       const typedConfig = configData as unknown as WeightBmiConfig | null;
+      const typedEntries = applyConfiguredBmi((entries || []) as unknown as WeightEntry[], typedConfig);
       const typedAlerts = (alertsData || []) as unknown as WeightBmiAlert[];
       const statusInfo = calculateWeightBmiStatus(typedEntries, typedConfig, typedAlerts);
 
