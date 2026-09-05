@@ -100,6 +100,30 @@ export function checkRapidWeightChange(
 }
 
 /**
+ * Ensure every entry carries a BMI value derived from the configured height.
+ * Existing entries logged before a height was configured (or logged against an
+ * outdated height) are recalculated so BMI is always consistent with Settings.
+ */
+export function applyConfiguredBmi(
+  entries: WeightEntry[],
+  config: WeightBmiConfig | null
+): WeightEntry[] {
+  const heightCm = config?.height_cm ?? null;
+  if (!heightCm || heightCm <= 0) return entries;
+
+  return entries.map(entry => {
+    if (entry.height_used_cm === heightCm && entry.bmi_value != null) return entry;
+    const bmi = Math.round(calculateBmi(entry.weight_kg, heightCm) * 10) / 10;
+    return {
+      ...entry,
+      height_used_cm: heightCm,
+      bmi_value: bmi,
+      bmi_category: getBmiCategory(bmi),
+    };
+  });
+}
+
+/**
  * Calculate comprehensive weight/BMI status
  */
 export function calculateWeightBmiStatus(
