@@ -91,7 +91,11 @@ export function PadChangeForm({
 
   const enableOnBehalf = config?.enable_uti_testing !== undefined;
 
-  // Build schedule time dropdown from config
+  const intervalStart = (config as any)?.interval_start_time || '07:00';
+  const intervalEnd = (config as any)?.interval_end_time || '22:00';
+  const isAsRequired = !config || config.schedule_type === 'as_required';
+
+  // Build schedule time dropdown strictly from the configured schedule
   const scheduleTimes = useMemo(() => {
     const items: { value: string; label: string }[] = [];
 
@@ -100,18 +104,27 @@ export function PadChangeForm({
         items.push({ value: time, label: `Scheduled Pad Change — ${time}` });
       }
     } else if (config?.schedule_type === 'hourly' && config.interval_hours) {
-      // Generate hourly slots starting from 00:00
-      for (let h = 0; h < 24; h += config.interval_hours) {
-        const t = `${String(h).padStart(2, '0')}:00`;
+      // Generate slots only inside the configured active window
+      const [sh, sm] = intervalStart.split(':').map(Number);
+      const [eh, em] = intervalEnd.split(':').map(Number);
+      const startMins = sh * 60 + (sm || 0);
+      const endMins = eh * 60 + (em || 0);
+      const step = Math.max(1, config.interval_hours) * 60;
+      for (let m = startMins; m <= endMins; m += step) {
+        const t = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
         items.push({ value: t, label: `Scheduled Pad Change — ${t}` });
       }
     }
 
     items.sort((a, b) => a.value.localeCompare(b.value));
-    // Always add unscheduled option
-    items.push({ value: 'unscheduled', label: 'Unscheduled Pad Change' });
+    // Always allow an unscheduled (as required) change
+    items.push({
+      value: 'unscheduled',
+      label: isAsRequired ? 'Pad Change (as required)' : 'Unscheduled Pad Change',
+    });
     return items;
-  }, [config?.schedule_type, config?.fixed_times, config?.interval_hours]);
+  }, [config?.schedule_type, config?.fixed_times, config?.interval_hours, intervalStart, intervalEnd, isAsRequired]);
+
 
   // Auto-set change reason based on schedule selection
   const handleScheduleTimeChange = (value: string) => {
