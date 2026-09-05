@@ -527,8 +527,16 @@ export function useContinenceStatus(clientId?: string): ContinenceStatus {
     return differenceInHours(now, changeTime) <= 168; // Last 7 days
   });
   const scheduledCount = recentChanges.filter(c => c.change_reason === 'scheduled').length;
+  // Expected changes per week only counts hours inside the active interval window.
+  const windowStart = ((config as any)?.interval_start_time || '07:00').split(':').map(Number);
+  const windowEnd = ((config as any)?.interval_end_time || '22:00').split(':').map(Number);
+  const startMinutes = windowStart[0] * 60 + windowStart[1];
+  const endMinutes = windowEnd[0] * 60 + windowEnd[1];
+  const windowHoursPerDay = startMinutes <= endMinutes
+    ? (endMinutes - startMinutes) / 60
+    : (1440 - startMinutes + endMinutes) / 60;
   const expectedChangesPerWeek = config?.schedule_type === 'hourly' && config.interval_hours
-    ? Math.floor(168 / config.interval_hours)
+    ? Math.floor(windowHoursPerDay / config.interval_hours) * 7
     : config?.schedule_type === 'fixed_times'
     ? config.fixed_times.length * 7
     : 0;
