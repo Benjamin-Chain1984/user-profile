@@ -2168,7 +2168,9 @@ export type Database = {
           escalation_recipients: string[]
           fixed_times: string[] | null
           id: string
+          interval_end_time: string
           interval_hours: number | null
+          interval_start_time: string
           schedule_type: string
           skin_check_frequency: string
           updated_at: string
@@ -2185,7 +2187,9 @@ export type Database = {
           escalation_recipients?: string[]
           fixed_times?: string[] | null
           id?: string
+          interval_end_time?: string
           interval_hours?: number | null
+          interval_start_time?: string
           schedule_type?: string
           skin_check_frequency?: string
           updated_at?: string
@@ -2202,7 +2206,9 @@ export type Database = {
           escalation_recipients?: string[]
           fixed_times?: string[] | null
           id?: string
+          interval_end_time?: string
           interval_hours?: number | null
+          interval_start_time?: string
           schedule_type?: string
           skin_check_frequency?: string
           updated_at?: string

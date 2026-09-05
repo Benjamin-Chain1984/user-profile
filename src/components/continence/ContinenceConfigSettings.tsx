@@ -76,6 +76,8 @@ export function ContinenceConfigSettings({ clientId }: ContinenceConfigSettingsP
   const [scheduleType, setScheduleType] = useState<ScheduleType>('as_required');
   const [fixedTimes, setFixedTimes] = useState<string[]>([]);
   const [intervalHours, setIntervalHours] = useState(4);
+  const [intervalStartTime, setIntervalStartTime] = useState('07:00');
+  const [intervalEndTime, setIntervalEndTime] = useState('22:00');
   const [enableUTI, setEnableUTI] = useState(false);
   const [enableHydration, setEnableHydration] = useState(false);
   const [enableConsumables, setEnableConsumables] = useState(false);
@@ -89,6 +91,8 @@ export function ContinenceConfigSettings({ clientId }: ContinenceConfigSettingsP
       setScheduleType(config.schedule_type as ScheduleType);
       setFixedTimes(config.fixed_times || []);
       setIntervalHours(config.interval_hours || 4);
+      setIntervalStartTime((config as any).interval_start_time || '07:00');
+      setIntervalEndTime((config as any).interval_end_time || '22:00');
       setEnableUTI(config.enable_uti_testing);
       setEnableHydration(config.enable_hydration_link);
       setEnableConsumables(config.enable_consumables_monitoring);
@@ -135,6 +139,8 @@ export function ContinenceConfigSettings({ clientId }: ContinenceConfigSettingsP
       schedule_type: scheduleType,
       fixed_times: fixedTimes,
       interval_hours: intervalHours,
+      interval_start_time: intervalStartTime,
+      interval_end_time: intervalEndTime,
       enable_uti_testing: enableUTI,
       enable_hydration_link: enableHydration,
       enable_consumables_monitoring: enableConsumables,
@@ -151,6 +157,8 @@ export function ContinenceConfigSettings({ clientId }: ContinenceConfigSettingsP
       setScheduleType(config.schedule_type as ScheduleType);
       setFixedTimes(config.fixed_times || []);
       setIntervalHours(config.interval_hours || 4);
+      setIntervalStartTime((config as any).interval_start_time || '07:00');
+      setIntervalEndTime((config as any).interval_end_time || '22:00');
       setEnableUTI(config.enable_uti_testing);
       setEnableHydration(config.enable_hydration_link);
       setEnableConsumables(config.enable_consumables_monitoring);
@@ -243,24 +251,56 @@ export function ContinenceConfigSettings({ clientId }: ContinenceConfigSettingsP
 
             {/* Hourly Interval */}
             {scheduleType === 'hourly' && (
-              <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
-                <Label htmlFor="intervalHours">Interval (hours)</Label>
-                <div className="flex items-center gap-4">
-                  <Input
-                    id="intervalHours"
-                    type="number"
-                    min={1}
-                    max={24}
-                    value={intervalHours}
-                    onChange={(e) => {
-                      setIntervalHours(parseInt(e.target.value) || 4);
-                      markChanged();
-                    }}
-                    className="w-24"
-                  />
-                  <span className="text-sm text-muted-foreground">
-                    Every {intervalHours} hour{intervalHours !== 1 ? 's' : ''}
-                  </span>
+              <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
+                <div className="space-y-2">
+                  <Label htmlFor="intervalHours">Interval (hours)</Label>
+                  <div className="flex items-center gap-4">
+                    <Input
+                      id="intervalHours"
+                      type="number"
+                      min={1}
+                      max={24}
+                      value={intervalHours}
+                      onChange={(e) => {
+                        setIntervalHours(parseInt(e.target.value) || 4);
+                        markChanged();
+                      }}
+                      className="w-24"
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      Every {intervalHours} hour{intervalHours !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Active between</Label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Input
+                      type="time"
+                      value={intervalStartTime}
+                      onChange={(e) => {
+                        setIntervalStartTime(e.target.value);
+                        markChanged();
+                      }}
+                      className="w-32"
+                      aria-label="Interval window start time"
+                    />
+                    <span className="text-sm text-muted-foreground">and</span>
+                    <Input
+                      type="time"
+                      value={intervalEndTime}
+                      onChange={(e) => {
+                        setIntervalEndTime(e.target.value);
+                        markChanged();
+                      }}
+                      className="w-32"
+                      aria-label="Interval window end time"
+                    />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Scheduled pad changes apply between these times only. Nighttime changes are performed as required.
+                  </p>
                 </div>
               </div>
             )}

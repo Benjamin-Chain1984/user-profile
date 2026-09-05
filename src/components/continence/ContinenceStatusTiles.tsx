@@ -113,9 +113,11 @@ function PadChangeTile({
           .map((t) => parseISO(`${todayStr}T${t}`))
           .sort((a, b) => a.getTime() - b.getTime());
       } else if (config.schedule_type === 'hourly' && config.interval_hours) {
-        // Build slots starting from 06:00
-        const dayStart = parseISO(`${todayStr}T06:00`);
-        const dayEnd = parseISO(`${todayStr}T22:00`);
+        // Build slots within the configured active window (default 07:00–22:00)
+        const startT = (config as any).interval_start_time || '07:00';
+        const endT = (config as any).interval_end_time || '22:00';
+        const dayStart = parseISO(`${todayStr}T${startT}`);
+        const dayEnd = parseISO(`${todayStr}T${endT}`);
         let slot = dayStart;
         while (slot <= dayEnd) {
           scheduledTimes.push(new Date(slot));
@@ -253,6 +255,11 @@ function PadChangeTile({
           )}
           {detail && (
             <p className="text-xs text-muted-foreground">{detail}</p>
+          )}
+          {config?.schedule_type === 'hourly' && (
+            <p className="text-xs text-muted-foreground italic">
+              Scheduled {(config as any).interval_start_time || '07:00'}–{(config as any).interval_end_time || '22:00'}. Nighttime changes as required.
+            </p>
           )}
         </div>
 
