@@ -472,6 +472,35 @@ export function useContinenceStatus(clientId?: string): ContinenceStatus {
 
     if (config.schedule_type === 'hourly' && config.interval_hours) {
       nextScheduledChange = new Date(lastChangeTime.getTime() + config.interval_hours * 60 * 60 * 1000);
+      // Scheduled changes only apply within the active window (e.g. 07:00–22:00).
+      // Outside the window, changes are "as required" — roll next due to the next window start.
+      const startT = (config as any).interval_start_time || '07:00';
+      const endT = (config as any).interval_end_time || '22:00';
+      const minutesOf = (d: Date) => d.getHours() * 60 + d.getMinutes();
+      const [sh, sm] = startT.split(':').map(Number);
+      const [eh, em] = endT.split(':').map(Number);
+      const startMin = sh * 60 + sm;
+      const endMin = eh * 60 + em;
+      const withinWindow = (d: Date) => {
+        const m = minutesOf(d);
+        return startMin <= endMin ? (m >= startMin && m <= endMin) : (m >= startMin || m <= endMin);
+      };
+      // If now is outside the window, nothing is scheduled/overdue until the window opens.
+      if (!withinWindow(now)) {
+        nextScheduledChange = null;
+      } else {
+        // If the computed next change falls after the window closes, move it to next window start.
+        let guard = 0;
+        while (nextScheduledChange && !withinWindow(nextScheduledChange) && guard < 10) {
+          const nextStart = new Date(nextScheduledChange);
+          nextStart.setHours(sh, sm, 0, 0);
+          if (nextStart.getTime() <= nextScheduledChange.getTime()) {
+            nextStart.setDate(nextStart.getDate() + 1);
+          }
+          nextScheduledChange = nextStart;
+          guard++;
+        }
+      }
     } else if (config.schedule_type === 'fixed_times' && config.fixed_times.length > 0) {
       // Find next scheduled time
       const today = format(now, 'yyyy-MM-dd');
