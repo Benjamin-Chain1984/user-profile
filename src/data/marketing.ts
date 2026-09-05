@@ -37,7 +37,7 @@ export const primaryFeatures: MarketingFeature[] = [
     icon: Lightbulb,
     title: 'The IDEAL Beacon — visual cues at the point of care',
     description:
-      'A connected beacon in the home gives instant visual cues and alerts. Green means on track, Amber means something needs attention, Red means act now — visible from across the room, no screen required.',
+      'A connected beacon in the home gives instant visual cues and alerts. Green means IDEAL, Amber means something needs attention, Red means act now — visible from across the room, no screen required.',
   },
   {
     icon: HeartPulse,
