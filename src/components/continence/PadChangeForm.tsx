@@ -320,7 +320,7 @@ export function PadChangeForm({
               <Label>Pad Change Schedule</Label>
               <Select value={scheduledTime} onValueChange={handleScheduleTimeChange}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select scheduled time" />
+                  <SelectValue placeholder={isAsRequired ? 'As required' : 'Select scheduled time'} />
                 </SelectTrigger>
                 <SelectContent>
                   {scheduleTimes.map((t) => (
@@ -330,7 +330,22 @@ export function PadChangeForm({
                   ))}
                 </SelectContent>
               </Select>
+              {isAsRequired ? (
+                <p className="text-xs text-muted-foreground">
+                  No pad change schedule is set up in Settings — changes are logged as required.
+                </p>
+              ) : config?.schedule_type === 'hourly' ? (
+                <p className="text-xs text-muted-foreground">
+                  Scheduled every {config.interval_hours} hour{config.interval_hours !== 1 ? 's' : ''} between{' '}
+                  {intervalStart} and {intervalEnd}. Nighttime changes as required.
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Times come from the schedule configured in Settings.
+                </p>
+              )}
             </div>
+
 
             {/* Time entry for unscheduled changes */}
             {scheduledTime === 'unscheduled' && (
