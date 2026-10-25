@@ -8,7 +8,7 @@ import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from './ThemeToggle';
 import { footerNav } from '@/data/marketing';
-import idealLogo from '@/assets/ideal-titlecase-logo.png';
+const idealLogo = '/Ideal-logo.png';
 
 const navItems = [
   { label: 'Features', to: '/features' },
