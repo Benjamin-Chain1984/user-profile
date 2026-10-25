@@ -23,9 +23,9 @@ function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/80 backdrop-blur-xl">
-      <div className="site-container flex h-16 items-center justify-between gap-4">
+      <div className="site-container flex h-20 items-center justify-between gap-4">
         <Link to="/" className="flex items-center gap-2" aria-label="IDEAL home">
-          <img src={idealLogo} alt="IDEAL" className="h-9 w-auto" />
+          <img src={idealLogo} alt="IDEAL" className="h-14 w-auto" />
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
@@ -123,7 +123,7 @@ function SiteFooter() {
     <footer className="border-t border-border bg-card">
       <div className="site-container grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
         <div>
-          <img src={idealLogo} alt="IDEAL" className="h-10 w-auto" />
+          <img src={idealLogo} alt="IDEAL" className="h-14 w-auto" />
           <p className="mt-4 max-w-xs text-sm text-muted-foreground">
             Clinical monitoring, escalation and reporting for disability and aged-care providers.
           </p>
