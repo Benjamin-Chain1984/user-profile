@@ -117,6 +117,23 @@ export function useClientsIdealSignal(clientIds: string[]) {
 
   useEffect(() => {
     fetchSignals();
+
+    // Live updates: any profile publishing a new signal refreshes the list
+    // immediately, so Admin > Clients is accurate in real time.
+    const channel = supabase
+      .channel(`client-ideal-signals-${Math.random().toString(36).slice(2)}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'client_ideal_signals' },
+        () => {
+          fetchSignals();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [fetchSignals]);
 
   // Overlay the live profile-computed signal for the active client so the Admin
